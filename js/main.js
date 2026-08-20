@@ -6,6 +6,7 @@
 (function () {
   const G = window.GAME;
   const P = G.PAL;
+  const OUTC = P.ink;
   const canvas = document.getElementById('game');
   const g = canvas.getContext('2d');
   g.imageSmoothingEnabled = false;
@@ -29,7 +30,7 @@
   }
   function syncWorld() { M.wx = M.x + Math.round(G.cam.x); M.wy = M.y + Math.round(G.cam.y); }
 
-  function hitMute(x, y) { return G.inRect(x, y, G.W - 20, 2, 18, 14); }
+  function hitMute(x, y) { return G.inRect(x, y, G.W - 16, 2, 14, 11); }
 
   canvas.addEventListener('pointerdown', (e) => {
     e.preventDefault();
@@ -69,13 +70,13 @@
 
   function drawMute(gg) {
     const m = G.state.muted;
-    const x = G.W - 20, y = 2;
+    const x = G.W - 16, y = 2;
     gg.globalAlpha = 0.9;
-    G.frame(gg, x, y, 18, 14, '#16211f');
-    G.R(gg, x + 4, y + 6, 3, 3, m ? P.steel : P.chrome);
-    G.R(gg, x + 7, y + 4, 2, 7, m ? P.steel : P.chrome);
-    if (!m) { G.R(gg, x + 11, y + 5, 1, 5, P.neonG); G.R(gg, x + 13, y + 3, 1, 9, P.neonG); }
-    else { for (let i = 0; i < 4; i++) { G.R(gg, x + 10 + i, y + 4 + i, 1, 1, P.blood); G.R(gg, x + 13 - i, y + 4 + i, 1, 1, P.blood); } }
+    G.box(gg, x, y, 14, 11, '#161f33', { r: 1, band: 1, spec: false });
+    G.R(gg, x + 3, y + 4, 2, 3, m ? P.steel : P.chrome);
+    G.R(gg, x + 5, y + 2, 2, 7, m ? P.steel : P.chrome);
+    if (!m) { G.R(gg, x + 8, y + 3, 1, 5, P.neonG); G.R(gg, x + 10, y + 2, 1, 7, P.neonG); }
+    else { for (let i = 0; i < 3; i++) { G.R(gg, x + 8 + i, y + 3 + i, 1, 1, P.blood); G.R(gg, x + 10 - i, y + 3 + i, 1, 1, P.blood); } }
     gg.globalAlpha = 1;
   }
 
@@ -94,6 +95,7 @@
   };
   function switchTo(name) {
     G.audio.stopAllLoops();
+    G.toastCX = 0; G.toastY = 0;
     G.clearGore();
     G.cam.sx = 0; G.cam.sy = 0;
     G.scene = G.scenes[name];
@@ -130,12 +132,11 @@
       gg.globalAlpha = a;
       const night = /NIGHT|CLINIC|BOOKS/.test(trans.label);
       if (night) {
-        G.drawToothIcon(gg, G.W / 2 - 5, G.H / 2 - 40, P.bone);
-        G.fe(gg, G.W / 2, G.H / 2 - 24, 9, 3, P.bloodDk);
+        G.tooth3(gg, { x: G.W / 2 - 8, y: G.H / 2 - 34, w: 16, h: 20, up: true }, {});
       } else {
-        G.drawScoopBall(gg, G.W / 2, G.H / 2 - 34, 11, G.flavorById(G.state.flavors[0]) || G.DATA.flavors[0], 0);
+        G.scoop3(gg, G.W / 2, G.H / 2 - 24, 10, G.flavorById(G.state.flavors[0]) || G.DATA.flavors[0], {});
       }
-      G.text(gg, trans.label, G.W / 2, G.H / 2 - 6, night ? P.neonC : P.gold, { align: 'center', out: P.ink, sc: 2 });
+      G.text(gg, trans.label, G.W / 2, G.H / 2 - 2, night ? P.neonC : P.gold, { align: 'center', out: P.ink, sc: 1 });
       gg.globalAlpha = 1;
     }
   }
@@ -144,94 +145,61 @@
   // TITLE
   // ============================================================
   G.scenes.title = {
-    enter() { this.t = 0; G.audio.music('title'); G.cam.reset(0, 0, 0, 0); },
+    enter() { this.t = 0; G.audio.music('title'); G.cam.reset(0, 0, 0, 0); G.spawnFlies(5, 160, 60, 70); },
     hasSave() { return G.hasSave && (G.state.day > 1 || G.state.money > 0 || G.state.flavors.length > 3); },
     onDown(x, y) {
       const hs = this.hasSave();
-      if (hs && G.inRect(x, y, 330, 240, 140, 24)) { G.audio.sfx('day'); G.newDayStats(); G.go('day', 'DAY ' + G.state.day); return; }
-      const ny = hs ? 270 : 244;
-      if (G.inRect(x, y, 330, ny, 140, 24)) {
-        G.audio.sfx('day'); G.reset(); G.newDayStats(); G.go('day', 'DAY 1');
-      }
+      if (hs && G.inRect(x, y, 186, 118, 76, 16)) { G.audio.sfx('day'); G.newDayStats(); G.go('day', 'DAY ' + G.state.day); return; }
+      const ny = hs ? 138 : 124;
+      if (G.inRect(x, y, 186, ny, 76, 16)) { G.audio.sfx('day'); G.reset(); G.newDayStats(); G.go('day', 'DAY 1'); }
     },
-    update(dt) { this.t += dt; },
+    update(dt) { this.t += dt; G.updateFlies(dt); G.updateDrips(dt, 180); if (Math.random() < dt) G.dripFrom(G.irand(10, 310), 10); },
     draw(gg) {
       const t = this.t;
-      // --- sky: bruised dusk on the left, black night on the right ---
-      G.gradV(gg, 0, 0, 320, 200, '#3a1c2e', '#12100f', 7);
-      G.gradV(gg, 320, 0, 320, 200, '#0d1418', '#080c0b', 6);
-      // stars
-      for (let i = 0; i < 40; i++) {
-        const sx = 330 + (i * 71) % 300, sy = (i * 43) % 170;
-        if (Math.sin(t * 1.7 + i) > -0.1) G.R(gg, sx, sy, 1, 1, i % 5 ? '#2c3b44' : '#7f96a3');
-      }
-      // sickly sun sinking left, bone moon right
-      G.fc(gg, 74, 150, 22, '#5a1f24');
-      G.fc(gg, 74, 150, 18, '#a33a24');
-      G.fc(gg, 74, 148, 13, '#d9702e');
-      G.fc(gg, 500, 52, 17, '#1a2226');
-      G.fc(gg, 500, 52, 15, '#d8d2bc');
-      G.fc(gg, 507, 47, 11, '#0d1418');
-      G.speckle(gg, 486, 38, 30, 30, '#a8a291', 0.05, 3);
+      // damp brick alley at night
+      G.R(gg, 0, 0, G.W, G.H, P.night);
+      G.sewerWall(gg, 0, 0, G.W, 120, t);
+      G.pipe(gg, 0, 3, G.W, false, t);
+      G.pipe(gg, 6, 12, 108, true, t);
+      G.pipe(gg, 300, 12, 96, true, t);
+      // moon through the grating
+      G.box(gg, 262, 16, 20, 20, '#e8e8f0', { lit: '#ffffff', dk: '#b0b0c0', r: 3, band: 3 });
+      G.R(gg, 272, 22, 4, 3, '#c8c8d8'); G.R(gg, 266, 28, 3, 2, '#c8c8d8');
+      // wet floor
+      G.R(gg, 0, 120, G.W, 60, P.night2);
+      G.R(gg, 0, 120, G.W, 1, P.night3);
+      G.grate(gg, 62, 150, 44, 14);
+      G.glow(gg, 160, 132, 120, 30, P.neonP, 0.8);
+      G.drawDrips(gg);
 
-      // --- skyline of the swamp town ---
-      for (let i = 0; i < 22; i++) {
-        const bx = i * 31 - 10, bh = 40 + ((i * 37) % 58), by = 200 - bh;
-        G.R(gg, bx, by, 30, bh, i % 2 ? '#0a1210' : '#0d1614');
-        G.R(gg, bx, by, 30, 1, '#16241f');
-        for (let w = 0; w < 6; w++) {
-          const wx = bx + 4 + (w % 3) * 9, wy = by + 6 + Math.floor(w / 3) * 13;
-          if (((i * 7 + w * 13) % 5) < 2) G.R(gg, wx, wy, 4, 5, Math.sin(t * 2 + i + w) > 0.9 ? '#3a3020' : '#6b5320');
-        }
-      }
-      // wet road
-      G.gradV(gg, 0, 200, 640, 90, '#0f1a18', '#070c0b', 5);
-      G.R(gg, 0, 200, 640, 1, '#1d3630');
-      // reflected neon smear on the wet road (soft, dithered - not a bar)
-      G.glow(gg, 320, 224, 190, 22, P.neonP, 1.1);
-      G.glow(gg, 320, 258, 140, 14, P.neonC, 0.8);
-      gg.globalAlpha = 0.1;
-      G.dither(gg, 150, 214, 340, 30, null, P.neonP, 0.35);
-      gg.globalAlpha = 1;
+      // the proprietor, a big boxel croc bust behind the sign
+      G.drawBust(gg, 'gator', 92, 78, 0.86,
+        { t, open: 0.16 + Math.sin(t * 1.3) * 0.1, mood: 'angry', noBlink: 1 });
+      // ...holding a live drill up on a short sleeved forearm
+      G.box(gg, 120, 104, 20, 14, '#3a6b8a', { lit: '#5a93b4', dk: '#234356', r: 2, band: 3 });
+      G.drawTool(gg, 'drill', 137, 104, { active: true, t });
+      G.drawMitt(gg, 137, 106, { grip: 1 });
+      // a loaded cone waiting on the ledge on his other side
+      G.box(gg, 14, 116, 34, 6, '#3a4560', { lit: '#56628a', dk: '#232b3f', r: 1, band: 1 });
+      G.cone3(gg, 31, 116, [G.DATA.flavors[5].id, G.DATA.flavors[2].id], { w: 15, h: 16, sr: 9 });
 
-      // --- the crocodile proprietor, hulking in the middle ---
-      const bob = Math.sin(t * 1.4) * 1.5;
-      const cx = 152, base = 300 + bob;
-      gg.globalAlpha = 0.5; G.fe(gg, cx, base + 2, 46, 6, '#000'); gg.globalAlpha = 1;
-      G.drawCust(gg, 'gator', cx, base + 6, t, { mood: 'angry', scale: 2.5 });
-      // the tools of both trades, one in each claw
-      G.drawScoopBall(gg, cx - 40, base - 40, 9, G.DATA.flavors[5], 0);
-      G.R(gg, cx - 42, base - 30, 4, 14, P.steel);
-      G.R(gg, cx - 41, base - 29, 2, 12, P.chrome);
-      G.drawTool(gg, 'drill', cx + 40, base - 26, { active: true, t });
+      // neon sign
+      G.drawNeon(gg, 200, 44, 'DOUBLE LIFE', P.neonP, t, 2);
+      G.text(gg, 'SCOOP BY DAY   DRILL BY NIGHT', 200, 62, P.neonC, { align: 'center', out: OUTC });
+      G.R(gg, 140, 38, 120, 1, '#2e3d5c');
 
-      // --- the cast shuffling past along the kerb ---
-      const ids = G.DATA.animals.map((a) => a.id);
-      for (let i = 0; i < ids.length; i++) {
-        const ax = (t * 26 + i * 74) % (640 + 90) - 45;
-        gg.globalAlpha = 0.92;
-        G.drawCust(gg, ids[i], ax, 336, t + i * 1.7, { walk: true, mood: i % 4 === 0 ? 'sick' : 'idle' });
-        gg.globalAlpha = 1;
-      }
-
-      // --- neon logo ---
-      G.drawNeon(gg, 320, 34, 'DOUBLE LIFE', P.neonP, t, 4);
-      G.drawNeon(gg, 320, 76, 'SCOOP BY DAY   DRILL BY NIGHT', P.neonC, t * 0.7 + 3, 1);
-      // hanging sign bracket
-      G.R(gg, 200, 24, 240, 2, '#16241f');
-      G.R(gg, 200, 20, 3, 8, '#16241f'); G.R(gg, 437, 20, 3, 8, '#16241f');
-
-      // --- buttons ---
       const hs = this.hasSave();
       if (hs) {
-        G.drawBtn(gg, 330, 240, 140, 24, 'CONTINUE', { col: '#2f6b3a' });
-        G.drawBtn(gg, 330, 270, 140, 24, 'NEW GAME', { col: P.gum });
-        G.text(gg, 'DAY ' + G.state.day + '   $' + Math.round(G.state.money), 400, 230, P.steel2, { align: 'center', out: P.ink });
+        G.drawBtn(gg, 186, 118, 76, 16, 'CONTINUE', { col: '#3d9a4a' });
+        G.drawBtn(gg, 186, 138, 76, 16, 'NEW GAME', { col: '#a83d5c' });
+        G.text(gg, 'DAY ' + G.state.day + '  $' + Math.round(G.state.money), 224, 108, P.steel2, { align: 'center', out: OUTC });
       } else {
-        G.drawBtn(gg, 330, 244, 140, 24, 'OPEN UP', { col: P.gum });
-        G.text(gg, 'SELL THE SUGAR. BILL FOR THE DAMAGE.', 400, 214, P.steel2, { align: 'center', out: P.ink });
+        G.drawBtn(gg, 186, 124, 76, 16, 'OPEN UP', { col: '#a83d5c' });
+        G.text(gg, 'SELL THE SUGAR.', 224, 104, P.steel2, { align: 'center', out: OUTC });
+        G.text(gg, 'BILL FOR THE DAMAGE.', 224, 113, P.steel2, { align: 'center', out: OUTC });
       }
-      G.grade(gg, 1.1);
+      G.drawFlies(gg);
+      G.grade(gg, 1);
     },
   };
 

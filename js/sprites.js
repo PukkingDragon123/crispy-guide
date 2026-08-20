@@ -450,15 +450,17 @@
       G.rr(g, cx - w * 0.5, top - 5, w, 8, OUT);
       G.rr(g, cx - w * 0.5 + 1, top - 4, w - 2, 6, c);
       G.R(g, cx - w * 0.4, top - 4, w * 0.5, 1, lit);
-      G.rr(g, cx - w * 0.62, top + 1, w * 0.42, 3, OUT);          // peak, forward-left
-      G.rr(g, cx - w * 0.6, top + 1, w * 0.4, 2, dk);
+      G.rr(g, cx - w * 0.64, top, w * 0.44, 6, OUT);              // peak, forward-left
+      G.rr(g, cx - w * 0.62, top + 1, w * 0.4, 4, dk);
+      G.R(g, cx - w * 0.62, top + 1, w * 0.38, 1, G.shade(c, 0.1));
     } else if (kind === 'cap') {
       G.rr(g, cx - w * 0.48, top - 6, w * 0.96, 9, OUT);
       G.rr(g, cx - w * 0.46, top - 5, w * 0.92, 7, c);
       G.R(g, cx - w * 0.3, top - 5, w * 0.4, 1, lit);
       G.R(g, cx - 1, top - 7, 2, 2, dk);                           // button
-      G.rr(g, cx + w * 0.3, top - 1, w * 0.38, 3, OUT);            // peak worn backwards
-      G.rr(g, cx + w * 0.32, top - 1, w * 0.34, 2, dk);
+      G.rr(g, cx + w * 0.28, top - 2, w * 0.4, 6, OUT);            // peak worn backwards
+      G.rr(g, cx + w * 0.3, top - 1, w * 0.36, 4, dk);
+      G.R(g, cx + w * 0.3, top - 1, w * 0.34, 1, G.shade(c, 0.1));
     } else if (kind === 'bucket') {
       G.rr(g, cx - w * 0.46, top - 6, w * 0.92, 8, OUT);
       G.rr(g, cx - w * 0.44, top - 5, w * 0.88, 6, c);

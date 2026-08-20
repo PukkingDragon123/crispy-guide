@@ -2,15 +2,15 @@
 
 **Sell the sugar. Bill for the damage.**
 
-A dark pixel-art simulator. By day you run a grimy late-night ice cream counter,
-carving scoops out of layered steel pints for a queue of amphibians and reptiles.
-By night you are the only dentist in town, and every patient in your chair is a
-customer you poisoned that afternoon.
+A chunky pixel-art simulator at **320×180**. By day you run a grimy ice cream
+counter under a leaking sewer ceiling, carving scoops out of layered steel pints
+for a queue of amphibians and reptiles. By night you are the only dentist in
+town, and every patient in your chair is a customer you poisoned that afternoon.
 
 ![Title](screenshots/title.png)
 
-**▶ Play it:** open `index.html` in a browser. No build, no dependencies, no assets —
-every sprite, sound and note is generated in code.
+**▶ Play it:** open `index.html` in a browser. No build, no dependencies, no
+assets — every sprite, sound and note is generated in code.
 
 ---
 
@@ -18,9 +18,9 @@ every sprite, sound and note is generated in code.
 
 ![The counter](screenshots/day.png)
 
-Drag the floor to walk the counter: a chilled well of pints on the left, the
-assembly bench in the middle, syrup and grit on the right. Both of your scaly
-forearms are in shot the whole time.
+A close two-shot: your pints on the left, your customer's enormous open mouth on
+the right, and a rusty sewer wall behind you both with pipes, a floor grate,
+drips and flies. Drag the floor to pan the counter over to the syrup bar.
 
 ### Scooping
 
@@ -30,25 +30,36 @@ Pints are **big rectangular tubs sliced into flavour strata, and every stratum i
 labelled right on the ice cream** — you can always see which band is which
 flavour. There are no meters and no timing windows:
 
-- **Press the band you want and hold.** The scoop digs in, a dome swells inside
+- **Press the band you want and hold.** The scoop digs in, a ball swells inside
   the bowl, crumbs fly and the pitch rises until it comes free with a pop.
-- The tub visibly hollows out where you dug, and **stays** hollowed for the shift.
-- **Carry the dome over and set it on the cone.** A dashed seat shows where it
+- The tub visibly craters where you dug, and **stays** cratered for the shift.
+- **Carry the ball over and set it on the cone.** A dashed seat shows where it
   lands; on release it squashes, settles and names itself.
 
-Scoops are drawn as **lit 3D domes** — churned ridges following the curvature, a
-melt lip at the base, a hard sheen — not flat discs. The cone keeps a running
-list of what is on it.
+Scoops are round, hard-shaded balls — five flat tones taken off the sphere normal
+against one top-left key light, a square specular, drip lobes hanging off the
+lower rim and a churned ridge across the face. Waffle cones taper to a point with
+a lattice cut across them.
 
 Stack up to three, drizzle syrup whose droplets genuinely land, cling, run around
 the curve of a scoop and drip off the bottom, then shake a jar of grit that
-bounces and sticks where it falls. Serve. Every gram of sugar is logged.
+bounces and sticks where it falls. Serve.
+
+### Eating
+
+![Eating](screenshots/eating.png)
+
+Serve it and you watch them eat it. The cone comes up in a chunky mitt into the
+corner of a mouth that chomps at 3.4 Hz — wide open through most of the cycle,
+snapping shut on each bite. Whole scoops stay whole; the one being eaten shrinks
+bite by bite while crumbs spray. Every gram of sugar is logged against tonight.
 
 ## 🌙 The clinic
 
 ![The clinic](screenshots/clinic.png)
 
-One hard lamp, sixteen teeth, and the kids from this afternoon.
+One hard lamp, eleven teeth filling the whole frame, and the kids from this
+afternoon staring down at you over their own gums.
 
 ### You must name the disease before you may cut
 
@@ -97,40 +108,45 @@ case.
 ![Stockroom](screenshots/stockroom.png)
 
 Pan a back room under one swinging bulb. Everything for sale is a physical object
-on a shelf with a price tag: a chest freezer of pints, a rack of syrups, jars of
-grit, and a steel cabinet of clinic upgrades (Carbide Burr, Surgeon Loupe, Steady
-Claw, Sedative Gas). Richer flavours mean sweeter orders, which means worse teeth,
-which means better nights.
+on a shelf with a name plate and a price tag: a chest freezer of pints, a rack of
+syrups, jars of grit, and a steel cabinet of clinic upgrades (Carbide Burr,
+Surgeon Loupe, Steady Claw, Sedative Gas). Richer flavours mean sweeter orders,
+which means worse teeth, which means better nights.
 
 ## The cast
 
-![The cast](screenshots/cast.png)
+Twelve amphibians and reptiles, all dressed and all built out of hard-edged
+boxel volumes. Every face is a big rounded skull slab with:
 
-Twelve amphibians and reptiles, **all dressed and all with big cartoon eyes** —
-shaded eyeballs with a coloured iris, a specular catch-light, working eyelids and
-brows that go angry, worried or sick. Every one wears something: the cane toad in
-dungarees and a bucket hat, the gator kid in a jersey and a backwards cap, the
-gecko in a lab coat and round spectacles, the fire newt in a hood, the pit viper
-in a fedora, the python in a knitted scarf.
+- **Big cartoon eyes** — a quantised round ball in a hard black rim, a fat
+  coloured iris, a slit pupil for the reptiles and a fat dot for the amphibians,
+  one square catch-light, working lids and brows that go angry, worried or sick.
+  They stay legible from 6 px to 26 px.
+- **A mouth that really opens** — the jaw drops in front of the chest, framed in
+  hard black, with an upper tooth row, a domed tongue with a median furrow, a
+  darkening throat and a lower tooth row on the jaw lip.
+- **Real cloth** — waistcoats, dungarees with straps, hoodies, jerseys, lab
+  coats, aprons and scarves, each with a wrapped collar, set-in shoulder seams,
+  fabric folds and a hem shadow. Hats and glasses on top.
+- **Per-species build** — width, height, snout length, eye size and jaw throw all
+  vary, so the cast rigs to genuinely different sizes.
 
 Bullfrog · cane toad · tree frog · axolotl · fire newt · pit viper · python ·
-gecko · iguana · gator kid · snapper · salamander. You are the crocodile.
+gecko · iguana · gator kid · snapper · salamander. You are the crocodile, and
+what you show of yourself is a small chunky mitt holding the tool.
 
 ## Tech
 
-- 640×360 canvas, nearest-neighbour upscaled; every shape is scanline `fillRect`
-  work so the pixels stay hard
-- **No flat circles anywhere.** Scoops, eyeballs and shells are quantised lit
-  domes with a real terminator and rim light; gums are one formed ridge of tissue
-  scalloped between the teeth; the tongue is a domed muscle with a median furrow;
-  light is dithered rather than stacked alpha discs
-- Characters are a real rig — shoes, shins, thighs, hips, ribcage, shoulders,
-  arms with elbows, neck, skull, muzzle — then clothes, then eyes. Limbs are
-  filled from a densified spine as a single span per scanline, so they read as
-  tubes instead of strings of spheres
-- Procedural sprites throughout — organic scanline skulls, layered pints with a
-  live dig surface and on-band flavour labels, clinical enamel with cusps and
-  fissures
+- **320×180** canvas, nearest-neighbour upscaled; every shape is scanline
+  `fillRect` work so the pixels stay hard
+- Flat-shaded "boxel" language: 3–5 tones per material, hard light and shadow
+  bands, 1 px black outlines, no dithered gradients pretending to be soft
+- Round things are quantised per scanline with real terminators and rim light —
+  never flat discs, never rounded squares standing in for balls
+- Characters are a procedural rig: skull, eye sockets, snout, jaw, chest, then
+  cloth, then accessories. Limbs fill from a densified spine as a single span
+  per scanline, so they read as tubes rather than strings of spheres
+- Layered pints with a live dig surface and on-band flavour labels
 - Custom 5×7 bitmap font
 - All audio synthesised with WebAudio: wet squelches, bone cracks, drill whine,
   suction, screams, and two sequenced tracks

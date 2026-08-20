@@ -1,13 +1,13 @@
 // ============================================================
 // DOUBLE LIFE v2 - util.js
-// 640x360 canvas. Dark, saturated, high-detail pixel art.
+// 320x180 canvas. Chunky, bold, flat-shaded pixel art.
 // Core: math, crisp pixel primitives, texture/dither helpers,
 // a world camera, gore/blood particles and global juice.
 // ============================================================
 (function () {
   const G = (window.GAME = {});
-  G.W = 640;
-  G.H = 360;
+  G.W = 320;
+  G.H = 180;
 
   // ---------- math ----------
   G.clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -30,36 +30,51 @@
 
   // ---------- palette : swamp-noir ----------
   const P = G.PAL = {
-    ink:      '#080c0b',   // universal outline, near black
-    ink2:     '#12191a',
-    night:    '#0b1512',
-    night2:   '#132420',
-    night3:   '#1d3630',
-    swamp:    '#254b40',
-    moss:     '#39684f',
-    steel:    '#5a6f78',
-    steel2:   '#8aa3ad',
-    chrome:   '#c9dde5',
-    bone:     '#efe6d2',   // enamel
-    boneDk:   '#c2b295',
-    boneShade:'#9d8d73',
-    gum:      '#a32236',
-    gumDk:    '#6d1424',
-    gumLit:   '#cf4257',
-    blood:    '#c1122b',
-    bloodDk:  '#71091a',
-    bloodLit: '#ff3b4e',
-    pus:      '#d9d34a',
-    rot:      '#2b1d10',
-    plaque:   '#a8b02a',
-    plaqueLt: '#c9d24a',
-    neonG:    '#6dff3f',   // sign green
-    neonP:    '#ff2e88',   // sign magenta
-    neonC:    '#2ee6ff',
-    amber:    '#ffab1f',
-    gold:     '#ffcf2e',
-    cream:    '#f6efdc',
-    warn:     '#ff6a3d',
+    // Bold and flat: three or four tones per material, hard black
+    // outlines, no dithered mush. Night blues behind, hot greens and
+    // creams in front.
+    ink:      '#0d1220',   // universal outline
+    ink2:     '#161f33',
+    night:    '#1a2438',   // sky / room ground
+    night2:   '#232f4a',
+    night3:   '#2e3d5c',
+    sewer:    '#2a3348',   // brick
+    sewerLt:  '#3a4560',
+    sewerDk:  '#1c2333',
+    rust:     '#8a5230',
+    rustLt:   '#b87a44',
+    slime:    '#4a6b3a',
+    slimeLt:  '#6b9450',
+    steel:    '#6b7f96',
+    steel2:   '#96aac0',
+    chrome:   '#d8e4f0',
+    bone:     '#f4f0e0',   // enamel
+    boneDk:   '#d8d0b8',
+    boneShade:'#b0a488',
+    gum:      '#d9607a',
+    gumDk:    '#a83d5c',
+    gumLit:   '#f08aa0',
+    maw:      '#5c1a28',   // mouth interior
+    mawDk:    '#3d0f1c',
+    blood:    '#d92038',
+    bloodDk:  '#8a1424',
+    bloodLit: '#ff4a5c',
+    pus:      '#e8d84a',
+    rot:      '#3a2410',
+    plaque:   '#b8c03a',
+    plaqueLt: '#d8e05a',
+    neonG:    '#7ee858',
+    neonP:    '#ff5c9c',
+    neonC:    '#4ad8f0',
+    amber:    '#ffb43a',
+    gold:     '#ffd44a',
+    cream:    '#f4f0e0',
+    warn:     '#ff7a4a',
+    // croc / player greens
+    croc:     '#6bbf42',
+    crocLt:   '#8ed95c',
+    crocDk:   '#3d7a26',
+    crocDk2:  '#2a5518',
   };
   G.OUT = P.ink;
   G.WHITE = P.cream;
@@ -222,6 +237,45 @@
     G.R(g, x + 3, y + h - 3, w - 6, 1, G.shade(fill, -0.3));
   };
 
+  // ------------------------------------------------------------
+  // BOXEL - the core shape of this art style. A flat face with a
+  // hard top light band, a hard bottom shadow band, a 1px black
+  // outline and softened corners. Three tones, no gradients.
+  // ------------------------------------------------------------
+  G.box = function (g, x, y, w, h, col, o) {
+    o = o || {};
+    x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+    if (w < 2 || h < 2) { G.R(g, x, y, w, h, col); return; }
+    const lit = o.lit || G.shade(col, 0.26);
+    const dk = o.dk || G.shade(col, -0.3);
+    const r = o.r === undefined ? (w > 8 && h > 8 ? 2 : 1) : o.r;
+    const rr = r >= 2 ? G.rr2 : G.rr;
+    // outline
+    if (o.out !== false) rr(g, x - 1, y - 1, w + 2, h + 2, o.outCol || P.ink);
+    rr(g, x, y, w, h, col);
+    // hard bands, inset so the corners stay clean
+    const bt = o.band === undefined ? Math.max(1, Math.round(h * 0.2)) : o.band;
+    if (bt > 0) {
+      G.R(g, x + r, y, w - r * 2, bt, lit);
+      G.R(g, x + r, y + h - bt, w - r * 2, bt, dk);
+    }
+    // side turn
+    if (w > 6) G.R(g, x + w - 2, y + bt, 2, h - bt * 2, G.shade(col, -0.16));
+    if (o.spec !== false && w > 5 && h > 5) G.R(g, x + r + 1, y + 1, 2, 1, G.shade(col, 0.5));
+  };
+
+  // a boxel with a chosen face colour per row band - used for anything
+  // that should read as a stack of cubes (crates, bricks, tubs)
+  G.boxStack = function (g, x, y, w, h, cols, o) {
+    const n = cols.length;
+    const bh = h / n;
+    for (let i = 0; i < n; i++) {
+      G.box(g, x, y + i * bh, w, Math.ceil(bh) + (i < n - 1 ? 0 : 0), cols[i],
+        Object.assign({ out: i === 0, r: 1 }, o || {}));
+    }
+    if (o && o.out !== false) G.rr(g, x - 1, y - 1, w + 2, h + 2, P.ink);
+  };
+
   // ---------- camera ----------
   const cam = G.cam = {
     x: 0, y: 0, tx: 0, ty: 0,
@@ -265,6 +319,8 @@
   G.screenFlash = function (col, life) { G.flash.t = life || 0.1; G.flash.life = life || 0.1; G.flash.col = col; };
 
   G.toasts = [];
+  G.toastCX = 0;              // scenes set these to steer toasts clear of art
+  G.toastY = 0;
   G.toast = function (str, col) { G.toasts.push({ str, col: col || P.cream, t: 0 }); if (G.toasts.length > 3) G.toasts.shift(); };
 
   G.sparks = [];
@@ -307,6 +363,37 @@
     if (G.stains.length > 160) G.stains.shift();
   };
   G.clearGore = function () { G.gore.length = 0; G.stains.length = 0; G.ooze.length = 0; };
+
+  // ---------- flies ----------
+  // Little dark specks that loiter and dart. Sewer atmosphere.
+  G.flies = [];
+  G.spawnFlies = function (n, x, y, rad) {
+    G.flies.length = 0;
+    for (let i = 0; i < n; i++) {
+      G.flies.push({
+        hx: x + G.rand(-rad, rad), hy: y + G.rand(-rad * 0.6, rad * 0.6),
+        x: x, y: y, ph: G.rand(0, 6.28), sp: G.rand(1.4, 3.2),
+        rx: G.rand(6, 18), ry: G.rand(4, 12), dart: 0,
+      });
+    }
+  };
+  G.updateFlies = function (dt) {
+    for (const f of G.flies) {
+      f.ph += dt * f.sp;
+      f.dart -= dt;
+      if (f.dart <= 0) { f.dart = G.rand(1.2, 4); f.hx += G.rand(-14, 14); f.hy += G.rand(-8, 8); }
+      f.x = f.hx + Math.cos(f.ph) * f.rx + Math.sin(f.ph * 2.7) * 3;
+      f.y = f.hy + Math.sin(f.ph * 1.3) * f.ry;
+    }
+  };
+  G.drawFlies = function (g) {
+    for (const f of G.flies) {
+      G.R(g, f.x, f.y, 2, 1, '#0d1220');
+      // wing blur every other frame-ish
+      if (Math.sin(f.ph * 9) > 0) G.R(g, f.x - 1, f.y - 1, 1, 1, '#3a4560');
+      else G.R(g, f.x + 2, f.y - 1, 1, 1, '#3a4560');
+    }
+  };
 
   G.coinFlies = [];
   G.flyCoin = function (x, y, amount) {
@@ -428,13 +515,14 @@
       G.text(g, f.str, f.x, f.y, f.col, { align: 'center', out: P.ink, sc: f.big ? 2 : 1 });
       g.globalAlpha = 1;
     }
-    let ty = 40;
+    let ty = G.toastY || 40;
     for (const t of G.toasts) {
       const a = t.t < 0.15 ? t.t / 0.15 : t.t > 2.35 ? 1 - (t.t - 2.35) / 0.45 : 1;
       const w = G.tw(t.str) + 16;
+      const cx = G.clamp(G.toastCX || G.W / 2, w / 2 + 2, G.W - w / 2 - 2);
       g.globalAlpha = Math.max(0, a);
-      G.frame(g, G.W / 2 - w / 2, ty, w, 16, '#16211f');
-      G.text(g, t.str, G.W / 2, ty + 5, t.col, { align: 'center' });
+      G.frame(g, cx - w / 2, ty, w, 16, '#16211f');
+      G.text(g, t.str, cx, ty + 5, t.col, { align: 'center' });
       g.globalAlpha = 1;
       ty += 19;
     }
@@ -446,21 +534,18 @@
   };
 
   // vignette + scanline grade, drawn last for the grimy look
+  // At 320x180 a scanline grade eats the image. Just a soft corner
+  // darkening so the frame holds together.
   G.grade = function (g, strength, tint) {
     strength = strength === undefined ? 1 : strength;
     if (strength <= 0) return;
-    g.globalAlpha = 0.16 * strength;
-    for (let y = 0; y < G.H; y += 3) G.R(g, 0, y, G.W, 1, '#000');
-    g.globalAlpha = 1;
-    // corner vignette in dithered bands
-    const bands = 5;
-    for (let i = 0; i < bands; i++) {
-      g.globalAlpha = 0.10 * strength;
-      const inset = i * 9;
-      G.R(g, 0, inset, G.W, 3, tint || '#000');
-      G.R(g, 0, G.H - inset - 3, G.W, 3, tint || '#000');
-      G.R(g, inset, 0, 3, G.H, tint || '#000');
-      G.R(g, G.W - inset - 3, 0, 3, G.H, tint || '#000');
+    for (let i = 0; i < 4; i++) {
+      g.globalAlpha = 0.07 * strength;
+      const inset = i * 4;
+      G.R(g, 0, inset, G.W, 2, tint || '#000');
+      G.R(g, 0, G.H - inset - 2, G.W, 2, tint || '#000');
+      G.R(g, inset, 0, 2, G.H, tint || '#000');
+      G.R(g, G.W - inset - 2, 0, 2, G.H, tint || '#000');
       g.globalAlpha = 1;
     }
   };
