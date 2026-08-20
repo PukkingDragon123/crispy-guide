@@ -1,8 +1,9 @@
 // ============================================================
 // DOUBLE LIFE v2 - night.js  ·  THE CLINIC
-// Examine the tooth. Name the disease in the notebook. Only
-// then may you cut. Seven instruments, seven skill checks, and
-// blood that stays on the field until you suck it off.
+// Examine the tooth. Name the disease in the notebook. Only then
+// may you cut. Seven instruments that simply work while you hold
+// them - no timing windows, no punishment - and blood that stays
+// on the field until you suck it off.
 // ============================================================
 (function () {
   const G = window.GAME;
@@ -124,19 +125,14 @@
     allTreated() { return this.sick().length === 0; },
     canFinish() { return this.allTreated() && !this.fieldDirty() && this.winT === 0; },
     say(m, col) { this.msg = m; this.msgCol = col || P.warn; this.msgT = 2.2; },
+    // A discomfort readout only: it rises while you work and settles
+    // again on its own. Nothing here can cost the player the case.
     hurt(amount, agony) {
-      this.pain = G.clamp(this.pain + amount * (G.hasUp('sedative') ? 0.6 : 1), 0, 1);
+      this.pain = G.clamp(this.pain + amount * (G.hasUp('sedative') ? 0.5 : 0.8), 0, 0.96);
       this.mood = agony ? 'agony' : 'worry';
-      this.moodT = agony ? 0.9 : 0.4;
-      if (this.pain >= 1 && this.mood !== 'out') {
-        this.mood = 'out'; this.moodT = 99;
-        G.audio.sfx('groan');
-        this.say('PATIENT HAS PASSED OUT - FEE LOST', P.blood);
-        G.shake(4, 0.4);
-      }
+      this.moodT = agony ? 0.8 : 0.4;
     },
     pay(amt, x, y, label) {
-      if (this.mood === 'out') return;
       if (G.hasUp('comfy')) amt = Math.round(amt * 1.25);
       G.state.today.nightEarn += amt;
       G.flyCoin(x - Math.round(G.cam.x), y - Math.round(G.cam.y), amt);
@@ -255,19 +251,27 @@
       // ---- start the procedure ----
       const s = th.sym;
       if (this.tool === 'drill') this.act = { type: 'drill', th, depth: 0 };
-      else if (this.tool === 'fill') this.act = { type: 'fill', th, level: 0, target: 0.78 };
+      else if (this.tool === 'fill') this.act = { type: 'fill', th, level: 0 };
       else if (this.tool === 'scale') this.act = { type: 'scale', th, prog: 0, band: 0, tot: 0 };
       else if (this.tool === 'lance') {
-        if (G.dist(wx, wy, th.x + s.lx, th.y + s.ly) > s.r + 14) { this.say('OFF TARGET', P.warn); return; }
-        const r = this.act && this.act.type === 'lance' ? this.act.r : 0;
-        this.act = { type: 'lance', th, r: 20, dir: -1, armed: true };
+        if (G.dist(wx, wy, th.x + s.lx, th.y + s.ly) > s.r + 20) { this.say('PUT THE BLADE ON THE SWELLING', P.warn); return; }
+        // one clean cut - no timing ring to beat
+        s.lanced = true;
+        G.audio.sfx('lance');
+        G.bleed(th.x + s.lx, th.y + s.ly, 24, { dir: th.up ? Math.PI / 2 : -Math.PI / 2, spread: 0.9, force: 150, floor: th.up ? 190 : 214 });
+        for (let i = 0; i < 12; i++) this.chips.push({ x: th.x + s.lx, y: th.y + s.ly, vx: G.rand(-90, 90), vy: G.rand(-110, -20), col: P.pus, t: 0, life: 0.6 });
+        G.state.today.blood += 6;
+        G.screenFlash('#d9d34a', 0.1);
+        this.mood = 'relief'; this.moodT = 1.4;
+        this.advance(th);
+        this.act = null;
       } else if (this.tool === 'forceps') {
         if (G.dist(wx, wy, th.x + s.lx, th.y + s.ly) > 20) { this.say('GRIP THE OBJECT ITSELF', P.warn); return; }
         s.grabbed = true;
         this.act = { type: 'forceps', th, sx: wx, sy: wy };
         G.audio.sfx('grab');
       } else if (this.tool === 'extract') {
-        this.act = { type: 'extract', th, loose: 0, side: 0, lastSide: 0, beat: 0 };
+        this.act = { type: 'extract', th, loose: 0, lastSide: 0 };
         G.audio.sfx('grab');
       }
     },
@@ -282,47 +286,14 @@
       if (!a) return;
       const th = a.th;
 
-      if (a.type === 'drill') {
-        G.audio.loop('drill', false);
-        const s = th.sym;
-        if (a.depth >= 0.55 && a.depth <= 0.84) {
-          if (s.kind === 'necrosis') s.opened = true; else s.stage = 'drilled';
-          G.audio.sfx('crack');
-          G.spark(th.x + th.w / 2 - Math.round(G.cam.x), th.y + s.ly, ['#e8dcc0', '#8a7a5a'], 12);
-          this.advance(th);
-        } else if (a.depth < 0.55) {
-          this.say('TOO SHALLOW - THE DECAY IS STILL IN THERE', P.warn);
-        }
-        this.act = null;
-        return;
-      }
-      if (a.type === 'fill') {
-        G.audio.loop('goo', false);
-        const s = th.sym;
-        const d = a.level - a.target;
-        if (Math.abs(d) < 0.1) {
-          s.fill = 1;
-          G.audio.sfx('fillDone');
-          this.advance(th);
-        } else if (d < 0) {
-          s.fill = G.clamp(a.level, 0, 0.85);
-          this.say('UNDERPACKED - GO AGAIN', P.warn);
-        } else {
-          s.fill = 1;
-          this.say('OVERPACKED - THE BITE WILL HURT', P.warn);
-          this.hurt(0.12, false);
-          this.advance(th);
-        }
-        this.act = null;
-        return;
-      }
+      if (a.type === 'drill') { G.audio.loop('drill', false); this.act = null; return; }
+      if (a.type === 'fill') { G.audio.loop('goo', false); this.act = null; return; }
       if (a.type === 'scale') {
         G.audio.loop('scrape', false);
         this.act = null;
         return;
       }
       if (a.type === 'forceps') { th.sym.grabbed = false; this.act = null; return; }
-      if (a.type === 'lance') { this.act = null; return; }
       if (a.type === 'extract') { this.act = null; return; }
       if (a.type === 'suction') { G.audio.loop('suction', false); this.act = null; return; }
       this.act = null;
@@ -351,6 +322,7 @@
       const M = G.mouse;
       const wx = M.wx, wy = M.wy;
       if (this.msgT > 0) this.msgT -= dt;
+      this.pain = Math.max(0, this.pain - dt * 0.09);   // discomfort settles on its own
       if (this.flinch > 0) this.flinch -= dt;
       if (this.moodT > 0) { this.moodT -= dt; if (this.moodT <= 0 && this.mood !== 'out') this.mood = 'worry'; }
       for (const th of this.teeth) if (th.flash > 0) th.flash -= dt;
@@ -369,27 +341,21 @@
       // ---- drill ----
       if (a && a.type === 'drill' && M.down) {
         const th = a.th, s = th.sym;
-        const near = G.dist(wx, wy, th.x + s.lx, th.y + s.ly) < s.r + 16;
+        const near = G.dist(wx, wy, th.x + s.lx, th.y + s.ly) < s.r + 22;
         if (near) {
           drilling = true;
-          a.depth += dt * (G.hasUp('carbide') ? 0.62 : 0.34);
-          if (Math.random() < 0.5) this.chips.push({ x: th.x + s.lx + G.rand(-4, 4), y: th.y + s.ly,
+          a.depth += dt * (G.hasUp('carbide') ? 1.15 : 0.62);
+          if (Math.random() < 0.6) this.chips.push({ x: th.x + s.lx + G.rand(-4, 4), y: th.y + s.ly,
             vx: G.rand(-70, 70), vy: G.rand(-90, -30), col: G.pick(['#3a2c22', '#8a7a5a', '#e8dcc0']), t: 0, life: 0.4 });
-          G.shake(0.7, 0.05);
-          if (a.depth > 0.9) {
-            // NERVE
-            G.audio.sfx('nerve'); G.audio.sfx('scream');
-            G.screenFlash(P.blood, 0.22);
-            G.shake(6, 0.5);
-            G.bleed(th.x + s.lx, th.y + s.ly, 26, { dir: th.up ? Math.PI / 2 : -Math.PI / 2, spread: 1.5, force: 190, floor: th.up ? 190 : 210 });
-            G.state.today.blood += 12;
-            G.state.totBlood = (G.state.totBlood || 0) + 12;
-            G.state.money = Math.max(0, G.state.money - 8);
-            G.state.moneyShown = G.state.money;
-            this.hurt(0.34, true);
-            this.flinch = 0.6;
-            this.say('YOU HIT THE NERVE. -$8', P.blood);
-            a.depth = 0.5;
+          G.shake(0.6, 0.05);
+          if (a.depth >= 1) {
+            if (s.kind === 'necrosis') s.opened = true; else s.stage = 'drilled';
+            G.audio.sfx('crack');
+            G.spark(th.x + s.lx - Math.round(G.cam.x), th.y + s.ly, ['#e8dcc0', '#8a7a5a'], 14);
+            G.bleed(th.x + s.lx, th.y + s.ly, 7, { force: 70, floor: th.up ? 190 : 214 });
+            G.state.today.blood += 2;
+            this.hurt(0.06, false);
+            this.advance(th);
             this.act = null;
             G.audio.loop('drill', false);
           }
@@ -399,89 +365,55 @@
 
       // ---- fill ----
       if (a && a.type === 'fill' && M.down) {
-        a.level += dt * 0.5;
+        const th = a.th, s = th.sym;
+        a.level += dt * 0.8;
+        s.fill = G.clamp(a.level, 0, 1);
         G.audio.loop('goo', true, 0.85);
-        if (a.level > 1.25) { this.say('SPILLED EVERYWHERE', P.warn); G.audio.loop('goo', false); this.act = null; }
+        if (a.level >= 1) {
+          s.fill = 1;
+          G.audio.loop('goo', false);
+          G.audio.sfx('fillDone');
+          G.spark(th.x + (s.lx === undefined ? th.w / 2 : s.lx) - Math.round(G.cam.x),
+                  th.y + (s.ly === undefined ? th.h / 2 : s.ly), ['#fff', P.chrome], 12);
+          this.advance(th);
+          this.act = null;
+        }
       } else if (a && a.type === 'fill') G.audio.loop('goo', false);
 
       // ---- scale ----
       if (a && a.type === 'scale' && M.down) {
         const th = a.th, s = th.sym;
         const spd = Math.hypot(M.vx, M.vy);
-        const wide = G.hasUp('steady') ? 1.4 : 1;
-        const inBand = spd > 60 / wide && spd < 300 * wide;
-        a.tot += dt; if (inBand) a.band += dt;
-        scraping = spd > 20;
+        a.tot += dt;
+        scraping = spd > 12;
         if (s.kind === 'tartar') {
           for (const b of s.blobs) {
             if (b.gone) continue;
-            if (G.dist(wx, wy, th.x + b.x, th.y + b.y) < b.r + 8) {
-              if (inBand) {
-                b.r -= dt * 13;
-                if (Math.random() < 0.4) this.chips.push({ x: th.x + b.x, y: th.y + b.y, vx: G.rand(-50, 50), vy: G.rand(-70, -10),
-                  col: P.plaque, t: 0, life: 0.45 });
-                if (b.r <= 2) { b.gone = true; G.audio.sfx('scrape'); G.spark(th.x + b.x - Math.round(G.cam.x), th.y + b.y, ['#fff', P.plaqueLt], 8); }
-              } else if (spd >= 300 * wide) {
-                if (Math.random() < 0.12) {
-                  G.bleed(wx, wy, 5, { dir: th.up ? Math.PI / 2 : -Math.PI / 2, force: 80, floor: th.up ? 190 : 210 });
-                  G.state.today.blood += 1;
-                  this.hurt(0.05, false); this.flinch = 0.2;
-                  G.audio.sfx('groan');
-                }
-              }
+            if (G.dist(wx, wy, th.x + b.x, th.y + b.y) < b.r + 12) {
+              b.r -= dt * 18;
+              if (Math.random() < 0.5) this.chips.push({ x: th.x + b.x, y: th.y + b.y, vx: G.rand(-50, 50), vy: G.rand(-70, -10),
+                col: P.plaque, t: 0, life: 0.45 });
+              if (b.r <= 2) { b.gone = true; G.audio.sfx('scrape'); G.spark(th.x + b.x - Math.round(G.cam.x), th.y + b.y, ['#fff', P.plaqueLt], 10); }
             }
           }
           if (s.blobs.every((b) => b.gone)) { this.advance(th); G.audio.loop('scrape', false); this.act = null; }
         } else if (s.kind === 'gingiva') {
           const gy = th.up ? th.y + th.h : th.y;
-          if (Math.abs(wy - gy) < 22 && wx > th.x - 6 && wx < th.x + th.w + 6) {
-            if (inBand) {
-              s.prog += dt * 0.55;
-              if (Math.random() < 0.3) G.bleed(wx, wy, 2, { force: 40, floor: th.up ? 190 : 210 });
-              if (s.prog >= 1) { s.cleaned = true; this.advance(th); G.audio.loop('scrape', false); this.act = null; }
-            } else if (spd >= 300 * wide) {
-              if (Math.random() < 0.1) { G.bleed(wx, wy, 4, { force: 70, floor: 200 }); this.hurt(0.04); G.state.today.blood += 1; }
-            }
+          if (Math.abs(wy - gy) < 26 && wx > th.x - 8 && wx < th.x + th.w + 8) {
+            s.prog += dt * 0.8;
+            if (Math.random() < 0.3) { G.bleed(wx, wy, 2, { force: 40, floor: th.up ? 190 : 210 }); G.state.today.blood += 1; }
+            if (s.prog >= 1) { s.cleaned = true; this.advance(th); G.audio.loop('scrape', false); this.act = null; }
           }
         }
       }
       G.audio.loop('scrape', scraping, 0.9);
 
       // ---- lance: the ring closes on its own; click to strike ----
-      if (a && a.type === 'lance') {
-        a.r += a.dir * dt * 26;
-        if (a.r < 3) { a.dir = 1; }
-        if (a.r > 22) { a.dir = -1; }
-        if (!M.down && a.armed) {
-          // released -> strike
-          a.armed = false;
-          const th = a.th, s = th.sym;
-          if (a.r <= 7) {
-            s.lanced = true;
-            G.audio.sfx('lance');
-            G.bleed(th.x + s.lx, th.y + s.ly, 22, { dir: th.up ? Math.PI / 2 : -Math.PI / 2, spread: 0.9, force: 150, floor: th.up ? 190 : 214 });
-            for (let i = 0; i < 10; i++) this.chips.push({ x: th.x + s.lx, y: th.y + s.ly, vx: G.rand(-90, 90), vy: G.rand(-110, -20), col: P.pus, t: 0, life: 0.6 });
-            G.state.today.blood += 6;
-            this.mood = 'relief'; this.moodT = 1.4;
-            this.advance(th);
-          } else {
-            G.audio.sfx('scream');
-            G.screenFlash(P.blood, 0.16);
-            G.bleed(th.x + s.lx, th.y + s.ly, 16, { force: 130, floor: th.up ? 190 : 214 });
-            G.state.today.blood += 5;
-            this.hurt(0.22, true); this.flinch = 0.5;
-            G.shake(4, 0.3);
-            this.say('YOU MISSED THE HEAD', P.blood);
-          }
-          this.act = null;
-        }
-      }
-
       // ---- forceps: pull against resistance ----
       if (a && a.type === 'forceps' && M.down) {
         const th = a.th, s = th.sym;
         const d = G.dist(wx, wy, a.sx, a.sy);
-        if (d > 24) {
+        if (d > 16) {
           s.pulled = true;
           G.audio.sfx('wetPull');
           this.pulled.push({ x: th.x + s.lx, y: th.y + s.ly, vx: G.rand(-40, 40), vy: -140, col: s.col, w: s.w, h: s.h, t: 0 });
@@ -496,14 +428,13 @@
       // ---- extract: rock on the beat, then it lifts ----
       if (a && a.type === 'extract' && M.down) {
         const th = a.th;
-        const period = 0.52;
-        const phase = (this.beat % period) / period;
-        const onBeat = phase < 0.3 || phase > 0.82;
-        const dir = M.vx > 90 ? 1 : M.vx < -90 ? -1 : 0;
-        if (dir !== 0 && dir !== a.lastSide) {
-          a.lastSide = dir;
-          if (onBeat) {
-            a.loose = G.clamp(a.loose + 0.17, 0, 1);
+        // simply holding works; waggling is faster. It always comes out.
+        a.loose = G.clamp(a.loose + dt * 0.2, 0, 1);
+        const dir = M.vx > 55 ? 1 : M.vx < -55 ? -1 : 0;
+        if (a.loose >= 1 || (dir !== 0 && dir !== a.lastSide)) {
+          a.lastSide = dir || a.lastSide;
+          {
+            a.loose = G.clamp(a.loose + 0.14, 0, 1);
             G.audio.sfx('clack');
             th.tilt = (th.tilt || 0) + dir * 0.06;
             G.bleed(th.x + th.w / 2, th.up ? th.y + th.h : th.y, 4, { force: 60, floor: th.up ? 190 : 214 });
@@ -522,17 +453,11 @@
               this.pulled.push({ x: th.x + th.w / 2, y: th.y + th.h / 2, vx: G.rand(-60, 60), vy: -190,
                 col: P.bone, w: th.w * 0.5, h: th.h * 0.6, t: 0, tooth: true });
               th.sym.out = true;
-              this.hurt(0.2, true);
+              this.hurt(0.16, true);
               this.flinch = 0.7;
               this.advance(th);
               this.act = null;
             }
-          } else {
-            a.loose = Math.max(0, a.loose - 0.1);
-            G.audio.sfx('groan');
-            this.hurt(0.07, true);
-            this.flinch = 0.3;
-            G.shake(2, 0.14);
           }
         }
       }
@@ -594,26 +519,53 @@
       // the overhead lamp pool, soft so it does not band into rings
       G.glow(g, camX + G.W / 2, 138, 300, 190, '#ffe6c0', 1.5);
 
-      // upper gum ridge
-      for (const th of this.teeth) {
-        if (!th.up) continue;
-        G.fe(g, th.x + th.w / 2, th.y + 2, th.w * 0.56, 16, P.gumDk);
-        G.fe(g, th.x + th.w / 2, th.y, th.w * 0.52, 13, P.gum);
-        G.fe(g, th.x + th.w / 2 - 4, th.y - 4, th.w * 0.26, 4, P.gumLit);
-      }
-      // lower gum ridge
-      for (const th of this.teeth) {
-        if (th.up) continue;
-        G.fe(g, th.x + th.w / 2, th.y + th.h - 2, th.w * 0.56, 16, P.gumDk);
-        G.fe(g, th.x + th.w / 2, th.y + th.h, th.w * 0.52, 13, P.gum);
-      }
+      // ---- gum arches: one formed ridge of tissue, scalloped between
+      // each tooth and lit from above, instead of a row of pink discs
+      const ridge = (up) => {
+        const set = this.teeth.filter((th) => th.up === up);
+        if (!set.length) return;
+        const x0 = set[0].x - 26;
+        const last = set[set.length - 1];
+        const x1 = last.x + last.w + 26;
+        const thick = 17;
+        for (let px = x0; px < x1; px++) {
+          let near = set[0], best = 1e9;
+          for (const th of set) {
+            const d = Math.abs(px - (th.x + th.w / 2));
+            if (d < best) { best = d; near = th; }
+          }
+          const half = near.w / 2;
+          const lobe = best < half + 6 ? Math.pow(Math.cos((best / (half + 6)) * Math.PI * 0.5), 0.7) : 0;
+          const baseY = up ? near.y + 6 : near.y + near.h - 6;
+          const edge = Math.round(baseY + (up ? 1 : -1) * (lobe * 10 - 4));
+          for (let k = 0; k < thick; k++) {
+            const yy = up ? edge - k : edge + k;
+            const p = k / thick;
+            G.R(g, px, yy, 1, 1,
+              p < 0.1 ? P.gumLit : p < 0.34 ? P.gum : p < 0.7 ? G.shade(P.gum, -0.22) : P.gumDk);
+          }
+          if ((px & 3) !== 3) G.R(g, px, edge, 1, 1, G.shade(P.gumLit, 0.25));
+        }
+      };
+      ridge(true);
+      ridge(false);
       // tongue
-      G.fe(g, WORLD / 2, 168, 200, 26, '#5c1424');
-      G.fe(g, WORLD / 2, 166, 188, 21, '#8f2438');
-      G.fe(g, WORLD / 2, 163, 158, 13, '#b8384e');
-      G.fe(g, WORLD / 2 - 38, 159, 40, 6, '#cf5068');
-      G.speckle(g, WORLD / 2 - 160, 154, 320, 20, '#701c2c', 0.14, 4);
-      G.R(g, WORLD / 2 - 1, 152, 2, 24, '#4a1020');
+      // tongue: a domed muscle with a median furrow, lit from above
+      const tW = 200, tH = 30, tCX = WORLD / 2, tCY = 168;
+      for (let dx = -tW; dx <= tW; dx++) {
+        const nx = dx / tW;
+        const prof = Math.pow(Math.max(0, 1 - nx * nx), 0.62);
+        if (prof <= 0.01) continue;
+        const halfH = tH * prof;
+        for (let dy = -halfH; dy <= halfH; dy++) {
+          const ny = dy / (halfH || 1);
+          const lam = G.clamp(0.5 - ny * 0.62 - Math.abs(nx) * 0.2, 0, 1);
+          G.R(g, tCX + dx, tCY + dy, 1, 1,
+            lam > 0.78 ? '#cf5a70' : lam > 0.6 ? '#b8384e' : lam > 0.4 ? '#96263c' : lam > 0.22 ? '#7a1c2e' : '#511020');
+        }
+      }
+      G.R(g, tCX - 1, tCY - tH + 6, 2, tH * 1.4, '#6b1626');
+      G.speckle(g, tCX - tW * 0.8, tCY - tH * 0.6, tW * 1.6, tH * 1.2, '#701c2c', 0.13, 4);
 
       // teeth
       for (const th of this.teeth) this.drawTooth(g, th, t);
@@ -667,58 +619,21 @@
         G.hideCursor = true;
       }
 
-      // lance targeting ring
-      if (this.act && this.act.type === 'lance') {
-        const a = this.act, th = a.th, s = th.sym;
-        const rx = th.x + s.lx - camX, ry = th.y + s.ly;
-        G.oc(g, rx, ry, a.r + 1, OUT);
-        G.oc(g, rx, ry, a.r, a.r <= 7 ? P.neonG : P.warn);
-        G.oc(g, rx, ry, 6, '#ffffff44');
-        G.text(g, 'RELEASE ON THE HEAD', rx, ry - a.r - 14, a.r <= 7 ? P.neonG : P.steel2, { align: 'center', out: OUT });
-      }
-      // drill depth meter
-      if (this.act && this.act.type === 'drill') {
-        G.meter(g, G.W / 2 - 90, 262, 180, 11, this.act.depth, [
-          { a: 0, b: 0.55, col: '#3d4a4a' },
-          { a: 0.55, b: 0.84, col: '#2f8a45' },
-          { a: 0.84, b: 0.9, col: '#8a6a20' },
-          { a: 0.9, b: 1, col: '#8a1220' },
-        ], { label: 'BUR DEPTH - RELEASE IN THE GREEN', needle: P.chrome });
-      }
-      // fill level meter
-      if (this.act && this.act.type === 'fill') {
-        const a = this.act;
-        G.meter(g, G.W / 2 - 90, 262, 180, 11, G.clamp(a.level, 0, 1), [
-          { a: 0, b: a.target - 0.1, col: '#3d4a4a' },
-          { a: a.target - 0.1, b: a.target + 0.1, col: '#2f8a45' },
-          { a: a.target + 0.1, b: 1, col: '#8a6a20' },
-        ], { label: 'PACK LEVEL - STOP ON THE LINE', needle: P.chrome });
-      }
-      // scale speed band
-      if (this.act && this.act.type === 'scale') {
-        const wide = G.hasUp('steady') ? 1.4 : 1;
-        G.meter(g, G.W / 2 - 90, 262, 180, 11, G.clamp(Math.hypot(M.vx, M.vy) / 420, 0, 1), [
-          { a: 0, b: 60 / wide / 420, col: '#3d4a4a' },
-          { a: 60 / wide / 420, b: Math.min(1, 300 * wide / 420), col: '#2f8a45' },
-          { a: Math.min(1, 300 * wide / 420), b: 1, col: '#8a1220' },
-        ], { label: 'SCRAPE SPEED', needle: P.chrome });
-      }
-      // extract rhythm
-      if (this.act && this.act.type === 'extract') {
-        const a = this.act;
-        const period = 0.52, phase = (this.beat % period) / period;
-        const on = phase < 0.3 || phase > 0.82;
-        G.frame(g, G.W / 2 - 90, 258, 180, 17, '#16211f');
-        G.R(g, G.W / 2 - 87, 261, 174, 11, '#0d1413');
-        for (let i = 0; i < 4; i++) {
-          const bx = G.W / 2 - 80 + i * 44;
-          G.R(g, bx, 262, 14, 9, on && i === Math.floor(phase * 4) % 4 ? P.neonG : '#243330');
-        }
-        const px = G.W / 2 - 87 + Math.round(phase * 174);
-        G.R(g, px, 259, 2, 15, on ? '#ffffff' : P.steel);
-        G.text(g, 'ROCK LEFT-RIGHT ON THE BEAT', G.W / 2, 247, on ? P.neonG : P.steel2, { align: 'center', out: OUT });
-        G.R(g, G.W / 2 - 90, 278, 180, 5, '#0d1413');
-        G.R(g, G.W / 2 - 90, 278, Math.round(180 * a.loose), 5, P.bloodLit);
+      // one honest progress bar for whatever is under the instrument
+      const act = this.act;
+      if (act && (act.type === 'drill' || act.type === 'fill' || act.type === 'extract' ||
+                  (act.type === 'scale' && act.th.sym.kind === 'gingiva'))) {
+        let prog = 0, label = '';
+        if (act.type === 'drill') { prog = act.depth; label = 'BORING IT OUT'; }
+        else if (act.type === 'fill') { prog = act.level; label = 'PACKING IT FULL'; }
+        else if (act.type === 'extract') { prog = act.loose; label = 'WORKING IT LOOSE'; }
+        else { prog = act.th.sym.prog || 0; label = 'SCALING THE MARGIN'; }
+        prog = G.clamp(prog, 0, 1);
+        G.frame(g, G.W / 2 - 82, 262, 164, 15, '#16211f');
+        G.R(g, G.W / 2 - 78, 266, 156, 7, '#0d1413');
+        G.R(g, G.W / 2 - 78, 266, Math.round(156 * prog), 7, G.mix(P.amber, P.neonG, prog));
+        for (let i = 8; i < 156; i += 8) G.R(g, G.W / 2 - 78 + i, 266, 1, 7, '#00000033');
+        G.text(g, label, G.W / 2, 251, P.steel2, { align: 'center', out: OUT });
       }
 
       // ---- patient status panel ----
@@ -730,7 +645,7 @@
       g.restore();
       G.R(g, 7, 74, 118, 1, '#243330');
       G.text(g, this.p.name, 66, 78, P.cream, { align: 'center' });
-      G.text(g, 'PAIN', 9, 89, P.steel, {});
+      G.text(g, 'OUCH', 9, 88, P.steel, {});
       G.R(g, 34, 89, 88, 5, '#0d1413');
       G.R(g, 34, 89, Math.round(88 * this.pain), 5, this.pain > 0.7 ? P.bloodLit : this.pain > 0.4 ? P.amber : '#2f8a45');
 
@@ -793,9 +708,14 @@
       const s = th.sym;
       if (s && s.kind === 'impacted' && s.out) {
         // empty socket
-        G.fe(g, th.x + th.w / 2, th.up ? th.y + th.h - 6 : th.y + 6, th.w * 0.42, 12, '#2a0c12');
-        G.fe(g, th.x + th.w / 2, th.up ? th.y + th.h - 8 : th.y + 8, th.w * 0.32, 8, '#120406');
-        G.speckle(g, th.x + 4, th.up ? th.y + th.h - 14 : th.y, th.w - 8, 14, P.blood, 0.3, th.i);
+        const sw = th.w * 0.42, sy0 = th.up ? th.y + th.h - 14 : th.y + 2;
+        for (let dy = 0; dy < 14; dy++) {
+          const p = dy / 13;
+          const hw = sw * Math.sqrt(Math.max(0, 1 - Math.pow(p * 2 - 1, 2))) * 0.9 + 2;
+          G.R(g, th.x + th.w / 2 - hw, sy0 + dy, hw * 2, 1,
+            p < 0.2 ? '#3d1018' : p < 0.5 ? '#25090f' : '#100305');
+        }
+        G.speckle(g, th.x + 4, sy0, th.w - 8, 14, P.blood, 0.3, th.i);
         return;
       }
       g.save();

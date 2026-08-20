@@ -148,9 +148,9 @@
     hasSave() { return G.hasSave && (G.state.day > 1 || G.state.money > 0 || G.state.flavors.length > 3); },
     onDown(x, y) {
       const hs = this.hasSave();
-      if (hs && G.inRect(x, y, 250, 250, 140, 24)) { G.audio.sfx('day'); G.newDayStats(); G.go('day', 'DAY ' + G.state.day); return; }
-      const ny = hs ? 280 : 254;
-      if (G.inRect(x, y, 250, ny, 140, 24)) {
+      if (hs && G.inRect(x, y, 330, 240, 140, 24)) { G.audio.sfx('day'); G.newDayStats(); G.go('day', 'DAY ' + G.state.day); return; }
+      const ny = hs ? 270 : 244;
+      if (G.inRect(x, y, 330, ny, 140, 24)) {
         G.audio.sfx('day'); G.reset(); G.newDayStats(); G.go('day', 'DAY 1');
       }
     },
@@ -196,31 +196,14 @@
 
       // --- the crocodile proprietor, hulking in the middle ---
       const bob = Math.sin(t * 1.4) * 1.5;
-      const cx = 320, base = 292 + bob;
+      const cx = 152, base = 300 + bob;
       gg.globalAlpha = 0.5; G.fe(gg, cx, base + 2, 46, 6, '#000'); gg.globalAlpha = 1;
-      // shoulders / torso as one solid mass
-      const tor = [];
-      for (let i = 0; i < 14; i++) {
-        const p = i / 13;
-        tor.push({ x: cx + Math.sin(p * 1.2) * 4, y: base - 8 - p * 52, r: 27 - Math.pow(Math.abs(p - 0.35) * 2.0, 1.6) * 13 });
-      }
-      G.limb(gg, tor, '#2c4a30', '#16281a', '#4c7a42', { grow: 2, scale: '#16281a' });
-      // apron, blood-flecked
-      G.rr2(gg, cx - 20, base - 44, 40, 44, '#c9c3ac');
-      G.rr2(gg, cx - 19, base - 43, 38, 42, '#e2dcc4');
-      G.R(gg, cx - 19, base - 43, 38, 2, '#f4eeda');
-      G.speckle(gg, cx - 18, base - 40, 36, 38, P.bloodDk, 0.05, 7);
-      G.speckle(gg, cx - 14, base - 26, 26, 22, P.blood, 0.03, 11);
-      // arms: one holds a scoop, one holds a drill
-      G.limb(gg, [{ x: cx - 26, y: base - 44, r: 8 }, { x: cx - 36, y: base - 32, r: 7 }, { x: cx - 44, y: base - 20, r: 6 }],
-        '#2c4a30', '#16281a', '#4c7a42', { grow: 1.6 });
-      G.limb(gg, [{ x: cx + 26, y: base - 44, r: 8 }, { x: cx + 37, y: base - 33, r: 7 }, { x: cx + 46, y: base - 22, r: 6 }],
-        '#2c4a30', '#16281a', '#4c7a42', { grow: 1.6 });
-      G.drawScoopBall(gg, cx - 48, base - 26, 7, G.DATA.flavors[5], 0);
-      G.R(gg, cx - 49, base - 18, 3, 10, P.steel);
-      G.drawTool(gg, 'drill', cx + 48, base - 14, { active: true, t });
-      // head, big and low-slung
-      G.drawHeadRaw(gg, G.animalById('gator'), 'gator', cx, base - 78, t, { mood: 'angry' }, 40, 30);
+      G.drawCust(gg, 'gator', cx, base + 6, t, { mood: 'angry', scale: 2.5 });
+      // the tools of both trades, one in each claw
+      G.drawScoopBall(gg, cx - 40, base - 40, 9, G.DATA.flavors[5], 0);
+      G.R(gg, cx - 42, base - 30, 4, 14, P.steel);
+      G.R(gg, cx - 41, base - 29, 2, 12, P.chrome);
+      G.drawTool(gg, 'drill', cx + 40, base - 26, { active: true, t });
 
       // --- the cast shuffling past along the kerb ---
       const ids = G.DATA.animals.map((a) => a.id);
@@ -241,12 +224,12 @@
       // --- buttons ---
       const hs = this.hasSave();
       if (hs) {
-        G.drawBtn(gg, 250, 250, 140, 24, 'CONTINUE', { col: '#2f6b3a' });
-        G.drawBtn(gg, 250, 280, 140, 24, 'NEW GAME', { col: P.gum });
-        G.text(gg, 'DAY ' + G.state.day + '   $' + Math.round(G.state.money), 320, 238, P.steel2, { align: 'center', out: P.ink });
+        G.drawBtn(gg, 330, 240, 140, 24, 'CONTINUE', { col: '#2f6b3a' });
+        G.drawBtn(gg, 330, 270, 140, 24, 'NEW GAME', { col: P.gum });
+        G.text(gg, 'DAY ' + G.state.day + '   $' + Math.round(G.state.money), 400, 230, P.steel2, { align: 'center', out: P.ink });
       } else {
-        G.drawBtn(gg, 250, 254, 140, 24, 'OPEN UP', { col: P.gum });
-        G.text(gg, 'SELL THE SUGAR. BILL FOR THE DAMAGE.', 320, 232, P.steel2, { align: 'center', out: P.ink });
+        G.drawBtn(gg, 330, 244, 140, 24, 'OPEN UP', { col: P.gum });
+        G.text(gg, 'SELL THE SUGAR. BILL FOR THE DAMAGE.', 400, 214, P.steel2, { align: 'center', out: P.ink });
       }
       G.grade(gg, 1.1);
     },

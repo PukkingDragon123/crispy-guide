@@ -1,9 +1,9 @@
 // ============================================================
 // DOUBLE LIFE v2 - day.js  ·  THE PARLOUR
-// A pannable counter. Carve scoops out of layered steel pints
-// with a speed-band skill stroke, pack them in a timing
-// minigame, drizzle physics sauce, shake physics grit, and sell
-// the sugar that pays for tonight's surgery.
+// A pannable counter. Every pint is a steel tub of labelled
+// flavour strata: press the band you want and hold while the
+// scoop fills, then carry the dome over and set it on the cone.
+// No meters, no timing - just weight, sound and a satisfying pop.
 // ============================================================
 (function () {
   const G = window.GAME;
@@ -34,8 +34,7 @@
       for (let i = 0; i < NPINT; i++) {
         this.pints.push({ layers: G.makePint(i), surf: new Array(COLS).fill(0), spent: 0 });
       }
-      this.hold = null;      // {kind:'carve'|'ball'|'sauce'|'jar', ...}
-      this.compact = null;   // timing minigame
+      this.hold = null;      // {kind:'scoop'|'ball'|'sauce'|'jar', ...}
       this.build = null;
       this.drops = []; this.bits = []; this.balls = []; this.parts = []; this.rest = [];
       this.serving = null;
@@ -52,7 +51,7 @@
         for (const id of sh) if (this.bag.length < this.total) this.bag.push(id);
       }
       G.audio.music('day');
-      if (!G.state.tut.carve) G.toast('HOLD A PINT AND DRAG TO CARVE', P.gold);
+      if (!G.state.tut.scoop) G.toast('PRESS A FLAVOUR BAND AND HOLD TO SCOOP', P.gold);
     },
 
     // ---------------- customers ----------------
@@ -100,8 +99,6 @@
       if (this.endT > 0) return;
       const wx = sx + Math.round(G.cam.x), wy = sy + Math.round(G.cam.y);
 
-      // compact minigame takes priority (screen space bar)
-      if (this.compact) { this.stopCompact(); return; }
       // edge pan tabs (screen space)
       if (G.inRect(sx, sy, 0, 150, 16, 160)) { G.cam.nudge(-150); G.audio.sfx('clack'); return; }
       if (G.inRect(sx, sy, G.W - 16, 150, 16, 160)) { G.cam.nudge(150); G.audio.sfx('clack'); return; }
@@ -120,19 +117,24 @@
         const s = STAND[k];
         if (G.inRect(wx, wy, s.x - 18, s.y - 16, 36, 46)) {
           if (!this.build) {
-            this.build = { base: k, scoops: [], coat: [], bits: [], sauceAmt: {}, topAmt: {}, wob: 0, wobV: 0, qual: [] };
+            this.build = { base: k, scoops: [], coat: [], bits: [], sauceAmt: {}, topAmt: {}, wob: 0, wobV: 0, qual: [], pop: 0 };
             G.audio.sfx('clack'); G.spark(PLX, PLY - 20, P.chrome, 6);
           } else G.toast('BIN THE ONE IN YOUR CLAW FIRST', P.warn);
           return;
         }
       }
-      // pints -> begin a carve stroke
+      // pints -> press the flavour stratum you want and hold
       for (let i = 0; i < NPINT; i++) {
         const r = pintRect(i);
         if (G.inRect(wx, wy, r.x - 6, r.y - 8, r.w + 12, r.h + 18)) {
-          this.hold = { kind: 'carve', pi: i, mass: 0, band: 0, tot: 0, deep: 0, tick: 0, lastWx: wx };
+          const pint = this.pints[i];
+          const nl = pint.layers.length;
+          const li = G.clamp(Math.floor(((wy - r.y) / r.h) * nl), 0, nl - 1);
+          this.hold = { kind: 'scoop', pi: i, li, fid: pint.layers[li], fill: 0, tick: 0, dx: wx };
           G.audio.sfx('grab');
-          if (!G.state.tut.carve) { G.state.tut.carve = 1; G.toast('KEEP THE SPEED IN THE GREEN BAND', P.neonG); }
+          const f = G.flavorById(pint.layers[li]);
+          if (f) G.floatText(f.name, wx - Math.round(G.cam.x), r.y - 18, f.col);
+          if (!G.state.tut.scoop) { G.state.tut.scoop = 1; G.toast('HOLD UNTIL THE SCOOP IS FULL', P.neonG); }
           return;
         }
       }
@@ -166,22 +168,15 @@
       if (!h) return;
       const wx = sx + Math.round(G.cam.x), wy = sy + Math.round(G.cam.y);
 
-      if (h.kind === 'carve') {
-        this.hold = null;
+      if (h.kind === 'scoop') {
         G.audio.loop('carve', false);
-        if (h.mass < 0.34) {
+        if (h.fill < 0.38) {
+          this.hold = null;
           G.audio.sfx('splat');
-          this.puff(wx, wy, '#8a7a5a', 8);
-          G.floatText('CRUMBLED', sx, sy - 14, P.warn);
+          this.puff(wx, wy, G.flavorById(h.fid).col, 8);
           return;
         }
-        // which layer did the stroke bottom out in?
-        const pint = this.pints[h.pi];
-        const li = G.clamp(Math.floor(h.deep * pint.layers.length), 0, pint.layers.length - 1);
-        const bandPct = h.tot > 0 ? h.band / h.tot : 0;
-        G.audio.sfx('scoopOff');
-        this.compact = { fid: pint.layers[li], bandPct, needle: 0, dir: 1,
-                         spd: 1.5 + G.state.day * 0.08, done: 0 };
+        this.popBall(h);
         return;
       }
       if (h.kind === 'ball') {
@@ -192,11 +187,15 @@
         const b = this.build;
         if (b) {
           const np = this.scoopPos(b.scoops.length);
-          if (b.scoops.length < 3 && G.dist(wx, wy, np.x, np.y) < 34) {
-            b.scoops.push(h.fid); b.qual.push(h.qual); b.wobV = 4;
+          if (b.scoops.length < 3 && G.dist(wx, wy, np.x, np.y) < 40) {
+            b.scoops.push(h.fid); b.qual.push(h.qual);
+            b.wobV = 5; b.pop = 1;
             this.pints[h.pi].spent++;
             G.audio.sfx('plop');
-            G.spark(np.x - Math.round(G.cam.x), np.y - Math.round(G.cam.y), ['#fff', G.flavorById(h.fid).col], 10);
+            G.shake(1.2, 0.09);
+            G.spark(np.x - Math.round(G.cam.x), np.y - Math.round(G.cam.y), ['#fff', G.flavorById(h.fid).col], 12);
+            const f2 = G.flavorById(h.fid);
+            G.floatText(f2.name, np.x - Math.round(G.cam.x), np.y - Math.round(G.cam.y) - 26, f2.col);
             return;
           }
           if (b.scoops.length >= 3) G.toast('THAT CONE IS FULL', P.gold);
@@ -212,20 +211,12 @@
 
     onWheel(d) { G.cam.nudge(d > 0 ? 70 : -70); },
 
-    stopCompact() {
-      const c = this.compact;
-      const d = Math.abs(c.needle - 0.5);
-      let qual, bonus;
-      if (d < 0.07) { qual = 'PACKED'; bonus = 1.25; G.audio.sfx('perfect'); G.screenFlash(P.gold, 0.08); }
-      else if (d < 0.2) { qual = 'OK'; bonus = 1.0; G.audio.sfx('good'); }
-      else { qual = 'RAGGED'; bonus = 0.7; G.audio.sfx('bad'); }
-      // band skill folds in
-      const grade = c.bandPct > 0.72 ? 'CLEAN' : c.bandPct > 0.4 ? 'OK' : 'RAGGED';
-      const score = G.clamp(bonus * (0.55 + c.bandPct * 0.6), 0.4, 1.45);
-      G.floatText(qual + ' / ' + grade, G.W / 2, 150, qual === 'PACKED' ? P.gold : P.steel2);
-      this.hold = { kind: 'ball', fid: c.fid, qual: score, pi: this.lastPi || 0,
-                    bx: G.mouse.x + Math.round(G.cam.x), by: G.mouse.y + Math.round(G.cam.y) };
-      this.compact = null;
+    // the scoop comes free of the tub as a finished dome
+    popBall(h) {
+      G.audio.sfx('scoopOff');
+      G.spark(G.mouse.x, G.mouse.y, ['#ffffff', G.flavorById(h.fid).col], 10, 60);
+      this.hold = { kind: 'ball', fid: h.fid, qual: 1, pi: h.pi, born: this.t,
+                    bx: G.mouse.wx, by: G.mouse.wy };
     },
 
     puff(x, y, col, n) {
@@ -363,50 +354,35 @@
         }
       }
 
-      // compact minigame needle
-      if (this.compact) {
-        const c = this.compact;
-        c.needle += c.dir * c.spd * dt;
-        if (c.needle > 1) { c.needle = 1; c.dir = -1; }
-        if (c.needle < 0) { c.needle = 0; c.dir = 1; }
-      }
-
       // ---- held ----
       const h = this.hold;
       let pouring = false;
-      if (h && h.kind === 'carve') {
-        this.lastPi = h.pi;
+      if (h && h.kind === 'scoop' && M.down) {
         const pint = this.pints[h.pi];
         const r = pintRect(h.pi);
-        const spd = Math.abs(M.vx);
-        const wide = G.hasUp('steady') ? 1.45 : 1;
-        const lo = 90 / wide, hi = 330 * wide;
-        const inBand = spd > lo && spd < hi;
-        h.tot += dt;
-        if (inBand) h.band += dt;
-        // carve a soft brush into the surface
+        const rate = G.hasUp('coldarm') ? 1.5 : 1.15;      // fills in well under a second
+        h.fill = Math.min(1, h.fill + dt * rate);
+        // a divot opens under the cursor: the tub visibly gets used up
         const col = Math.floor(((wx - r.x) / r.w) * COLS);
-        if (col >= -3 && col < COLS + 3) {
-          const rate = (inBand ? 1.5 : 0.45) * dt;
-          for (let k = -4; k <= 4; k++) {
-            const ci = col + k;
-            if (ci < 0 || ci >= COLS) continue;
-            const fall = 1 - Math.abs(k) / 5;
-            pint.surf[ci] = G.clamp(pint.surf[ci] + rate * fall * 0.55, 0, 0.94);
-            h.deep = Math.max(h.deep, pint.surf[ci]);
-          }
-          if (inBand) h.mass = Math.min(1.3, h.mass + dt * 1.15);
-          h.tick += dt;
-          if (h.tick > 0.07) {
-            h.tick = 0;
-            G.audio.sfx('carveTick', { f: h.mass });
-            this.parts.push({ x: wx + G.rand(-8, 8), y: r.y + pint.surf[G.clamp(col, 0, COLS - 1)] * r.h,
-              vx: G.rand(-40, 40), vy: G.rand(-80, -20),
-              col: (G.flavorById(pint.layers[G.clamp(Math.floor(h.deep * pint.layers.length), 0, pint.layers.length - 1)]) || {}).col || '#fff',
-              t: 0, life: 0.45, grav: 320 });
-          }
+        const bandTop = (h.li / pint.layers.length);
+        for (let k = -5; k <= 5; k++) {
+          const ci = col + k;
+          if (ci < 0 || ci >= COLS) continue;
+          const fall = 1 - Math.abs(k) / 6;
+          const target = bandTop + 0.1 + fall * 0.12;
+          if (pint.surf[ci] < target) pint.surf[ci] = Math.min(target, pint.surf[ci] + dt * 0.55 * fall);
         }
-        G.audio.loop('carve', true, G.clamp(spd / 340, 0.2, 1));
+        h.tick += dt;
+        if (h.tick > 0.06) {
+          h.tick = 0;
+          G.audio.sfx('carveTick', { f: h.fill });
+          const fc2 = G.flavorById(h.fid);
+          this.parts.push({ x: wx + G.rand(-7, 7), y: wy + G.rand(-4, 4),
+            vx: G.rand(-40, 40), vy: G.rand(-80, -20),
+            col: Math.random() < 0.5 ? fc2.col : G.shade(fc2.col, 0.3), t: 0, life: 0.4, grav: 320 });
+        }
+        G.audio.loop('carve', true, 0.35 + h.fill * 0.65);
+        if (h.fill >= 1) this.popBall(h);
       } else G.audio.loop('carve', false);
 
       if (h && h.kind === 'ball') {
@@ -527,7 +503,10 @@
         }
       }
 
-      if (b) { b.wobV += -b.wob * 70 * dt - b.wobV * 9 * dt; b.wob += b.wobV * dt; }
+      if (b) {
+        b.wobV += -b.wob * 70 * dt - b.wobV * 9 * dt; b.wob += b.wobV * dt;
+        if (b.pop > 0) b.pop = Math.max(0, b.pop - dt * 3.4);
+      }
 
       for (let i = this.parts.length - 1; i >= 0; i--) {
         const p = this.parts[i];
@@ -659,10 +638,34 @@
       G.drawGoreWorld(g);
       for (const r of this.rest) { g.globalAlpha = G.clamp(1 - r.t / 6, 0, 1); this.drawBit(g, r.x, r.y, r); g.globalAlpha = 1; }
       if (this.build) this.drawBuild(g, PLX, PLY, this.build, 1);
-      // ghost target for the next scoop
+      // ghost target for the next scoop: a dashed seat, not a ring
       if (this.hold && this.hold.kind === 'ball' && this.build && this.build.scoops.length < 3) {
         const np = this.scoopPos(this.build.scoops.length);
-        if (Math.sin(t * 9) > -0.3) { g.globalAlpha = 0.55; G.oc(g, np.x, np.y, np.r, P.chrome); g.globalAlpha = 1; }
+        const near = G.dist(G.mouse.wx, G.mouse.wy, np.x, np.y) < 40;
+        const pulse = 0.4 + Math.abs(Math.sin(t * 5)) * (near ? 0.6 : 0.25);
+        g.globalAlpha = pulse;
+        for (let i = 0; i < 14; i++) {
+          if (i % 2) continue;
+          const a2 = (i / 14) * Math.PI * 2;
+          G.R(g, np.x + Math.cos(a2) * np.r, np.y + Math.sin(a2) * np.r * 0.8, 2, 2, near ? P.neonG : P.chrome);
+        }
+        g.globalAlpha = 1;
+        if (near) G.text(g, 'SET IT DOWN', np.x, np.y - np.r - 16, P.neonG, { align: 'center', out: OUT });
+      }
+      // what is already on the cone, named
+      if (this.build && this.build.scoops.length) {
+        let ly = PLY - 118;
+        for (let i = this.build.scoops.length - 1; i >= 0; i--) {
+          const f4 = G.flavorById(this.build.scoops[i]);
+          if (!f4) continue;
+          const nm = f4.name.split(' ')[0];
+          const w4 = G.tw(nm) + 13;
+          G.frame(g, PLX + 26, ly, w4, 12, '#111b19');
+          G.R(g, PLX + 29, ly + 3, 5, 5, OUT);
+          G.R(g, PLX + 29, ly + 3, 4, 4, f4.col);
+          G.text(g, nm, PLX + 36, ly + 3, f4.col);
+          ly += 14;
+        }
       }
       // serve button (world space, by the plate)
       const fc = this.front();
@@ -716,19 +719,18 @@
       const rx = G.clamp(M.x, 18, G.W - 18), ry = G.clamp(M.y, 70, G.H - 10);
       if (M.x >= 0) G.drawArm(g, rx, ry + 20, 1, { grip: h ? 1 : 0.35, reach: 22, thick: 25 });
       if (h) {
-        if (h.kind === 'carve') {
-          // the scoop itself
-          G.R(g, rx + 3, ry - 4, 5, 22, P.steel);
-          G.R(g, rx + 4, ry - 3, 2, 20, P.chrome);
-          G.fc(g, rx, ry, 9, OUT); G.fc(g, rx, ry, 8, P.steel2);
-          G.fc(g, rx - 2, ry - 2, 4, P.chrome);
-          const pint = this.pints[h.pi];
-          if (h.mass > 0.06) {
-            const li = G.clamp(Math.floor(h.deep * pint.layers.length), 0, pint.layers.length - 1);
-            G.drawScoopBall(g, rx, ry - 3 - h.mass * 5, 3 + h.mass * 8, pint.layers[li], 0);
-          }
+        if (h.kind === 'scoop') {
+          // the steel scoop, with the dome swelling inside its bowl
+          G.R(g, rx + 4, ry - 6, 6, 26, OUT);
+          G.R(g, rx + 5, ry - 5, 4, 24, P.steel);
+          G.R(g, rx + 5, ry - 5, 2, 22, P.chrome);
+          G.dome(g, rx, ry + 2, 9, P.steel, { squash: 1.15, spec: false });
+          G.R(g, rx - 6, ry - 2, 12, 3, G.shade(P.steel, 0.3));
+          if (h.fill > 0.05) G.drawScoopBall(g, rx, ry - 2 - h.fill * 6, 4 + h.fill * 9, h.fid, 0);
         } else if (h.kind === 'ball') {
-          G.drawScoopBall(g, h.bx - camX, h.by - Math.round(G.cam.y) - 6, 13 + Math.sin(t * 11) * 0.6, h.fid, Math.sin(t * 13) * 0.05);
+          const age = G.clamp((t - (h.born || 0)) * 6, 0, 1);
+          const r0 = 13 + (1 - age) * 4;
+          G.drawScoopBall(g, h.bx - camX, h.by - Math.round(G.cam.y) - 6, r0, h.fid, Math.sin(t * 9) * 0.04);
         } else if (h.kind === 'sauce') {
           G.drawBottle(g, rx, ry + 8, G.sauceById(h.sid), true);
         } else if (h.kind === 'jar') {
@@ -737,36 +739,20 @@
         G.hideCursor = true;
       }
 
-      // carve skill meter
-      if (h && h.kind === 'carve') {
-        const wide = G.hasUp('steady') ? 1.45 : 1;
-        const spd = G.clamp(Math.abs(M.vx) / 500, 0, 1);
-        G.meter(g, G.W / 2 - 90, 300, 180, 9, spd, [
-          { a: 0, b: 90 / wide / 500, col: '#4a2b2b' },
-          { a: 90 / wide / 500, b: Math.min(1, 330 * wide / 500), col: '#2f6b3a' },
-          { a: Math.min(1, 330 * wide / 500), b: 1, col: '#6b2b2b' },
-        ], { label: 'STROKE SPEED', needle: P.chrome });
-        // mass gauge
-        G.frame(g, G.W / 2 - 90, 314, 180, 10, '#16211f');
-        G.R(g, G.W / 2 - 87, 317, Math.round(174 * G.clamp(h.mass / 1.0, 0, 1)), 4, h.mass >= 0.34 ? P.neonG : P.warn);
-        G.text(g, 'SCOOP MASS', G.W / 2, 328, P.steel, { align: 'center' });
-      }
-
-      // compact minigame
-      if (this.compact) {
-        const c = this.compact;
-        g.globalAlpha = 0.55; G.R(g, 0, 0, G.W, G.H, '#050908'); g.globalAlpha = 1;
-        G.text(g, 'PACK THE SCOOP', G.W / 2, 130, P.gold, { align: 'center', out: OUT, sc: 2 });
-        G.meter(g, G.W / 2 - 110, 170, 220, 14, c.needle, [
-          { a: 0, b: 0.3, col: '#5c2b2b' },
-          { a: 0.3, b: 0.43, col: '#6b5a20' },
-          { a: 0.43, b: 0.57, col: '#2f8a45' },
-          { a: 0.57, b: 0.7, col: '#6b5a20' },
-          { a: 0.7, b: 1, col: '#5c2b2b' },
-        ], { needle: '#ffffff' });
-        G.drawScoopBall(g, G.W / 2, 226, 15, c.fid, 0);
-        G.text(g, 'TAP IN THE GREEN', G.W / 2, 256, P.steel2, { align: 'center' });
-        G.hideCursor = false;
+      // the flavour you are currently pulling, named on screen
+      if (h && h.kind === 'scoop') {
+        const f3 = G.flavorById(h.fid);
+        const lab = f3.name;
+        const lw = G.tw(lab) + 26;
+        G.frame(g, G.W / 2 - lw / 2, 300, lw, 17, '#16211f');
+        G.R(g, G.W / 2 - lw / 2 + 4, 305, 7, 7, OUT);
+        G.R(g, G.W / 2 - lw / 2 + 4, 305, 6, 6, f3.col);
+        G.R(g, G.W / 2 - lw / 2 + 4, 305, 6, 1, G.shade(f3.col, 0.4));
+        G.text(g, lab, G.W / 2 + 6, 305, f3.col, { align: 'center' });
+        // fill readout as a chunky bar, no target band to hit
+        G.R(g, G.W / 2 - lw / 2 + 2, 318, lw - 4, 4, '#0d1413');
+        G.R(g, G.W / 2 - lw / 2 + 2, 318, Math.round((lw - 4) * h.fill), 4,
+          h.fill >= 1 ? P.neonG : G.mix(P.amber, P.neonG, h.fill));
       }
 
       // pan affordances
@@ -805,15 +791,11 @@
       G.drawBase(g, b.base, ox, oy);
       for (let i = 0; i < b.scoops.length; i++) {
         const sp = this.scoopPos(i, ox, oy, b.base);
-        const sq = i === b.scoops.length - 1 ? G.clamp(b.wob * 0.12, -0.3, 0.3) : 0;
-        const q = b.qual[i] === undefined ? 1 : b.qual[i];
-        G.drawScoopBall(g, sp.x, sp.y, sp.r * (scale < 1 ? scale : 1), b.scoops[i], sq);
-        if (q < 0.8) {   // ragged scoops get chewed edges
-          for (let k = 0; k < 5; k++) {
-            const a = k * 1.3 + i;
-            G.R(g, sp.x + Math.cos(a) * sp.r, sp.y + Math.sin(a) * sp.r, 2, 2, '#0a1210');
-          }
-        }
+        const top = i === b.scoops.length - 1;
+        // the freshly-set scoop squashes then settles
+        const squash = top ? G.clamp(b.wob * 0.1, -0.28, 0.28) + (b.pop || 0) * 0.34 : 0;
+        const drop = top ? -(b.pop || 0) * 4 : 0;
+        G.drawScoopBall(g, sp.x, sp.y + drop, sp.r * (scale < 1 ? scale : 1), b.scoops[i], squash);
       }
       if (scale >= 1) {
         for (const c of b.coat) G.fc(g, ox + c.lx, oy + c.ly, c.r, c.col);
@@ -876,9 +858,9 @@
         G.drawToothIcon(g, 184, 5, P.bone);
         G.text(g, '×' + pn + ' TONIGHT', 196, 7, '#b46bff');
       }
-      if (this.t % 8 < 4 && !this.hold && !this.compact) {
+      if (this.t % 8 < 4 && !this.hold) {
         const hint = !this.build ? 'TAP A CONE OR CUP TO START'
-          : !this.build.scoops.length ? 'HOLD A PINT AND DRAG SIDEWAYS TO CARVE'
+          : !this.build.scoops.length ? 'PRESS A FLAVOUR BAND AND HOLD, THEN DRAG IT OVER'
           : 'DRIZZLE, SHAKE, THEN SERVE';
         g.globalAlpha = 0.8;
         G.text(g, hint, G.W / 2, 286, '#5d7a72', { align: 'center' });

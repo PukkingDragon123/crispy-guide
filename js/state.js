@@ -37,7 +37,7 @@
     ],
     upgrades: [
       { id: 'coldarm',  name: 'COLD ARM',     desc: 'PINT STAYS SOFT LONGER', price: 90 },
-      { id: 'steady',   name: 'STEADY CLAW',  desc: 'WIDER SKILL BANDS',      price: 160 },
+      { id: 'steady',   name: 'STEADY CLAW',  desc: 'SCOOPS FILL FASTER',     price: 160 },
       { id: 'loupe',    name: 'SURGEON LOUPE',desc: 'SYMPTOM HINTS IN BOOK',  price: 240 },
       { id: 'sedative', name: 'SEDATIVE GAS', desc: 'PATIENTS FLINCH LESS',   price: 330 },
       { id: 'carbide',  name: 'CARBIDE BURR', desc: 'DRILLS TWICE AS FAST',   price: 420 },
@@ -104,12 +104,12 @@
     // ---------- tools ----------
     tools: [
       { id: 'probe',   name: 'PROBE',   hint: 'CLICK A TOOTH TO EXAMINE IT' },
-      { id: 'scale',   name: 'SCALER',  hint: 'DRAG ALONG THE TOOTH - KEEP SPEED IN THE BAND' },
-      { id: 'drill',   name: 'DRILL',   hint: 'HOLD TO SINK - RELEASE IN THE GREEN, NOT THE NERVE' },
-      { id: 'fill',    name: 'FILLER',  hint: 'HOLD TO PACK - STOP ON THE LINE' },
-      { id: 'forceps', name: 'FORCEPS', hint: 'GRIP, THEN DRAG SIDE TO SIDE IN RHYTHM' },
-      { id: 'extract', name: 'ELEVATOR',hint: 'ROCK LEFT AND RIGHT ON THE BEAT UNTIL IT LIFTS' },
-      { id: 'lance',   name: 'SCALPEL', hint: 'CLICK WHEN THE RING IS TIGHT ON THE HEAD' },
+      { id: 'scale',   name: 'SCALER',  hint: 'DRAG OVER THE CRUST AND IT FLAKES AWAY' },
+      { id: 'drill',   name: 'DRILL',   hint: 'HOLD ON THE LESION UNTIL IT IS CLEAR' },
+      { id: 'fill',    name: 'FILLER',  hint: 'HOLD TO PACK THE HOLE FULL' },
+      { id: 'forceps', name: 'FORCEPS', hint: 'GRIP IT AND PULL AWAY' },
+      { id: 'extract', name: 'ELEVATOR',hint: 'HOLD AND WAGGLE UNTIL IT LIFTS OUT' },
+      { id: 'lance',   name: 'SCALPEL', hint: 'PUT THE BLADE ON THE SWELLING AND CUT' },
       { id: 'suction', name: 'SUCTION', hint: 'HOLD OVER BLOOD TO CLEAR THE FIELD' },
     ],
   };

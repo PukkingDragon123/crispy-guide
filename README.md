@@ -22,22 +22,23 @@ Drag the floor to walk the counter: a chilled well of pints on the left, the
 assembly bench in the middle, syrup and grit on the right. Both of your scaly
 forearms are in shot the whole time.
 
-### Carving is the skill
+### Scooping
 
-![Carving](screenshots/carve.png)
+![Scooping](screenshots/scooping.png)
 
-Pints are **big rectangular tubs sliced into flavour strata**. Hold one and drag
-sideways to carve:
+Pints are **big rectangular tubs sliced into flavour strata, and every stratum is
+labelled right on the ice cream** — you can always see which band is which
+flavour. There are no meters and no timing windows:
 
-- A **stroke-speed band** rules the cut. Too slow and the scoop packs icy and
-  ragged; too fast and you skim off nothing.
-- Mass only builds while you are inside the band.
-- The ball takes the flavour of the **deepest layer your stroke reached** — so an
-  order buried under two other flavours needs a deliberate, deeper cut.
-- The carve is **persistent**: the pints stay dug out for the rest of the shift.
+- **Press the band you want and hold.** The scoop digs in, a dome swells inside
+  the bowl, crumbs fly and the pitch rises until it comes free with a pop.
+- The tub visibly hollows out where you dug, and **stays** hollowed for the shift.
+- **Carry the dome over and set it on the cone.** A dashed seat shows where it
+  lands; on release it squashes, settles and names itself.
 
-Then a **packing minigame** — stop the sweeping needle in the green to get PACKED
-(rounder, glossier, better paid) instead of RAGGED.
+Scoops are drawn as **lit 3D domes** — churned ridges following the curvature, a
+melt lip at the base, a hard sheen — not flat discs. The cone keeps a running
+list of what is on it.
 
 Stack up to three, drizzle syrup whose droplets genuinely land, cling, run around
 the curve of a scoop and drip off the bottom, then shake a jar of grit that
@@ -55,8 +56,9 @@ One hard lamp, sixteen teeth, and the kids from this afternoon.
 
 Probe a tooth to examine it, then open the **notebook** and match what you can see
 against the diagnosis list. Get it right and the tooth is charted and its
-procedure unlocks. Get it wrong and the patient jolts, you lose $4, and the book
-stays open. Nothing can be treated until it is charted.
+procedure unlocks. Get it wrong and the patient jolts and the book stays open.
+Nothing can be treated until it is charted — identifying the disease is the whole
+puzzle.
 
 Eight findings, each with its own look and its own ordered fix:
 
@@ -71,22 +73,24 @@ Eight findings, each with its own look and its own ordered fix:
 | **Foreign body** | Something wedged in the gap | Forceps |
 | **Gingivitis** | Gum weeping blood | Scale → suction |
 
-### Every instrument is a skill check
+### The instruments just work
 
-- **Drill** — a depth meter climbs while you hold. Release in the green. Push past
-  it into the nerve and the patient screams, blood sprays, the screen shakes and
-  you eat a fine.
-- **Scaler** — keep the drag speed in the band. Overdo it and you gouge the gum.
-- **Scalpel** — a ring closes on the abscess head. Release when it is tight.
-- **Elevator** — rock left and right **on the beat**. Off-beat rocks cost progress
-  and hurt. When it finally lifts: crack, gush, and a dark bleeding socket.
-- **Forceps** — grip and pull against resistance until it pops.
-- **Filler** — stop the level on the line. Under is a redo; over is a bad bite.
+Once a tooth is charted, its procedure runs on feel, not on timing. Hold the
+instrument and it happens, with one honest progress bar and a lot of feedback:
+
+- **Drill** — hold on the lesion until the decay is bored out. No nerve to hit.
+- **Scaler** — drag over the crust and it flakes off in chips.
+- **Scalpel** — put the blade on the swelling and it opens.
+- **Elevator** — hold and waggle; the tooth wobbles further each time and then
+  comes out with a crack, a gush and a dark bleeding socket.
+- **Forceps** — grip the wedged object and pull away.
+- **Filler** — hold to pack the hole full.
 - **Suction** — blood pools, stains and runs down the teeth, and it stays there.
   The field must be clear before you can discharge.
 
-A **pain meter** tracks how badly you are doing. Max it out and the patient passes
-out and you lose the fee.
+There is an **OUCH** readout that rises while you work and settles on its own. It
+is there for the wince, not to punish you — nothing in the clinic can cost you a
+case.
 
 ## 🛒 The stockroom
 
@@ -100,17 +104,33 @@ which means better nights.
 
 ## The cast
 
-Twelve amphibians and reptiles, all with **beady dot eyes**: bullfrog, cane toad,
-tree frog, axolotl, fire newt, pit viper, python, gecko, iguana, gator kid,
-snapper, salamander. You are the crocodile.
+![The cast](screenshots/cast.png)
+
+Twelve amphibians and reptiles, **all dressed and all with big cartoon eyes** —
+shaded eyeballs with a coloured iris, a specular catch-light, working eyelids and
+brows that go angry, worried or sick. Every one wears something: the cane toad in
+dungarees and a bucket hat, the gator kid in a jersey and a backwards cap, the
+gecko in a lab coat and round spectacles, the fire newt in a hood, the pit viper
+in a fedora, the python in a knitted scarf.
+
+Bullfrog · cane toad · tree frog · axolotl · fire newt · pit viper · python ·
+gecko · iguana · gator kid · snapper · salamander. You are the crocodile.
 
 ## Tech
 
 - 640×360 canvas, nearest-neighbour upscaled; every shape is scanline `fillRect`
   work so the pixels stay hard
-- Procedural sprites throughout — organic scanline skulls, two-pass solid limbs,
-  reptile scale fields, layered pints with a live carve surface, clinical enamel
-  with cusps and fissures
+- **No flat circles anywhere.** Scoops, eyeballs and shells are quantised lit
+  domes with a real terminator and rim light; gums are one formed ridge of tissue
+  scalloped between the teeth; the tongue is a domed muscle with a median furrow;
+  light is dithered rather than stacked alpha discs
+- Characters are a real rig — shoes, shins, thighs, hips, ribcage, shoulders,
+  arms with elbows, neck, skull, muzzle — then clothes, then eyes. Limbs are
+  filled from a densified spine as a single span per scanline, so they read as
+  tubes instead of strings of spheres
+- Procedural sprites throughout — organic scanline skulls, layered pints with a
+  live dig surface and on-band flavour labels, clinical enamel with cusps and
+  fissures
 - Custom 5×7 bitmap font
 - All audio synthesised with WebAudio: wet squelches, bone cracks, drill whine,
   suction, screams, and two sequenced tracks
