@@ -194,12 +194,16 @@
   // Deeper layers need deeper carving -> that is the day's skill curve.
   G.makePint = function (idx) {
     const own = G.state.flavors;
+    const n = own.length;
+    const nl = G.clamp(1 + Math.floor(n / 3) + (idx % 2), 1, 4);
     const layers = [];
-    const nl = G.clamp(1 + Math.floor(own.length / 3) + (idx % 2), 1, 4);
-    const pool = own.slice();
+    // walk the owned list with a stride that is coprime-ish to its length so
+    // successive pints get distinct strata instead of all starting on the same flavour
+    const stride = 1 + (idx % Math.max(1, n - 1));
+    let cur = (idx * 2 + idx * idx) % n;
     for (let i = 0; i < nl; i++) {
-      const pickIdx = (idx * 3 + i * 5) % pool.length;
-      layers.push(pool[pickIdx]);
+      layers.push(own[cur % n]);
+      cur = (cur + stride) % n;
     }
     return layers;
   };

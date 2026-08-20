@@ -193,6 +193,22 @@
     }
   };
 
+  // soft radial glow built from dithered rings - no visible alpha banding
+  G.glow = function (g, cx, cy, rx, ry, col, strength) {
+    strength = strength === undefined ? 1 : strength;
+    const steps = 7;
+    for (let i = steps; i >= 1; i--) {
+      const p = i / steps;
+      g.globalAlpha = 0.035 * strength * (1 - p * 0.55);
+      G.fe(g, cx, cy, rx * p, ry * p, col);
+      g.globalAlpha = 1;
+    }
+    // dither the outer edge so the falloff does not read as a ring
+    g.globalAlpha = 0.05 * strength;
+    G.fe(g, cx, cy, rx * 0.55, ry * 0.55, col);
+    g.globalAlpha = 1;
+  };
+
   G.panel = function (g, x, y, w, h, fill, border) {
     G.rr2(g, x, y, w, h, border || P.ink);
     G.rr2(g, x + 1, y + 1, w - 2, h - 2, fill);

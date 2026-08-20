@@ -482,22 +482,24 @@
   G.drawArm = function (g, tipX, tipY, side, o) {
     o = o || {};
     const C = o.col || '#4c7a42', C2 = G.shade(C, -0.44), LIT = G.shade(C, 0.32);
-    const ax = o.anchorX !== undefined ? o.anchorX : G.W / 2 + side * G.W * 0.36;
-    const ay = o.anchorY !== undefined ? o.anchorY : G.H + 34;
     tipX = Math.round(tipX); tipY = Math.round(tipY);
-
+    // The forearm enters from just off the bottom edge, close under the hand,
+    // so it reads as foreshortened rather than sprawling across the screen.
+    const reach = o.reach === undefined ? 26 : o.reach;
+    const ax = o.anchorX !== undefined ? o.anchorX : tipX + side * reach;
+    const ay = o.anchorY !== undefined ? o.anchorY : G.H + 16;
     // elbow bows outward so the arm reads as a real limb, not a stick
-    const ex = G.lerp(ax, tipX, 0.5) + side * 10;
-    const ey = G.lerp(ay, tipY, 0.5);
+    const ex = G.lerp(ax, tipX, 0.5) + side * 9;
+    const ey = G.lerp(ay, tipY, 0.55);
     const spine = [];
-    const N = 26;
+    const N = 22;
     for (let i = 0; i <= N; i++) {
       const p = i / N;
       // quadratic bezier anchor -> elbow -> tip
       const q = 1 - p;
       const px = q * q * ax + 2 * q * p * ex + p * p * tipX;
       const py = q * q * ay + 2 * q * p * ey + p * p * tipY;
-      spine.push({ x: px, y: py, r: G.lerp(34, 17, p * 0.92) });
+      spine.push({ x: px, y: py, r: G.lerp(o.thick || 33, 15, Math.pow(p, 0.7)) });
     }
     G.limb(g, spine, C, G.shade(C2, 0.1), LIT, { grow: 2, scale: C2 });
     // crosswise belly scutes (banded, not a row of snake dots)
@@ -522,27 +524,29 @@
     // ---- clawed hand ----
     const grip = o.grip === undefined ? 0.5 : o.grip;
     const pSp = [];
-    for (let i = 0; i < 5; i++) pSp.push({ x: tipX - side * i * 2.2, y: tipY + 6 + i * 1.1, r: 15 - i * 1.1 });
+    for (let i = 0; i < 5; i++) pSp.push({ x: tipX - side * i * 1.9, y: tipY + 5 + i * 1, r: 12 - i * 0.9 });
     G.limb(g, pSp, C, null, LIT, { grow: 1.6, scale: C2 });
     for (let f = 0; f < 3; f++) {
       const fa = (-0.85 + f * 0.7) * side + (o.angle || 0) - Math.PI / 2;
-      const bend = 20 - grip * 6;
+      const showClaw = f !== 1;                 // middle claw stays tucked
+      const bend = 16 - grip * 5;
       const fSp = [];
       for (let k = 0; k < 4; k++) {
-        fSp.push({ x: tipX + Math.cos(fa) * (bend * 0.33 * k), y: tipY + 5 + Math.sin(fa) * (bend * 0.33 * k), r: 6.4 - k * 0.8 });
+        fSp.push({ x: tipX + Math.cos(fa) * (bend * 0.33 * k), y: tipY + 4 + Math.sin(fa) * (bend * 0.33 * k), r: 5.2 - k * 0.7 });
       }
       G.limb(g, fSp, C, null, LIT, { grow: 1.2 });
       const tip = fSp[3];
-      G.fe(g, tip.x + Math.cos(fa) * 4.2, tip.y + Math.sin(fa) * 4.2, 4.2, 4.2, OUT);
-      G.fe(g, tip.x + Math.cos(fa) * 4.2, tip.y + Math.sin(fa) * 4.2, 3, 3, P.bone);
-      G.R(g, tip.x + Math.cos(fa) * 5, tip.y + Math.sin(fa) * 5, 1, 1, '#fff');
+      if (showClaw) {
+        G.fe(g, tip.x + Math.cos(fa) * 3.2, tip.y + Math.sin(fa) * 3.2, 3, 3, OUT);
+        G.fe(g, tip.x + Math.cos(fa) * 3.2, tip.y + Math.sin(fa) * 3.2, 1.9, 1.9, '#9d9078');
+      }
     }
     // thumb wrapping the other way
     const thSp = [];
-    for (let k = 0; k < 3; k++) thSp.push({ x: tipX + side * (13 + k * 4), y: tipY + 11 - k * 2, r: 6.8 - k * 0.9 });
+    for (let k = 0; k < 3; k++) thSp.push({ x: tipX + side * (10 + k * 3.2), y: tipY + 9 - k * 1.6, r: 5.4 - k * 0.75 });
     G.limb(g, thSp, C, null, LIT, { grow: 1.2 });
     G.fe(g, thSp[2].x + side * 3, thSp[2].y - 1, 3.2, 3, OUT);
-    G.fe(g, thSp[2].x + side * 3, thSp[2].y - 1, 2.2, 2, P.bone);
+    G.fe(g, thSp[2].x + side * 3, thSp[2].y - 1, 2.2, 2, '#c9bda0');
   };
 
   // ============================================================
@@ -714,32 +718,69 @@
   G.drawEnamel = function (g, th, o) {
     o = o || {};
     const x = th.x, y = th.y, w = th.w, h = th.h;
-    const base = o.dead ? '#8d8b7e' : P.bone;
-    const dk = o.dead ? '#5f5d54' : P.boneDk;
-    G.rr2(g, x - 2, y - 2, w + 4, h + 4, OUT);
-    G.rr2(g, x - 1, y - 1, w + 2, h + 2, P.boneShade);
-    G.rr2(g, x, y, w, h, base);
-    // body shading: crown bright, neck dark
-    if (th.up) G.gradV(g, x + 1, y + h - 12, w - 2, 11, base, dk, 4);
-    else G.gradV(g, x + 1, y + 1, w - 2, 11, dk, base, 4);
-    // vertical enamel striations
-    for (let i = 3; i < w - 3; i += 5) G.R(g, x + i, y + 3, 1, h - 6, G.shade(base, -0.08));
-    // hard spec streak
-    G.R(g, x + 3, y + 3, 3, h - 8, G.shade(base, 0.4));
-    G.R(g, x + 3, y + 3, 2, 4, '#ffffff');
-    // occlusal cusps on the biting edge
-    const cy = th.up ? y + h - 5 : y + 1;
-    if (w >= 26) {
-      for (let i = 0; i < 3; i++) {
-        const gx = x + 5 + i * ((w - 10) / 3);
-        G.R(g, gx, cy, 2, 4, G.shade(base, -0.2));
-      }
-      G.R(g, x + 4, th.up ? y + h - 6 : y + 4, w - 8, 1, G.shade(base, -0.26));
-    } else {
-      G.R(g, x + Math.floor(w / 2) - 1, cy, 2, 4, G.shade(base, -0.18));
+    const base = o.dead ? '#918e7e' : P.bone;
+    const mid  = o.dead ? '#6d6a5c' : P.boneDk;
+    const dk   = o.dead ? '#494638' : P.boneShade;
+    const up = th.up;
+    // --- scanline profile: root narrow, body full, crown slightly belled ---
+    const rows = [];
+    for (let j = 0; j < h; j++) {
+      const p = up ? j / (h - 1) : 1 - j / (h - 1);   // p=0 at the root, 1 at the crown
+      let k = 0.60 + 0.40 * Math.pow(p, 0.55);
+      if (p > 0.86) k -= (p - 0.86) * 1.5;            // biting edge tucks in
+      if (p < 0.08) k *= 0.72 + p * 3.4;              // root tapers into the gum
+      rows.push(Math.max(3, Math.round(w * 0.5 * k)));
     }
-    // stain/grime in the crevices
-    if (o.stain) G.speckle(g, x + 2, th.up ? y + h - 10 : y + 2, w - 4, 9, '#6b5a2a', 0.16, th.i || 1);
+    // outline
+    for (let j = 0; j < h; j++) G.R(g, x + w / 2 - rows[j] - 2, y + j, rows[j] * 2 + 4, 1, OUT);
+    // fill with a strong ramp: bright crown, shadowed neck
+    for (let j = 0; j < h; j++) {
+      const p = up ? j / (h - 1) : 1 - j / (h - 1);
+      const c = p > 0.5 ? G.mix(mid, G.shade(base, 0.12), Math.pow((p - 0.5) / 0.5, 0.7))
+                        : G.mix(G.shade(dk, -0.34), mid, Math.pow(p / 0.5, 1.3));
+      const hw = rows[j];
+      G.R(g, x + w / 2 - hw, y + j, hw * 2 + 1, 1, c);
+      G.R(g, x + w / 2 + hw - 2, y + j, 2, 1, G.shade(c, -0.3));       // far-side turn
+      G.R(g, x + w / 2 - hw, y + j, 1, 1, G.shade(dk, -0.35));         // core shadow
+    }
+    // vertical developmental grooves - irregular, not a printed grid
+    for (let i = 0; i < 3; i++) {
+      const gx = x + w / 2 + Math.round((i - 1) * w * 0.24) + ((th.i || 0) % 2 ? 1 : -1);
+      const gy0 = up ? y + Math.round(h * 0.3) : y + Math.round(h * 0.12);
+      const gh = Math.round(h * 0.5);
+      g.globalAlpha = 0.5;
+      G.R(g, gx, gy0, 1, gh, G.shade(mid, -0.22));
+      g.globalAlpha = 1;
+    }
+    // hard specular band down the near edge
+    const spx = x + w / 2 - Math.round(w * 0.28);
+    G.R(g, spx, y + Math.round(h * (up ? 0.22 : 0.16)), 3, Math.round(h * 0.6), G.shade(base, 0.4));
+    G.R(g, spx, y + Math.round(h * (up ? 0.22 : 0.16)), 2, Math.round(h * 0.2), '#ffffff');
+    // --- occlusal surface: real cusps on the biting edge ---
+    const edgeY = up ? y + h - 1 : y;
+    const nc = w >= 50 ? 4 : w >= 40 ? 3 : 2;
+    const hwE = rows[up ? h - 1 : 0];
+    for (let c = 0; c < nc; c++) {
+      const cw = (hwE * 2) / nc;
+      const cxp = x + w / 2 - hwE + cw * c;
+      const bump = 3 + ((c + (th.i || 0)) % 2) * 2;
+      for (let b = 0; b < bump; b++) {
+        const inset = Math.round(Math.pow(b / bump, 1.5) * cw * 0.22);
+        G.R(g, cxp + inset, up ? edgeY - b : edgeY + b, Math.max(1, cw - inset * 2), 1,
+          b === 0 ? G.shade(base, 0.3) : G.shade(mid, -0.1));
+      }
+      // fissure between cusps
+      if (c > 0) G.R(g, cxp, up ? edgeY - 5 : edgeY, 1, 5, G.shade(dk, -0.3));
+    }
+    // wet highlight along the very edge
+    G.R(g, x + w / 2 - hwE + 2, up ? edgeY - bumpTop(nc) : edgeY, hwE * 2 - 4, 1, G.shade(base, 0.5));
+    function bumpTop(n) { return 5; }
+    // grime settled in the fissures and at the gum margin
+    if (o.stain) {
+      G.speckle(g, x + w / 2 - hwE + 2, up ? edgeY - 7 : edgeY + 1, hwE * 2 - 4, 7, '#6b5a2a', 0.2, (th.i || 1) * 3);
+      const ry = up ? y + 2 : y + h - 8;
+      G.speckle(g, x + w / 2 - rows[up ? 0 : h - 1], ry, rows[up ? 0 : h - 1] * 2, 6, '#7a6438', 0.16, th.i || 2);
+    }
   };
 
   // symptom overlays. s = symptom instance {lx,ly,r,...}

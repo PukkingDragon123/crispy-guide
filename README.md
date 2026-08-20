@@ -1,85 +1,120 @@
-# 🍦 DOUBLE LIFE 🦷
+# 🐊 DOUBLE LIFE
 
-**Scoop by day. Drill by night.**
+**Sell the sugar. Bill for the damage.**
 
-A cute pixel-art 2.5D simulator game about a very sound business model:
-by day you run an adorable ice cream parlor and serve *super sweet* treats
-to little animal kids… and by night you're **Dr. Molar**, the town dentist,
-fixing the exact cavities you caused. For money. Business is booming!
+A dark pixel-art simulator. By day you run a grimy late-night ice cream counter,
+carving scoops out of layered steel pints for a queue of amphibians and reptiles.
+By night you are the only dentist in town, and every patient in your chair is a
+customer you poisoned that afternoon.
 
 ![Title](screenshots/title.png)
 
-## ▶️ How to play
+**▶ Play it:** open `index.html` in a browser. No build, no dependencies, no assets —
+every sprite, sound and note is generated in code.
 
-No build, no dependencies — plain HTML5 canvas + vanilla JS.
+---
 
-- **Just open `index.html` in a browser** (double-click it), or
-- serve the folder: `npx serve .` / `python3 -m http.server` and open the URL.
+## ☀️ The parlour
 
-Works with mouse or touch. Progress auto-saves in your browser.
+![The counter](screenshots/day.png)
 
-## ☀️ Day — the ice cream parlor
+Drag the floor to walk the counter: a chilled well of pints on the left, the
+assembly bench in the middle, syrup and grit on the right. Both of your scaly
+forearms are in shot the whole time.
 
-![Day](screenshots/day.png)
+### Carving is the skill
 
-Animal customers (turtle, tiger, snake, puppy, kitty, bunny, froggy, panda)
-walk up and show their order in a speech bubble. Make it:
+![Carving](screenshots/carve.png)
 
-1. **Tap a cone or cup** to start a base.
-2. **Hold a tub to scoop** — the ball grows in your scooper — then
-   **drag it onto the cone** and release. *Plop.* Stack up to 3.
-3. **Grab a sauce bottle** and drizzle: every droplet is simulated —
-   it lands, sticks, slides down the scoops and drips off the cone.
-4. **Grab a topping jar and shake it** — sprinkles, cookie bits & friends
-   tumble, bounce and stick where they land.
-5. Press **SERVE**. Perfect orders pay tips. Extra sugar makes kids extra
-   happy… and grows tonight's cavity forecast (🦷× in the HUD).
+Pints are **big rectangular tubs sliced into flavour strata**. Hold one and drag
+sideways to carve:
 
-Wrong scoops? Dump them in the trash. Drop a scoop on the counter and it
-*splats* (you monster).
+- A **stroke-speed band** rules the cut. Too slow and the scoop packs icy and
+  ragged; too fast and you skim off nothing.
+- Mass only builds while you are inside the band.
+- The ball takes the flavour of the **deepest layer your stroke reached** — so an
+  order buried under two other flavours needs a deliberate, deeper cut.
+- The carve is **persistent**: the pints stay dug out for the rest of the shift.
 
-## 🌙 Night — Dr. Molar's clinic
+Then a **packing minigame** — stop the sweeping needle in the green to get PACKED
+(rounder, glossier, better paid) instead of RAGGED.
 
-![Night](screenshots/night.png)
+Stack up to three, drizzle syrup whose droplets genuinely land, cling, run around
+the curve of a scoop and drip off the bottom, then shake a jar of grit that
+bounces and sticks where it falls. Serve. Every gram of sugar is logged.
 
-The same kids you served today arrive with problems proportional to the
-sugar you sold them. Full-mouth view, 16 teeth, five tools:
+## 🌙 The clinic
 
-| Tool | Use |
-|------|-----|
-| 🪥 **Brush** | Scrub the green plaque off, pixel by pixel |
-| 🥢 **Tweezers** | Grab stuck sprinkles & cookie bits and *pull* until they pop |
-| 🛠️ **Drill** | Hold on a cavity germ until it's gone (they panic, it's great) |
-| 💉 **Filler** | Fill the drilled hole with shiny silver |
-| 💦 **Spray** | Rinse away the foam for a SPARKLING bonus |
+![The clinic](screenshots/clinic.png)
 
-Every fixed tooth pays instantly. Finish the patient with **DONE** and the
-next one slides into the chair.
+One hard lamp, sixteen teeth, and the kids from this afternoon.
 
-## 🛍️ The shop
+### You must name the disease before you may cut
 
-![Shop](screenshots/shop.png)
+![The notebook](screenshots/notebook.png)
 
-Between days, spend your (double) income mobile-game style:
+Probe a tooth to examine it, then open the **notebook** and match what you can see
+against the diagnosis list. Get it right and the tooth is charted and its
+procedure unlocks. Get it wrong and the patient jolts, you lose $4, and the book
+stays open. Nothing can be treated until it is charted.
 
-- **7 unlockable flavors** — mint chip, banana, blueberry, bubblegum,
-  matcha, mango, galaxy
-- **3 extra sauces** — berry, caramel, honey
-- **4 extra toppings** — cookie bits, choco chips, gummy bears, marshmallow
-- **4 clinic upgrades** — gold scoop, mega brush, turbo drill, comfy chair
+Eight findings, each with its own look and its own ordered fix:
 
-More flavors → sweeter orders → more cavities → richer nights. The loop.
+| Finding | Presents as | Procedure |
+|---|---|---|
+| **Caries** | Black pit in the crown | Drill → fill |
+| **Tartar** | Crusted yellow-green buildup | Scale |
+| **Abscess** | Swollen bulge, pus head | Lance → suction |
+| **Fracture** | Jagged crack, sharp edges | Bond |
+| **Impaction** | Tilted, crowding its neighbour | Extract → suction |
+| **Necrosis** | Grey-dead, dark core | Drill → clear → seal |
+| **Foreign body** | Something wedged in the gap | Forceps |
+| **Gingivitis** | Gum weeping blood | Scale → suction |
 
-## 🔧 Tech notes
+### Every instrument is a skill check
 
-- 480×270 canvas, nearest-neighbor upscaled; every shape is drawn from
-  scanline rects so pixels stay crisp — no image assets at all
-- Procedural pixel sprites (all 8 animals + faces are drawn in code)
-- Custom 5×7 bitmap pixel font
-- All audio synthesized live with WebAudio (sfx + day/night chiptunes) —
-  no audio files; mute button top-right
-- Sauce droplets, dripping, topping bounce physics are real little particle
-  sims, not animations
-- Save game via `localStorage`
+- **Drill** — a depth meter climbs while you hold. Release in the green. Push past
+  it into the nerve and the patient screams, blood sprays, the screen shakes and
+  you eat a fine.
+- **Scaler** — keep the drag speed in the band. Overdo it and you gouge the gum.
+- **Scalpel** — a ring closes on the abscess head. Release when it is tight.
+- **Elevator** — rock left and right **on the beat**. Off-beat rocks cost progress
+  and hurt. When it finally lifts: crack, gush, and a dark bleeding socket.
+- **Forceps** — grip and pull against resistance until it pops.
+- **Filler** — stop the level on the line. Under is a redo; over is a bad bite.
+- **Suction** — blood pools, stains and runs down the teeth, and it stays there.
+  The field must be clear before you can discharge.
 
-Made with Claude Code. 🍨🪥
+A **pain meter** tracks how badly you are doing. Max it out and the patient passes
+out and you lose the fee.
+
+## 🛒 The stockroom
+
+![Stockroom](screenshots/stockroom.png)
+
+Pan a back room under one swinging bulb. Everything for sale is a physical object
+on a shelf with a price tag: a chest freezer of pints, a rack of syrups, jars of
+grit, and a steel cabinet of clinic upgrades (Carbide Burr, Surgeon Loupe, Steady
+Claw, Sedative Gas). Richer flavours mean sweeter orders, which means worse teeth,
+which means better nights.
+
+## The cast
+
+Twelve amphibians and reptiles, all with **beady dot eyes**: bullfrog, cane toad,
+tree frog, axolotl, fire newt, pit viper, python, gecko, iguana, gator kid,
+snapper, salamander. You are the crocodile.
+
+## Tech
+
+- 640×360 canvas, nearest-neighbour upscaled; every shape is scanline `fillRect`
+  work so the pixels stay hard
+- Procedural sprites throughout — organic scanline skulls, two-pass solid limbs,
+  reptile scale fields, layered pints with a live carve surface, clinical enamel
+  with cusps and fissures
+- Custom 5×7 bitmap font
+- All audio synthesised with WebAudio: wet squelches, bone cracks, drill whine,
+  suction, screams, and two sequenced tracks
+- Droplet, particle, gore and carve simulation, not canned animation
+- Save via `localStorage`; mouse and touch
+
+Made with Claude Code.
