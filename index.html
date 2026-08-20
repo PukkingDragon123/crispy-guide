@@ -3,37 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Double Life 🍦🦷</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍦</text></svg>">
+<title>Double Life</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>">
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%;
-    background: #241c2e;
-    overflow: hidden;
-    touch-action: none;
+    background: #050908;
+    overflow: hidden; touch-action: none;
     -webkit-user-select: none; user-select: none;
   }
-  #wrap {
-    position: fixed; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column;
-  }
-  canvas {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    cursor: none;
-    background: #241c2e;
-  }
+  #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; cursor: none; background: #050908; }
   #foot {
-    position: fixed; bottom: 6px; width: 100%;
-    text-align: center; color: #5d4b70;
-    font: 11px monospace; pointer-events: none;
+    position: fixed; bottom: 4px; width: 100%; text-align: center;
+    color: #1d3630; font: 10px ui-monospace, Menlo, Consolas, monospace; pointer-events: none;
   }
 </style>
 </head>
 <body>
-<div id="wrap"><canvas id="game" width="480" height="270"></canvas></div>
-<div id="foot">DOUBLE LIFE · scoop by day, drill by night</div>
+<div id="wrap"><canvas id="game" width="640" height="360"></canvas></div>
+<div id="foot">DOUBLE LIFE — SCOOP BY DAY, DRILL BY NIGHT</div>
 <script src="js/util.js"></script>
 <script src="js/font.js"></script>
 <script src="js/audio.js"></script>
