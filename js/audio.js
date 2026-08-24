@@ -153,6 +153,16 @@
       case 'day': [55, 60, 64, 67].forEach((n, i) => osc('triangle', N2F(n), t + i * 0.1, 0.35, 0.08)); break;
       case 'night': [53, 48, 45, 41].forEach((n, i) => osc('sine', N2F(n), t + i * 0.13, 0.5, 0.09)); break;
       case 'swish': noise(t, 0.24, 0.07, 'bandpass', 900, 2); break;
+
+      // --- robots ---
+      case 'order': [76, 83, 79].forEach((n, i) => osc('square', N2F(n), t + i * 0.07, 0.08, 0.05)); break;
+      case 'servo': osc('sawtooth', 320, t, 0.1, 0.05, 520); noise(t, 0.08, 0.03, 'highpass', 2600); break;
+      case 'zap': noise(t, 0.06, 0.16, 'highpass', 3200); osc('square', 1800, t, 0.04, 0.09, 300);
+        noise(t + 0.05, 0.14, 0.07, 'bandpass', 1400, 2); break;
+      case 'weld': noise(t, 0.3, 0.1, 'bandpass', 2200, 1.4); osc('sawtooth', 120, t, 0.28, 0.05); break;
+      case 'clank': osc('square', 180, t, 0.07, 0.11, 90); noise(t, 0.14, 0.12, 'bandpass', 700, 1.6);
+        osc('triangle', 900, t, 0.05, 0.05); break;
+      case 'boot': [48, 55, 60, 67, 72].forEach((n, i) => osc('square', N2F(n), t + i * 0.06, 0.14, 0.05)); break;
     }
   };
 

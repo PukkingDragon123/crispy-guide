@@ -1,6 +1,6 @@
 // ============================================================
-// DOUBLE LIFE v3 - shop.js  ·  THE BOOKS + THE STOCKROOM
-// 320x180. A ledger under a desk lamp, then a damp stockroom
+// DOUBLE LIFE v4 - shop.js  ·  THE BOOKS + THE STOCKROOM
+// 320x180. A terminal readout under a work lamp, then a lock-up
 // you pan across where every purchase is an object on a shelf.
 // ============================================================
 (function () {
@@ -14,25 +14,26 @@
       this.t = 0;
       const d = G.state.today || {};
       this.rows = [
-        ['CONES SOLD', '' + (d.kidsServed || 0), P.cream],
-        ['SUGAR PUSHED', '' + (d.sugar || 0), '#ff8ade'],
-        ['PARLOUR', '$' + (d.dayEarn || 0), P.gold],
-        ['CLINIC', '$' + (d.nightEarn || 0), P.neonC],
-        ['CAUSED', '' + (d.patients || []).reduce((a, p) => a + p.symptoms.length, 0), '#b46bff'],
-        ['FIXED', '' + (d.fixed || 0), P.neonG],
-        ['BLOOD', (d.blood || 0) + 'ML', P.bloodLit],
+        ['UNITS SERVED', '' + (d.botsServed || 0), P.cream],
+        ['SUGAR PUSHED', '' + (d.sugar || 0), P.magentaLt],
+        ['KIOSK', '$' + (d.dayEarn || 0), P.hazard],
+        ['WORKSHOP', '$' + (d.nightEarn || 0), P.cyanLt],
+        ['FAULTS CAUSED', '' + (d.jobs || []).reduce((a, p) => a + p.faults.length, 0), P.violetLt],
+        ['FAULTS FIXED', '' + (d.fixed || 0), P.lime],
+        ['COOLANT LOST', (d.mess || 0) + 'ML', P.coolantLt],
       ];
       this.stamped = 0;
       G.audio.music('title');
       G.cam.reset(0, 0, 0, 0);
-      G.spawnFlies(3, 160, 60, 50);
+      G.steam.length = 0;
     },
     onDown(x, y) {
-      if (this.t > 0.4 && G.inRect(x, y, 118, 158, 84, 16)) { G.audio.sfx('click'); G.go('shop', 'STOCKROOM'); }
+      if (this.t > 0.4 && G.inRect(x, y, 116, 158, 88, 16)) { G.audio.sfx('click'); G.go('shop', 'LOCK-UP'); }
     },
     update(dt) {
       this.t += dt;
-      G.updateFlies(dt);
+      G.updateSteam(dt);
+      if (Math.random() < dt * 0.8) G.puffSteam(G.irand(10, 310), 176);
       const want = Math.floor((this.t - 0.3) / 0.2);
       while (this.stamped < Math.min(want, this.rows.length)) {
         this.stamped++; G.audio.sfx('clack'); G.shake(0.6, 0.05);
@@ -40,39 +41,43 @@
     },
     draw(g) {
       const t = this.t;
-      G.R(g, 0, 0, G.W, G.H, '#0f1420');
-      G.sewerWall(g, 0, 0, G.W, 90, t);
-      G.glow(g, 100, 60, 130, 80, '#ffdf9a', 1.2);
-      // desk
-      G.box(g, -4, 118, G.W + 8, 66, '#3a2a1c', { lit: '#56412a', dk: '#221610', r: 2, band: 5 });
-      // lamp
-      G.pipe(g, 26, 6, 40, true, t);
-      G.box(g, 18, 44, 22, 9, '#2b3644', { r: 2, band: 2 });
-      G.box(g, 26, 52, 6, 5, '#ffe9a8', { lit: '#ffffff', dk: '#c9a83a', r: 1, band: 1 });
+      G.R(g, 0, 0, G.W, G.H, P.cityDk);
+      G.cityWall(g, 0, 0, G.W, 100, t);
+      G.conduit(g, 0, 2, G.W, false, P.cyan);
+      G.glow(g, 100, 60, 140, 84, P.cyanLt, 0.9);
+      // bench
+      G.box(g, -4, 118, G.W + 8, 66, P.plate, { lit: P.plateLt, dk: P.plateDk, r: 2, band: 5 });
+      G.R(g, -4, 118, G.W + 8, 1, P.cyanDk);
+      // work lamp
+      G.conduit(g, 26, 6, 38, true, P.magenta);
+      G.box(g, 16, 44, 26, 9, P.plateDk, { r: 2, band: 2 });
+      G.R(g, 20, 52, 18, 2, '#fff8d8');
 
-      // ledger page
-      G.box(g, 60, 16, 200, 130, '#c9c0a0', { lit: '#ddd4b4', dk: '#a89a78', r: 2, band: 3, spec: false });
-      G.R(g, 76, 18, 1, 126, '#c08a8a');
-      G.text(g, 'DAY ' + G.state.day + ' - THE BOOKS', 160, 24, '#3a3524', { align: 'center' });
-      G.R(g, 84, 32, 152, 1, '#8a7a58');
+      // the terminal readout
+      G.box(g, 58, 14, 204, 132, '#0f1a24', { lit: '#1d3040', dk: '#070c12', r: 2, band: 3, spec: false });
+      G.R(g, 60, 16, 200, 1, P.cyanDk);
+      for (let j = 18; j < 144; j += 3) { g.globalAlpha = 0.1; G.R(g, 60, j, 200, 1, P.cyanLt); g.globalAlpha = 1; }
+      G.text(g, 'SHIFT ' + G.state.day + ' - THE BOOKS', 160, 22, P.cyanLt, { align: 'center' });
+      G.R(g, 82, 32, 156, 1, P.cyanDk);
       for (let i = 0; i < this.stamped; i++) {
         const r = this.rows[i], ry = 38 + i * 13;
-        G.text(g, r[0], 84, ry, '#2a2418');
-        G.text(g, r[1], 236, ry, '#6b1424', { align: 'right' });
-        G.text(g, r[1], 235, ry - 1, G.mix(r[2], '#3a1418', 0.3), { align: 'right' });
+        G.text(g, r[0], 82, ry, P.steel2);
+        G.text(g, r[1], 238, ry, r[2], { align: 'right' });
+        // a hard scan-line flicker on the freshest row
+        if (i === this.stamped - 1 && Math.sin(t * 30) > 0) G.R(g, 82, ry - 1, 156, 9, '#22e0ff18');
       }
       if (this.stamped >= this.rows.length) {
         const net = (G.state.today.dayEarn || 0) + (G.state.today.nightEarn || 0);
-        G.R(g, 84, 130, 152, 1, '#8a7a58');
-        G.text(g, 'NET', 84, 134, '#2a2418');
-        G.text(g, '$' + net, 236, 134, '#1a4a24', { align: 'right' });
+        G.R(g, 82, 130, 156, 1, P.cyanDk);
+        G.text(g, 'NET', 82, 134, P.cream);
+        G.text(g, '$' + net, 238, 134, P.lime, { align: 'right' });
       }
-      if (t > 1.9) G.text(g, 'YOU SOLD THE DISEASE AND BILLED FOR THE CURE.', 160, 150, '#8a7a68', { align: 'center' });
-      if (t > 0.4) G.drawBtn(g, 118, 158, 84, 16, 'STOCKROOM >', { col: '#a83d5c' });
-      G.box(g, 2, 2, 50, 12, '#161f33', { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.gold);
-      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.gold);
-      G.drawFlies(g);
+      if (t > 1.9) G.text(g, 'YOU SOLD THE FAULT AND BILLED FOR THE FIX.', 160, 150, P.steel, { align: 'center' });
+      if (t > 0.4) G.drawBtn(g, 116, 158, 88, 16, 'LOCK-UP >', { col: '#3a2a5c' });
+      G.box(g, 2, 2, 50, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.R(g, 6, 6, 4, 5, P.hazard);
+      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.hazard);
+      G.drawSteam(g);
       G.grade(g, 1);
     },
   };
@@ -81,9 +86,9 @@
   const SW = 620;
   const ZONES = [
     { id: 'flavors', label: 'FLAVOURS', x: 8, w: 180, key: 'flavors', data: () => G.DATA.flavors },
-    { id: 'sauces', label: 'SYRUPS', x: 200, w: 120, key: 'sauces', data: () => G.DATA.sauces },
-    { id: 'tops', label: 'GRIT', x: 332, w: 132, key: 'tops', data: () => G.DATA.tops },
-    { id: 'upgrades', label: 'CLINIC', x: 476, w: 132, key: 'upgrades', data: () => G.DATA.upgrades },
+    { id: 'sauces', label: 'SAUCES', x: 200, w: 120, key: 'sauces', data: () => G.DATA.sauces },
+    { id: 'tops', label: 'TOPPINGS', x: 332, w: 132, key: 'tops', data: () => G.DATA.tops },
+    { id: 'upgrades', label: 'WORKSHOP', x: 476, w: 132, key: 'upgrades', data: () => G.DATA.upgrades },
   ];
   function slots(z) {
     const out = [], items = z.data();
@@ -104,7 +109,7 @@
       this.slots = [];
       for (const z of ZONES) for (const s of slots(z)) this.slots.push(Object.assign(s, { z }));
       this.flash = null;
-      G.spawnFlies(4, 160, 70, 60);
+      G.steam.length = 0;
       G.audio.music('title');
     },
     tagRect(s) { return { x: s.x - 15, y: s.y + 11, w: 30, h: 10 }; },
@@ -128,8 +133,8 @@
             G.state.newIds.push(s.item.id);
             G.save();
             G.audio.sfx('unlock');
-            G.spark(s.x - Math.round(G.cam.x), s.y, [P.gold, '#fff', P.neonG], 14, 60);
-            G.toast('STOCKED ' + s.item.name, P.gold);
+            G.spark(s.x - Math.round(G.cam.x), s.y, [P.hazard, '#fff', P.lime], 14, 60);
+            G.toast('STOCKED ' + s.item.name, P.hazard);
             this.flash = { x: s.x, y: s.y, t: 0 };
           } else { G.audio.sfx('denied'); G.toast('NOT ENOUGH', P.warn); }
           return;
@@ -142,19 +147,17 @@
     onWheel(d) { G.cam.nudge(d > 0 ? 50 : -50); },
     update(dt) {
       this.t += dt;
-      G.updateFlies(dt);
-      G.updateDrips(dt, 178);
-      if (Math.random() < dt * 0.8) G.dripFrom(G.irand(10, 310), 10);
+      G.updateSteam(dt);
+      if (Math.random() < dt * 1.1) G.puffSteam(G.irand(10, 310), 176);
       if (this.flash) { this.flash.t += dt; if (this.flash.t > 0.5) this.flash = null; }
     },
     draw(g) {
       const t = this.t;
       const camX = Math.round(G.cam.x);
       G.R(g, 0, 0, G.W, G.H, P.night);
-      G.sewerWall(g, 0, 0, G.W, 130, t);
-      G.pipe(g, 0, 3, G.W, false, t);
-      G.grate(g, 40, 112, 34, 14);
-      G.drawDrips(g);
+      G.cityWall(g, 0, 0, G.W, 130, t);
+      G.conduit(g, 0, 2, G.W, false, P.cyan);
+      G.hangSign(g, 40, 108, 18, 16, P.magenta, t, 1);
       const sw = Math.sin(t * 1.1) * 12;
       G.R(g, 160 + sw * 0.3, 0, 1, 22, '#2e3d5c');
       G.box(g, 157 + sw, 21, 7, 6, '#ffe9a8', { lit: '#ffffff', dk: '#c9a83a', r: 1, band: 1 });
@@ -165,16 +168,16 @@
       G.cam.push(g);
       for (const z of ZONES) {
         G.box(g, z.x + z.w / 2 - 34, 34, 68, 12, '#161f33', { r: 1, band: 1, spec: false });
-        G.text(g, z.label, z.x + z.w / 2, 37, P.gold, { align: 'center' });
+        G.text(g, z.label, z.x + z.w / 2, 37, P.hazard, { align: 'center' });
         if (z.id === 'flavors') {
-          G.box(g, z.x, 50, z.w, 100, '#2b3f4a', { lit: '#415b6a', dk: '#1a2833', r: 2, band: 6 });
-          g.globalAlpha = 0.1; G.R(g, z.x + 3, 53, z.w - 6, 94, P.neonC); g.globalAlpha = 1;
+          G.box(g, z.x, 50, z.w, 100, '#1d3040', { lit: '#2f4c62', dk: '#0e1a24', r: 2, band: 6 });
+          g.globalAlpha = 0.12; G.R(g, z.x + 3, 53, z.w - 6, 94, P.cyan); g.globalAlpha = 1;
         } else if (z.id === 'upgrades') {
-          G.box(g, z.x, 50, z.w, 100, '#2b3a44', { lit: '#41545f', dk: '#1a252c', r: 2, band: 5 });
+          G.box(g, z.x, 50, z.w, 100, P.plateDk, { lit: P.plate, dk: P.plateDk2, r: 2, band: 5 });
           G.R(g, z.x + z.w - 9, 84, 4, 14, P.chrome);
         } else {
-          G.box(g, z.x, 50, z.w, 100, '#2f2618', { lit: '#463823', dk: '#1d1710', r: 2, band: 4 });
-          for (let r = 0; r < 2; r++) { G.R(g, z.x + 3, 88 + r * 50, z.w - 6, 4, '#4a3a26'); G.R(g, z.x + 3, 88 + r * 50, z.w - 6, 1, '#6b5638'); }
+          G.box(g, z.x, 50, z.w, 100, '#241d33', { lit: '#3c3150', dk: '#150f20', r: 2, band: 4 });
+          for (let r = 0; r < 2; r++) { G.R(g, z.x + 3, 88 + r * 50, z.w - 6, 4, '#3a2f4e'); G.R(g, z.x + 3, 88 + r * 50, z.w - 6, 1, P.violet); }
         }
       }
       for (const s of this.slots) {
@@ -187,37 +190,37 @@
           G.box(g, s.x - 7, s.y - 12, 14, 20, '#22303c', { r: 1, band: 2 });
           for (let k = 0; k < 5; k++) G.R(g, s.x - 5 + (k % 3) * 4, s.y - 7 + Math.floor(k / 3) * 4, 2, 2, G.topBitCol(s.item.id));
         } else {
-          const icon = { coldarm: 'suction', steady: 'scale', loupe: 'probe', sedative: 'fill', carbide: 'drill' }[s.item.id] || 'probe';
-          G.drawTool(g, icon, s.x, s.y + 8, { t });
+          const icon = { coldarm: 'vac', steady: 'swap', loupe: 'scan', sedative: 'oil', carbide: 'weld' }[s.item.id] || 'scan';
+          G.mechTool(g, icon, s.x, s.y + 8, { t });
         }
         g.globalAlpha = 1;
-        const nm = s.item.name.split(' ')[0].slice(0, 5);
+        const nm = s.item.name.split(' ')[0].slice(0, 6);
         const nw = G.tw(nm) + 6;
         G.R(g, s.x - nw / 2, s.y - 28, nw, 9, '#0d1220');
         G.text(g, nm, s.x, s.y - 26, owned ? P.steel2 : P.cream, { align: 'center' });
         const r = this.tagRect(s);
         if (owned) {
           G.box(g, r.x, r.y, r.w, r.h, '#16281a', { r: 1, band: 1, spec: false });
-          G.text(g, 'HELD', s.x, r.y + 2, P.neonG, { align: 'center' });
+          G.text(g, 'HELD', s.x, r.y + 2, P.lime, { align: 'center' });
         } else {
           const hov = G.inRect(G.mouse.wx, G.mouse.y, r.x - 3, r.y - 3, r.w + 6, r.h + 6);
           G.box(g, r.x, r.y, r.w, r.h, hov ? (afford ? '#2f5c28' : '#5c2b2b') : '#2a2418', { r: 1, band: 1, spec: false });
-          G.text(g, '$' + s.item.price, s.x, r.y + 2, afford ? P.gold : '#8a6a6a', { align: 'center' });
+          G.text(g, '$' + s.item.price, s.x, r.y + 2, afford ? P.hazard : '#6b5a60', { align: 'center' });
         }
         if (G.state.newIds.includes(s.item.id) && Math.sin(t * 6) > 0)
-          G.text(g, 'NEW', s.x + 12, s.y - 36, P.neonP, { out: OUT });
+          G.text(g, 'NEW', s.x + 12, s.y - 36, P.magentaLt, { out: OUT });
       }
       if (this.flash) {
         g.globalAlpha = 1 - this.flash.t / 0.5;
-        G.oc(g, this.flash.x, this.flash.y, 6 + this.flash.t * 40, P.gold);
+        G.oc(g, this.flash.x, this.flash.y, 6 + this.flash.t * 40, P.hazard);
         g.globalAlpha = 1;
       }
       G.cam.pop(g);
 
       G.box(g, 2, 2, 56, 12, '#161f33', { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.gold);
-      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.gold);
-      G.text(g, 'STOCKROOM', 160, 4, P.steel2, { align: 'center', out: OUT });
+      G.R(g, 6, 6, 4, 5, P.hazard);
+      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.hazard);
+      G.text(g, 'LOCK-UP', 160, 4, P.cyanLt, { align: 'center', out: OUT });
       // minimap
       const mw = 70, mx = 160 - mw / 2;
       G.R(g, mx, 16, mw, 4, '#0d1220');
@@ -233,7 +236,7 @@
       }
       G.drawBtn(g, 244, 160, 72, 16, 'NEXT DAY >', { col: '#a8621f' });
       G.text(g, 'DRAG THE FLOOR', 6, 166, '#3d5049');
-      G.drawFlies(g);
+      G.drawSteam(g);
       G.grade(g, 1);
     },
   };

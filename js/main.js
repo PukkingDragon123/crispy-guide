@@ -145,7 +145,7 @@
   // TITLE
   // ============================================================
   G.scenes.title = {
-    enter() { this.t = 0; G.audio.music('title'); G.cam.reset(0, 0, 0, 0); G.spawnFlies(5, 160, 60, 70); },
+    enter() { this.t = 0; G.audio.music('title'); G.cam.reset(0, 0, 0, 0); G.steam.length = 0; },
     hasSave() { return G.hasSave && (G.state.day > 1 || G.state.money > 0 || G.state.flavors.length > 3); },
     onDown(x, y) {
       const hs = this.hasSave();
@@ -153,52 +153,56 @@
       const ny = hs ? 138 : 124;
       if (G.inRect(x, y, 186, ny, 76, 16)) { G.audio.sfx('day'); G.reset(); G.newDayStats(); G.go('day', 'DAY 1'); }
     },
-    update(dt) { this.t += dt; G.updateFlies(dt); G.updateDrips(dt, 180); if (Math.random() < dt) G.dripFrom(G.irand(10, 310), 10); },
+    update(dt) { this.t += dt; G.updateSteam(dt); if (Math.random() < dt * 1.4) G.puffSteam(G.irand(10, 310), 178); },
     draw(gg) {
       const t = this.t;
-      // damp brick alley at night
-      G.R(gg, 0, 0, G.W, G.H, P.night);
-      G.sewerWall(gg, 0, 0, G.W, 120, t);
-      G.pipe(gg, 0, 3, G.W, false, t);
-      G.pipe(gg, 6, 12, 108, true, t);
-      G.pipe(gg, 300, 12, 96, true, t);
-      // moon through the grating
-      G.box(gg, 262, 16, 20, 20, '#e8e8f0', { lit: '#ffffff', dk: '#b0b0c0', r: 3, band: 3 });
-      G.R(gg, 272, 22, 4, 3, '#c8c8d8'); G.R(gg, 266, 28, 3, 2, '#c8c8d8');
-      // wet floor
-      G.R(gg, 0, 120, G.W, 60, P.night2);
-      G.R(gg, 0, 120, G.W, 1, P.night3);
-      G.grate(gg, 62, 150, 44, 14);
-      G.glow(gg, 160, 132, 120, 30, P.neonP, 0.8);
-      G.drawDrips(gg);
+      // a wet neon alley
+      G.R(gg, 0, 0, G.W, G.H, P.cityDk);
+      G.cityWall(gg, 0, 0, G.W, 122, t);
+      G.conduit(gg, 0, 2, G.W, false, P.cyan);
+      G.conduit(gg, 6, 12, 106, true, P.magenta);
+      G.conduit(gg, 302, 12, 94, true, P.violet);
+      G.hangSign(gg, 268, 20, 20, 18, P.cyan, t, 0);
+      G.hangSign(gg, 292, 20, 18, 16, P.magenta, t, 2);
+      // wet floor with the sign reflected in it
+      G.R(gg, 0, 122, G.W, 58, '#141726');
+      G.R(gg, 0, 122, G.W, 1, P.cityAcc);
+      G.glow(gg, 200, 134, 130, 30, P.magenta, 0.9);
+      for (let i = 0; i < 40; i++) {
+        const rx = (i * 37 + 11) % G.W;
+        G.R(gg, rx, 126 + ((i * 13) % 44), 2, 1, i % 3 ? '#1d2438' : '#2a3452');
+      }
 
-      // the proprietor, a big boxel croc bust behind the sign
-      G.drawBust(gg, 'gator', 92, 78, 0.86,
-        { t, open: 0.16 + Math.sin(t * 1.3) * 0.1, mood: 'angry', noBlink: 1 });
-      // ...holding a live drill up on a short sleeved forearm
-      G.box(gg, 120, 104, 20, 14, '#3a6b8a', { lit: '#5a93b4', dk: '#234356', r: 2, band: 3 });
-      G.drawTool(gg, 'drill', 137, 104, { active: true, t });
-      G.drawMitt(gg, 137, 106, { grip: 1 });
-      // a loaded cone waiting on the ledge on his other side
-      G.box(gg, 14, 116, 34, 6, '#3a4560', { lit: '#56628a', dk: '#232b3f', r: 1, band: 1 });
-      G.cone3(gg, 31, 116, [G.DATA.flavors[5].id, G.DATA.flavors[2].id], { w: 15, h: 16, sr: 9 });
+      // the proprietor: an ice cream robot behind the sign
+      const b = G.robotBust(gg, 'minty', 88, 74, 0.8,
+        { t, open: 0.2 + Math.sin(t * 1.3) * 0.12, mood: 'idle', noBlink: 1 });
+      // a soft-serve cone bolted to the crown, because of course
+      G.cone3(gg, 88, b.headTop - 2, [G.DATA.flavors[0].id], { w: 12, h: 12, sr: 7 });
+      // ...holding a live plasma welder up on a short armoured arm
+      G.box(gg, 118, 100, 20, 14, P.plateDk, { lit: P.plate, dk: P.plateDk2, r: 2, band: 3 });
+      G.R(gg, 120, 104, 16, 1, P.cyanDk);
+      G.mechTool(gg, 'weld', 136, 104, { active: true, t });
+      G.servoMitt(gg, 136, 106, { grip: 1 });
+      // a finished cone waiting on the ledge on the other side
+      G.box(gg, 12, 116, 34, 6, P.plate, { lit: P.plateLt, dk: P.plateDk, r: 1, band: 1 });
+      G.cone3(gg, 29, 116, [G.DATA.flavors[2].id, G.DATA.flavors[0].id], { w: 15, h: 16, sr: 9 });
 
       // neon sign
-      G.drawNeon(gg, 200, 44, 'DOUBLE LIFE', P.neonP, t, 2);
-      G.text(gg, 'SCOOP BY DAY   DRILL BY NIGHT', 200, 62, P.neonC, { align: 'center', out: OUTC });
-      G.R(gg, 140, 38, 120, 1, '#2e3d5c');
+      G.drawNeon(gg, 200, 42, 'DOUBLE LIFE', P.magenta, t, 2);
+      G.text(gg, 'SCOOP BY DAY   FIX BY NIGHT', 200, 60, P.cyanLt, { align: 'center', out: OUTC });
+      G.R(gg, 140, 36, 120, 1, P.cityAcc);
 
       const hs = this.hasSave();
       if (hs) {
-        G.drawBtn(gg, 186, 118, 76, 16, 'CONTINUE', { col: '#3d9a4a' });
-        G.drawBtn(gg, 186, 138, 76, 16, 'NEW GAME', { col: '#a83d5c' });
+        G.drawBtn(gg, 186, 118, 76, 16, 'CONTINUE', { col: '#2f8a48' });
+        G.drawBtn(gg, 186, 138, 76, 16, 'NEW GAME', { col: '#a8145c' });
         G.text(gg, 'DAY ' + G.state.day + '  $' + Math.round(G.state.money), 224, 108, P.steel2, { align: 'center', out: OUTC });
       } else {
-        G.drawBtn(gg, 186, 124, 76, 16, 'OPEN UP', { col: '#a83d5c' });
+        G.drawBtn(gg, 186, 124, 76, 16, 'OPEN UP', { col: '#a8145c' });
         G.text(gg, 'SELL THE SUGAR.', 224, 104, P.steel2, { align: 'center', out: OUTC });
-        G.text(gg, 'BILL FOR THE DAMAGE.', 224, 113, P.steel2, { align: 'center', out: OUTC });
+        G.text(gg, 'BILL FOR THE REPAIR.', 224, 113, P.steel2, { align: 'center', out: OUTC });
       }
-      G.drawFlies(gg);
+      G.drawSteam(gg);
       G.grade(gg, 1);
     },
   };

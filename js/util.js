@@ -75,6 +75,37 @@
     crocLt:   '#8ed95c',
     crocDk:   '#3d7a26',
     crocDk2:  '#2a5518',
+    // ---- cyberpunk: dark plated city, hot neon, cold chrome ----
+    city:     '#1b1d2e',   // wall panel
+    cityLt:   '#2b2e46',
+    cityDk:   '#11121e',
+    cityAcc:  '#3a3f5e',
+    plate:    '#3d4560',   // robot chassis plate
+    plateLt:  '#5b6688',
+    plateDk:  '#252b3d',
+    plateDk2: '#161a26',
+    hull:     '#8a93ad',   // bright bare metal
+    hullLt:   '#c2cbe0',
+    hullDk:   '#5a6278',
+    magenta:  '#ff2f8e',
+    magentaLt:'#ff7ab8',
+    magentaDk:'#a8145c',
+    cyan:     '#22e0ff',
+    cyanLt:   '#8af2ff',
+    cyanDk:   '#0f8aa8',
+    violet:   '#9a5cff',
+    violetLt: '#c49bff',
+    lime:     '#b6ff3a',
+    hazard:   '#ffb01f',
+    coolant:  '#3affd0',   // leaks, in place of blood
+    coolantDk:'#12a888',
+    coolantLt:'#a8ffe8',
+    oil:      '#2a1f3a',
+    oilLt:    '#4a3a5e',
+    sparkY:   '#fff2a8',
+    // sticky ice-cream damage
+    sugarCrust:'#f0e4c0',
+    syrupGoo: '#c93a6a',
   };
   G.OUT = P.ink;
   G.WHITE = P.cream;
@@ -347,7 +378,9 @@
       const s = G.rand(20, opts.force || 110);
       G.gore.push({
         x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: G.rand(0.5, 1.3),
-        r: G.rand(0.8, 2.2), col: Math.random() < 0.25 ? P.bloodLit : (Math.random() < 0.6 ? P.blood : P.bloodDk),
+        r: G.rand(0.8, 2.2),
+        col: opts.cols ? G.pick(opts.cols)
+          : (Math.random() < 0.25 ? P.bloodLit : (Math.random() < 0.6 ? P.blood : P.bloodDk)),
         floor: opts.floor === undefined ? null : opts.floor, stain: opts.stain !== false,
       });
     }

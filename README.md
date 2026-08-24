@@ -1,11 +1,12 @@
-# 🐊 DOUBLE LIFE
+# 🤖 DOUBLE LIFE
 
-**Sell the sugar. Bill for the damage.**
+**Sell the sugar. Bill for the repair.**
 
-A chunky pixel-art simulator at **320×180**. By day you run a grimy ice cream
-counter under a leaking sewer ceiling, carving scoops out of layered steel pints
-for a queue of amphibians and reptiles. By night you are the only dentist in
-town, and every patient in your chair is a customer you poisoned that afternoon.
+A chunky pixel-art simulator at **320×180**. By day you run a neon ice cream
+kiosk on a wet back street, carving scoops out of layered steel tubs for a
+queue of robots. By night you are the only mechanic in the district, and every
+machine on your bench is a customer whose gears you filled with sugar that
+afternoon.
 
 ![Title](screenshots/title.png)
 
@@ -14,126 +15,156 @@ assets — every sprite, sound and note is generated in code.
 
 ---
 
-## ☀️ The parlour
+## ☀️ The kiosk
 
-![The counter](screenshots/day.png)
+![The counter](screenshots/kiosk.png)
 
-A close two-shot: your pints on the left, your customer's enormous open mouth on
-the right, and a rusty sewer wall behind you both with pipes, a floor grate,
-drips and flies. Drag the floor to pan the counter over to the syrup bar.
+A close two-shot: your tubs on the left, a robot's enormous open intake on the
+right, and a plated city wall behind you both with conduit, neon signage,
+hanging glyph boxes and steam coming up off the pavement. Drag the floor to pan
+the counter over to the sauce bench.
+
+### You have to remember the order
+
+![Working from memory](screenshots/memory.png)
+
+The chit prints across the top of the wall — base, flavours with counts, sauce,
+toppings — and it is **readable for six seconds**. Then the cells redact
+themselves and you are working from memory.
+
+- **RECALL** re-prints it for a moment, and takes **$2** off the tip. It always
+  works. It is a cost, not a punishment.
+- The **ORDER BUFFER** upgrade keeps the chit up four seconds longer.
+- The green bar under the chit is patience. It is generous — forty seconds.
+
+### Some robots want something strange
+
+![A quirk](screenshots/quirks.png)
+
+Most machines have a habit, shown on its own tab beside the chit with a live
+progress bar. The quirk **never** blanks out — remembering a weird habit on top
+of the order is not fun; remembering the order is.
+
+| Habit | What it wants |
+|---|---|
+| **SPRINKLE ME** | Shake the jar over the *robot*, not the cone |
+| **SAUCE ME** | Pour the sauce over the robot's shell |
+| **HAND FEED ME** | No cone. Carry bare scoops to its intake and drop them in |
+| **ALL ONE FLAVOUR** | Every scoop the same |
+| **CUP ONLY** | Build it in a cup |
+| **NOTHING ON TOP** | No sauce, no toppings, at all |
+| **IN A HURRY** | Serve inside fourteen seconds for a fat tip |
+
+Whatever lands on the shell sticks there, and it counts toward tonight's sugar.
 
 ### Scooping
 
 ![Scooping](screenshots/scooping.png)
 
-Pints are **big rectangular tubs sliced into flavour strata, and every stratum is
-labelled right on the ice cream** — you can always see which band is which
-flavour. There are no meters and no timing windows:
+Tubs are **big rectangular vats sliced into flavour strata, and every stratum is
+labelled right on the ice cream** — vanilla, chocolate, strawberry, mint chip,
+coffee, cookies, banana, blueberry, pistachio, caramel. No meters, no timing
+windows:
 
-- **Press the band you want and hold.** The scoop digs in, a ball swells inside
-  the bowl, crumbs fly and the pitch rises until it comes free with a pop.
+- **Press the band you want and hold.** The scoop digs in, a ball swells in the
+  bowl, crumbs fly and the pitch rises until it comes free with a pop.
 - The tub visibly craters where you dug, and **stays** cratered for the shift.
-- **Carry the ball over and set it on the cone.** A dashed seat shows where it
+- **Keep holding, carry it over, and release.** A dashed seat shows where it
   lands; on release it squashes, settles and names itself.
 
-Scoops are round, hard-shaded balls — five flat tones taken off the sphere normal
-against one top-left key light, a square specular, drip lobes hanging off the
-lower rim and a churned ridge across the face. Waffle cones taper to a point with
-a lattice cut across them.
-
-Stack up to three, drizzle syrup whose droplets genuinely land, cling, run around
-the curve of a scoop and drip off the bottom, then shake a jar of grit that
-bounces and sticks where it falls. Serve.
-
-### Eating
+Scoops are round, hard-shaded balls — five flat tones taken off the sphere
+normal against one top-left key light, a square specular, drip lobes on the
+lower rim. Stack up to three, drizzle sauce whose droplets genuinely land,
+cling, run around the curve of a scoop and drip off the bottom, then shake a jar
+of toppings that bounces and sticks where it falls.
 
 ![Eating](screenshots/eating.png)
 
-Serve it and you watch them eat it. The cone comes up in a chunky mitt into the
-corner of a mouth that chomps at 3.4 Hz — wide open through most of the cycle,
+Serve it and you watch them eat it. The cone comes up in a servo claw into the
+corner of an intake that chomps at 3.4 Hz — wide open through most of the cycle,
 snapping shut on each bite. Whole scoops stay whole; the one being eaten shrinks
-bite by bite while crumbs spray. Every gram of sugar is logged against tonight.
+bite by bite.
 
-## 🌙 The clinic
+## 🌙 The workshop
 
-![The clinic](screenshots/clinic.png)
+![The workshop](screenshots/workshop.png)
 
-One hard lamp, eleven teeth filling the whole frame, and the kids from this
-afternoon staring down at you over their own gums.
+One inspection lamp, one robot opened up on the bench, six module bays filling
+the frame, and its head lolling back off the top watching you work.
 
-### You must name the disease before you may cut
+### Scan it, name it, then fix it
 
-![The notebook](screenshots/notebook.png)
+![The diagnostic tablet](screenshots/tablet.png)
 
-Probe a tooth to examine it, then open the **notebook** and match what you can see
-against the diagnosis list. Get it right and the tooth is charted and its
-procedure unlocks. Get it wrong and the patient jolts and the book stays open.
-Nothing can be treated until it is charted — identifying the disease is the whole
-puzzle.
+Scan a bay to pull up the **diagnostic tablet**: the scan image on the left, the
+symptom in plain words underneath, and **three candidate faults** on the right.
+Only three, ever. Get it right and the bay is logged and its repair unlocks.
+Get it wrong and the machine jolts and the tablet stays open.
 
-Eight findings, each with its own look and its own ordered fix:
+Eight faults, every one of them something you did to them this afternoon:
 
-| Finding | Presents as | Procedure |
+| Fault | Presents as | Repair |
 |---|---|---|
-| **Caries** | Black pit in the crown | Drill → fill |
-| **Tartar** | Crusted yellow-green buildup | Scale |
-| **Abscess** | Swollen bulge, pus head | Lance → suction |
-| **Fracture** | Jagged crack, sharp edges | Bond |
-| **Impaction** | Tilted, crowding its neighbour | Extract → suction |
-| **Necrosis** | Grey-dead, dark core | Drill → clear → seal |
-| **Foreign body** | Something wedged in the gap | Forceps |
-| **Gingivitis** | Gum weeping blood | Scale → suction |
+| **Sugar crust** | Hard crust welded over the contacts | Scrape |
+| **Syrup short** | Sauce pooled across the board, arcing | Vacuum → solder |
+| **Grit jam** | Sprinkles packed into the gear teeth | Blow |
+| **Cold seize** | Frosted, seized solid | Heat → oil |
+| **Dairy rot** | Soured cream eating the terminal | Vacuum → scrape → solder |
+| **Impact crack** | Housing split by something hard | Weld |
+| **Foreign body** | Something solid wedged in a slot | Pullers |
+| **Sugar surge** | Scorched board, fuse popped | Swap module → solder |
 
-### The instruments just work
+### The tools just work
 
-Once a tooth is charted, its procedure runs on feel, not on timing. Hold the
-instrument and it happens, with one honest progress bar and a lot of feedback:
+Once a bay is logged, its repair runs on feel, not on timing. Hold the tool and
+it happens, with one honest progress bar and a lot of feedback:
 
-- **Drill** — hold on the lesion until the decay is bored out. No nerve to hit.
-- **Scaler** — drag over the crust and it flakes off in chips.
-- **Scalpel** — put the blade on the swelling and it opens.
-- **Elevator** — hold and waggle; the tooth wobbles further each time and then
-  comes out with a crack, a gush and a dark bleeding socket.
-- **Forceps** — grip the wedged object and pull away.
-- **Filler** — hold to pack the hole full.
-- **Suction** — blood pools, stains and runs down the teeth, and it stays there.
-  The field must be clear before you can discharge.
+- **Scraper** — drag over the crust and it flakes off in chips.
+- **Blower** — hold and the sprinkles lift out of the gear, which then spins.
+- **Vacuum** — coolant pools, stains and runs, and it stays there. The bay must
+  be clear before you can sign off.
+- **Heater** — hold on the frost until it steams off.
+- **Oiler** — hold to flood the bearing.
+- **Solder** — hold to re-run the joint, with sparks.
+- **Welder** — hold to close the crack, with a hard arc and a screen flash.
+- **Pullers** — grip the wedged object and drag it out.
+- **Swapper** — hold and waggle; the dead module rocks further each time and
+  then comes out with a crack, a gush of coolant and an empty socket.
 
-There is an **OUCH** readout that rises while you work and settles on its own. It
-is there for the wince, not to punish you — nothing in the clinic can cost you a
-case.
+There is a **LOAD** readout that rises while you work and settles on its own. It
+is there for the wince, not to punish you — nothing in the workshop can cost you
+a job.
 
-## 🛒 The stockroom
+## 🛒 The lock-up
 
-![Stockroom](screenshots/stockroom.png)
+![The lock-up](screenshots/lockup.png)
 
-Pan a back room under one swinging bulb. Everything for sale is a physical object
-on a shelf with a name plate and a price tag: a chest freezer of pints, a rack of
-syrups, jars of grit, and a steel cabinet of clinic upgrades (Carbide Burr,
-Surgeon Loupe, Steady Claw, Sedative Gas). Richer flavours mean sweeter orders,
-which means worse teeth, which means better nights.
+Pan a back room under one work lamp. Everything for sale is a physical object on
+a shelf with a name plate and a price tag: a chest of flavour vats, a rack of
+sauces, jars of toppings, and a cabinet of workshop upgrades (Chill Coil, Servo
+Grip, Order Buffer, Surge Damper, Plasma Bit). Richer flavours mean sweeter
+orders, which means worse faults, which means better nights.
 
 ## The cast
 
-Twelve amphibians and reptiles, all dressed and all built out of hard-edged
-boxel volumes. Every face is a big rounded skull slab with:
+Twelve machines, all built out of hard-edged boxel volumes. Every one has:
 
-- **Big cartoon eyes** — a quantised round ball in a hard black rim, a fat
-  coloured iris, a slit pupil for the reptiles and a fat dot for the amphibians,
-  one square catch-light, working lids and brows that go angry, worried or sick.
-  They stay legible from 6 px to 26 px.
-- **A mouth that really opens** — the jaw drops in front of the chest, framed in
-  hard black, with an upper tooth row, a domed tongue with a median furrow, a
-  darkening throat and a lower tooth row on the jaw lip.
-- **Real cloth** — waistcoats, dungarees with straps, hoodies, jerseys, lab
-  coats, aprons and scarves, each with a wrapped collar, set-in shoulder seams,
-  fabric folds and a hem shadow. Hats and glasses on top.
-- **Per-species build** — width, height, snout length, eye size and jaw throw all
-  vary, so the cast rigs to genuinely different sizes.
+- **A glowing optic** — a quantised round lens in a hard black rim, a bright
+  metal bezel, a fat coloured iris around a white-hot core, a scan band sweeping
+  the glass, one square catch-light, and armour shades that go angry, worried or
+  sick. Legible from 6 px to 26 px.
+- **An intake hatch that really opens** — the jaw drops in front of the chest
+  inside a hard black frame, with metal crusher plates top and bottom, a lit
+  conveyor belt for a tongue and a darkening throat behind it.
+- **Its own chassis** — colour ramp, neon accent, head variant (brick, dome,
+  bucket, CRT bezel, visor) and head furniture (whip antenna, fin array, dish,
+  twin aerials, hazard lamp).
+- **Its own build** — width, height, jaw throw and optic size all vary, so the
+  cast rigs to genuinely different sizes.
 
-Bullfrog · cane toad · tree frog · axolotl · fire newt · pit viper · python ·
-gecko · iguana · gator kid · snapper · salamander. You are the crocodile, and
-what you show of yourself is a small chunky mitt holding the tool.
+Dozer · Sable · Chrome · Minty · Rustbolt · Violetta · Pixel · Medibot · Tank ·
+Neonkid · Cargo · Spindle. You are the ice cream robot, and what you show of
+yourself is a small servo claw holding the tool.
 
 ## Tech
 
@@ -143,14 +174,13 @@ what you show of yourself is a small chunky mitt holding the tool.
   bands, 1 px black outlines, no dithered gradients pretending to be soft
 - Round things are quantised per scanline with real terminators and rim light —
   never flat discs, never rounded squares standing in for balls
-- Characters are a procedural rig: skull, eye sockets, snout, jaw, chest, then
-  cloth, then accessories. Limbs fill from a densified spine as a single span
-  per scanline, so they read as tubes rather than strings of spheres
-- Layered pints with a live dig surface and on-band flavour labels
+- Robots are a procedural rig: chassis plate, optics, intake, hatch, pauldrons,
+  cable looms, then head furniture
+- Layered tubs with a live dig surface and on-band flavour labels
 - Custom 5×7 bitmap font
-- All audio synthesised with WebAudio: wet squelches, bone cracks, drill whine,
-  suction, screams, and two sequenced tracks
-- Droplet, particle, gore and carve simulation, not canned animation
+- All audio synthesised with WebAudio: servo whines, arc zaps, clanks, vacuum,
+  drills, boot chimes, and two sequenced tracks
+- Droplet, particle, coolant and carve simulation, not canned animation
 - Save via `localStorage`; mouse and touch
 
 Made with Claude Code.

@@ -1,7 +1,10 @@
 // ============================================================
-// DOUBLE LIFE v3 - night.js  ·  THE CLINIC
-// 320x180. The patient's head fills the frame. Probe a tooth,
-// name it in the notebook, then the instruments just work.
+// DOUBLE LIFE v4 - night.js  ·  THE WORKSHOP
+// 320x180. A robot lies open on the bench, its chassis cavity
+// filling the frame with six module bays. Scan a bay, name the
+// fault on the diagnostic tablet, and the tools just work.
+//
+// Every fault in here is something you did to them this afternoon.
 // ============================================================
 (function () {
   const G = window.GAME;
@@ -9,136 +12,158 @@
   const OUT = P.ink;
 
   const TRAY_Y = 158;
-  const TOOLS = ['probe', 'scale', 'drill', 'fill', 'forceps', 'extract', 'lance', 'suction'];
-  const MAW = { x: 10, y: 22, w: 300, h: 128 };
-  const NUP = 6, NLO = 5;
+  const TOOLS = ['scan', 'scrape', 'blow', 'vac', 'heat', 'oil', 'solder', 'weld', 'pull', 'swap'];
+  const CAV = { x: 16, y: 40, w: 288, h: 98 };
+  const NBAY = 6;                                  // 3 across, 2 down
+  const DX_CANDIDATES = 3;                         // the tablet narrows it to three
 
   const night = (G.scenes = G.scenes || {}).night = {
     enter() {
       if (!G.state.today) G.newDayStats();
       this.t = 0;
-      this.tool = 'probe';
+      this.tool = 'scan';
       this.book = false;
-      this.bookTooth = null;
+      this.bookBay = null;
       this.act = null;
       this.chips = [];
       this.pulled = [];
       this.pi = -1;
       this.msg = null; this.msgT = 0;
-      this.pain = 0;
+      this.load = 0;                               // the "OVERLOAD" readout
       this.doneAll = false;
-      this.flinch = 0;
+      this.jolt = 0;
       G.cam.reset(0, 0, 0, 0);
-      G.spawnFlies(5, 160, 80, 60);
-      const src = (G.state.today.patients || []).slice();
+      G.steam.length = 0;
+      const src = (G.state.today.jobs || []).slice();
       this.queue = src.length ? src
-        : [{ sp: 'gator', name: 'CHOMP', sugar: 14, symptoms: ['caries', 'tartar', 'abscess'] }];
+        : [{ sp: 'dozer', name: 'DOZ-9', sugar: 14, faults: ['sugarcrust', 'sprinklejam', 'syrupshort'] }];
       G.audio.music('night');
       this.next();
-      if (!G.state.tut.clinic) {
-        G.state.tut.clinic = 1;
-        G.toast('PROBE A TOOTH, NAME IT IN THE BOOK', P.neonC);
+      if (!G.state.tut.shop) {
+        G.state.tut.shop = 1;
+        this.say('SCAN A BAY, THEN NAME IT ON THE TABLET', P.cyanLt);
+        this.msgT = 5;
       }
     },
 
-    layout(cav) {
-      const teeth = [];
-      const us = Math.floor(cav.w / NUP);
-      for (let i = 0; i < NUP; i++) {
-        teeth.push({ x: cav.x + 3 + i * us, y: cav.y + 3, w: us - 9, h: 24, up: true, i, tilt: 0 });
+    layout() {
+      const bays = [];
+      const cols = 3, rows = 2;
+      const bw = Math.floor((CAV.w - 20) / cols) - 8;
+      const bh = Math.floor((CAV.h - 14) / rows) - 6;
+      for (let r = 0; r < rows; r++) {
+        for (let cI = 0; cI < cols; cI++) {
+          bays.push({
+            x: CAV.x + 12 + cI * (bw + 12),
+            y: CAV.y + 8 + r * (bh + 10),
+            w: bw, h: bh, i: r * cols + cI,
+            fault: null, scanned: false, charted: false, step: 0, done: false, flash: 0,
+          });
+        }
       }
-      const ls = Math.floor((cav.w - 24) / NLO);
-      for (let i = 0; i < NLO; i++) {
-        teeth.push({ x: cav.x + 16 + i * ls, y: cav.y + cav.h - 27, w: ls - 9, h: 24, up: false, i: i + NUP, tilt: 0 });
-      }
-      for (const th of teeth) {
-        th.sym = null; th.examined = false; th.charted = false; th.step = 0; th.done = false; th.flash = 0;
-      }
-      return teeth;
+      return bays;
     },
 
-    materialise(th, kind) {
-      const w = th.w, h = th.h;
+    materialise(m, kind) {
+      const w = m.w, h = m.h;
       const s = { kind };
-      if (kind === 'caries') { s.lx = w * 0.5; s.ly = h * 0.45; s.r = G.rand(4, 6); s.stage = 'decay'; s.fill = 0; }
-      if (kind === 'necrosis') { s.lx = w * 0.5; s.ly = h * 0.46; s.r = G.rand(5, 7); s.opened = false; s.fill = 0; }
-      if (kind === 'tartar') {
+      if (kind === 'sugarcrust') {
         s.blobs = [];
         for (let i = 0, n = G.irand(2, 3); i < n; i++)
-          s.blobs.push({ x: G.rand(4, w - 4), y: th.up ? G.rand(h * 0.6, h - 4) : G.rand(4, h * 0.4), r: G.rand(3, 5), gone: false });
+          s.blobs.push({ x: G.rand(6, w - 6), y: G.rand(h * 0.55, h - 5), r: G.rand(3, 5), gone: false });
       }
-      if (kind === 'abscess') { s.lx = w * 0.5; s.ly = th.up ? h + 5 : -5; s.r = G.rand(6, 8); s.lanced = false; }
-      if (kind === 'fracture') {
-        s.lx = w * 0.5; s.bonded = false; s.pts = [];
-        let cy = th.up ? 3 : h - 3;
-        for (let i = 0; i < 3; i++) { cy += (th.up ? 1 : -1) * (h / 3.4); s.pts.push({ x: w * 0.5 + G.rand(-4, 4), y: cy }); }
+      if (kind === 'syrupshort') { s.jx = w * 0.5 + G.rand(-6, 6); s.jy = h * 0.62; s.cleaned = false; s.soldered = false; }
+      if (kind === 'sprinklejam') {
+        s.freed = false; s.bits = [];
+        for (let i = 0, n = G.irand(4, 6); i < n; i++)
+          s.bits.push({ x: w * 0.5 + G.rand(-9, 9), y: h * 0.5 + G.rand(-9, 9), col: G.pick(G.MULTI_COLS.sprinkles), gone: false });
       }
-      if (kind === 'foreign') {
-        s.lx = Math.random() < 0.5 ? 2 : w - 6; s.ly = h * 0.42;
-        s.w = G.irand(4, 5); s.h = G.irand(7, 10);
-        s.col = G.pick(['#f4f0e0', '#a8813a', '#4a4a7a', '#ff5c9c']);
+      if (kind === 'coldseize') {
+        s.thawed = false; s.oiled = false; s.crystals = [];
+        for (let i = 0, n = G.irand(4, 6); i < n; i++)
+          s.crystals.push({ x: G.rand(3, w - 5), y: G.rand(3, h - 5), w: G.irand(2, 4), h: G.irand(2, 4) });
+      }
+      if (kind === 'dairyrot') { s.corner = Math.random() < 0.5 ? 0 : 1; s.cleaned = false; s.cut = false; s.soldered = false; }
+      if (kind === 'nutcrack') {
+        s.welded = false; s.pts = [];
+        let cy = 2;
+        for (let i = 0; i < 4; i++) { s.pts.push({ x: w * 0.3 + G.rand(-6, 10), y: cy }); cy += h / 3.2; }
+      }
+      if (kind === 'wedged') {
+        s.lx = Math.random() < 0.5 ? 3 : w - 9; s.ly = h * 0.34;
+        s.w = G.irand(4, 6); s.h = G.irand(7, 10);
+        s.col = G.pick(['#c9a06a', '#e8d8b0', '#3a2418', '#6ee06e', '#d8a03a']);
         s.grabbed = false; s.pulled = false;
       }
-      if (kind === 'gingiva') { s.cleaned = false; s.prog = 0; }
-      if (kind === 'impacted') { th.tilt = G.rand(0.24, 0.4) * (Math.random() < 0.5 ? -1 : 1); s.out = false; }
-      th.sym = s;
+      if (kind === 'overload') { s.swapped = false; s.soldered = false; }
+      m.fault = s;
     },
 
     next() {
-      G.audio.loop('drill', false); G.audio.loop('scrape', false); G.audio.loop('suction', false);
+      G.audio.loop('drill', false); G.audio.loop('scrape', false);
+      G.audio.loop('suction', false); G.audio.loop('goo', false);
       this.pi++;
-      this.act = null; this.book = false; this.bookTooth = null;
-      this.pain = 0;
+      this.act = null; this.book = false; this.bookBay = null;
+      this.load = 0;
       G.clearGore();
       this.chips.length = 0; this.pulled.length = 0;
       if (this.pi >= this.queue.length) { this.doneAll = true; return; }
       const p = this.queue[this.pi];
       this.p = p;
-      this.cav = { x: MAW.x + 8, y: MAW.y + Math.round(MAW.h * 0.34) + 5,
-                   w: MAW.w - 16, h: MAW.h - Math.round(MAW.h * 0.34) - Math.round(MAW.h * 0.2) - 10 };
-      this.teeth = this.layout(this.cav);
-      const idx = this.teeth.map((_, i) => i).sort(() => Math.random() - 0.5);
+      this.model = G.modelOf(p.sp);
+      this.bays = this.layout();
+      const idx = this.bays.map((_, i) => i).sort(() => Math.random() - 0.5);
       let k = 0;
-      for (const sid of p.symptoms) { if (k >= idx.length) break; this.materialise(this.teeth[idx[k++]], sid); }
-      this.mood = 'worry'; this.moodT = 0; this.winT = 0;
-      G.audio.sfx('doorbell');
-      G.toast(p.name + ' · ' + p.symptoms.length + ' FINDING' + (p.symptoms.length > 1 ? 'S' : ''), P.neonC);
+      for (const fid of p.faults) { if (k >= idx.length) break; this.materialise(this.bays[idx[k++]], fid); }
+      this.mood = 'worried'; this.moodT = 0; this.winT = 0;
+      G.audio.sfx('boot');
+      G.toast(p.name + ' · ' + p.faults.length + ' FAULT' + (p.faults.length > 1 ? 'S' : ''), P.cyanLt);
     },
 
     // ---------- helpers ----------
-    sick() { return this.teeth.filter((th) => th.sym && !th.done); },
-    fieldDirty() { return G.stains.length > 5; },
-    canFinish() { return this.sick().length === 0 && !this.fieldDirty() && this.winT === 0; },
+    broken() { return this.bays.filter((m) => m.fault && !m.done); },
+    bayDirty() { return G.stains.length > 10; },
+    canFinish() { return this.broken().length === 0 && !this.bayDirty() && this.winT === 0; },
     say(m, col) { this.msg = m; this.msgCol = col || P.warn; this.msgT = 2.2; },
-    hurt(a, agony) {
-      this.pain = G.clamp(this.pain + a * (G.hasUp('sedative') ? 0.5 : 0.8), 0, 0.96);
-      this.mood = agony ? 'agony' : 'worry';
-      this.moodT = agony ? 0.8 : 0.4;
+    stress(a, big) {
+      this.load = G.clamp(this.load + a * (G.hasUp('sedative') ? 0.5 : 0.8), 0, 0.96);
+      this.mood = big ? 'angry' : 'worried';
+      this.moodT = big ? 0.8 : 0.4;
     },
     pay(amt, x, y, label) {
       G.state.today.nightEarn += amt;
       G.flyCoin(x, y, amt);
-      G.floatText((label ? label + ' ' : '') + '+$' + amt, x, y - 8, P.neonG);
+      G.floatText((label ? label + ' ' : '') + '+$' + amt, x, y - 8, P.lime);
     },
-    toothAt(x, y, pad) {
+    bayAt(x, y, pad) {
       pad = pad === undefined ? 4 : pad;
-      for (const th of this.teeth) if (G.inRect(x, y, th.x - pad, th.y - pad, th.w + pad * 2, th.h + pad * 2)) return th;
+      for (const m of this.bays) if (G.inRect(x, y, m.x - pad, m.y - pad, m.w + pad * 2, m.h + pad * 2)) return m;
       return null;
     },
-    step(th) { return th.sym && th.charted ? G.sympById(th.sym.kind).steps[th.step] : null; },
-    advance(th) {
-      const sym = G.sympById(th.sym.kind);
-      th.step++;
-      if (th.step >= sym.steps.length) {
-        th.done = true; th.flash = 0.5;
-        this.mood = 'relief'; this.moodT = 1.2;
+    step(m) { return m.fault && m.charted ? G.faultById(m.fault.kind).steps[m.step] : null; },
+    // the tablet only ever offers three answers: the real one plus two decoys
+    candidates(m) {
+      if (m.dxList) return m.dxList;
+      const all = G.DATA.faults.map((f) => f.id).filter((id) => id !== m.fault.kind);
+      const pickTwo = [];
+      const shuffled = all.sort(() => Math.random() - 0.5);
+      for (let i = 0; i < DX_CANDIDATES - 1; i++) pickTwo.push(shuffled[i]);
+      m.dxList = [m.fault.kind].concat(pickTwo).sort(() => Math.random() - 0.5);
+      return m.dxList;
+    },
+    advance(m) {
+      const f = G.faultById(m.fault.kind);
+      m.step++;
+      if (m.step >= f.steps.length) {
+        m.done = true; m.flash = 0.5;
+        this.mood = 'happy'; this.moodT = 1.2;
         G.audio.sfx('clean');
-        G.spark(th.x + th.w / 2, th.y + th.h / 2, ['#fff', P.neonC], 10);
-        this.pay(sym.pay, th.x + th.w / 2, th.y + th.h / 2, 'FIXED');
+        G.spark(m.x + m.w / 2, m.y + m.h / 2, ['#fff', P.lime], 12);
+        this.pay(f.pay, m.x + m.w / 2, m.y + m.h / 2, 'FIXED');
         G.state.today.fixed++; G.state.totFixed++;
       } else {
         G.audio.sfx('fillDone');
-        this.say('NEXT: ' + G.toolById(sym.steps[th.step]).name, P.neonC);
+        this.say('NEXT: ' + G.toolById(f.steps[m.step]).name, P.cyanLt);
       }
     },
 
@@ -148,24 +173,25 @@
 
       if (this.book) {
         if (G.inRect(x, y, 268, 12, 42, 13)) { this.book = false; G.audio.sfx('bookFlip'); return; }
-        const list = G.DATA.symptoms;
+        const m = this.bookBay;
+        if (!m || !m.fault) { this.book = false; return; }
+        const list = this.candidates(m);
         for (let i = 0; i < list.length; i++) {
-          const ry = 40 + i * 15;
-          if (G.inRect(x, y, 160, ry, 148, 14)) {
-            const th = this.bookTooth;
-            if (!th || !th.sym) { this.book = false; return; }
-            if (list[i].id === th.sym.kind) {
-              th.charted = true;
-              if (!G.state.dxSeen.includes(list[i].id)) G.state.dxSeen.push(list[i].id);
+          const ry = 54 + i * 22;
+          if (G.inRect(x, y, 158, ry, 152, 20)) {
+            const f = G.faultById(list[i]);
+            if (list[i] === m.fault.kind) {
+              m.charted = true;
+              if (!G.state.dxSeen.includes(f.id)) G.state.dxSeen.push(f.id);
               G.audio.sfx('dxRight');
-              this.pay(5, th.x + th.w / 2, th.y + th.h / 2, 'CHARTED');
-              this.say('IT IS ' + list[i].dx + ' - USE THE ' + G.toolById(list[i].steps[0]).name, P.neonG);
+              this.pay(5, m.x + m.w / 2, m.y + m.h / 2, 'LOGGED');
+              this.say('IT IS ' + f.dx + ' - USE THE ' + G.toolById(f.steps[0]).name, P.lime);
               this.book = false;
             } else {
               G.audio.sfx('dxWrong');
               G.state.today.misdx++; G.state.totMisdx++;
-              this.flinch = 0.4; this.hurt(0.08, false);
-              this.say('NO. LOOK AGAIN.', P.blood);
+              this.jolt = 0.4; this.stress(0.08, false);
+              this.say('NO. RESCAN IT.', P.magenta);
               G.shake(2, 0.2);
             }
             return;
@@ -177,59 +203,53 @@
       // tray
       if (y >= TRAY_Y) {
         for (let i = 0; i < TOOLS.length; i++) {
-          if (G.inRect(x, y, 3 + i * 24, TRAY_Y + 3, 22, 18)) {
+          if (G.inRect(x, y, 2 + i * 19, TRAY_Y + 3, 17, 18)) {
             if (this.tool !== TOOLS[i]) { this.tool = TOOLS[i]; this.act = null; G.audio.sfx('clack'); }
             return;
           }
         }
-        if (G.inRect(x, y, 199, TRAY_Y + 3, 42, 18)) { this.book = true; G.audio.sfx('bookOpen'); return; }
-        if (G.inRect(x, y, 245, TRAY_Y + 3, 70, 18)) {
+        if (G.inRect(x, y, 196, TRAY_Y + 3, 46, 18)) { this.book = true; G.audio.sfx('bookOpen'); return; }
+        if (G.inRect(x, y, 246, TRAY_Y + 3, 70, 18)) {
           if (this.canFinish()) this.finish();
-          else if (this.sick().length) this.say('FINDINGS STILL OPEN', P.warn);
-          else this.say('SUCTION THE BLOOD FIRST', P.warn);
+          else if (this.broken().length) this.say('FAULTS STILL OPEN', P.warn);
+          else this.say('VACUUM THE SPILL FIRST', P.warn);
         }
         return;
       }
 
-      if (this.tool === 'suction') { this.act = { type: 'suction' }; return; }
+      if (this.tool === 'vac') { this.act = { type: 'vac' }; return; }
 
-      const th = this.toothAt(x, y);
-      if (!th) return;
+      const m = this.bayAt(x, y);
+      if (!m) return;
 
-      if (this.tool === 'probe') {
+      if (this.tool === 'scan') {
         G.audio.sfx('probe');
-        if (!th.sym) { this.say('THIS ONE IS FINE', P.steel2); return; }
-        th.examined = true; this.bookTooth = th; this.book = true;
+        if (!m.fault) { this.say('THIS BAY IS CLEAN', P.steel2); return; }
+        m.scanned = true; this.bookBay = m; this.book = true;
         G.audio.sfx('bookOpen');
         return;
       }
-      if (!th.sym) { G.audio.sfx('denied'); this.say('LEAVE THE GOOD ONES', P.warn); return; }
-      if (!th.examined) { G.audio.sfx('denied'); this.say('PROBE IT FIRST', P.warn); return; }
-      if (!th.charted) { G.audio.sfx('denied'); this.say('NAME IT IN THE BOOK', P.warn); this.book = true; this.bookTooth = th; return; }
-      if (th.done) { this.say('ALREADY DONE', P.steel2); return; }
-      const need = this.step(th);
+      if (!m.fault) { G.audio.sfx('denied'); this.say('LEAVE THE GOOD ONES', P.warn); return; }
+      if (!m.scanned) { G.audio.sfx('denied'); this.say('SCAN IT FIRST', P.warn); return; }
+      if (!m.charted) { G.audio.sfx('denied'); this.say('NAME IT ON THE TABLET', P.warn); this.book = true; this.bookBay = m; return; }
+      if (m.done) { this.say('ALREADY DONE', P.steel2); return; }
+      const need = this.step(m);
       if (this.tool !== need) { G.audio.sfx('denied'); this.say('NEEDS THE ' + G.toolById(need).name, P.warn); return; }
 
-      const s = th.sym;
-      if (this.tool === 'drill') this.act = { type: 'drill', th, depth: 0 };
-      else if (this.tool === 'fill') this.act = { type: 'fill', th, level: 0 };
-      else if (this.tool === 'scale') this.act = { type: 'scale', th };
-      else if (this.tool === 'lance') {
-        s.lanced = true;
-        G.audio.sfx('lance');
-        G.bleed(th.x + s.lx, th.y + s.ly, 16, { dir: th.up ? Math.PI / 2 : -Math.PI / 2, force: 90, floor: th.up ? this.cav.y + this.cav.h : this.cav.y + this.cav.h });
-        for (let i = 0; i < 8; i++) this.chips.push({ x: th.x + s.lx, y: th.y + s.ly, vx: G.rand(-50, 50), vy: G.rand(-60, -10), col: P.pus, t: 0, life: 0.5 });
-        G.state.today.blood += 6;
-        G.screenFlash(P.pus, 0.08);
-        this.mood = 'relief'; this.moodT = 1.2;
-        this.advance(th);
-      } else if (this.tool === 'forceps') {
-        if (G.dist(x, y, th.x + s.lx, th.y + s.ly) > 12) { this.say('GRIP THE OBJECT', P.warn); return; }
+      const s = m.fault;
+      if (this.tool === 'scrape') this.act = { type: 'scrape', m };
+      else if (this.tool === 'blow') this.act = { type: 'blow', m, prog: 0 };
+      else if (this.tool === 'heat') this.act = { type: 'heat', m, prog: 0 };
+      else if (this.tool === 'oil') this.act = { type: 'oil', m, prog: 0 };
+      else if (this.tool === 'solder') this.act = { type: 'solder', m, prog: 0 };
+      else if (this.tool === 'weld') this.act = { type: 'weld', m, prog: 0 };
+      else if (this.tool === 'pull') {
+        if (G.dist(x, y, m.x + s.lx + s.w / 2, m.y + s.ly + s.h / 2) > 14) { this.say('GRIP THE OBJECT', P.warn); return; }
         s.grabbed = true;
-        this.act = { type: 'forceps', th, sx: x, sy: y };
+        this.act = { type: 'pull', m, sx: x, sy: y };
         G.audio.sfx('grab');
-      } else if (this.tool === 'extract') {
-        this.act = { type: 'extract', th, loose: 0, lastSide: 0 };
+      } else if (this.tool === 'swap') {
+        this.act = { type: 'swap', m, loose: 0, lastSide: 0 };
         G.audio.sfx('grab');
       }
     },
@@ -237,21 +257,22 @@
     onUp() {
       const a = this.act;
       if (!a) return;
-      if (a.type === 'drill') G.audio.loop('drill', false);
-      if (a.type === 'fill') G.audio.loop('goo', false);
-      if (a.type === 'scale') G.audio.loop('scrape', false);
-      if (a.type === 'suction') G.audio.loop('suction', false);
-      if (a.type === 'forceps' && a.th.sym) a.th.sym.grabbed = false;
+      if (a.type === 'blow' || a.type === 'weld') G.audio.loop('drill', false);
+      if (a.type === 'oil' || a.type === 'solder' || a.type === 'heat') G.audio.loop('goo', false);
+      if (a.type === 'scrape') G.audio.loop('scrape', false);
+      if (a.type === 'vac') G.audio.loop('suction', false);
+      if (a.type === 'pull' && a.m.fault) a.m.fault.grabbed = false;
       this.act = null;
     },
 
     finish() {
-      let bonus = 8;
-      if (G.state.today.misdx === 0) bonus += 5;
-      this.pay(bonus, 160, 80, 'CLEAN');
+      let bonus = 9;
+      if (G.state.today.misdx === 0) bonus += 6;
+      this.pay(bonus, 160, 80, 'SIGNED OFF');
       G.audio.sfx('perfect');
       this.winT = 0.01;
-      this.mood = 'relief';
+      this.mood = 'happy';
+      G.state.totJobs++;
     },
 
     // ---------- update ----------
@@ -260,11 +281,12 @@
       if (this.doneAll) { G.audio.stopAllLoops(); G.save(); G.go('summary', 'BOOKS CLOSED'); return; }
       const M = G.mouse;
       if (this.msgT > 0) this.msgT -= dt;
-      if (this.flinch > 0) this.flinch -= dt;
-      if (this.moodT > 0) { this.moodT -= dt; if (this.moodT <= 0) this.mood = 'worry'; }
-      this.pain = Math.max(0, this.pain - dt * 0.09);
-      for (const th of this.teeth) if (th.flash > 0) th.flash -= dt;
-      G.updateFlies(dt);
+      if (this.jolt > 0) this.jolt -= dt;
+      if (this.moodT > 0) { this.moodT -= dt; if (this.moodT <= 0) this.mood = 'worried'; }
+      this.load = Math.max(0, this.load - dt * 0.1);
+      for (const m of this.bays) if (m.flash > 0) m.flash -= dt;
+      G.updateSteam(dt);
+      if (Math.random() < dt * 1.1) G.puffSteam(G.irand(10, 310), 176);
 
       if (this.winT > 0) {
         this.winT += dt;
@@ -274,125 +296,180 @@
       }
 
       const a = this.act;
-      let drilling = false, scraping = false, sucking = false;
-      const floor = this.cav.y + this.cav.h;
+      let blowing = false, scraping = false, sucking = false, gooing = false;
+      const floor = CAV.y + CAV.h - 8;
 
-      if (a && a.type === 'drill' && M.down) {
-        const th = a.th, s = th.sym;
-        if (G.dist(M.x, M.y, th.x + s.lx, th.y + s.ly) < s.r + 14) {
-          drilling = true;
-          a.depth += dt * (G.hasUp('carbide') ? 1.15 : 0.62);
-          if (Math.random() < 0.6) this.chips.push({ x: th.x + s.lx + G.rand(-2, 2), y: th.y + s.ly, vx: G.rand(-40, 40), vy: G.rand(-50, -15), col: G.pick(['#3a2410', '#b0a488', '#f4f0e0']), t: 0, life: 0.35 });
-          G.shake(0.5, 0.05);
-          if (a.depth >= 1) {
-            if (s.kind === 'necrosis') s.opened = true; else s.stage = 'drilled';
-            G.audio.sfx('crack');
-            G.spark(th.x + s.lx, th.y + s.ly, ['#f4f0e0', '#b0a488'], 10);
-            G.bleed(th.x + s.lx, th.y + s.ly, 5, { force: 45, floor });
-            G.state.today.blood += 2;
-            this.hurt(0.06, false);
-            this.advance(th);
-            this.act = null;
-            G.audio.loop('drill', false);
-          }
-        }
-      }
-      G.audio.loop('drill', drilling, 1);
-
-      if (a && a.type === 'fill' && M.down) {
-        const th = a.th, s = th.sym;
-        a.level += dt * 0.8;
-        s.fill = G.clamp(a.level, 0, 1);
-        G.audio.loop('goo', true, 0.85);
-        if (a.level >= 1) {
-          s.fill = 1; if (s.pts) s.bonded = true;
-          G.audio.loop('goo', false);
-          G.audio.sfx('fillDone');
-          G.spark(th.x + th.w / 2, th.y + th.h / 2, ['#fff', P.chrome], 10);
-          this.advance(th);
-          this.act = null;
-        }
-      } else if (a && a.type === 'fill') G.audio.loop('goo', false);
-
-      if (a && a.type === 'scale' && M.down) {
-        const th = a.th, s = th.sym;
+      // ---- SCRAPER: flake the crust off, or cut back a rotted terminal ----
+      if (a && a.type === 'scrape' && M.down) {
+        const m = a.m, s = m.fault;
         scraping = Math.hypot(M.vx, M.vy) > 10;
-        if (s.kind === 'tartar') {
+        if (s.kind === 'sugarcrust') {
           for (const b of s.blobs) {
             if (b.gone) continue;
-            if (G.dist(M.x, M.y, th.x + b.x, th.y + b.y) < b.r + 8) {
-              b.r -= dt * 12;
-              if (Math.random() < 0.5) this.chips.push({ x: th.x + b.x, y: th.y + b.y, vx: G.rand(-30, 30), vy: G.rand(-40, -8), col: P.plaque, t: 0, life: 0.4 });
-              if (b.r <= 1.4) { b.gone = true; G.audio.sfx('scrape'); G.spark(th.x + b.x, th.y + b.y, ['#fff', P.plaqueLt], 8); }
+            if (G.dist(M.x, M.y, m.x + b.x, m.y + b.y) < b.r + 13) {
+              b.r -= dt * 17;
+              if (Math.random() < 0.5) this.chips.push({ x: m.x + b.x, y: m.y + b.y, vx: G.rand(-30, 30), vy: G.rand(-40, -8), col: P.sugarCrust, t: 0, life: 0.4 });
+              if (b.r <= 1.4) { b.gone = true; G.audio.sfx('scrape'); G.spark(m.x + b.x, m.y + b.y, ['#fff', P.sugarCrust], 8); }
             }
           }
-          if (s.blobs.every((b) => b.gone)) { this.advance(th); G.audio.loop('scrape', false); this.act = null; }
-        } else if (s.kind === 'gingiva') {
-          const gy = th.up ? th.y + th.h : th.y;
-          if (Math.abs(M.y - gy) < 16 && M.x > th.x - 6 && M.x < th.x + th.w + 6) {
-            s.prog += dt * 0.8;
-            if (Math.random() < 0.3) { G.bleed(M.x, M.y, 2, { force: 30, floor }); G.state.today.blood += 1; }
-            if (s.prog >= 1) { s.cleaned = true; this.advance(th); G.audio.loop('scrape', false); this.act = null; }
-          }
+          if (s.blobs.every((b) => b.gone)) { this.advance(m); G.audio.loop('scrape', false); this.act = null; }
+        } else if (s.kind === 'dairyrot') {
+          a.prog = (a.prog || 0) + dt * 0.85;
+          if (Math.random() < 0.4) this.chips.push({ x: M.x, y: M.y, vx: G.rand(-26, 26), vy: G.rand(-40, -8), col: '#9aad3a', t: 0, life: 0.4 });
+          if (a.prog >= 1) { s.cut = true; this.advance(m); G.audio.loop('scrape', false); this.act = null; }
         }
       }
       G.audio.loop('scrape', scraping, 0.9);
 
-      if (a && a.type === 'forceps' && M.down) {
-        const th = a.th, s = th.sym;
+      // ---- BLOWER: blast the sprinkles out of the gear ----
+      if (a && a.type === 'blow' && M.down) {
+        const m = a.m, s = m.fault;
+        blowing = true;
+        a.prog += dt * (G.hasUp('carbide') ? 1.5 : 0.85);
+        for (const b of s.bits) {
+          if (b.gone) continue;
+          b.x += G.rand(-1, 1) * 4; b.y -= dt * 22;
+          if (b.y < -4) {
+            b.gone = true;
+            this.chips.push({ x: m.x + b.x, y: m.y + b.y, vx: G.rand(-50, 50), vy: G.rand(-70, -20), col: b.col, t: 0, life: 0.5 });
+          }
+        }
+        G.shake(0.5, 0.05);
+        if (a.prog >= 1) {
+          s.freed = true;
+          for (const b of s.bits) b.gone = true;
+          G.audio.sfx('zap');
+          G.spark(m.x + m.w / 2, m.y + m.h / 2, ['#fff', P.cyanLt], 14);
+          this.advance(m);
+          this.act = null;
+          G.audio.loop('drill', false);
+        }
+      }
+
+      // ---- HEATER: thaw the frost ----
+      if (a && a.type === 'heat' && M.down) {
+        const m = a.m, s = m.fault;
+        gooing = true;
+        a.prog += dt * 0.8;
+        for (const c of s.crystals) if (Math.random() < dt * 6) { c.w = Math.max(1, c.w - 1); c.h = Math.max(1, c.h - 1); }
+        if (Math.random() < 0.3) G.puffSteam(m.x + G.rand(4, m.w - 4), m.y + G.rand(4, m.h - 4));
+        if (a.prog >= 1) {
+          s.thawed = true;
+          G.audio.sfx('fillDone');
+          G.spark(m.x + m.w / 2, m.y + m.h / 2, ['#fff', P.coolantLt], 10);
+          this.advance(m);
+          this.act = null;
+        }
+      }
+
+      // ---- OILER: flood the bearing ----
+      if (a && a.type === 'oil' && M.down) {
+        const m = a.m, s = m.fault;
+        gooing = true;
+        a.prog += dt * 0.9;
+        if (Math.random() < 0.4) this.chips.push({ x: M.x, y: M.y, vx: G.rand(-10, 10), vy: G.rand(10, 30), col: '#6b5028', t: 0, life: 0.35 });
+        if (a.prog >= 1) {
+          s.oiled = true;
+          G.audio.sfx('fillDone');
+          this.advance(m);
+          this.act = null;
+        }
+      }
+
+      // ---- SOLDER: re-run the joint ----
+      if (a && a.type === 'solder' && M.down) {
+        const m = a.m, s = m.fault;
+        gooing = true;
+        a.prog += dt * 0.85;
+        if (Math.random() < 0.5) this.chips.push({ x: M.x + G.rand(-2, 2), y: M.y, vx: G.rand(-14, 14), vy: G.rand(-30, -6), col: P.hullLt, t: 0, life: 0.3 });
+        if (Math.random() < 0.2) G.puffSteam(M.x, M.y);
+        if (a.prog >= 1) {
+          s.soldered = true;
+          G.audio.sfx('fillDone');
+          G.spark(m.x + m.w / 2, m.y + m.h / 2, ['#fff', P.hazard], 10);
+          this.advance(m);
+          this.act = null;
+        }
+      }
+
+      // ---- WELDER: close the crack, with a lot of arc ----
+      if (a && a.type === 'weld' && M.down) {
+        const m = a.m, s = m.fault;
+        blowing = true;
+        a.prog += dt * (G.hasUp('carbide') ? 1.4 : 0.78);
+        if (Math.random() < 0.8) this.chips.push({ x: M.x + G.rand(-3, 3), y: M.y, vx: G.rand(-70, 70), vy: G.rand(-80, -10), col: Math.random() < 0.5 ? '#ffffff' : P.cyanLt, t: 0, life: 0.4 });
+        G.shake(0.7, 0.05);
+        if (a.prog >= 1) {
+          s.welded = true;
+          G.audio.sfx('weld'); G.screenFlash(P.cyanLt, 0.1);
+          G.spark(m.x + m.w / 2, m.y + m.h / 2, ['#fff', P.cyanLt, P.hazard], 16);
+          this.advance(m);
+          this.act = null;
+          G.audio.loop('drill', false);
+        }
+      }
+      G.audio.loop('drill', blowing, 1);
+      G.audio.loop('goo', gooing, 0.85);
+
+      // ---- PULLERS: draw the wedged object out ----
+      if (a && a.type === 'pull' && M.down) {
+        const m = a.m, s = m.fault;
         if (G.dist(M.x, M.y, a.sx, a.sy) > 12) {
           s.pulled = true;
           G.audio.sfx('wetPull');
-          this.pulled.push({ x: th.x + s.lx, y: th.y + s.ly, vx: G.rand(-25, 25), vy: -80, col: s.col, w: s.w, h: s.h, t: 0 });
-          G.bleed(th.x + s.lx, th.y + s.ly, 5, { force: 50, floor });
-          G.state.today.blood += 2;
-          this.advance(th);
+          this.pulled.push({ x: m.x + s.lx, y: m.y + s.ly, vx: G.rand(-25, 25), vy: -80, col: s.col, w: s.w, h: s.h, t: 0 });
+          G.bleed(m.x + s.lx, m.y + s.ly, 4, { force: 45, floor, cols: ['#4a3a5e', '#2a1f3a', '#6b5a80'] });
+          G.state.today.mess += 2;
+          this.advance(m);
           this.act = null;
         }
       }
 
-      if (a && a.type === 'extract' && M.down) {
-        const th = a.th;
-        a.loose = G.clamp(a.loose + dt * 0.22, 0, 1);
+      // ---- SWAPPER: rock the dead module out of its socket ----
+      if (a && a.type === 'swap' && M.down) {
+        const m = a.m;
+        a.loose = G.clamp(a.loose + dt * 0.3, 0, 1);
         const dir = M.vx > 40 ? 1 : M.vx < -40 ? -1 : 0;
         if (dir !== 0 && dir !== a.lastSide) {
           a.lastSide = dir;
-          a.loose = G.clamp(a.loose + 0.14, 0, 1);
-          G.audio.sfx('clack');
-          th.tilt = (th.tilt || 0) + dir * 0.05;
-          G.bleed(th.x + th.w / 2, th.up ? th.y + th.h : th.y, 3, { force: 35, floor });
-          G.state.today.blood += 1;
+          a.loose = G.clamp(a.loose + 0.16, 0, 1);
+          G.audio.sfx('clank');
+          m.tilt = (m.tilt || 0) + dir * 0.04;
           G.shake(1.2, 0.08);
         }
         if (a.loose >= 1) {
-          G.audio.sfx('crack'); G.audio.sfx('spurt');
-          G.screenFlash(P.blood, 0.16);
-          G.shake(5, 0.4);
-          G.bleed(th.x + th.w / 2, th.up ? th.y + th.h : th.y, 26, { dir: th.up ? Math.PI / 2 : -Math.PI / 2, force: 120, floor });
-          for (let i = 0; i < 4; i++) G.addOoze(th.x + G.rand(2, th.w - 2), th.up ? th.y + th.h - 3 : th.y + 3, P.blood, G.rand(6, 16));
-          G.state.today.blood += 18;
-          this.pulled.push({ x: th.x + th.w / 2, y: th.y + th.h / 2, vx: G.rand(-30, 30), vy: -110, col: P.bone, w: th.w * 0.5, h: th.h * 0.55, t: 0, tooth: true });
-          th.sym.out = true;
-          this.hurt(0.16, true);
-          this.flinch = 0.6;
-          this.advance(th);
+          G.audio.sfx('crack'); G.audio.sfx('zap');
+          G.screenFlash(P.cyanLt, 0.14);
+          G.shake(4, 0.35);
+          G.bleed(m.x + m.w / 2, m.y + m.h / 2, 14, { dir: -Math.PI / 2, force: 100, floor, cols: ['#3affd0', '#12a888', '#a8ffe8'] });
+          for (let i = 0; i < 3; i++) G.addOoze(m.x + G.rand(2, m.w - 2), m.y + m.h - 3, P.coolantDk, G.rand(6, 14));
+          G.state.today.mess += 14;
+          this.pulled.push({ x: m.x + m.w / 2, y: m.y + m.h / 2, vx: G.rand(-30, 30), vy: -110, col: '#1d3a30', w: m.w * 0.6, h: m.h * 0.6, t: 0, module: true });
+          m.fault.swapped = true;
+          m.tilt = 0;
+          this.stress(0.16, true);
+          this.jolt = 0.5;
+          this.advance(m);
           this.act = null;
         }
       }
 
-      if (a && a.type === 'suction' && M.down) {
+      // ---- VACUUM: clear the bay ----
+      if (a && a.type === 'vac' && M.down) {
         sucking = true;
         for (let i = G.stains.length - 1; i >= 0; i--) {
           const s = G.stains[i];
-          if (G.dist(M.x, M.y, s.x, s.y) < 16) { s.r -= dt * 20; if (s.r <= 1) G.stains.splice(i, 1); }
+          if (G.dist(M.x, M.y, s.x, s.y) < 24) { s.r -= dt * 30; if (s.r <= 1) G.stains.splice(i, 1); }
         }
-        for (let i = G.ooze.length - 1; i >= 0; i--) if (G.dist(M.x, M.y, G.ooze[i].x, G.ooze[i].y) < 16) G.ooze.splice(i, 1);
-        const th = this.toothAt(M.x, M.y, 14);
-        if (th && th.charted && !th.done && this.step(th) === 'suction') {
-          th.sucked = (th.sucked || 0) + dt;
-          if (th.sucked > 0.7) this.advance(th);
+        for (let i = G.ooze.length - 1; i >= 0; i--) if (G.dist(M.x, M.y, G.ooze[i].x, G.ooze[i].y) < 24) G.ooze.splice(i, 1);
+        const m = this.bayAt(M.x, M.y, 14);
+        if (m && m.charted && !m.done && this.step(m) === 'vac') {
+          m.vacd = (m.vacd || 0) + dt;
+          if (m.fault.kind === 'syrupshort') m.fault.cleaned = true;
+          if (m.fault.kind === 'dairyrot') m.fault.cleaned = true;
+          if (m.vacd > 0.7) this.advance(m);
         }
-      } else if (a && a.type === 'suction' && !M.down) this.act = null;
+      } else if (a && a.type === 'vac' && !M.down) this.act = null;
       G.audio.loop('suction', sucking, 1);
 
       for (let i = this.chips.length - 1; i >= 0; i--) {
@@ -405,195 +482,173 @@
         p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 200 * dt;
         if (p.t > 1.4) this.pulled.splice(i, 1);
       }
-      for (const th of this.teeth) {
-        if (th.sym && th.charted && !th.done && Math.random() < dt * 0.4)
-          G.addOoze(th.x + G.rand(2, th.w - 2), th.up ? th.y + th.h - 2 : th.y + 2, P.bloodDk, G.rand(2, 6));
+      // untreated faults keep weeping
+      for (const m of this.bays) {
+        if (m.fault && m.charted && !m.done && Math.random() < dt * 0.35)
+          G.addOoze(m.x + G.rand(2, m.w - 2), m.y + m.h - 2, P.oilLt, G.rand(2, 6));
       }
     },
 
     // ---------- draw ----------
     draw(g) {
-      G.toastY = 126;                  // down on the lower jaw, off the teeth
+      G.toastY = 20; G.toastCX = 0;
       const t = this.t;
-      if (!this.teeth) return;
+      if (!this.bays) return;
 
-      // ---- sewer clinic room ----
-      G.R(g, 0, 0, G.W, G.H, P.night);
-      G.sewerWall(g, 0, 0, G.W, 120, t);
-      G.pipe(g, 0, 4, G.W, false, t);
-      G.pipe(g, 2, 14, 96, true, t);
-      G.grate(g, 12, 128, 34, 14);
-      // one bare bulb over the chair
-      const sw = Math.sin(t * 0.9) * 5;
-      G.R(g, 160 + sw * 0.4, 0, 1, 14, '#2e3d5c');
-      G.box(g, 157 + sw, 13, 8, 7, '#ffe9a8', { lit: '#ffffff', dk: '#c9a83a', r: 1, band: 1 });
-      G.glow(g, 160 + sw, 26, 90, 60, '#ffdf9a', 1.1);
-      G.R(g, 0, 120, G.W, 60, P.night2);
-      G.R(g, 0, 120, G.W, 1, P.night3);
+      // ---- the workshop ----
+      G.R(g, 0, 0, G.W, G.H, P.cityDk);
+      G.cityWall(g, 0, 0, G.W, G.H, t);
+      G.conduit(g, 0, 2, G.W, false, P.magenta);
+      // the inspection lamp
+      const lampY = 8;
+      G.R(g, 158, 0, 3, lampY, P.plateDk);
+      G.box(g, 132, lampY, 56, 7, P.plateDk, { lit: P.plate, dk: P.plateDk2, r: 1, band: 1 });
+      G.R(g, 136, lampY + 6, 48, 2, '#fff8d8');
+      G.glow(g, 160, 60, 190, 96, '#ffeec0', 1.3);
+      // the bench
+      G.box(g, 0, CAV.y + CAV.h + 8, G.W, 26, P.plate, { lit: P.plateLt, dk: P.plateDk, r: 2, band: 4 });
 
-      // ---- the patient ----
-      const cav = G.drawMaw(g, this.p.sp, MAW.x, MAW.y, MAW.w, MAW.h, {
-        t, mood: this.winT > 0 ? 'relief' : this.mood, flinch: this.flinch > 0,
-      });
-      for (const th of this.teeth) this.drawTooth(g, th, t);
+      // ---- the robot on the bench ----
+      const jx = this.jolt > 0 ? Math.round(Math.sin(t * 60) * 2) : 0;
+      g.save(); g.translate(jx, 0);
+      G.chassisFrame(g, CAV.x, CAV.y, CAV.w, CAV.h, this.model, t);
+      // its head, tipped back off the top of the cavity, watching you work
+      const hx = CAV.x + 36;
+      G.robotBust(g, this.p.sp, hx, CAV.y - 16, 0.44,
+        { t, open: this.mood === 'angry' ? 0.8 : 0.2, mood: this.mood });
 
+      // ---- bays ----
+      for (const m of this.bays) {
+        const sel = G.inRect(G.mouse.x, G.mouse.y, m.x - 4, m.y - 4, m.w + 8, m.h + 8);
+        // bay label
+        G.R(g, m.x - 2, m.y - 9, 22, 8, P.plateDk2);
+        G.text(g, 'B' + (m.i + 1), m.x, m.y - 8, m.done ? P.lime : m.fault ? P.hazard : P.steel);
+        g.save();
+        if (m.tilt) { g.translate(m.x + m.w / 2, m.y + m.h); g.rotate(m.tilt); g.translate(-(m.x + m.w / 2), -(m.y + m.h)); }
+        G.moduleBox(g, m, { dead: m.fault && m.fault.kind === 'overload' && !m.fault.swapped, fixed: m.done || !m.fault });
+        if (m.fault) G.drawFault(g, m.fault.kind, m, m.fault, t);
+        g.restore();
+        if (m.flash > 0) {
+          g.globalAlpha = m.flash * 1.6;
+          G.rr(g, m.x - 3, m.y - 3, m.w + 6, m.h + 6, P.lime);
+          g.globalAlpha = 1;
+        }
+        // selection frame + state pip
+        if (sel && !this.book) {
+          const c = m.done ? P.lime : m.fault ? P.hazard : P.steel;
+          for (let i = 0; i < 4; i++) {
+            const cx2 = m.x - 3 + (i % 2) * (m.w + 4), cy2 = m.y - 3 + ((i >> 1) & 1) * (m.h + 4);
+            G.R(g, cx2, cy2, 3, 1, c); G.R(g, cx2, cy2, 1, 3, c);
+          }
+        }
+        if (m.fault && !m.done) {
+          const pip = m.charted ? P.lime : m.scanned ? P.hazard : P.magenta;
+          if (Math.sin(t * 5 + m.i) > -0.4) G.R(g, m.x + m.w - 3, m.y - 8, 5, 5, pip);
+        }
+      }
       G.drawGoreWorld(g);
-      for (const p of this.chips) { g.globalAlpha = 1 - p.t / p.life; G.R(g, p.x, p.y, 2, 2, p.col); g.globalAlpha = 1; }
+      for (const p of this.chips) G.R(g, p.x, p.y, 2, 2, p.col);
       for (const p of this.pulled) {
         g.globalAlpha = G.clamp(1.4 - p.t, 0, 1);
-        if (p.tooth) G.box(g, p.x - p.w / 2, p.y - p.h / 2, p.w, p.h, P.bone, { r: 1, band: 1, spec: false });
-        else G.box(g, p.x, p.y, p.w, p.h, p.col, { r: 1, band: 0, spec: false });
+        if (p.module) G.box(g, p.x - p.w / 2, p.y - p.h / 2, p.w, p.h, p.col, { lit: '#2f5c48', dk: '#0d1a14', r: 1, band: 1 });
+        else G.box(g, p.x - p.w / 2, p.y - p.h / 2, p.w, p.h, p.col, { r: 1, band: 1 });
         g.globalAlpha = 1;
       }
-      G.drawFlies(g);
-
-      // ---- mitt + instrument ----
-      const M = G.mouse;
-      if (M.y < TRAY_Y - 4 && M.x >= 0) {
-        const jig = (this.act && this.act.type === 'drill' && M.down) ? Math.sin(t * 50) * 1 : 0;
-        G.drawTool(g, this.tool, Math.round(M.x + jig), Math.round(M.y), { active: M.down, t, grip: M.down });
-        G.drawMitt(g, Math.round(M.x + jig), Math.round(M.y) + 12, { grip: M.down });
-        G.hideCursor = true;
-      }
-
-      // ---- progress bar for the current procedure ----
-      const a = this.act;
-      if (a && (a.type === 'drill' || a.type === 'fill' || a.type === 'extract' ||
-                (a.type === 'scale' && a.th.sym.kind === 'gingiva'))) {
-        let prog = 0, lab = '';
-        if (a.type === 'drill') { prog = a.depth; lab = 'BORING'; }
-        else if (a.type === 'fill') { prog = a.level; lab = 'PACKING'; }
-        else if (a.type === 'extract') { prog = a.loose; lab = 'LOOSENING'; }
-        else { prog = a.th.sym.prog || 0; lab = 'SCALING'; }
-        prog = G.clamp(prog, 0, 1);
-        G.box(g, 106, 140, 108, 11, '#161f33', { r: 1, band: 1, spec: false });
-        G.R(g, 109, 143, 102, 5, '#0d1220');
-        G.R(g, 109, 143, Math.round(102 * prog), 5, G.mix(P.amber, P.neonG, prog));
-        G.text(g, lab, 160, 131, P.steel2, { align: 'center', out: OUT });
-      }
+      g.restore();
+      G.drawSteam(g);
 
       // ---- HUD ----
-      G.box(g, 2, 2, 52, 12, '#161f33', { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.gold);
-      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.gold);
-      G.box(g, 58, 2, 44, 12, '#161f33', { r: 1, band: 1, spec: false });
-      G.text(g, (this.pi + 1) + '/' + this.queue.length, 62, 4, P.neonC);
-      const open = this.sick().length;
-      G.box(g, 106, 2, 62, 12, '#161f33', { r: 1, band: 1, spec: false });
-      G.text(g, open ? open + ' TO FIX' : 'ALL FIXED', 110, 4, open ? P.warn : P.neonG);
-      if (this.fieldDirty()) {
-        G.box(g, 172, 2, 54, 12, '#161f33', { r: 1, band: 1, spec: false });
-        G.text(g, 'BLOODY', 176, 4, P.bloodLit);
+      G.box(g, 2, 2, 50, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.R(g, 6, 6, 4, 5, P.hazard);
+      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.hazard);
+      G.box(g, 56, 2, 46, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.text(g, (this.pi + 1) + '/' + this.queue.length, 60, 4, P.cyanLt);
+      const open = this.broken().length;
+      G.box(g, 106, 2, 62, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.text(g, open ? open + ' TO FIX' : 'ALL CLEAR', 110, 4, open ? P.warn : P.lime);
+      if (this.bayDirty()) {
+        G.box(g, 172, 2, 40, 12, P.ink2, { r: 1, band: 1, spec: false });
+        G.text(g, 'SPILL', 176, 4, P.coolantLt);
       }
-      // ouch meter, kept up in the HUD row where the patient can't cover it
-      G.box(g, 212, 2, 86, 12, '#161f33', { r: 1, band: 1, spec: false });
-      G.text(g, 'OUCH', 216, 4, P.steel, {});
-      G.R(g, 244, 5, 50, 6, '#0d1220');
-      G.R(g, 244, 5, Math.round(50 * this.pain), 6, this.pain > 0.6 ? P.bloodLit : P.amber);
+      // overload readout
+      G.box(g, 216, 2, 82, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.text(g, 'LOAD', 220, 4, P.steel2);
+      G.R(g, 246, 5, 48, 6, '#0d1220');
+      G.R(g, 246, 5, Math.round(48 * this.load), 6, this.load > 0.6 ? P.magenta : P.hazard);
 
       if (this.msgT > 0) {
         const w = G.tw(this.msg) + 10;
         g.globalAlpha = Math.min(1, this.msgT * 2);
-        G.box(g, 160 - w / 2, 139, w, 12, '#1a0d14', { r: 1, band: 1, spec: false });
-        G.text(g, this.msg, 160, 142, this.msgCol, { align: 'center' });
+        G.box(g, 160 - w / 2, 141, w, 12, '#140f22', { r: 1, band: 1, spec: false });
+        G.text(g, this.msg, 160, 144, this.msgCol, { align: 'center' });
         g.globalAlpha = 1;
       }
 
       // ---- tray ----
-      G.R(g, 0, TRAY_Y - 2, G.W, G.H - TRAY_Y + 2, '#101828');
-      G.R(g, 0, TRAY_Y - 2, G.W, 1, P.night3);
+      G.R(g, 0, TRAY_Y - 2, G.W, G.H - TRAY_Y + 2, '#0c0d16');
+      G.R(g, 0, TRAY_Y - 2, G.W, 1, P.cyanDk);
       for (let i = 0; i < TOOLS.length; i++) {
-        const bx = 3 + i * 24, sel = this.tool === TOOLS[i];
-        G.box(g, bx, TRAY_Y + 3, 22, 18, sel ? '#3d7ac8' : '#1c2740', { r: 1, band: 2, spec: false });
-        G.drawTool(g, TOOLS[i], bx + 11, TRAY_Y + 18, { t });
+        const bx = 2 + i * 19, on = this.tool === TOOLS[i];
+        G.box(g, bx, TRAY_Y + 3, 17, 18, on ? P.cyanDk : '#1a1e2a', { r: 1, band: 1, spec: false });
+        if (on) G.R(g, bx, TRAY_Y + 3, 17, 1, P.cyanLt);
+        G.mechTool(g, TOOLS[i], bx + 9, TRAY_Y + 20, { t, active: on && this.act });
       }
-      G.box(g, 199, TRAY_Y + 3, 42, 18, '#5c4a8a', { r: 1, band: 2 });
-      G.text(g, 'BOOK', 220, TRAY_Y + 9, '#e8e0ff', { align: 'center' });
-      const cf = this.canFinish();
-      G.box(g, 245, TRAY_Y + 3, 70, 18, cf ? '#3d9a4a' : '#28323f', { r: 1, band: 2 });
-      G.text(g, 'DISCHARGE', 280, TRAY_Y + 9, cf ? '#e8ffe8' : '#5a6470', { align: 'center' });
+      G.box(g, 196, TRAY_Y + 3, 46, 18, this.book ? P.violet : '#3a2a5c', { r: 1, band: 2 });
+      G.text(g, 'TABLET', 219, TRAY_Y + 8, '#f0e8ff', { align: 'center' });
+      const fin = this.canFinish();
+      G.box(g, 246, TRAY_Y + 3, 70, 18, fin ? '#2f8a48' : '#20242e', { r: 1, band: 2 });
+      G.text(g, 'SIGN OFF', 281, TRAY_Y + 8, fin ? '#e8ffe8' : '#4a5060', { align: 'center' });
 
-      if (this.book) this.drawBook(g, t);
+      // ---- the tablet ----
+      if (this.book) this.tablet(g);
 
       if (this.winT > 0) {
-        g.globalAlpha = Math.min(0.7, this.winT * 0.6);
-        G.R(g, 0, 0, G.W, G.H, '#0d1220');
+        g.globalAlpha = Math.min(0.7, this.winT * 0.9);
+        G.R(g, 0, 0, G.W, G.H, P.cityDk);
         g.globalAlpha = 1;
-        G.text(g, 'DISCHARGED', 160, 74, P.neonC, { align: 'center', out: OUT, sc: 2 });
-        G.text(g, 'THEY ALWAYS COME BACK', 160, 94, P.steel2, { align: 'center', out: OUT });
+        G.text(g, this.p.name + ' REBOOTED', 160, 74, P.lime, { align: 'center', out: OUT, sc: 2 });
+        G.text(g, 'NEXT ON THE BENCH', 160, 94, P.cyanLt, { align: 'center', out: OUT });
       }
       G.grade(g, 1);
     },
 
-    drawTooth(g, th, t) {
-      const s = th.sym;
-      if (s && s.kind === 'impacted' && s.out) {
-        // socket
-        G.box(g, th.x + 2, th.up ? th.y + th.h - 12 : th.y, th.w - 4, 12, '#3d0f1c', { r: 1, band: 1, spec: false });
-        G.speckle(g, th.x + 3, th.up ? th.y + th.h - 11 : th.y + 1, th.w - 6, 10, P.blood, 0.28, th.i);
-        return;
-      }
-      g.save();
-      if (th.tilt) {
-        g.translate(th.x + th.w / 2, th.y + th.h / 2);
-        g.rotate(th.tilt);
-        g.translate(-(th.x + th.w / 2), -(th.y + th.h / 2));
-      }
-      G.tooth3(g, th, { dead: s && s.kind === 'necrosis' });
-      if (s) G.drawSymptom(g, s.kind, th, s, t);
-      if (th.done) G.text(g, '✓', th.x + th.w / 2, th.up ? th.y + 3 : th.y + th.h - 10, '#3d9a4a', { align: 'center', out: OUT });
-      else if (th.charted) G.text(g, '' + (th.step + 1), th.x + th.w / 2, th.up ? th.y + 3 : th.y + th.h - 10, P.gold, { align: 'center', out: OUT });
-      else if (th.examined) G.text(g, '?', th.x + th.w / 2, th.up ? th.y + 3 : th.y + th.h - 10, P.warn, { align: 'center', out: OUT });
-      if (th.flash > 0) { g.globalAlpha = th.flash * 1.5; G.rr2(g, th.x, th.y, th.w, th.h, '#ffffff'); g.globalAlpha = 1; }
-      g.restore();
-    },
+    // the diagnostic tablet: the scan on the left, three answers on the right
+    tablet(g) {
+      const t = this.t;
+      const m = this.bookBay;
+      G.box(g, 6, 8, 308, 146, '#141a2a', { lit: '#232c44', dk: '#0a0d16', r: 2, band: 3, spec: false });
+      G.R(g, 8, 10, 304, 1, P.cyanDk);
+      G.text(g, 'DIAGNOSTIC', 12, 14, P.cyanLt);
+      G.text(g, this.p.name + '  BAY ' + (m ? m.i + 1 : '?'), 12, 24, P.steel2);
+      G.box(g, 268, 12, 42, 13, '#5c2030', { r: 1, band: 1 });
+      G.text(g, 'CLOSE', 289, 15, '#ffd8e0', { align: 'center' });
 
-    drawBook(g, t) {
-      g.globalAlpha = 0.72; G.R(g, 0, 0, G.W, G.H, '#0d1220'); g.globalAlpha = 1;
-      G.box(g, 6, 8, 308, 148, '#c9c0a0', { lit: '#ddd4b4', dk: '#a89a78', r: 2, band: 3, spec: false });
-      G.R(g, 158, 10, 2, 144, '#a89a78');
-      G.text(g, 'CASE', 12, 14, '#3a3524');
-      G.text(g, 'WHAT IS IT?', 164, 14, '#3a3524');
-      G.box(g, 268, 12, 42, 13, '#8a4a3a', { r: 1, band: 2 });
-      G.text(g, 'CLOSE', 289, 15, '#ffe8e0', { align: 'center' });
+      if (!m || !m.fault) { G.text(g, 'NOTHING SELECTED', 160, 80, P.steel, { align: 'center' }); return; }
+      const f = G.faultById(m.fault.kind);
+      // the scan image
+      G.faultThumb(g, m.fault.kind, 14, 38, 128, 74, t);
+      G.R(g, 14, 116, 128, 1, P.cyanDk);
+      // the sign, wrapped over two lines
+      const words = f.sign.split(' ');
+      let l1 = '', l2 = '';
+      for (const w of words) { if (G.tw(l1 + w) < 122) l1 += (l1 ? ' ' : '') + w; else l2 += (l2 ? ' ' : '') + w; }
+      G.text(g, l1, 14, 122, P.cream);
+      if (l2) G.text(g, l2, 14, 132, P.cream);
+      if (G.hasUp('loupe') && f.book) G.text(g, 'LOGGED ' + G.state.dxSeen.length + '/' + G.DATA.faults.length, 14, 144, P.steel);
 
-      const th = this.bookTooth;
-      if (th && th.sym) {
-        const sym = G.sympById(th.sym.kind);
-        G.text(g, this.p.name + '  TOOTH ' + (th.i + 1), 12, 26, '#5a5238');
-        // magnified specimen
-        G.box(g, 12, 36, 62, 66, '#3d0f1c', { r: 1, band: 1, spec: false });
-        g.save();
-        g.beginPath(); g.rect(13, 37, 60, 64); g.clip();
-        g.translate(43, 70); g.scale(1.9, 1.9); g.translate(-(th.x + th.w / 2), -(th.y + th.h / 2));
-        G.tooth3(g, th, { dead: th.sym.kind === 'necrosis' });
-        G.drawSymptom(g, th.sym.kind, th, th.sym, t);
-        g.restore();
-        // the sign, wrapped
-        const words = sym.sign.split(' ');
-        let line = '', ly = 108;
-        for (const w of words) {
-          if (G.tw(line + ' ' + w) > 132) { G.text(g, line, 12, ly, '#2a2418'); ly += 10; line = w; }
-          else line = line ? line + ' ' + w : w;
-        }
-        if (line) G.text(g, line, 12, ly, '#2a2418');
-        if (G.hasUp('loupe')) G.text(g, 'LOUPE: ' + sym.dx, 12, ly + 14, '#2a6b34');
-      } else {
-        G.text(g, 'PROBE A TOOTH FIRST.', 12, 30, '#5a5238');
-        G.text(g, 'LEARNED ' + G.state.dxSeen.length + '/' + G.DATA.symptoms.length, 12, 46, '#2a2418');
-      }
-
-      const list = G.DATA.symptoms;
+      G.text(g, 'WHAT IS IT?', 158, 38, P.hazard);
+      const list = this.candidates(m);
       for (let i = 0; i < list.length; i++) {
-        const ry = 40 + i * 15;
-        const known = G.state.dxSeen.includes(list[i].id);
-        const hov = G.inRect(G.mouse.x, G.mouse.y, 160, ry, 148, 14);
-        G.R(g, 160, ry, 148, 14, hov ? '#b8ae8c' : '#c2b896');
-        G.R(g, 160, ry, 2, 14, known ? '#2a6b34' : '#8a7a58');
-        G.text(g, list[i].dx, 166, ry + 4, '#2a2418');
-        if (known) G.text(g, '✓', 302, ry + 4, '#2a6b34');
+        const ff = G.faultById(list[i]);
+        const ry = 54 + i * 22;
+        const hov = G.inRect(G.mouse.x, G.mouse.y, 158, ry, 152, 20);
+        G.box(g, 158, ry, 152, 20, hov ? P.cyanDk : '#1d2436', { r: 1, band: 1, spec: false });
+        G.R(g, 158, ry, 2, 20, hov ? P.cyanLt : P.plateDk);
+        G.text(g, ff.dx, 164, ry + 3, hov ? '#ffffff' : P.cream);
+        const known = G.state.dxSeen.includes(ff.id);
+        G.text(g, known ? ff.book.slice(0, 30) : 'NOT YET LOGGED', 164, ry + 12, known ? P.steel2 : P.steel);
       }
-      G.hideCursor = false;
+      G.text(g, 'PICK THE RIGHT ONE.', 158, 122, P.steel);
     },
   };
 })();
