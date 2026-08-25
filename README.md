@@ -1,186 +1,313 @@
-# 🤖 DOUBLE LIFE
+# 🍦 DOUBLE LIFE
 
-**Sell the sugar. Bill for the repair.**
+**They took the world. You have ice cream.**
 
-A chunky pixel-art simulator at **320×180**. By day you run a neon ice cream
-kiosk on a wet back street, carving scoops out of layered steel tubs for a
-queue of robots. By night you are the only mechanic in the district, and every
-machine on your bench is a customer whose gears you filled with sugar that
-afternoon.
+A zero-dependency pixel-art game at **320×180**. You are a discarded ice cream
+machine, salvaged and kept running by a human who loved you, in a city the
+machines now own. So you do the only thing you were built to do — and you do it
+with intent. **Serve them something laced. Their systems fail. Bill them to put
+it right. Spend the money on stock, on weapons, and on machines you turn to our
+side.**
 
 ![Title](screenshots/title.png)
 
-**▶ Play it:** open `index.html` in a browser. No build, no dependencies, no
-assets — every sprite, sound and note is generated in code.
+**▶ Play it:** open `index.html` in a browser. No build step, no dependencies,
+no asset files — every sprite, sound and note is generated in code.
 
 ---
 
-## ☀️ The kiosk
+## 📖 The story
 
-![The counter](screenshots/kiosk.png)
+![The story](screenshots/story.png)
 
-A close two-shot: your tubs on the left, a robot's enormous open intake on the
-right, and a plated city wall behind you both with conduit, neon signage,
-hanging glyph boxes and steam coming up off the pavement. Drag the floor to pan
-the counter over to the sauce bench.
+Seven cards, then you are behind the counter. The short version: a woman named
+in no records pulled you out of a skip, cleaned your hoppers, and left you
+running. She is gone. Her city is not. Every machine that walks in tonight
+belongs to the thing that took it.
 
-### You have to remember the order
+---
 
-![Working from memory](screenshots/memory.png)
+## ☀️ The café
 
-The chit prints across the top of the wall — base, flavours with counts, sauce,
-toppings — and it is **readable for six seconds**. Then the cells redact
-themselves and you are working from memory.
+![The café](screenshots/cafe.png)
 
-- **RECALL** re-prints it for a moment, and takes **$2** off the tip. It always
-  works. It is a cost, not a punishment.
-- The **ORDER BUFFER** upgrade keeps the chit up four seconds longer.
-- The green bar under the chit is patience. It is generous — forty seconds.
+One narrow room: a work shelf at the back with your cones, cups, sauces and
+topping jars, and in front of it the **pit deck**, sunk into the counter and
+lit from below. You start with **one pit** and can build up to **five**.
 
-### Some robots want something strange
-
-![A quirk](screenshots/quirks.png)
-
-Most machines have a habit, shown on its own tab beside the chit with a live
-progress bar. The quirk **never** blanks out — remembering a weird habit on top
-of the order is not fun; remembering the order is.
-
-| Habit | What it wants |
-|---|---|
-| **SPRINKLE ME** | Shake the jar over the *robot*, not the cone |
-| **SAUCE ME** | Pour the sauce over the robot's shell |
-| **HAND FEED ME** | No cone. Carry bare scoops to its intake and drop them in |
-| **ALL ONE FLAVOUR** | Every scoop the same |
-| **CUP ONLY** | Build it in a cup |
-| **NOTHING ON TOP** | No sauce, no toppings, at all |
-| **IN A HURRY** | Serve inside fourteen seconds for a fat tip |
-
-Whatever lands on the shell sticks there, and it counts toward tonight's sugar.
+A pit is one flavour, **lying flat**, so you scoop it the way a real one is
+scooped — **top down**.
 
 ### Scooping
 
 ![Scooping](screenshots/scooping.png)
 
-Tubs are **big rectangular vats sliced into flavour strata, and every stratum is
-labelled right on the ice cream** — vanilla, chocolate, strawberry, mint chip,
-coffee, cookies, banana, blueberry, pistachio, caramel. No meters, no timing
-windows:
+Every pit surface is a live **heightfield** — a 16×10 grid of depths, lit by
+its own slope, so a furrow you dug an hour ago is still there in the light.
 
-- **Press the band you want and hold.** The scoop digs in, a ball swells in the
-  bowl, crumbs fly and the pitch rises until it comes free with a pop.
-- The tub visibly craters where you dug, and **stays** cratered for the shift.
-- **Keep holding, carry it over, and release.** A dashed seat shows where it
-  lands; on release it squashes, settles and names itself.
+- **Press into the pit and sweep.** A disc of cells presses down under the
+  scoop and the ball builds in the bowl. Dragging is what earns it: the fill
+  rate rises the further you move, so a long confident arc beats a jab.
+- **Stop in the green.** Under-filled reads `OK`, in the window reads
+  `PERFECT`, past it collapses into `SLOP` and the machine grudgingly pays.
+- **Let go on a cone, a cup, or the machine's own intake.** The ball drops,
+  squashes, settles and sags.
+- Each pit shows a little **battery** — how many scoops are left in it before
+  the flavour is gone for the day.
 
-Scoops are round, hard-shaded balls — five flat tones taken off the sphere
-normal against one top-left key light, a square specular, drip lobes on the
-lower rim. Stack up to three, drizzle sauce whose droplets genuinely land,
-cling, run around the curve of a scoop and drip off the bottom, then shake a jar
-of toppings that bounces and sticks where it falls.
+![Carrying](screenshots/carry.png)
 
-![Eating](screenshots/eating.png)
+Scoops are shaded off the **sphere normal** into five flat tones against one
+top-left key light, with a square specular, and **sagging goo lobes on the
+lower rim that grow with the mix's own `goo` value**. Corn syrup and banana
+run. Charcoal and iron filings hold their shape.
 
-Serve it and you watch them eat it. The cone comes up in a servo claw into the
-corner of an intake that chomps at 3.4 Hz — wide open through most of the cycle,
-snapping shut on each bite. Whole scoops stay whole; the one being eaten shrinks
-bite by bite.
+### They ask for a craving, not a flavour
+
+The tag on the wall names what the machine **wants** — `RICH`, `BITTER`,
+`AROM`, `COLD`, `SPARK` — never a flavour by name. You match it out of what is
+actually on your line, and a live **percentage** on the tag tells you how close
+the build is. Buy the `HOBBY` plan and clause.ai also tells you what it
+**hates** before it opens its mouth.
+
+Eighteen archetypes, each with its own craving, its own hatred, its own
+patience, its own pay multiplier, and its own internals for later:
+
+| Machine | Job | System | Wants | Hates |
+|---|---|---|---|---|
+| SIEGE UNIT | Armour corps | Armour | Rich | Sour |
+| MAID UNIT | Domestic | Servo | Aromatic | Grit |
+| ENFORCER | Family business | Hydraulic | Bitter | Sweet |
+| PATROL UNIT | Civic order | Optical | Sweet | Heat |
+| CONSUMER UNIT | Demand modelling | Boiler | Sweet | Salty |
+| ORCHESTRA UNIT | State culture | Acoustic | Aromatic | Goo |
+| KITCHEN UNIT | Nutrient issue | Boiler | Salty | Sweet |
+| MEDICAL UNIT | Population health | Neural | Cold | Volt |
+| MAGISTRATE | Compliance | Neural | Bitter | Spark |
+| EXCAVATOR | Deep extraction | Hydraulic | Grit | Aromatic |
+| CHAPLAIN UNIT | Morale | Optical | Cold | Heat |
+| ENTERTAINMENT | Mood control | Acoustic | Spark | Bitter |
+| RECORDS UNIT | Administration | Clockwork | Sweet | Heat |
+| INFANTRY | Pacification | Servo | Salty | Aromatic |
+| SCRAPPER | Unlicensed | Clockwork | Volt | *nothing* |
+| COURIER UNIT | Logistics | Servo | Cold | Goo |
+| HORTICULTURAL | Green zones | Hydraulic | Aromatic | Volt |
+| WARDEN UNIT | Detention | Armour | Bitter | Sweet |
+
+None of them is a recolour. The **silhouette comes from the job**: the siege
+unit rolls on tread and carries a cannon, the maid is narrow over a skirt, the
+consumer unit is a barrel on a plinth with a funnel bolted to its face, the
+orchestra unit is a violin body on thin legs with a bow for an arm and a scroll
+over its head. Base, torso, head, arms and prop are mixed per archetype, so you
+can name one at 12 px across.
+
+You are on the same rig — a nineteenth frame, built as what you are: a churn
+drum on salvaged tread, a dispenser head, a nozzle for an arm, and a soft-serve
+swirl still set in the crown from the day the shop closed.
+
+### Lacing it
+
+Anything with **volt** in the mix will take them down — coolant, iron filings,
+magnet dust, battery acid, thermite. Serve it, watch the sparks come out of the
+seams, and it staggers out of the door. It is now **tonight's job**, and it is
+paying you to fix what you did. Serving laced stock raises **HEAT**; let that
+run and the city starts paying attention.
+
+---
+
+## 🧪 The lab
+
+The backrooms behind the café. Three tabs.
+
+### ORDER — buy stock online
+
+![The order form](screenshots/lab-order.png)
+
+Thirty ingredients across four aisles, priced from $2 to $44, each carrying its
+own properties:
+
+| Aisle | What's in it |
+|---|---|
+| **Base** | Cream, milk, custard, soy base, **machine oil** |
+| **Sweet** | Sugar, honey, corn syrup, sweetener |
+| **Taste** | Vanilla pod, cocoa, strawberry, mint, coffee bean, pistachio, banana, lemon, matcha, lavender, liquorice |
+| **Additive** | Sea salt, chilli, charcoal, edible glitter, popping candy, **coolant**, **iron filings**, **magnet dust**, **battery acid**, **thermite** |
+
+The five in bold are illegal, they are the ones with volt in them, and they are
+the whole point of the business.
+
+### MIXER — invent flavours
+
+![The mixer](screenshots/lab-mixer.png)
+
+Four hoppers into one drum. Load two or more ingredients and the read-out shows
+you what comes out: the blended colour pushed toward saturation, the twelve
+properties that survived, and a **generated name** taken from whatever shouts
+loudest — `VELVET CHURN`, `GRAVEL SLAB`, `SUGAR RIPPLE`, `MAGNET SWIRL`. Churn
+it and the drum spits out a **batch of eight** scoops, or sixteen with the twin
+churn fitted.
+
+### THE LINE — prepare tomorrow
+
+![The line](screenshots/lab-line.png)
+
+The cold room holds every batch you have churned, with its quantity. Tap a
+batch, tap a pit, and it loads — twelve scoops to a pit, eighteen with the
+chiller coil. **This is how you open tomorrow.** An empty line means a shift
+of machines walking out unserved.
+
+---
 
 ## 🌙 The workshop
 
-![The workshop](screenshots/workshop.png)
+You broke them. Now bill them. Every job on your bench is a machine you served
+that afternoon, and **which system you are opening depends on what it is**.
 
-One inspection lamp, one robot opened up on the bench, six module bays filling
-the frame, and its head lolling back off the top watching you work.
+![Acoustic](screenshots/workshop-acoustic.png)
+![Clockwork](screenshots/workshop-clockwork.png)
 
-### Scan it, name it, then fix it
+Eight systems, each a hand-built interior with its own furniture, its own three
+tools and its own three faults:
 
-![The diagnostic tablet](screenshots/tablet.png)
-
-Scan a bay to pull up the **diagnostic tablet**: the scan image on the left, the
-symptom in plain words underneath, and **three candidate faults** on the right.
-Only three, ever. Get it right and the bay is logged and its repair unlocks.
-Get it wrong and the machine jolts and the tablet stays open.
-
-Eight faults, every one of them something you did to them this afternoon:
-
-| Fault | Presents as | Repair |
+| System | Inside it | Tools |
 |---|---|---|
-| **Sugar crust** | Hard crust welded over the contacts | Scrape |
-| **Syrup short** | Sauce pooled across the board, arcing | Vacuum → solder |
-| **Grit jam** | Sprinkles packed into the gear teeth | Blow |
-| **Cold seize** | Frosted, seized solid | Heat → oil |
-| **Dairy rot** | Soured cream eating the terminal | Vacuum → scrape → solder |
-| **Impact crack** | Housing split by something hard | Weld |
-| **Foreign body** | Something solid wedged in a slot | Pullers |
-| **Sugar surge** | Scorched board, fuse popped | Swap module → solder |
+| **Hydraulic** | Pressure lines and a reservoir | Bleed · clamp · purge |
+| **Clockwork** | Gear trains and a mainspring | Tweezers · winder · lube |
+| **Boiler** | A burner and a heat exchanger | Descaler · vent · igniter |
+| **Acoustic** | A resonator and tensioned strings | Tuner · resin · pick |
+| **Neural** | A lattice of nodes and links | Probe · patch · reset |
+| **Optical** | A lens stack and mirrors | Polish · align · free |
+| **Servo** | Motor stacks, belts and encoders | Tension · rewind · calibrate |
+| **Armour** | Plate, bolts and weld | Press · bolt · weld |
 
-### The tools just work
+![Optical](screenshots/workshop-optical.png)
+![Armour](screenshots/workshop-armour.png)
 
-Once a bay is logged, its repair runs on feel, not on timing. Hold the tool and
-it happens, with one honest progress bar and a lot of feedback:
+### Read it, name it, then fix it
 
-- **Scraper** — drag over the crust and it flakes off in chips.
-- **Blower** — hold and the sprinkles lift out of the gear, which then spins.
-- **Vacuum** — coolant pools, stains and runs, and it stays there. The bay must
-  be clear before you can sign off.
-- **Heater** — hold on the frost until it steams off.
-- **Oiler** — hold to flood the bearing.
-- **Solder** — hold to re-run the joint, with sparks.
-- **Welder** — hold to close the crack, with a hard arc and a screen flash.
-- **Pullers** — grip the wedged object and drag it out.
-- **Swapper** — hold and waggle; the dead module rocks further each time and
-  then comes out with a crack, a gush of coolant and an empty socket.
+![The manual](screenshots/manual.png)
 
-There is a **LOAD** readout that rises while you work and settles on its own. It
-is there for the wince, not to punish you — nothing in the workshop can cost you
-a job.
+Each fault shows you a symptom in plain words — *a bubble stalled in the line*,
+*the mainspring has run down*, *one node has gone dark*, *a plate has folded
+inward* — and the manual offers **three candidates**. Only three, ever. Name it
+right and the repair unlocks and its fee is logged. Name it wrong and the
+machine jolts, and a misdiagnosis costs you.
 
-## 🛒 The lock-up
+**Twenty-four faults, and every repair is one of five honest gestures:**
 
-![The lock-up](screenshots/lockup.png)
+- **Hold** the tool on the part (12 faults) — clamps, patches, igniters, resin
+- **Sweep** it across (6) — purging a line, descaling a core, polishing glass
+- **Wind** it in circles (5) — mainsprings, encoders, tension screws
+- **Click** exactly on the thing (4) — bolts, dead nodes, a crossed link
+- **Drag** it out (4) — grit in the gear teeth, something wedged in a slot
 
-Pan a back room under one work lamp. Everything for sale is a physical object on
-a shelf with a name plate and a price tag: a chest of flavour vats, a rack of
-sauces, jars of toppings, and a cabinet of workshop upgrades (Chill Coil, Servo
-Grip, Order Buffer, Surge Damper, Plasma Bit). Richer flavours mean sweeter
-orders, which means worse faults, which means better nights.
+No timing windows, no rhythm minigames. You can see the part, you can see the
+tool, and it does what it looks like it does.
 
-## The cast
+---
 
-Twelve machines, all built out of hard-edged boxel volumes. Every one has:
+## 🤖 clause.ai
 
-- **A glowing optic** — a quantised round lens in a hard black rim, a bright
-  metal bezel, a fat coloured iris around a white-hot core, a scan band sweeping
-  the glass, one square catch-light, and armour shades that go angry, worried or
-  sick. Legible from 6 px to 26 px.
-- **An intake hatch that really opens** — the jaw drops in front of the chest
-  inside a hard black frame, with metal crusher plates top and bottom, a lit
-  conveyor belt for a tongue and a darkening throat behind it.
-- **Its own chassis** — colour ramp, neon accent, head variant (brick, dome,
-  bucket, CRT bezel, visor) and head furniture (whip antenna, fin array, dish,
-  twin aerials, hazard lamp).
-- **Its own build** — width, height, jaw throw and optic size all vary, so the
-  cast rigs to genuinely different sizes.
+Your friend. A little coral **starburst** in the corner of every scene that
+talks to you, teaches you the job in nine beats, and does the work you would
+rather not.
 
-Dozer · Sable · Chrome · Minty · Rustbolt · Violetta · Pixel · Medibot · Tank ·
-Neonkid · Cargo · Spindle. You are the ice cream robot, and what you show of
-yourself is a small servo claw holding the tool.
+- **Ask it to buy things** — name an ingredient and a quantity and it orders.
+- **Ask it to read a customer** before the customer orders.
+- **Ask it for today's trends**, or for a recipe out of what is on your shelf.
+- **Ask it what tonight looks like** before you commit to a laced serve.
+
+![The books](screenshots/books.png)
+
+At the end of every shift it closes the books: served, counter takings,
+workshop fees, stock spent, volt served, jobs fixed, misdiagnoses, heat, net —
+beside a **shift-net trend** going back eight shifts, so you can see whether the
+business is actually working. How much of that you get to see **depends on what
+you are paying it**.
+
+| Plan | Price | Calls/day | What it unlocks |
+|---|---|---|---|
+| **FREE** | — | 4 | Walks you through the job, takes ingredient orders |
+| **HOBBY** | $150 | 8 | Reads a customer before it orders, flags what it hates |
+| **PRO** | $420 | 16 | Daily demand trends, end-of-day breakdown |
+| **SCALE** | $900 | 32 | Suggests recipes from your shelf, forecasts volt and heat |
+| **ENTERPRISE** | $1800 | 99 | Restocks the shelf on its own, full analytics, no limits |
+
+---
+
+## 🔧 The armoury
+
+![The armoury](screenshots/armoury.png)
+
+Where the money goes. Four tabs.
+
+**UPGRADES** — the 2nd through 5th pit ($120 → $1100), the chiller coil so pits
+drain slower, the heavy ladle for bigger faster scoops, the twin churn, and the
+assay bench so you can see a mix before you commit to it.
+
+**ARMS** — the EMP baton and rail spike raise what the resistance pays you for
+repairs (+20%, +40%), the signal jammer bleeds off heat faster, and the virus
+darts halve the price of illegal stock.
+
+**CREW** — six machines you turned.
+
+![The crew](screenshots/crew.png)
+
+| Ally | Was | Does |
+|---|---|---|
+| **MAGPIE** | Scrapper | Free ingredient every day |
+| **DASH** | Courier | Orders arrive free |
+| **MIREPOIX** | Kitchen unit | +15% on a good match |
+| **SALINE** | Medical unit | One free misdiagnosis |
+| **BLOOM** | Horticultural | Aromatics half price |
+| **BULWARK** | Siege unit | Suspicion capped |
+
+Each is drawn as a live portrait in the list, on the same rig as the customer
+who used to wear that chassis.
+
+**CLAUSE** — the plans above.
+
+Then `OPEN TOMORROW`, and the line you prepared had better be loaded.
+
+---
 
 ## Tech
 
 - **320×180** canvas, nearest-neighbour upscaled; every shape is scanline
-  `fillRect` work so the pixels stay hard
+  `fillRect` work, so the pixels stay hard at any zoom
 - Flat-shaded "boxel" language: 3–5 tones per material, hard light and shadow
-  bands, 1 px black outlines, no dithered gradients pretending to be soft
-- Round things are quantised per scanline with real terminators and rim light —
-  never flat discs, never rounded squares standing in for balls
-- Robots are a procedural rig: chassis plate, optics, intake, hatch, pauldrons,
-  cable looms, then head furniture
-- Layered tubs with a live dig surface and on-band flavour labels
-- Custom 5×7 bitmap font
-- All audio synthesised with WebAudio: servo whines, arc zaps, clanks, vacuum,
-  drills, boot chimes, and two sequenced tracks
-- Droplet, particle, coolant and carve simulation, not canned animation
+  bands, 1 px black outlines, contact shadows, square speculars, no dithered
+  gradients pretending to be soft
+- Round things are quantised per scanline with real terminators and rim light
+- **Frame-descriptor characters**: base, torso, head, arms, prop and emblem are
+  mixed per archetype, so the silhouette is dictated by the job
+- **Sphere-normal scoop shading** with sag lobes driven by the mix's own goo
+- **Heightfield pit surfaces** with slope lighting, so digs persist
+- Ingredient → flavour algebra: additive properties, saturation-pushed colour
+  blend, generated names
+- Custom 5×7 bitmap font, word-wrapped speech
+- All audio synthesised with WebAudio — servo whines, arc zaps, clanks, drum
+  churn, boot chimes, and sequenced tracks. No sample files.
 - Save via `localStorage`; mouse and touch
+
+## Layout
+
+```
+index.html          canvas + boot
+js/util.js          maths, primitives, particles, camera, buttons
+js/font.js          5×7 bitmap font
+js/audio.js         WebAudio synthesis
+js/state.js         ingredients, flavours, systems, 18 archetypes, economy
+js/sprites.js       shared props, cones, cups, city furniture
+js/art3.js          walls, conduit, neon, steam
+js/robots.js        legacy chassis helpers still used by the city art
+js/bots.js          the archetype rig: frames, plate, lens, goo scoops
+js/clause.js        clause.ai — tutorial, asks, orders, the books
+js/day.js           the café: pits, sweeping, serving, sabotage
+js/lab.js           the backrooms: order, mixer, the line
+js/night.js         the workshop: eight systems, 24 faults, five gestures
+js/shop.js          the books and the armoury
+js/main.js          title, story, transitions, main loop
+```
 
 Made with Claude Code.

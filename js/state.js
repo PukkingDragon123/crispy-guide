@@ -1,149 +1,330 @@
 // ============================================================
-// DOUBLE LIFE v4 - state.js
-// Data: robot cast + quirks, ordinary ice cream flavours,
-// ice-cream-inflicted robot faults -> diagnoses -> repairs,
-// stockroom, save/load.
+// DOUBLE LIFE v5 - state.js
+// You are a discarded ice cream machine. A human dug you out of
+// the scrap and gave you a name. The machines run the city now.
+// You serve them ice cream they cannot digest, charge them to
+// put right what it does, and spend the money arming the people.
+//
+// Data: 18 robot archetypes with purposes, personalities, internal
+// systems and tastes; an ingredient catalogue you order online; a
+// mixer that turns ingredients into flavours; batches, pits, the
+// armoury, and clause.ai's subscription tiers.
 // ============================================================
 (function () {
   const G = window.GAME;
   const P = G.PAL;
 
-  G.DATA = {
-    // ---------- flavours: ordinary ice cream, cyberpunk lighting ----------
-    flavors: [
-      { id: 'vanilla',   name: 'VANILLA',    col: '#f6ecc8', price: 0,   sugar: 2 },
-      { id: 'choc',      name: 'CHOCOLATE',  col: '#7a4a28', price: 0,   sugar: 3 },
-      { id: 'strawberry',name: 'STRAWBERRY', col: '#ff5d84', price: 0,   sugar: 3 },
-      { id: 'mint',      name: 'MINT CHIP',  col: '#5fe0ba', price: 40,  sugar: 2, fleck: '#2a2233' },
-      { id: 'coffee',    name: 'COFFEE',     col: '#a8703c', price: 70,  sugar: 3 },
-      { id: 'cookies',   name: 'COOKIES',    col: '#e8dcc0', price: 105, sugar: 4, fleck: '#3a2a20' },
-      { id: 'banana',    name: 'BANANA',     col: '#ffd94a', price: 150, sugar: 4 },
-      { id: 'blueberry', name: 'BLUEBERRY',  col: '#5b7cff', price: 200, sugar: 4 },
-      { id: 'pistachio', name: 'PISTACHIO',  col: '#a8d158', price: 270, sugar: 3, fleck: '#4a6b20' },
-      { id: 'caramel',   name: 'CARAMEL',    col: '#e09a3a', price: 350, sugar: 5 },
-    ],
-    sauces: [
-      { id: 'fudge',   name: 'HOT FUDGE',    col: '#3a1f14', price: 0,   sugar: 3 },
-      { id: 'berry',   name: 'BERRY SAUCE',  col: '#c8265c', price: 55,  sugar: 3 },
-      { id: 'butter',  name: 'BUTTERSCOTCH', col: '#e0912a', price: 120, sugar: 4 },
-      { id: 'toffee',  name: 'SALT TOFFEE',  col: '#a86a2a', price: 190, sugar: 4 },
-    ],
-    tops: [
-      { id: 'sprinkles', name: 'SPRINKLES',  col: '#ff2f8e', multi: true, price: 0,   sugar: 2, hard: 0 },
-      { id: 'nuts',      name: 'NUTS',       col: '#c9a06a', price: 60,  sugar: 1, hard: 2 },
-      { id: 'chips',     name: 'CHOC CHIPS', col: '#3a2418', price: 95,  sugar: 2, hard: 2 },
-      { id: 'gummy',     name: 'GUMMY BEARS',col: '#6ee06e', multi: true, price: 145, sugar: 4, hard: 1 },
-      { id: 'brittle',   name: 'PEANUT BRITTLE', col: '#d8a03a', price: 210, sugar: 2, hard: 3 },
-      { id: 'wafer',     name: 'WAFER SHARDS',   col: '#e8d8b0', price: 290, sugar: 3, hard: 2 },
-    ],
-    upgrades: [
-      { id: 'coldarm',  name: 'CHILL COIL',   desc: 'TUBS STAY SOFT LONGER',   price: 90 },
-      { id: 'steady',   name: 'SERVO GRIP',   desc: 'SCOOPS FILL FASTER',      price: 160 },
-      { id: 'loupe',    name: 'ORDER BUFFER', desc: 'ORDER STAYS UP LONGER',   price: 240 },
-      { id: 'sedative', name: 'SURGE DAMPER', desc: 'ROBOTS SPARK LESS',       price: 330 },
-      { id: 'carbide',  name: 'PLASMA BIT',   desc: 'CUTS TWICE AS FAST',      price: 420 },
-    ],
+  // ------------------------------------------------------------
+  // INGREDIENTS. Bought online. Every one carries properties, and
+  // VOLT is the one that matters: it is what their systems cannot
+  // take. High volt earns you a bigger repair bill and more heat.
+  // ------------------------------------------------------------
+  const ING = [
+    // --- bases ---
+    { id: 'cream',   name: 'CREAM',        cat: 'BASE', price: 4,  col: '#f6ecc8', rich: 3, sweet: 1 },
+    { id: 'milk',    name: 'MILK',         cat: 'BASE', price: 2,  col: '#faf4e2', rich: 1, sweet: 1 },
+    { id: 'custard', name: 'CUSTARD',      cat: 'BASE', price: 7,  col: '#ffe9a0', rich: 4, sweet: 2 },
+    { id: 'soy',     name: 'SOY BASE',     cat: 'BASE', price: 5,  col: '#e8dcc0', rich: 2, bitter: 1 },
+    { id: 'oilbase', name: 'MACHINE OIL',  cat: 'BASE', price: 9,  col: '#3a2f1a', rich: 5, volt: 2, illegal: 1 },
+    // --- sweeteners ---
+    { id: 'sugar',   name: 'SUGAR',        cat: 'SWEET', price: 2, col: '#ffffff', sweet: 4 },
+    { id: 'honey',   name: 'HONEY',        cat: 'SWEET', price: 6, col: '#e0a12a', sweet: 4, rich: 2 },
+    { id: 'syrup',   name: 'CORN SYRUP',   cat: 'SWEET', price: 4, col: '#d8b45a', sweet: 5, goo: 3 },
+    { id: 'sweeten', name: 'SWEETENER',    cat: 'SWEET', price: 8, col: '#e8f0ff', sweet: 6, volt: 1 },
+    // --- flavours ---
+    { id: 'vanilla', name: 'VANILLA POD',  cat: 'TASTE', price: 9,  col: '#efdcae', sweet: 2, arom: 3 },
+    { id: 'cocoa',   name: 'COCOA',        cat: 'TASTE', price: 8,  col: '#6b3f22', bitter: 2, rich: 3 },
+    { id: 'straw',   name: 'STRAWBERRY',   cat: 'TASTE', price: 7,  col: '#ff5d84', sweet: 3, sour: 2 },
+    { id: 'mint',    name: 'MINT',         cat: 'TASTE', price: 6,  col: '#5fe0ba', cold: 3, arom: 2 },
+    { id: 'coffee',  name: 'COFFEE BEAN',  cat: 'TASTE', price: 10, col: '#a8703c', bitter: 3, arom: 3 },
+    { id: 'pistach', name: 'PISTACHIO',    cat: 'TASTE', price: 13, col: '#a8d158', rich: 2, salty: 1, grit: 1 },
+    { id: 'banana',  name: 'BANANA',       cat: 'TASTE', price: 6,  col: '#ffd94a', sweet: 3, goo: 2 },
+    { id: 'lemon',   name: 'LEMON',        cat: 'TASTE', price: 5,  col: '#fff05a', sour: 4, cold: 1 },
+    { id: 'matcha',  name: 'MATCHA',       cat: 'TASTE', price: 15, col: '#8fbf3a', bitter: 3, arom: 4 },
+    { id: 'lavend',  name: 'LAVENDER',     cat: 'TASTE', price: 14, col: '#b48ae0', arom: 5 },
+    { id: 'liquor',  name: 'LIQUORICE',    cat: 'TASTE', price: 11, col: '#22202c', bitter: 4, arom: 2 },
+    // --- additives: the interesting ones ---
+    { id: 'salt',    name: 'SEA SALT',     cat: 'ADD', price: 3,  col: '#e8eef4', salty: 4 },
+    { id: 'chilli',  name: 'CHILLI',       cat: 'ADD', price: 7,  col: '#e02020', heat: 4, volt: 1 },
+    { id: 'charcoal',name: 'CHARCOAL',     cat: 'ADD', price: 9,  col: '#1a1a20', bitter: 2, grit: 3 },
+    { id: 'glitter', name: 'EDIBLE GLITTER', cat: 'ADD', price: 12, col: '#ffd0f0', grit: 2, arom: 1, spark: 1 },
+    { id: 'popcand', name: 'POPPING CANDY',cat: 'ADD', price: 10, col: '#ff8ad8', sweet: 2, spark: 3, volt: 1 },
+    { id: 'coolant', name: 'COOLANT',      cat: 'ADD', price: 18, col: '#3affd0', cold: 6, volt: 3, illegal: 1 },
+    { id: 'ironfil', name: 'IRON FILINGS', cat: 'ADD', price: 16, col: '#8a93ad', grit: 5, volt: 3, illegal: 1 },
+    { id: 'magdust', name: 'MAGNET DUST',  cat: 'ADD', price: 24, col: '#5a4f78', grit: 3, volt: 5, illegal: 1 },
+    { id: 'acid',    name: 'BATTERY ACID', cat: 'ADD', price: 30, col: '#c9ff2a', sour: 6, volt: 6, illegal: 1 },
+    { id: 'thermite',name: 'THERMITE',     cat: 'ADD', price: 44, col: '#ff7a1f', heat: 8, volt: 8, illegal: 1 },
+  ];
+  const PROPS = ['sweet', 'rich', 'sour', 'bitter', 'salty', 'cold', 'heat', 'arom', 'grit', 'goo', 'spark', 'volt'];
 
-    // ---------- the cast: twelve machines ----------
-    robots: [
-      { id: 'dozer',    name: 'DOZER',    cls: 'HAULER',  names: ['DOZ-9', 'BRICK', 'MULE', 'SHUNT'] },
-      { id: 'sable',    name: 'SABLE',    cls: 'COURIER', names: ['SABLE', 'NOIR', 'WISP', 'SHADE'] },
-      { id: 'chrome',   name: 'CHROME',   cls: 'GREETER', names: ['CHRM-1', 'POLISH', 'GLEAM', 'MIRROR'] },
-      { id: 'minty',    name: 'MINTY',    cls: 'SWEEPER', names: ['MINTY', 'FRESH', 'SPRIG', 'TILE'] },
-      { id: 'rustbolt', name: 'RUSTBOLT', cls: 'DOCKER',  names: ['RUSTY', 'BOLT', 'SEIZE', 'FLAKE'] },
-      { id: 'violetta', name: 'VIOLETTA', cls: 'SINGER',  names: ['VIOLET', 'ARIA', 'LUME', 'HUSH'] },
-      { id: 'pixel',    name: 'PIXEL',    cls: 'ARCADE',  names: ['PIXEL', 'BLIP', 'SCORE', 'COIN'] },
-      { id: 'medibot',  name: 'MEDIBOT',  cls: 'MEDIC',   names: ['MEDI', 'SUTURE', 'SALINE', 'GAUZE'] },
-      { id: 'tank',     name: 'TANK',     cls: 'GUARD',   names: ['TANK', 'RIVET', 'WALL', 'BUNKER'] },
-      { id: 'neonkid',  name: 'NEONKID',  cls: 'RUNNER',  names: ['NEON', 'FLICK', 'BUZZ', 'STREAK'] },
-      { id: 'cargo',    name: 'CARGO',    cls: 'LIFTER',  names: ['CARGO', 'CRATE', 'PALLET', 'LOAD'] },
-      { id: 'spindle',  name: 'SPINDLE',  cls: 'CLERK',   names: ['SPINDLE', 'THIN', 'REED', 'WIRE'] },
-    ],
-
-    // ---------- quirks: the weird habit each customer might have ----------
-    // Each one changes what "done right" means, and is shown as one
-    // short line on the order chit before it blanks out.
-    quirks: [
-      { id: 'none',     label: '',                     hint: '' },
-      { id: 'onhead',   label: 'SPRINKLE ME',          hint: 'SHAKE THE JAR OVER THE ROBOT, NOT THE CONE',
-        icon: 'head', pay: 6 },
-      { id: 'handfeed', label: 'HAND FEED ME',         hint: 'CARRY A BARE SCOOP TO ITS MOUTH',
-        icon: 'hand', pay: 7 },
-      { id: 'sauceme',  label: 'SAUCE ME',             hint: 'POUR THE SAUCE OVER THE ROBOT',
-        icon: 'head', pay: 6 },
-      { id: 'twin',     label: 'ALL ONE FLAVOUR',      hint: 'EVERY SCOOP THE SAME FLAVOUR',
-        icon: 'twin', pay: 5 },
-      { id: 'cuponly',  label: 'CUP ONLY',             hint: 'BUILD IT IN A CUP',
-        icon: 'cup', pay: 4 },
-      { id: 'nosprink', label: 'NOTHING ON TOP',       hint: 'NO SAUCE AND NOTHING ON TOP AT ALL',
-        icon: 'bare', pay: 4 },
-      { id: 'quick',    label: 'IN A HURRY',           hint: 'SERVE FAST FOR A BIG TIP',
-        icon: 'fast', pay: 9 },
-    ],
-
-    // ---------- faults: what the ice cream does to a machine ----------
-    // sign: what you SEE in the bay. dx: scanner diagnosis label.
-    // steps: the ordered repair the diagnosis unlocks.
-    faults: [
-      { id: 'sugarcrust', sign: 'HARD SUGAR CRUST OVER THE CONTACTS',  dx: 'SUGAR CRUST',  pay: 12,
-        steps: ['scrape'], mess: 1,
-        book: 'Dried sugar has welded itself to the pins. Scrape it back to bare metal.' },
-      { id: 'syrupshort', sign: 'SYRUP POOLED ACROSS THE BOARD',       dx: 'SYRUP SHORT',  pay: 20,
-        steps: ['vac', 'solder'], mess: 3,
-        book: 'Sauce got in and bridged the traces. Vacuum the pool, then re-run the joint.' },
-      { id: 'sprinklejam',sign: 'SPRINKLES PACKED INTO THE GEARS',     dx: 'GRIT JAM',     pay: 14,
-        steps: ['blow'], mess: 1,
-        book: 'Hundreds of little sugar rods in the teeth of the gear. Blast them out.' },
-      { id: 'coldseize',  sign: 'FROSTED, SEIZED SOLID',               dx: 'COLD SEIZE',   pay: 18,
-        steps: ['heat', 'oil'], mess: 1,
-        book: 'Chilled until the bearing locked. Warm it through, then oil it.' },
-      { id: 'dairyrot',   sign: 'SOURED CREAM EATING THE TERMINAL',    dx: 'DAIRY ROT',    pay: 26,
-        steps: ['vac', 'scrape', 'solder'], mess: 3,
-        book: 'Milk fat turned acid and chewed the terminal. Clear it, cut it back, rebuild it.' },
-      { id: 'nutcrack',   sign: 'HOUSING CRACKED BY SOMETHING HARD',   dx: 'IMPACT CRACK', pay: 22,
-        steps: ['weld'], mess: 2,
-        book: 'A nut or a brittle shard went through under load. Weld the shell shut.' },
-      { id: 'wedged',     sign: 'SOMETHING SOLID WEDGED IN THE SLOT',  dx: 'FOREIGN BODY', pay: 13,
-        steps: ['pull'], mess: 1,
-        book: 'Whatever you put on top of their cone. Grip it and draw it out.' },
-      { id: 'overload',   sign: 'SCORCHED, FUSE POPPED',               dx: 'SUGAR SURGE',  pay: 24,
-        steps: ['swap', 'solder'], mess: 2,
-        book: 'Too much sugar, too fast, and the rail let go. Drop in a new module and tie it in.' },
-    ],
-
-    // ---------- mechanic tools ----------
-    tools: [
-      { id: 'scan',   name: 'SCANNER', hint: 'CLICK A BAY TO SCAN IT' },
-      { id: 'scrape', name: 'SCRAPER', hint: 'DRAG OVER THE CRUST AND IT FLAKES AWAY' },
-      { id: 'blow',   name: 'BLOWER',  hint: 'HOLD TO BLAST THE GRIT OUT' },
-      { id: 'vac',    name: 'VACUUM',  hint: 'HOLD OVER SPILLS TO CLEAR THE BAY' },
-      { id: 'heat',   name: 'HEATER',  hint: 'HOLD ON THE FROST UNTIL IT THAWS' },
-      { id: 'oil',    name: 'OILER',   hint: 'HOLD TO FLOOD THE BEARING' },
-      { id: 'solder', name: 'SOLDER',  hint: 'HOLD TO RE-RUN THE JOINT' },
-      { id: 'weld',   name: 'WELDER',  hint: 'HOLD TO CLOSE THE CRACK' },
-      { id: 'pull',   name: 'PULLERS', hint: 'GRIP IT AND DRAG IT OUT' },
-      { id: 'swap',   name: 'SWAPPER', hint: 'HOLD AND WAGGLE TO LIFT THE MODULE OUT' },
-    ],
+  // ------------------------------------------------------------
+  // SYSTEMS. What is inside a machine decides how you repair it.
+  // ------------------------------------------------------------
+  const SYSTEMS = {
+    hydraulic: { name: 'HYDRAULIC', desc: 'PRESSURE LINES AND A RESERVOIR',
+      col: '#3a7ac0', tools: ['bleed', 'clamp', 'purge'],
+      faults: [
+        { id: 'seal',   name: 'BLOWN SEAL',    sign: 'FLUID WEEPING FROM A JOINT', steps: ['clamp'], pay: 16 },
+        { id: 'airlock',name: 'AIR LOCK',      sign: 'A BUBBLE STALLED IN THE LINE', steps: ['bleed'], pay: 14 },
+        { id: 'sludge', name: 'SLUDGED LINE',  sign: 'THE LINE IS PACKED SOLID', steps: ['purge', 'bleed'], pay: 24 },
+      ] },
+    clockwork: { name: 'CLOCKWORK', desc: 'GEAR TRAINS AND A MAINSPRING',
+      col: '#c9a02a', tools: ['tweeze', 'wind', 'lube'],
+      faults: [
+        { id: 'jam',    name: 'JAMMED TRAIN',  sign: 'SOMETHING IN THE GEAR TEETH', steps: ['tweeze'], pay: 15 },
+        { id: 'spring', name: 'SLACK SPRING',  sign: 'THE MAINSPRING HAS RUN DOWN', steps: ['wind'], pay: 12 },
+        { id: 'dry',    name: 'DRY PIVOTS',    sign: 'THE PIVOTS ARE SQUEALING', steps: ['lube', 'wind'], pay: 22 },
+      ] },
+    boiler: { name: 'BOILER', desc: 'A BURNER AND A HEAT EXCHANGER',
+      col: '#e0642a', tools: ['descale', 'vent', 'ignite'],
+      faults: [
+        { id: 'scale',  name: 'SCALED CORE',   sign: 'CRUST OVER THE EXCHANGER', steps: ['descale'], pay: 18 },
+        { id: 'over',   name: 'OVERPRESSURE',  sign: 'THE GAUGE IS IN THE RED', steps: ['vent'], pay: 15 },
+        { id: 'out',    name: 'FLAMEOUT',      sign: 'THE BURNER IS COLD AND DARK', steps: ['vent', 'ignite'], pay: 25 },
+      ] },
+    acoustic: { name: 'ACOUSTIC', desc: 'A RESONATOR AND TENSIONED STRINGS',
+      col: '#b8862f', tools: ['tune', 'resin', 'pick'],
+      faults: [
+        { id: 'detune', name: 'DETUNED',       sign: 'THE STRINGS ARE ALL FLAT', steps: ['tune'], pay: 14 },
+        { id: 'crack',  name: 'CRACKED BODY',  sign: 'A SPLIT ACROSS THE RESONATOR', steps: ['resin'], pay: 20 },
+        { id: 'muted',  name: 'MUTED REED',    sign: 'SOMETHING IS DAMPING THE REED', steps: ['pick', 'tune'], pay: 23 },
+      ] },
+    neural: { name: 'NEURAL', desc: 'A LATTICE OF NODES AND LINKS',
+      col: '#9a5cff', tools: ['probe', 'patch', 'reset'],
+      faults: [
+        { id: 'dead',   name: 'DEAD NODE',     sign: 'ONE NODE HAS GONE DARK', steps: ['patch'], pay: 20 },
+        { id: 'cross',  name: 'CROSSED LINK',  sign: 'TWO LINKS ARE SHORTED TOGETHER', steps: ['probe', 'patch'], pay: 26 },
+        { id: 'loop',   name: 'SEIZURE LOOP',  sign: 'THE WHOLE LATTICE IS FIRING', steps: ['reset'], pay: 22 },
+      ] },
+    optical: { name: 'OPTICAL', desc: 'A LENS STACK AND MIRRORS',
+      col: '#22c0e0', tools: ['polish', 'align', 'free'],
+      faults: [
+        { id: 'fog',    name: 'FOGGED LENS',   sign: 'THE GLASS HAS CLOUDED OVER', steps: ['polish'], pay: 13 },
+        { id: 'mirror', name: 'BENT MIRROR',   sign: 'THE BEAM IS WALKING OFF LINE', steps: ['align'], pay: 19 },
+        { id: 'iris',   name: 'STUCK IRIS',    sign: 'THE APERTURE WILL NOT MOVE', steps: ['free', 'polish'], pay: 24 },
+      ] },
+    servo: { name: 'SERVO', desc: 'MOTOR STACKS, BELTS AND ENCODERS',
+      col: '#3affa0', tools: ['tension', 'rewind', 'calib'],
+      faults: [
+        { id: 'belt',   name: 'SLIPPED BELT',  sign: 'A BELT HAS JUMPED ITS PULLEY', steps: ['tension'], pay: 15 },
+        { id: 'burnt',  name: 'BURNT WINDING', sign: 'A COIL IS SCORCHED BLACK', steps: ['rewind'], pay: 24 },
+        { id: 'skip',   name: 'ENCODER SKIP',  sign: 'THE COUNT KEEPS LOSING STEPS', steps: ['calib'], pay: 17 },
+      ] },
+    armour: { name: 'ARMOUR', desc: 'PLATE, BOLTS AND WELD',
+      col: '#8a93ad', tools: ['press', 'bolt', 'weld'],
+      faults: [
+        { id: 'buckle', name: 'BUCKLED PLATE', sign: 'A PLATE HAS FOLDED INWARD', steps: ['press'], pay: 18 },
+        { id: 'sheared',name: 'SHEARED BOLTS', sign: 'THE BOLT HEADS ARE GONE', steps: ['bolt'], pay: 16 },
+        { id: 'weldc',  name: 'CRACKED WELD',  sign: 'THE SEAM HAS OPENED UP', steps: ['weld', 'press'], pay: 26 },
+      ] },
   };
 
+  // ------------------------------------------------------------
+  // TOOLS. Grouped by the system that needs them.
+  // ------------------------------------------------------------
+  const TOOLS = {
+    bleed:  { name: 'BLEED KEY', hint: 'HOLD ON THE BUBBLE UNTIL IT PASSES' },
+    clamp:  { name: 'CLAMP',     hint: 'HOLD ON THE LEAK TO CINCH IT SHUT' },
+    purge:  { name: 'PURGE GUN', hint: 'HOLD TO FLUSH THE LINE THROUGH' },
+    tweeze: { name: 'TWEEZERS',  hint: 'GRIP THE DEBRIS AND DRAG IT CLEAR' },
+    wind:   { name: 'WINDER',    hint: 'DRAG IN CIRCLES TO WIND IT UP' },
+    lube:   { name: 'OILER',     hint: 'HOLD ON EACH DRY PIVOT' },
+    descale:{ name: 'DESCALE',  hint: 'DRAG OVER THE CRUST TO STRIP IT' },
+    vent:   { name: 'VENT KEY',  hint: 'HOLD TO BLEED THE PRESSURE DOWN' },
+    ignite: { name: 'IGNITER',   hint: 'CLICK THE BURNER TO RELIGHT IT' },
+    tune:   { name: 'TUNING KEY',hint: 'DRAG EACH PEG UNTIL THE NOTE SITS' },
+    resin:  { name: 'RESIN GUN', hint: 'DRAG ALONG THE CRACK TO FILL IT' },
+    pick:   { name: 'REED PICK', hint: 'GRIP WHAT IS ON THE REED AND PULL' },
+    probe:  { name: 'PROBE',     hint: 'CLICK BOTH ENDS OF THE CROSSED LINK' },
+    patch:  { name: 'PATCH PEN', hint: 'HOLD ON THE NODE TO REGROW IT' },
+    reset:  { name: 'RESET ROD', hint: 'HOLD ANYWHERE TO DRAIN THE LATTICE' },
+    polish: { name: 'POLISH',    hint: 'DRAG OVER THE GLASS IN CIRCLES' },
+    align:  { name: 'ALIGN KEY', hint: 'DRAG THE MIRROR BACK ONTO THE MARK' },
+    free:   { name: 'IRIS KEY',  hint: 'HOLD ON THE IRIS TO WORK IT LOOSE' },
+    tension:{ name: 'TENSION', hint: 'DRAG THE BELT BACK ONTO THE PULLEY' },
+    rewind: { name: 'REWINDER',  hint: 'DRAG IN CIRCLES TO LAY NEW WIRE' },
+    calib:  { name: 'CALIBRATE',hint: 'HOLD UNTIL THE COUNT SETTLES' },
+    press:  { name: 'PRESS',     hint: 'HOLD ON THE DENT TO PUSH IT OUT' },
+    bolt:   { name: 'BOLT GUN',  hint: 'CLICK EACH EMPTY BOLT HOLE' },
+    weld:   { name: 'WELDER',    hint: 'DRAG ALONG THE SEAM TO CLOSE IT' },
+  };
+
+  // ------------------------------------------------------------
+  // THE OCCUPATION. Eighteen archetypes. Each one is a job, a
+  // silhouette, a temperament, an internal system and a taste.
+  // taste: which property it wants most. hates: what ruins it.
+  // ------------------------------------------------------------
+  const BOTS = [
+    { id: 'tank',    name: 'SIEGE UNIT',   job: 'ARMOUR CORPS', sys: 'armour',
+      taste: 'rich',   hates: 'sour',   pay: 1.4, patience: 1.4, mood: 'blunt',
+      col: '#5c6b3a', col2: '#8a9a56', hue: '#b6ff3a',
+      line: 'FUEL. NOT FLAVOUR.', names: ['BRK-9', 'BULWARK', 'SIEGE', 'RAMPART'] },
+    { id: 'maid',    name: 'MAID UNIT',    job: 'DOMESTIC', sys: 'servo',
+      taste: 'arom',   hates: 'grit',   pay: 1.0, patience: 1.6, mood: 'fussy',
+      col: '#e8e4ee', col2: '#b8b4c8', hue: '#ff9ad0',
+      line: 'A SMALL ONE. TIDY, PLEASE.', names: ['MIMI', 'DUSTER', 'PARLOUR', 'LINEN'] },
+    { id: 'mafia',   name: 'ENFORCER',     job: 'FAMILY BUSINESS', sys: 'hydraulic',
+      taste: 'bitter', hates: 'sweet',  pay: 1.6, patience: 0.8, mood: 'menacing',
+      col: '#2a2a38', col2: '#4a4a60', hue: '#ff2f4e',
+      line: 'MAKE IT BITTER. LIKE THE CITY.', names: ['DON-1', 'KNUCKLE', 'VIG', 'CEMENT'] },
+    { id: 'police',  name: 'PATROL UNIT',  job: 'CIVIC ORDER', sys: 'optical',
+      taste: 'sweet',  hates: 'heat',   pay: 1.2, patience: 1.0, mood: 'officious',
+      col: '#22386b', col2: '#3a5a9a', hue: '#4a9aff',
+      line: 'STANDARD ISSUE. NO ADDITIVES.', names: ['PC-44', 'BATON', 'WHISTLE', 'BEAT'] },
+    { id: 'fat',     name: 'CONSUMER UNIT',job: 'DEMAND MODELLING', sys: 'boiler',
+      taste: 'sweet',  hates: 'salty',  pay: 1.8, patience: 1.8, mood: 'greedy',
+      col: '#c9762a', col2: '#e8a05a', hue: '#ffd44a',
+      line: 'MORE. ALL OF IT. MORE.', names: ['BIG-7', 'HOPPER', 'GULLET', 'SILO'] },
+    { id: 'violin',  name: 'ORCHESTRA UNIT', job: 'STATE CULTURE', sys: 'acoustic',
+      taste: 'arom',   hates: 'goo',    pay: 1.5, patience: 1.2, mood: 'snobbish',
+      col: '#8a4a22', col2: '#c07a3a', hue: '#ffcf7a',
+      line: 'SOMETHING WITH STRUCTURE.', names: ['VLN-3', 'ADAGIO', 'ROSIN', 'CATGUT'] },
+    { id: 'chef',    name: 'KITCHEN UNIT', job: 'NUTRIENT ISSUE', sys: 'boiler',
+      taste: 'salty',  hates: 'sweet',  pay: 1.3, patience: 0.9, mood: 'critical',
+      col: '#e4e8ee', col2: '#b0b6c2', hue: '#ff6a3a',
+      line: 'I WILL BE JUDGING THIS.', names: ['ESC-8', 'BRAISE', 'MIREPOIX', 'LADLE'] },
+    { id: 'nurse',   name: 'MEDICAL UNIT', job: 'POPULATION HEALTH', sys: 'neural',
+      taste: 'cold',   hates: 'volt',   pay: 1.1, patience: 1.5, mood: 'clinical',
+      col: '#f0f4f8', col2: '#c0cad6', hue: '#3affd0',
+      line: 'NOTHING UNSTERILE.', names: ['RN-2', 'SALINE', 'SUTURE', 'SWAB'] },
+    { id: 'judge',   name: 'MAGISTRATE',   job: 'COMPLIANCE', sys: 'neural',
+      taste: 'bitter', hates: 'spark',  pay: 1.7, patience: 1.1, mood: 'pompous',
+      col: '#22202c', col2: '#45414f', hue: '#c49bff',
+      line: 'PLAIN. AUSTERE. AS THE LAW REQUIRES.', names: ['JDG-1', 'GAVEL', 'STATUTE', 'WRIT'] },
+    { id: 'miner',   name: 'EXCAVATOR',    job: 'DEEP EXTRACTION', sys: 'hydraulic',
+      taste: 'grit',   hates: 'arom',   pay: 1.2, patience: 1.3, mood: 'weary',
+      col: '#6b5a2a', col2: '#9a8548', hue: '#ffb01f',
+      line: 'SOMETHING WITH BITE IN IT.', names: ['DIG-6', 'SEAM', 'ADIT', 'FACE'] },
+    { id: 'priest',  name: 'CHAPLAIN UNIT',job: 'MORALE', sys: 'optical',
+      taste: 'cold',   hates: 'heat',   pay: 1.1, patience: 1.7, mood: 'solemn',
+      col: '#e8e2d0', col2: '#b8b0a0', hue: '#ffe89a',
+      line: 'SOMETHING WHITE AND QUIET.', names: ['CHP-5', 'VESPER', 'CENSER', 'MATINS'] },
+    { id: 'dj',      name: 'ENTERTAINMENT',job: 'MOOD CONTROL', sys: 'acoustic',
+      taste: 'spark',  hates: 'bitter', pay: 1.3, patience: 0.7, mood: 'hyper',
+      col: '#2a1f4a', col2: '#4a3a80', hue: '#ff2f8e',
+      line: 'MAKE IT GO OFF IN MY HEAD.', names: ['DJ-X', 'BREAK', 'BASSBIN', 'CUE'] },
+    { id: 'clerk',   name: 'RECORDS UNIT', job: 'ADMINISTRATION', sys: 'clockwork',
+      taste: 'sweet',  hates: 'heat',   pay: 0.9, patience: 1.9, mood: 'pedantic',
+      col: '#4a4436', col2: '#736a52', hue: '#d8c47a',
+      line: 'AS PER THE STANDING ORDER.', names: ['CLK-0', 'FOLIO', 'STAMP', 'LEDGER'] },
+    { id: 'soldier', name: 'INFANTRY',     job: 'PACIFICATION', sys: 'servo',
+      taste: 'salty',  hates: 'arom',   pay: 1.2, patience: 0.9, mood: 'terse',
+      col: '#3a4a32', col2: '#5c7050', hue: '#a8d158',
+      line: 'RATIONS. QUICKLY.', names: ['PVT-3', 'WEBBING', 'PICKET', 'TRENCH'] },
+    { id: 'scav',    name: 'SCRAPPER',     job: 'UNLICENSED', sys: 'clockwork',
+      taste: 'volt',   hates: 'none',   pay: 0.8, patience: 1.6, mood: 'feral',
+      col: '#5a4a3a', col2: '#8a7258', hue: '#ff8a3a',
+      line: 'ANYTHING. I EAT ANYTHING.', names: ['SCRP', 'MAGPIE', 'TALLOW', 'GLEAN'] },
+    { id: 'courier', name: 'COURIER UNIT', job: 'LOGISTICS', sys: 'servo',
+      taste: 'cold',   hates: 'goo',    pay: 1.0, patience: 0.6, mood: 'impatient',
+      col: '#c92a4a', col2: '#e85a78', hue: '#ffd44a',
+      line: 'FAST. I AM ON A CLOCK.', names: ['CUR-9', 'DASH', 'PARCEL', 'ROUTE'] },
+    { id: 'garden',  name: 'HORTICULTURAL',job: 'GREEN ZONES', sys: 'hydraulic',
+      taste: 'arom',   hates: 'volt',   pay: 1.0, patience: 1.8, mood: 'gentle',
+      col: '#3a6b3a', col2: '#5c9a56', hue: '#8fe05a',
+      line: 'SOMETHING THAT GREW, PLEASE.', names: ['GRD-4', 'TRELLIS', 'LOAM', 'BLOOM'] },
+    { id: 'warden',  name: 'WARDEN UNIT',  job: 'DETENTION', sys: 'armour',
+      taste: 'bitter', hates: 'sweet',  pay: 1.5, patience: 1.0, mood: 'cruel',
+      col: '#3a3a44', col2: '#5c5c6b', hue: '#ff5a2a',
+      line: 'COLD. AND DO NOT SPEAK.', names: ['WRD-2', 'KEYRING', 'BLOCK-C', 'CURFEW'] },
+  ];
+
+  // ------------------------------------------------------------
+  // TOPPINGS. Ordered like ingredients, shaken on at the counter.
+  // ------------------------------------------------------------
+  const TOPS = [
+    { id: 'sprinkles', name: 'SPRINKLES',   price: 0,  col: '#ff2f8e', multi: 1, grit: 1 },
+    { id: 'nuts',      name: 'NUTS',        price: 40, col: '#c9a06a', grit: 3 },
+    { id: 'chips',     name: 'CHOC CHIPS',  price: 55, col: '#3a2418', rich: 2 },
+    { id: 'gummy',     name: 'GUMMY BEARS', price: 70, col: '#6ee06e', multi: 1, goo: 2 },
+    { id: 'brittle',   name: 'BRITTLE',     price: 95, col: '#d8a03a', grit: 4 },
+    { id: 'bolts',     name: 'STEEL BOLTS', price: 140, col: '#8a93ad', grit: 5, volt: 3, illegal: 1 },
+    { id: 'fuses',     name: 'LIVE FUSES',  price: 200, col: '#ff7a1f', spark: 4, volt: 5, illegal: 1 },
+  ];
+
+  // ------------------------------------------------------------
+  // SAUCES. Poured over the scoop, same idea.
+  // ------------------------------------------------------------
+  const SAUCES = [
+    { id: 'fudge',  name: 'HOT FUDGE',    price: 0,   col: '#3a1f14', rich: 3, goo: 3 },
+    { id: 'berry',  name: 'BERRY',        price: 45,  col: '#c8265c', sour: 2, sweet: 2 },
+    { id: 'butter', name: 'BUTTERSCOTCH', price: 80,  col: '#e0912a', sweet: 4, goo: 3 },
+    { id: 'brine',  name: 'BRINE',        price: 120, col: '#8fbfa0', salty: 5, volt: 2, illegal: 1 },
+    { id: 'flux',   name: 'SOLDER FLUX',  price: 190, col: '#c9ff2a', volt: 6, spark: 2, illegal: 1 },
+  ];
+
+  // ------------------------------------------------------------
+  // THE ARMOURY. Where the repair money goes.
+  // ------------------------------------------------------------
+  const ARMS = [
+    { id: 'pit2',    name: '2ND PIT',      kind: 'shop', price: 120, desc: 'ONE MORE FLAVOUR ON THE LINE' },
+    { id: 'pit3',    name: '3RD PIT',      kind: 'shop', price: 300, desc: 'THREE FLAVOURS AT ONCE' },
+    { id: 'pit4',    name: '4TH PIT',      kind: 'shop', price: 620, desc: 'FOUR FLAVOURS AT ONCE' },
+    { id: 'pit5',    name: '5TH PIT',      kind: 'shop', price: 1100, desc: 'THE FULL COUNTER' },
+    { id: 'chiller', name: 'CHILLER COIL', kind: 'shop', price: 180, desc: 'PITS DRAIN SLOWER' },
+    { id: 'ladle',   name: 'HEAVY LADLE',  kind: 'shop', price: 240, desc: 'BIGGER, FASTER SCOOPS' },
+    { id: 'churn2',  name: 'TWIN CHURN',   kind: 'lab',  price: 260, desc: 'BATCHES COME OUT DOUBLE' },
+    { id: 'assay',   name: 'ASSAY BENCH',  kind: 'lab',  price: 340, desc: 'SEE A MIX BEFORE YOU CHURN IT' },
+    { id: 'emp',     name: 'EMP BATON',    kind: 'war',  price: 400, desc: 'RESISTANCE: +20% REPAIR FEES' },
+    { id: 'jammer',  name: 'SIGNAL JAMMER',kind: 'war',  price: 560, desc: 'SUSPICION FALLS FASTER' },
+    { id: 'railspk', name: 'RAIL SPIKE',   kind: 'war',  price: 900, desc: 'RESISTANCE: +40% REPAIR FEES' },
+    { id: 'virus',   name: 'VIRUS DARTS',  kind: 'war',  price: 1300, desc: 'ILLEGAL STOCK COSTS HALF' },
+  ];
+
+  // Recruitable allies. Robots you turned. Each gives a passive.
+  const ALLIES = [
+    { id: 'a_scav',   name: 'MAGPIE',   sp: 'scav',    price: 260,  desc: 'SCAVENGES: FREE INGREDIENT DAILY' },
+    { id: 'a_courier',name: 'DASH',     sp: 'courier', price: 380,  desc: 'RUNS DELIVERIES: ORDERS ARRIVE FREE' },
+    { id: 'a_chef',   name: 'MIREPOIX', sp: 'chef',    price: 540,  desc: 'TASTES MIXES: +15% ON A GOOD MATCH' },
+    { id: 'a_nurse',  name: 'SALINE',   sp: 'nurse',   price: 700,  desc: 'PATCHES YOU UP: ONE FREE MISDIAGNOSIS' },
+    { id: 'a_garden', name: 'BLOOM',    sp: 'garden',  price: 880,  desc: 'GROWS STOCK: AROMATICS HALF PRICE' },
+    { id: 'a_tank',   name: 'BULWARK',  sp: 'tank',    price: 1200, desc: 'STANDS GUARD: SUSPICION CAPPED' },
+  ];
+
+  // ------------------------------------------------------------
+  // CLAUSE.AI. Your assistant. Buy a bigger plan, get more help.
+  // ------------------------------------------------------------
+  const TIERS = [
+    { id: 'free',  name: 'FREE',       price: 0,    calls: 4,
+      perks: ['WALKS YOU THROUGH THE JOB', 'TAKES INGREDIENT ORDERS'] },
+    { id: 'hobby', name: 'HOBBY',      price: 150,  calls: 8,
+      perks: ['READS A CUSTOMER BEFORE IT ORDERS', 'FLAGS WHAT IT HATES'] },
+    { id: 'pro',   name: 'PRO',        price: 420,  calls: 16,
+      perks: ['DAILY DEMAND TRENDS', 'END OF DAY BREAKDOWN'] },
+    { id: 'scale', name: 'SCALE',      price: 900,  calls: 32,
+      perks: ['SUGGESTS RECIPES FROM YOUR SHELF', 'FORECASTS VOLT AND HEAT'] },
+    { id: 'ultra', name: 'ENTERPRISE', price: 1800, calls: 99,
+      perks: ['RESTOCKS THE SHELF ON ITS OWN', 'FULL ANALYTICS, NO LIMITS'] },
+  ];
+
+  G.DATA = { ing: ING, props: PROPS, systems: SYSTEMS, tools: TOOLS, bots: BOTS,
+             tops: TOPS, sauces: SAUCES, arms: ARMS, allies: ALLIES, tiers: TIERS };
+
   // ---------- lookups ----------
-  G.flavorById = (id) => G.DATA.flavors.find((f) => f.id === id);
-  G.sauceById = (id) => G.DATA.sauces.find((f) => f.id === id);
-  G.topById = (id) => G.DATA.tops.find((f) => f.id === id);
-  G.robotById = (id) => G.DATA.robots.find((a) => a.id === id) || G.DATA.robots[0];
-  G.quirkById = (id) => G.DATA.quirks.find((q) => q.id === id) || G.DATA.quirks[0];
-  G.faultById = (id) => G.DATA.faults.find((s) => s.id === id);
-  G.toolById = (id) => G.DATA.tools.find((t) => t.id === id);
-  // compatibility shim: the v3 animal renderers in sprites.js are dead code
-  // now, but keep them from throwing if anything still reaches for them.
-  G.animalById = () => ({ id: 'chrome', name: 'CHROME', col: '#9aa6c0', col2: '#66708a', belly: '#d2dcee', names: ['CHRM-1'] });
-  G.owned = (kind, id) => G.state[kind].includes(id);
-  G.hasUp = (id) => G.state.upgrades.includes(id);
+  G.ingById   = (id) => ING.find((i) => i.id === id);
+  // YOU. Not a customer, so not in the demand pool, but the rig needs a record.
+  const PLAYER = { id: 'player', name: 'SOFT SERVE UNIT', job: 'DECOMMISSIONED', sys: 'clockwork',
+    taste: 'sweet', hates: 'none', pay: 1, patience: 1, mood: 'idle',
+    col: '#7a8a5c', col2: '#a8bc7a', hue: '#ff5d84',
+    line: 'I STILL WORK.', names: ['YOU'] };
+  G.botById    = (id) => (id === 'player' ? PLAYER : BOTS.find((b) => b.id === id) || BOTS[0]);
+  G.sysById    = (id) => SYSTEMS[id] || SYSTEMS.servo;
+  G.toolById   = (id) => TOOLS[id] || { name: id.toUpperCase(), hint: '' };
+  G.topById    = (id) => TOPS.find((t) => t.id === id);
+  G.sauceById  = (id) => SAUCES.find((s) => s.id === id);
+  G.armById    = (id) => ARMS.find((a) => a.id === id);
+  G.allyById   = (id) => ALLIES.find((a) => a.id === id);
+  G.tierIdx    = () => G.clamp(G.state.tier || 0, 0, TIERS.length - 1);
+  G.tier       = () => TIERS[G.tierIdx()];
+  G.has        = (id) => G.state.owned.indexOf(id) >= 0;
+  G.hasAlly    = (id) => G.state.allies.indexOf(id) >= 0;
+  G.faultOf    = (sysId, fid) => G.sysById(sysId).faults.find((f) => f.id === fid);
+  G.pitCount   = () => 1 + (G.has('pit2') ? 1 : 0) + (G.has('pit3') ? 1 : 0)
+                         + (G.has('pit4') ? 1 : 0) + (G.has('pit5') ? 1 : 0);
 
   G.MULTI_COLS = {
     sprinkles: ['#ff2f8e', '#ffcf2e', '#22e0ff', '#b6ff3a', '#c49bff', '#ff8a3d'],
     gummy: ['#6ee06e', '#ff3b4e', '#ffcf2e', '#ff2f8e', '#22e0ff'],
-    grit: ['#ff2f8e', '#ffcf2e', '#22e0ff', '#b6ff3a', '#c49bff', '#ff8a3d'],
   };
   G.topBitCol = function (id) {
     const t = G.topById(id);
@@ -151,20 +332,87 @@
     return t ? t.col : '#fff';
   };
 
+  // ------------------------------------------------------------
+  // MIXING. Two to four ingredients make a flavour. Properties add
+  // up, the colour blends, and the name comes out of whatever is
+  // loudest in the mix.
+  // ------------------------------------------------------------
+  const ADJ = { sweet: 'SUGAR', rich: 'VELVET', sour: 'SHARP', bitter: 'BLACK', salty: 'SALT',
+                cold: 'FROST', heat: 'EMBER', arom: 'BLOOM', grit: 'GRAVEL', goo: 'TAR',
+                spark: 'FIZZ', volt: 'LIVE' };
+  const NOUN = ['SWIRL', 'CRUSH', 'RIPPLE', 'CHURN', 'DRIFT', 'SLAB', 'CLOUD', 'SEAM'];
+
+  G.mixFlavour = function (ids, seed) {
+    const parts = ids.map(G.ingById).filter(Boolean);
+    if (!parts.length) return null;
+    const f = { id: 'mix' + (seed === undefined ? Date.now() % 100000 : seed), parts: ids.slice() };
+    for (const k of PROPS) f[k] = 0;
+    let r = 0, g2 = 0, b = 0, illegal = 0;
+    for (const p of parts) {
+      for (const k of PROPS) f[k] += p[k] || 0;
+      r += parseInt(p.col.slice(1, 3), 16);
+      g2 += parseInt(p.col.slice(3, 5), 16);
+      b += parseInt(p.col.slice(5, 7), 16);
+      if (p.illegal) illegal = 1;
+    }
+    const n = parts.length;
+    // pull the blend away from mud: push the channels apart a little
+    const mid = (r + g2 + b) / (3 * n);
+    const sat = (v) => G.clamp(Math.round(mid + (v / n - mid) * 1.45), 8, 250);
+    f.col = '#' + [sat(r), sat(g2), sat(b)].map((v) => v.toString(16).padStart(2, '0')).join('');
+    f.illegal = illegal;
+    // the loudest two properties name it
+    const rank = PROPS.slice().sort((a, b2) => f[b2] - f[a]);
+    const top = rank[0];
+    f.lead = top;
+    f.name = (ADJ[top] || 'PLAIN') + ' ' + NOUN[(f.sweet * 3 + f.rich * 5 + f.volt * 7 + n) % NOUN.length];
+    f.cost = parts.reduce((a, p) => a + p.price, 0);
+    // what it is worth over the counter, and what it does to a machine
+    f.value = 6 + Math.round((f.sweet + f.rich + f.arom + f.cold) * 0.7);
+    f.fleck = f.grit >= 3 ? '#3a3a44' : (f.spark >= 3 ? '#ffffff' : null);
+    return f;
+  };
+
+  // How well a flavour suits a given archetype: -1 .. +1
+  G.match = function (flav, bot) {
+    if (!flav || !bot) return 0;
+    const want = flav[bot.taste] || 0;
+    const hate = bot.hates === 'none' ? 0 : (flav[bot.hates] || 0);
+    return G.clamp((want * 0.22) - (hate * 0.28), -1, 1);
+  };
+
   // ---------- save ----------
-  const SAVE_KEY = 'doubleLife.save.v4';
+  const SAVE_KEY = 'doubleLife.save.v5';
+
+  function starterFlavours() {
+    const a = G.mixFlavour(['cream', 'sugar', 'vanilla'], 1);
+    a.name = 'PLAIN VANILLA';
+    const b = G.mixFlavour(['milk', 'sugar', 'cocoa'], 2);
+    b.name = 'PLAIN CHOCOLATE';
+    return [a, b];
+  }
 
   function freshState() {
+    const fl = starterFlavours();
     return {
-      money: 0, moneyShown: 0, day: 1,
-      flavors: ['vanilla', 'choc', 'strawberry'],
+      money: 40, moneyShown: 40, day: 1,
+      shelf: { cream: 3, milk: 3, sugar: 4, vanilla: 2, cocoa: 2 },   // ingredient counts
+      flavours: fl,                                   // invented recipes
+      batches: [{ fid: fl[0].id, qty: 12 }],          // churned, waiting in the cold room
+      pits: [{ fid: fl[0].id, qty: 12, max: 12 }],    // loaded on the line
       sauces: ['fudge'],
       tops: ['sprinkles'],
-      upgrades: [],
+      owned: [],                                      // armoury + shop + lab upgrades
+      allies: [],
+      tier: 0,                                        // clause.ai plan
+      calls: 4,                                       // help left today
+      suspicion: 0,                                   // 0..1; the occupation notices
+      freed: 0,                                       // people helped
       muted: false,
-      tut: {},
-      dxSeen: [],                     // fault ids the scanner has logged
-      totJobs: 0, totFixed: 0, totBots: 0, totMess: 0, totMisdx: 0,
+      tut: 0,                                         // tutorial step
+      seen: [],                                       // fault ids logged
+      hist: [],                                       // closing net per shift, for the trend
+      totBots: 0, totFixed: 0, totMisdx: 0, totVolt: 0,
       newIds: [],
       today: null,
     };
@@ -181,10 +429,9 @@
           for (const k in G.state) if (s[k] !== undefined) G.state[k] = s[k];
           G.state.moneyShown = G.state.money;
           G.state.today = null;
-          // guard against a save written before the flavour rename
-          if (!G.flavorById(G.state.flavors[0])) G.state.flavors = ['vanilla', 'choc', 'strawberry'];
-          if (!G.sauceById(G.state.sauces[0])) G.state.sauces = ['fudge'];
-          if (!G.topById(G.state.tops[0])) G.state.tops = ['sprinkles'];
+          if (!G.state.flavours || !G.state.flavours.length) G.state.flavours = starterFlavours();
+          if (!G.state.pits || !G.state.pits.length)
+            G.state.pits = [{ fid: G.state.flavours[0].id, qty: 12, max: 12 }];
           G.hasSave = true;
         }
       }
@@ -205,26 +452,29 @@
     try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
   };
 
-  G.newDayStats = function () {
-    G.state.today = { dayEarn: 0, nightEarn: 0, botsServed: 0, perfect: 0, sugar: 0,
-                      jobs: [], mess: 0, misdx: 0, fixed: 0 };
+  G.flavById = function (id) {
+    return (G.state.flavours || []).find((f) => f.id === id) || null;
+  };
+  // day.js and the lab both need "what is actually in this pit"
+  G.pitFlav = function (i) {
+    const p = G.state.pits[i];
+    return p ? G.flavById(p.fid) : null;
   };
 
-  // ---------- tub layer generation ----------
-  // A tub is a rectangle sliced into horizontal flavour layers.
-  G.makePint = function (idx) {
-    const own = G.state.flavors;
-    const n = own.length;
-    const nl = G.clamp(1 + Math.floor(n / 3) + (idx % 2), 1, 4);
-    const layers = [];
-    // walk the owned list with a stride that is coprime-ish to its length so
-    // successive tubs get distinct strata instead of all starting on the same flavour
-    const stride = 1 + (idx % Math.max(1, n - 1));
-    let cur = (idx * 2 + idx * idx) % n;
-    for (let i = 0; i < nl; i++) {
-      layers.push(own[cur % n]);
-      cur = (cur + stride) % n;
-    }
-    return layers;
+  G.newDayStats = function () {
+    G.state.calls = G.tier().calls;
+    G.state.today = { dayEarn: 0, nightEarn: 0, served: 0, perfect: 0, volt: 0,
+                      jobs: [], misdx: 0, fixed: 0, spent: 0, demand: {} };
+  };
+
+  // rolling demand: what the district is asking for today
+  G.rollDemand = function () {
+    const d = {};
+    const pool = ['sweet', 'rich', 'bitter', 'cold', 'arom', 'salty', 'sour', 'grit'];
+    const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+    d.hot = shuffled[0];
+    d.cool = shuffled[1];
+    d.crowd = G.pick(BOTS).id;
+    return d;
   };
 })();

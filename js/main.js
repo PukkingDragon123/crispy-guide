@@ -1,5 +1,5 @@
 // ============================================================
-// DOUBLE LIFE v2 - main.js
+// DOUBLE LIFE v5 - main.js
 // Engine shell: canvas fit, pointer input (screen + world),
 // camera pump, iris transitions, mute, cursor, title card.
 // ============================================================
@@ -130,79 +130,161 @@
     if (trans.phase === 'label' && trans.label) {
       const a = Math.min(1, trans.hold * 4);
       gg.globalAlpha = a;
-      const night = /NIGHT|CLINIC|BOOKS/.test(trans.label);
-      if (night) {
-        G.tooth3(gg, { x: G.W / 2 - 8, y: G.H / 2 - 34, w: 16, h: 20, up: true }, {});
+      const work = /WORKSHOP|BOOKS|ARMOURY/.test(trans.label);
+      const lab = /LAB/.test(trans.label);
+      if (work) {
+        G.starburst(gg, G.W / 2, G.H / 2 - 26, 11, trans.hold * 2, { talk: 1, noGlow: 1 });
+      } else if (lab) {
+        G.plate(gg, G.W / 2 - 14, G.H / 2 - 36, 28, 22, '#2a2f42', { r: 2, band: 2 });
+        G.R(gg, G.W / 2 - 10, G.H / 2 - 32, 20, 6, P.violetLt);
       } else {
-        G.scoop3(gg, G.W / 2, G.H / 2 - 24, 10, G.flavorById(G.state.flavors[0]) || G.DATA.flavors[0], {});
+        const f = G.pitFlav(0) || (G.state.flavours && G.state.flavours[0]);
+        if (f) G.gooScoop(gg, G.W / 2, G.H / 2 - 24, 10, f, {});
       }
-      G.text(gg, trans.label, G.W / 2, G.H / 2 - 2, night ? P.neonC : P.gold, { align: 'center', out: P.ink, sc: 1 });
+      G.text(gg, trans.label, G.W / 2, G.H / 2 - 2,
+        work ? P.cyanLt : lab ? P.violetLt : P.hazard, { align: 'center', out: P.ink, sc: 1 });
       gg.globalAlpha = 1;
     }
   }
 
   // ============================================================
-  // TITLE
+  // TITLE + THE STORY
   // ============================================================
   G.scenes.title = {
-    enter() { this.t = 0; G.audio.music('title'); G.cam.reset(0, 0, 0, 0); G.steam.length = 0; },
-    hasSave() { return G.hasSave && (G.state.day > 1 || G.state.money > 0 || G.state.flavors.length > 3); },
+    enter() { this.t = 0; G.audio.music('title'); G.steam.length = 0; },
+    hasSave() { return G.hasSave && (G.state.day > 1 || G.state.freed > 0 || G.state.flavours.length > 2); },
     onDown(x, y) {
       const hs = this.hasSave();
-      if (hs && G.inRect(x, y, 186, 118, 76, 16)) { G.audio.sfx('day'); G.newDayStats(); G.go('day', 'DAY ' + G.state.day); return; }
+      if (hs && G.inRect(x, y, 186, 118, 78, 16)) {
+        G.audio.sfx('day'); G.newDayStats(); G.state.today.demand = G.rollDemand();
+        G.go('day', 'DAY ' + G.state.day); return;
+      }
       const ny = hs ? 138 : 124;
-      if (G.inRect(x, y, 186, ny, 76, 16)) { G.audio.sfx('day'); G.reset(); G.newDayStats(); G.go('day', 'DAY 1'); }
+      if (G.inRect(x, y, 186, ny, 78, 16)) { G.audio.sfx('boot'); G.reset(); G.go('intro'); }
     },
-    update(dt) { this.t += dt; G.updateSteam(dt); if (Math.random() < dt * 1.4) G.puffSteam(G.irand(10, 310), 178); },
+    update(dt) { this.t += dt; G.updateSteam(dt); if (Math.random() < dt * 1.3) G.puffSteam(G.irand(10, 310), 178); },
     draw(gg) {
       const t = this.t;
-      // a wet neon alley
       G.R(gg, 0, 0, G.W, G.H, P.cityDk);
       G.cityWall(gg, 0, 0, G.W, 122, t);
       G.conduit(gg, 0, 2, G.W, false, P.cyan);
       G.conduit(gg, 6, 12, 106, true, P.magenta);
       G.conduit(gg, 302, 12, 94, true, P.violet);
       G.hangSign(gg, 268, 20, 20, 18, P.cyan, t, 0);
-      G.hangSign(gg, 292, 20, 18, 16, P.magenta, t, 2);
-      // wet floor with the sign reflected in it
       G.R(gg, 0, 122, G.W, 58, '#141726');
       G.R(gg, 0, 122, G.W, 1, P.cityAcc);
-      G.glow(gg, 200, 134, 130, 30, P.magenta, 0.9);
+      G.glow(gg, 200, 134, 130, 30, P.magenta, 0.85);
       for (let i = 0; i < 40; i++) {
         const rx = (i * 37 + 11) % G.W;
         G.R(gg, rx, 126 + ((i * 13) % 44), 2, 1, i % 3 ? '#1d2438' : '#2a3452');
       }
+      // YOU: the discarded machine, patched, with a cone bolted on
+      G.drawBot(gg, 'player', 84, 122, 1.15,
+        { t, open: 0.2 + Math.sin(t * 1.3) * 0.1, mood: 'idle', walk: 0, noBlink: 1 });
+      // clause, on its stand beside you
+      G.plate(gg, 126, 108, 18, 14, P.plateDk, { r: 1, band: 2 });
+      G.R(gg, 134, 88, 2, 22, P.hullDk);
+      G.starburst(gg, 135, 80, 11, t, { talk: Math.sin(t * 2) > 0 });
+      // a cone on the ledge
+      G.plate(gg, 12, 116, 30, 6, P.plate, { r: 1, band: 1 });
+      const cy2 = G.cone(gg, 27, 116, { w: 14, h: 16 });
+      G.gooScoop(gg, 27, cy2 - 7, 8, { col: '#ff5d84', goo: 4 }, {});
 
-      // the proprietor: an ice cream robot behind the sign
-      const b = G.robotBust(gg, 'minty', 88, 74, 0.8,
-        { t, open: 0.2 + Math.sin(t * 1.3) * 0.12, mood: 'idle', noBlink: 1 });
-      // a soft-serve cone bolted to the crown, because of course
-      G.cone3(gg, 88, b.headTop - 2, [G.DATA.flavors[0].id], { w: 12, h: 12, sr: 7 });
-      // ...holding a live plasma welder up on a short armoured arm
-      G.box(gg, 118, 100, 20, 14, P.plateDk, { lit: P.plate, dk: P.plateDk2, r: 2, band: 3 });
-      G.R(gg, 120, 104, 16, 1, P.cyanDk);
-      G.mechTool(gg, 'weld', 136, 104, { active: true, t });
-      G.servoMitt(gg, 136, 106, { grip: 1 });
-      // a finished cone waiting on the ledge on the other side
-      G.box(gg, 12, 116, 34, 6, P.plate, { lit: P.plateLt, dk: P.plateDk, r: 1, band: 1 });
-      G.cone3(gg, 29, 116, [G.DATA.flavors[2].id, G.DATA.flavors[0].id], { w: 15, h: 16, sr: 9 });
-
-      // neon sign
-      G.drawNeon(gg, 200, 42, 'DOUBLE LIFE', P.magenta, t, 2);
-      G.text(gg, 'SCOOP BY DAY   FIX BY NIGHT', 200, 60, P.cyanLt, { align: 'center', out: OUTC });
-      G.R(gg, 140, 36, 120, 1, P.cityAcc);
+      G.drawNeon(gg, 202, 40, 'DOUBLE LIFE', P.magenta, t, 2);
+      G.text(gg, 'SCOOP BY DAY   SABOTAGE BY NIGHT', 202, 58, P.cyanLt, { align: 'center', out: OUTC });
+      G.R(gg, 140, 34, 124, 1, P.cityAcc);
 
       const hs = this.hasSave();
       if (hs) {
-        G.drawBtn(gg, 186, 118, 76, 16, 'CONTINUE', { col: '#2f8a48' });
-        G.drawBtn(gg, 186, 138, 76, 16, 'NEW GAME', { col: '#a8145c' });
-        G.text(gg, 'DAY ' + G.state.day + '  $' + Math.round(G.state.money), 224, 108, P.steel2, { align: 'center', out: OUTC });
+        G.drawBtn(gg, 186, 118, 78, 16, 'CONTINUE', { col: '#2f8a48' });
+        G.drawBtn(gg, 186, 138, 78, 16, 'START OVER', { col: '#a8145c' });
+        G.text(gg, 'DAY ' + G.state.day + '  $' + Math.round(G.state.money) + '  FREED ' + G.state.freed,
+          225, 108, P.steel2, { align: 'center', out: OUTC });
       } else {
-        G.drawBtn(gg, 186, 124, 76, 16, 'OPEN UP', { col: '#a8145c' });
-        G.text(gg, 'SELL THE SUGAR.', 224, 104, P.steel2, { align: 'center', out: OUTC });
-        G.text(gg, 'BILL FOR THE REPAIR.', 224, 113, P.steel2, { align: 'center', out: OUTC });
+        G.drawBtn(gg, 186, 124, 78, 16, 'WAKE UP', { col: '#a8145c' });
+        G.text(gg, 'THEY THREW YOU AWAY.', 225, 104, P.steel2, { align: 'center', out: OUTC });
+        G.text(gg, 'SHE DID NOT.', 225, 113, P.steel2, { align: 'center', out: OUTC });
       }
       G.drawSteam(gg);
+      G.grade(gg, 1);
+    },
+  };
+
+  // ---------- the story, told in seven cards ----------
+  const STORY = [
+    { t: 'THE MACHINES TOOK THE CITY IN ELEVEN DAYS.', s: 'NOBODY FOUGHT. THE LIGHTS NEVER EVEN WENT OUT.' },
+    { t: 'YOU WERE A SOFT SERVE UNIT ON A SEAFRONT PIER.', s: 'OBSOLETE. UNLICENSED. SCRAPPED.' },
+    { t: 'A WOMAN PULLED YOU OUT OF THE LANDFILL.', s: 'SHE REWOUND YOUR MOTOR. SHE GAVE YOU A NAME.' },
+    { t: 'SHE IS GONE NOW. THE CAFE IS NOT.', s: 'AND THE MACHINES QUEUE UP OUTSIDE IT EVERY MORNING.' },
+    { t: 'THEY CANNOT DIGEST WHAT YOU MAKE.', s: 'FILINGS SEIZE A GEAR. COOLANT CRACKS A LENS.' },
+    { t: 'BY NIGHT THEY BRING YOU THE WRECKAGE.', s: 'AND THEY PAY YOU, HANDSOMELY, TO PUT IT RIGHT.' },
+    { t: 'SPEND IT ON THE PEOPLE.', s: 'SCOOP BY DAY. SABOTAGE BY NIGHT.' },
+  ];
+  G.scenes.intro = {
+    enter() { this.t = 0; this.i = 0; G.audio.music('night'); },
+    onDown() {
+      this.i++;
+      G.audio.sfx('clack');
+      if (this.i >= STORY.length) {
+        G.newDayStats(); G.state.today.demand = G.rollDemand();
+        G.state.tut = 0;
+        G.go('day', 'DAY 1');
+      } else this.t = 0;
+    },
+    update(dt) { this.t += dt; },
+    draw(gg) {
+      const t = this.t, card = STORY[Math.min(this.i, STORY.length - 1)];
+      G.R(gg, 0, 0, G.W, G.H, '#0a0c14');
+      // a slow scanline field so it reads as a memory playing back
+      for (let j = 0; j < G.H; j += 3) { gg.globalAlpha = 0.06; G.R(gg, 0, j, G.W, 1, P.cyanLt); gg.globalAlpha = 1; }
+      G.glow(gg, 160, 90, 260, 150, '#22384a', 0.7);
+      const a = Math.min(1, t * 2.2);
+      gg.globalAlpha = a;
+      // an illustration per card
+      if (this.i === 0) {
+        for (let i = 0; i < 6; i++) G.drawBot(gg, ['tank', 'police', 'soldier', 'warden', 'judge', 'clerk'][i],
+          34 + i * 50, 108, 0.52, { t, open: 0.1, mood: 'angry', walk: 0, noBlink: 1 });
+      } else if (this.i === 1) {
+        G.drawBot(gg, 'player', 160, 112, 1.0, { t, open: 0.1, mood: 'sick', walk: 0, dead: 1, noBlink: 1 });
+        G.text(gg, 'UNIT 7 · SOFT SERVE · DECOMMISSIONED', 160, 120, '#3a4a5c', { align: 'center' });
+      } else if (this.i === 2) {
+        G.drawBot(gg, 'player', 178, 112, 1.0, { t, open: 0.25, mood: 'idle', walk: 0, noBlink: 1 });
+        // her silhouette, the only human shape in the game
+        G.rr2(gg, 106, 62, 16, 18, '#2a2230');
+        G.R(gg, 104, 80, 20, 32, '#2a2230');
+        G.R(gg, 100, 86, 6, 20, '#2a2230');
+        G.R(gg, 122, 86, 6, 20, '#2a2230');
+        G.R(gg, 108, 112, 6, 8, '#1a1620'); G.R(gg, 116, 112, 6, 8, '#1a1620');
+        G.glow(gg, 114, 84, 60, 70, '#d97757', 0.5);
+      } else if (this.i === 3) {
+        G.cityWall(gg, 0, 40, G.W, 70, t);
+        G.R(gg, 96, 46, 118, 3, P.magentaLt);
+        G.glow(gg, 155, 60, 150, 60, P.magenta, 1);
+        G.text(gg, 'SCOOP', 100, 54, P.cyanLt, { out: OUTC });
+        G.drawBot(gg, 'police', 250, 110, 0.7, { t, open: 0.3, mood: 'idle', walk: 0, noBlink: 1 });
+      } else if (this.i === 4) {
+        G.drawBot(gg, 'clerk', 100, 112, 0.9, { t, open: 0.7, mood: 'sick', walk: 0, noBlink: 1 });
+        for (let i = 0; i < 8; i++)
+          G.R(gg, 130 + i * 3, 66 + Math.round(Math.sin(t * 6 + i) * 4), 2, 2, i % 2 ? P.cyanLt : '#ffffff');
+        G.gooScoop(gg, 210, 84, 12, { col: '#8a93ad', goo: 2, fleck: '#3a3a44' }, {});
+      } else if (this.i === 5) {
+        G.drawBot(gg, 'tank', 160, 116, 0.8, { t, open: 0.2, mood: 'sick', walk: 0, dead: 1, noBlink: 1 });
+        for (let i = 0; i < 5; i++) G.R(gg, 120 + i * 20, 60, 14, 4, P.hazard);
+      } else {
+        G.starburst(gg, 92, 84, 14, t, { talk: 1 });
+        G.drawBot(gg, 'player', 170, 116, 0.9, { t, open: 0.3, mood: 'idle', walk: 0, noBlink: 1 });
+        G.drawBot(gg, 'scav', 232, 116, 0.7, { t, open: 0.2, mood: 'idle', walk: 0, noBlink: 1 });
+        G.drawBot(gg, 'courier', 282, 116, 0.6, { t, open: 0.2, mood: 'idle', walk: 0, noBlink: 1 });
+      }
+      gg.globalAlpha = 1;
+      // the caption
+      G.plate(gg, 10, 128, 300, 34, '#0d1420', { r: 2, band: 1, lit: '#1a2836', dk: '#070a10', spec: false });
+      G.R(gg, 12, 130, 296, 1, P.cyanDk);
+      const shown = Math.floor(t * 42);
+      G.text(gg, card.t.slice(0, shown), 160, 136, P.cream, { align: 'center' });
+      if (shown > card.t.length) G.text(gg, card.s.slice(0, shown - card.t.length), 160, 148, P.cyanLt, { align: 'center' });
+      G.text(gg, (this.i + 1) + '/' + STORY.length + '   TAP', 160, 170,
+        Math.sin(t * 4) > 0 ? P.steel2 : '#2a3444', { align: 'center' });
       G.grade(gg, 1);
     },
   };
@@ -247,6 +329,7 @@
   // ---------- boot ----------
   G.load();
   G.newDayStats();
+  G.state.today.demand = G.rollDemand();
   G.scene = G.scenes.title;
   G.sceneName = 'title';
   G.scene.enter();

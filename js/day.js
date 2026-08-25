@@ -1,595 +1,519 @@
 // ============================================================
-// DOUBLE LIFE v4 - day.js  ·  THE KIOSK
-// 320x180, pulled right up to the counter of a neon ice cream
-// stand. A robot's head fills the right of frame with its intake
-// hatch hanging open; the labelled tubs fill the left.
+// DOUBLE LIFE v5 - day.js  ·  THE CAFE
+// 320x180. Up to five flat pits sunk into the counter, seen from
+// above. You press into a pit and SWEEP: the surface furrows, the
+// ladle fills, and when you lift it the ice cream comes up in
+// stretched gooey strands.
 //
-// The twist: the order chit blanks out after a few seconds. You
-// have to remember it. RECALL peeks for a small cut of the tip.
-// And most robots want something strange doing to them.
+// The machines do not name a flavour. They name a craving. You
+// decide which of your inventions to give them - and whether to
+// give them the one with filings in it.
 // ============================================================
 (function () {
   const G = window.GAME;
   const P = G.PAL;
   const OUT = P.ink;
 
-  const WORLD = 400;
-  const COUNTER = 128;
-  const NPINT = 2, PW = 72, PH = 62, PY = 62, PX0 = 10, PGAP = 12;
-  const COLS = 36;
-  const PLX = 196, PLY = 152;                    // plate: cone base sits here
-  const STAND = { cone: { x: 172, y: 104 }, cup: { x: 196, y: 104 } };
-  const BIN = { x: 218, y: 108, w: 20, h: 26 };
-  const RACK_S = { x: 252, y: 96 }, RACK_T = { x: 316, y: 96 };
-  const CUST = { x: 248, y: 62 };                // screen space
-  const CSCALE = 0.92;
-  const SAUCE_NEED = 14, TOP_NEED = 6;
-  const HEAD_NEED = 6;                           // bits/drops that must land ON the robot
-  const MEM_SHOW = 6.0;                          // seconds the chit stays readable
-  const PEEK_LEN = 1.4, PEEK_COST = 2;
-  const PATIENCE = 40;
+  const WORK_Y = 90;                              // the back work shelf surface
+  const DECK_Y = 96, DECK_H = 54;                 // the pit deck in front of it
+  const PIT_W = 52, PIT_H = 32, PIT_X0 = 6, PIT_PITCH = 60;
+  const GX = 16, GY = 10;                         // heightfield resolution per pit
+  const CUST = { x: 262, y: WORK_Y + 4 };         // where a machine stands (feet)
+  const CSCALE = 1.05;
+  const PLATE = { x: 96, y: WORK_Y };             // where the cone gets built
+  const CONE_ST = 20, CUP_ST = 48;                // base stands on the shelf
+  const RACK_S = 128, RACK_T = 172;               // sauce / topping shelf positions
+  const PERFECT_LO = 0.76, PERFECT_HI = 1.16, SLOP = 1.42;
+  const SAUCE_NEED = 12, TOP_NEED = 5;
+  const PATIENCE = 42;
 
-  function pintRect(i) { return { x: PX0 + i * (PW + PGAP), y: PY, w: PW, h: PH }; }
+  function pitRect(i) { return { x: PIT_X0 + i * PIT_PITCH, y: DECK_Y + 7, w: PIT_W, h: PIT_H }; }
 
   const day = (G.scenes = G.scenes || {}).day = {
     enter() {
-      if (!G.state.today) G.newDayStats();
+      if (!G.state.today) { G.newDayStats(); G.state.today.demand = G.rollDemand(); }
       this.t = 0;
-      G.cam.reset(0, WORLD - G.W, 0, 0);
-      G.cam.goto(0, 0, true);
-      this.pints = [];
-      for (let i = 0; i < NPINT; i++)
-        this.pints.push({ layers: G.makePint(i), surf: new Array(COLS).fill(0) });
+      this.n = G.pitCount();
+      // a fresh heightfield per pit each morning
+      this.surf = [];
+      for (let i = 0; i < 5; i++) this.surf.push(new Float32Array(GX * GY));
       this.hold = null;
       this.build = null;
-      this.drops = []; this.bits = []; this.parts = []; this.rest = [];
+      this.drops = []; this.bits = []; this.parts = [];
       this.serving = null;
       this.cust = null;
-      this.panDrag = null;
       this.endT = 0;
-      this.total = Math.min(3 + G.state.day, 7);
+      this.total = Math.min(3 + G.state.day, 8);
       this.left = this.total;
-      this.spawnT = 0.6;
-      this.binWob = 0;
-      this.bust = null;
+      this.spawnT = 0.8;
+      this.bot = null;
       this.bag = [];
+      const pool = G.DATA.bots.map((b) => b.id);
       while (this.bag.length < this.total) {
-        const sh = G.DATA.robots.map((a) => a.id).sort(() => Math.random() - 0.5);
+        const sh = pool.slice().sort(() => Math.random() - 0.5);
         for (const id of sh) if (this.bag.length < this.total) this.bag.push(id);
       }
+      // the crowd the district sent today shows up more often
+      if (G.state.today.demand && G.state.today.demand.crowd) this.bag[0] = G.state.today.demand.crowd;
       G.steam.length = 0;
       G.audio.music('day');
-      if (!G.state.tut.scoop) G.toast('HOLD A FLAVOUR BAND', P.hazard);
+      if (G.clause) G.clause.enter('day');
     },
 
-    // ---------------- customer ----------------
-    genOrder(quirk) {
+    // ---------------- customers ----------------
+    genOrder(bot) {
       const d = G.state.day;
-      let n = G.irand(1, Math.min(3, 1 + Math.ceil(d / 2)));
-      const scoops = [];
-      if (quirk === 'twin') {
-        n = Math.max(2, n);
-        const f = G.pick(G.state.flavors);
-        for (let i = 0; i < n; i++) scoops.push(f);
-      } else {
-        for (let i = 0; i < n; i++) scoops.push(G.pick(G.state.flavors));
-      }
-      const bare = quirk === 'nosprink' || quirk === 'handfeed';
-      if (quirk === 'handfeed') scoops.length = Math.min(scoops.length, 2);
       return {
-        base: quirk === 'cuponly' ? 'cup' : quirk === 'handfeed' ? 'none' : (Math.random() < 0.7 ? 'cone' : 'cup'),
-        scoops,
-        sauce: !bare && quirk !== 'sauceme' && Math.random() < 0.3 + d * 0.05 ? G.pick(G.state.sauces) : null,
-        top: !bare && quirk !== 'onhead' && Math.random() < 0.3 + d * 0.05 ? G.pick(G.state.tops) : null,
+        base: Math.random() < 0.68 ? 'cone' : 'cup',
+        n: G.irand(1, Math.min(3, 1 + Math.floor(d / 3))),
+        want: bot.taste,                              // the craving, not a flavour
+        sauce: Math.random() < 0.22 + d * 0.04 ? G.pick(G.state.sauces) : null,
+        top: Math.random() < 0.22 + d * 0.04 ? G.pick(G.state.tops) : null,
       };
     },
-    rollQuirk() {
-      // day 1 is plain so the basics land first; quirks ramp in after that
-      if (G.state.day <= 1) return 'none';
-      const pool = ['none', 'none', 'quick', 'twin', 'cuponly', 'onhead', 'handfeed', 'nosprink'];
-      if (G.state.day >= 3) pool.push('sauceme', 'onhead', 'handfeed');
-      return G.pick(pool);
-    },
     spawn() {
-      const sp = this.bag[this.total - this.left];
-      const a = G.robotById(sp);
+      const id = this.bag[this.total - this.left];
+      const b = G.botById(id);
       this.left--;
-      const quirk = this.rollQuirk();
       this.cust = {
-        sp, name: G.pick(a.names), cls: a.cls, quirk,
-        order: this.genOrder(quirk),
-        st: 'arrive', t: 0, wait: 0, mood: 'idle', open: 0, eat: null, slide: 1,
-        memo: MEM_SHOW + (G.hasUp('loupe') ? 4 : 0),   // countdown before the chit blanks
-        peek: 0, peeks: 0,
-        headBits: 0, headSauce: 0, fed: 0, sprinkled: false,
+        id, bot: b, name: G.pick(b.names),
+        order: this.genOrder(b),
+        st: 'arrive', t: 0, wait: 0, mood: 'idle', open: 0, slide: 1,
+        walk: 0, read: false, shellBits: null, shellCoat: null,
+        sauceOn: 0, topOn: 0,
       };
       G.audio.sfx('doorbell');
     },
 
-    // ---------------- build geometry ----------------
-    scoopPos(i, ox, oy, base) {
-      ox = ox === undefined ? PLX : ox; oy = oy === undefined ? PLY : oy;
-      base = base || (this.build && this.build.base) || 'cone';
-      let cy = (base === 'cup' ? oy - 16 : oy - 27) - 8;
+    // ---------------- geometry ----------------
+    scoopSeat(i) {
+      const base = this.build && this.build.base === 'cup' ? PLATE.y - 20 : PLATE.y - 30;
+      let cy = base - 8;
       for (let k = 1; k <= i; k++) cy -= (10 - k) + 3;
-      return { x: ox, y: cy, r: 10 - i };
-    },
-    // the robot's head, in SCREEN space, for the quirks that target it
-    headRect() {
-      const b = this.bust;
-      if (!b) return { x: CUST.x - 30, y: CUST.y - 30, w: 60, h: 70 };
-      return { x: b.cx - b.hw - 4, y: b.headTop - 8, w: b.hw * 2 + 8, h: (b.jawY - b.headTop) + 26 };
+      return { x: PLATE.x, y: cy, r: 10 - i };
     },
     mouthRect() {
-      const b = this.bust;
-      if (!b) return { x: CUST.x - 20, y: CUST.y + 10, w: 40, h: 34 };
-      return { x: b.cx - 24, y: b.jawY - 6, w: 48, h: 34 };
+      const b = this.bot;
+      if (!b) return { x: CUST.x - 18, y: 40, w: 36, h: 26 };
+      return { x: b.cx - 20, y: b.mouthY - 8, w: 40, h: 28 };
+    },
+    botRect() {
+      const b = this.bot;
+      if (!b) return { x: CUST.x - 30, y: 24, w: 60, h: 80 };
+      return { x: b.cx - b.hw - 4, y: b.top - 4, w: b.hw * 2 + 8, h: (CUST.y - b.top) };
     },
 
     // ---------------- input ----------------
-    onDown(sx, sy) {
+    onDown(x, y) {
       if (this.endT > 0) return;
-      const wx = sx + Math.round(G.cam.x), wy = sy;
-      const c = this.cust;
+      if (G.clause && G.clause.onDown(x, y)) return;
 
-      if (sy >= 158) {                                  // tray row
-        if (G.inRect(sx, sy, 232, 161, 40, 16) && this.canServe()) { G.audio.sfx('click'); this.serve(); return; }
-        if (G.inRect(sx, sy, 186, 161, 42, 16)) {        // RECALL
-          if (c && c.st === 'order') {
-            if (c.memo > 0) { G.toast('IT IS STILL ON THE CHIT', P.steel2); return; }
-            c.peek = PEEK_LEN; c.peeks++;
-            G.audio.sfx('bookOpen');
-          }
+      if (y >= 150) {                                  // the tray
+        if (G.inRect(x, y, 4, 152, 40, 16)) { G.audio.sfx('click'); G.go('lab', 'THE LAB'); return; }
+        if (G.inRect(x, y, 48, 152, 44, 16)) { if (G.clause) G.clause.ask('read'); return; }
+        if (G.inRect(x, y, 96, 152, 44, 16)) { if (G.clause) G.clause.ask('trend'); return; }
+        if (G.inRect(x, y, 194, 152, 48, 16) && this.canServe()) { G.audio.sfx('click'); this.serve(); return; }
+        if (G.inRect(x, y, 246, 152, 32, 16)) {          // bin
+          if (this.build) { G.audio.sfx('splat'); this.puff(PLATE.x, PLATE.y - 10, '#6b5a3a', 8); this.build = null; }
           return;
         }
-        if (G.inRect(sx, sy, 276, 161, 40, 16)) { G.cam.nudge(G.cam.tx > 40 ? -80 : 80); G.audio.sfx('clack'); return; }
         return;
       }
 
-      // bin
-      if (G.inRect(wx, wy, BIN.x - 3, BIN.y - 4, BIN.w + 6, BIN.h + 6)) {
-        if (this.build) { this.binWob = 1; G.audio.sfx('splat'); this.puff(BIN.x + 10, BIN.y, '#6b5a3a', 7); this.build = null; }
-        return;
-      }
-      // bases
-      for (const k of ['cone', 'cup']) {
-        const s = STAND[k];
-        if (G.inRect(wx, wy, s.x - 12, s.y - 12, 24, 34)) {
-          if (!this.build) {
-            this.build = { base: k, scoops: [], coat: [], bits: [], sauceAmt: {}, topAmt: {}, wob: 0, wobV: 0, pop: 0 };
-            G.audio.sfx('clack');
-          } else G.toast('BIN THAT ONE FIRST', P.warn);
-          return;
-        }
-      }
-      // tubs: press the stratum you want
-      for (let i = 0; i < NPINT; i++) {
-        const r = pintRect(i);
-        if (G.inRect(wx, wy, r.x - 4, r.y - 5, r.w + 8, r.h + 12)) {
-          const pint = this.pints[i];
-          const nl = pint.layers.length;
-          const li = G.clamp(Math.floor(((wy - r.y) / r.h) * nl), 0, nl - 1);
-          this.hold = { kind: 'scoop', pi: i, li, fid: pint.layers[li], fill: 0, tick: 0 };
-          G.audio.sfx('grab');
-          if (!G.state.tut.scoop) { G.state.tut.scoop = 1; G.toast('HOLD UNTIL IT IS FULL', P.lime); }
-          return;
-        }
-      }
-      // sauces
+      // cone / cup stands on the back shelf
+      if (G.inRect(x, y, CONE_ST - 11, WORK_Y - 26, 22, 30)) { this.take('cone'); return; }
+      if (G.inRect(x, y, CUP_ST - 11, WORK_Y - 20, 22, 24)) { this.take('cup'); return; }
+
+      // sauce bottles + topping jars, in a row along the shelf
       const sl = G.state.sauces;
-      for (let i = 0; i < sl.length; i++) {
-        const bx = RACK_S.x + 9 + i * 15;
-        if (G.inRect(wx, wy, bx - 7, RACK_S.y + 4, 14, 26)) {
-          this.hold = { kind: 'sauce', sid: sl[i], gx: sx, gy: sy, emit: 0 }; G.audio.sfx('grab'); return;
+      for (let i = 0; i < sl.length; i++)
+        if (G.inRect(x, y, RACK_S + i * 14 - 6, WORK_Y - 22, 13, 24)) {
+          this.hold = { kind: 'sauce', sid: sl[i], gx: x, gy: y, emit: 0 }; G.audio.sfx('grab'); return;
         }
-      }
-      // toppings
       const tl = G.state.tops;
-      for (let i = 0; i < tl.length; i++) {
-        const bx = RACK_T.x + 9 + (i % 3) * 16, by = RACK_T.y + 6 + Math.floor(i / 3) * 24;
-        if (G.inRect(wx, wy, bx - 7, by, 14, 22)) {
-          this.hold = { kind: 'jar', tid: tl[i], gx: sx, gy: sy, emit: 0 }; G.audio.sfx('grab'); return;
+      for (let i = 0; i < tl.length; i++)
+        if (G.inRect(x, y, RACK_T + i * 14 - 6, WORK_Y - 22, 13, 24)) {
+          this.hold = { kind: 'jar', tid: tl[i], gx: x, gy: y, emit: 0 }; G.audio.sfx('grab'); return;
         }
+
+      // ---- the pits: press in and start sweeping ----
+      for (let i = 0; i < this.n; i++) {
+        const r = pitRect(i);
+        if (!G.inRect(x, y, r.x - 2, r.y - 2, r.w + 4, r.h + 4)) continue;
+        const pit = G.state.pits[i];
+        if (!pit || pit.qty <= 0) { G.toast('THAT PIT IS EMPTY - CHURN MORE IN THE LAB', P.warn); return; }
+        const f = G.flavById(pit.fid);
+        if (!f) { G.toast('NOTHING LOADED THERE', P.warn); return; }
+        this.hold = { kind: 'sweep', pi: i, fid: pit.fid, fill: 0, tick: 0, path: [], lastX: x, lastY: y, lift: 0 };
+        G.audio.sfx('grab');
+        if (G.state.tut < 3) G.clause && G.clause.tut(3);
+        return;
       }
-      this.panDrag = { sx, camX: G.cam.tx };
     },
 
-    onMove(sx) { if (this.panDrag) G.cam.goto(this.panDrag.camX - (sx - this.panDrag.sx), null); },
+    onMove() { /* sweeping is handled in update from the live cursor */ },
 
-    onUp(sx, sy) {
-      this.panDrag = null;
+    onUp() {
       const h = this.hold;
-      if (!h) return;
-      const wx = sx + Math.round(G.cam.x), wy = sy;
-      if (h.kind === 'scoop') {
+      if (!h) { return; }
+      if (h.kind === 'sweep') {
         G.audio.loop('carve', false);
-        if (h.fill < 0.32) { this.hold = null; G.audio.sfx('splat'); this.puff(wx, wy, G.flavorById(h.fid).col, 6); return; }
-        this.popBall(h);
+        if (h.fill < 0.28) { this.hold = null; G.audio.sfx('back'); return; }
+        // lift it out: the ball comes up on strands
+        const f = G.flavById(h.fid);
+        const pit = G.state.pits[h.pi];
+        pit.qty = Math.max(0, pit.qty - 1);
+        const grade = h.fill > SLOP ? 'slop' : h.fill >= PERFECT_LO && h.fill <= PERFECT_HI ? 'perfect' : 'ok';
+        G.audio.sfx(grade === 'perfect' ? 'perfect' : 'scoopOff');
+        if (grade === 'perfect') { G.spark(G.mouse.x, G.mouse.y, ['#ffffff', f.col], 14, 55); G.floatText('CLEAN SCOOP', G.mouse.x, G.mouse.y - 16, P.lime); }
+        else if (grade === 'slop') G.floatText('SLOPPY', G.mouse.x, G.mouse.y - 16, P.warn);
+        this.hold = { kind: 'ball', fid: h.fid, grade, r: grade === 'slop' ? 11 : grade === 'perfect' ? 10 : 8,
+                      bx: G.mouse.x, by: G.mouse.y, from: { x: G.mouse.x, y: G.mouse.y }, born: this.t };
         return;
       }
       if (h.kind === 'ball') {
         this.hold = null;
-        // hand-feed: drop a bare scoop straight into the intake
         const c = this.cust;
         const mr = this.mouthRect();
-        if (c && c.st === 'order' && G.inRect(sx, sy, mr.x, mr.y, mr.w, mr.h)) {
-          c.fed++;
-          c.mood = 'happy';
+        // straight into the intake
+        if (c && c.st === 'order' && G.inRect(G.mouse.x, G.mouse.y, mr.x, mr.y, mr.w, mr.h)) {
+          if (!this.build) this.build = { base: 'none', scoops: [], grades: [], coat: [], bits: [], sauceAmt: {}, topAmt: {} };
+          this.build.scoops.push(h.fid); this.build.grades.push(h.grade);
           G.audio.sfx('plop'); G.shake(1.2, 0.1);
-          G.spark(sx, sy, ['#ffffff', G.flavorById(h.fid).col], 12, 50);
-          G.floatText('FED', sx, sy - 14, P.lime);
-          if (!this.handBuild) this.handBuild = { base: 'none', scoops: [], coat: [], bits: [], sauceAmt: {}, topAmt: {} };
-          this.handBuild.scoops.push(h.fid);
+          G.floatText('FED', G.mouse.x, G.mouse.y - 12, P.lime);
           return;
         }
-        if (G.inRect(wx, wy, BIN.x - 3, BIN.y - 4, BIN.w + 6, BIN.h + 6)) {
-          this.binWob = 1; G.audio.sfx('splat'); this.puff(BIN.x + 10, BIN.y, G.flavorById(h.fid).col, 7); return;
-        }
         const b = this.build;
-        if (b && b.scoops.length < 3) {
-          const np = this.scoopPos(b.scoops.length);
-          if (G.dist(wx, wy, np.x, np.y) < 26) {
-            b.scoops.push(h.fid); b.wobV = 4; b.pop = 1;
+        if (b && b.base !== 'none' && b.scoops.length < 3) {
+          const seat = this.scoopSeat(b.scoops.length);
+          if (G.dist(G.mouse.x, G.mouse.y, seat.x, seat.y) < 26) {
+            b.scoops.push(h.fid); b.grades.push(h.grade); b.pop = 1;
             G.audio.sfx('plop'); G.shake(1, 0.08);
-            G.spark(np.x - Math.round(G.cam.x), np.y, ['#fff', G.flavorById(h.fid).col], 8);
-            const f = G.flavorById(h.fid);
-            G.floatText(f.name.split(' ')[0], np.x - Math.round(G.cam.x), np.y - 16, f.col);
+            const f = G.flavById(h.fid);
+            G.spark(seat.x, seat.y, ['#fff', f.col], 8);
+            G.floatText(f.name.split(' ')[0], seat.x, seat.y - 16, f.col);
             return;
           }
         }
-        this.puff(wx, wy, G.flavorById(h.fid).col, 8);
+        const f = G.flavById(h.fid);
+        this.puff(G.mouse.x, G.mouse.y, f ? f.col : '#fff', 8);
         G.audio.sfx('splat');
-        G.addStain(wx, PLY + 2, 4, G.flavorById(h.fid).col);
         return;
       }
       this.hold = null;
       G.audio.loop('pour', false);
-      G.audio.sfx('back');
     },
 
-    onWheel(d) { G.cam.nudge(d > 0 ? 40 : -40); },
-
-    popBall(h) {
-      G.audio.sfx('scoopOff');
-      G.spark(G.mouse.x, G.mouse.y, ['#ffffff', G.flavorById(h.fid).col], 8, 40);
-      this.hold = { kind: 'ball', fid: h.fid, pi: h.pi, born: this.t, bx: G.mouse.wx, by: G.mouse.y };
+    take(kind) {
+      if (this.build && this.build.base !== 'none') { G.toast('BIN THAT ONE FIRST', P.warn); return; }
+      this.build = { base: kind, scoops: [], grades: [], coat: [], bits: [], sauceAmt: {}, topAmt: {}, pop: 0 };
+      G.audio.sfx('clack');
+      if (G.state.tut < 4) G.clause && G.clause.tut(4);
     },
     puff(x, y, col, n) {
       for (let i = 0; i < (n || 6); i++)
-        this.parts.push({ x, y, vx: G.rand(-40, 40), vy: G.rand(-60, -14), col: i % 3 ? col : '#fff', t: 0, life: G.rand(0.25, 0.5), grav: 220 });
+        this.parts.push({ x, y, vx: G.rand(-40, 40), vy: G.rand(-60, -14), col: i % 3 ? col : '#fff',
+                          t: 0, life: G.rand(0.25, 0.5), grav: 220 });
     },
 
     // ---------------- scoring ----------------
-    // The build being judged is the cone/cup, or the pile of
-    // hand-fed scoops for a handfeed robot.
-    judged() {
-      const c = this.cust;
-      if (c && c.quirk === 'handfeed') return this.handBuild || { base: 'none', scoops: [], sauceAmt: {}, topAmt: {} };
-      return this.build;
-    },
     canServe() {
       const c = this.cust;
-      if (!c || c.st !== 'order') return false;
-      const b = this.judged();
-      return !!(b && b.scoops.length);
+      return !!(c && c.st === 'order' && this.build && this.build.scoops.length);
     },
-    check() {
-      const c = this.cust;
-      const b = this.judged();
-      if (!b || !c) return null;
-      const o = c.order, q = c.quirk;
-      const have = {}, need = {};
-      for (const f of b.scoops) have[f] = (have[f] || 0) + 1;
-      for (const f of o.scoops) need[f] = (need[f] || 0) + 1;
-      let ok = b.scoops.length === o.scoops.length;
-      for (const k in need) if ((have[k] || 0) !== need[k]) ok = false;
-      for (const k in have) if (!need[k]) ok = false;
-      const anySauce = Object.keys(b.sauceAmt || {}).some((k) => b.sauceAmt[k] > 2);
-      const anyTop = Object.keys(b.topAmt || {}).some((k) => b.topAmt[k] > 2);
+    // how well the build answers the craving
+    grade() {
+      const c = this.cust, b = this.build;
+      if (!c || !b || !b.scoops.length) return null;
+      const o = c.order;
+      let taste = 0, volt = 0, clean = 0;
+      for (let i = 0; i < b.scoops.length; i++) {
+        const f = G.flavById(b.scoops[i]);
+        if (!f) continue;
+        taste += G.match(f, c.bot);
+        volt += f.volt || 0;
+        clean += b.grades[i] === 'perfect' ? 1 : b.grades[i] === 'slop' ? -0.5 : 0.3;
+      }
+      const nb = b.scoops.length;
       return {
-        base: b.base === o.base,
-        scoops: ok,
+        taste: taste / nb,
+        volt,
+        clean: clean / nb,
+        count: nb === o.n,
+        base: b.base === o.base || (o.base === 'cone' && b.base === 'none'),
         sauce: !o.sauce || (b.sauceAmt[o.sauce] || 0) >= SAUCE_NEED,
         top: !o.top || (b.topAmt[o.top] || 0) >= TOP_NEED,
-        quirk: q === 'onhead' ? c.headBits >= HEAD_NEED
-          : q === 'sauceme' ? c.headSauce >= HEAD_NEED
-          : q === 'handfeed' ? c.fed >= o.scoops.length
-          : q === 'nosprink' ? (!anySauce && !anyTop)
-          : q === 'quick' ? c.wait < 14
-          : true,
       };
     },
-    rollFaults(b, sugar) {
-      let hard = 0;
-      for (const k in (b.topAmt || {})) { const tp = G.topById(k); if (tp && tp.hard >= 2) hard++; }
-      const sticky = Object.keys(b.sauceAmt || {}).length > 0;
-      const pool = ['sugarcrust', 'sprinklejam'];
-      if (sticky) pool.push('syrupshort', 'dairyrot');
-      if (sugar >= 8) pool.push('sugarcrust', 'coldseize');
-      if (sugar >= 14) pool.push('overload', 'dairyrot');
-      if (sugar >= 20) pool.push('overload', 'syrupshort');
-      for (let i = 0; i < hard; i++) pool.push('nutcrack', 'wedged');
-      const n = G.clamp(1 + Math.floor(sugar / 9) + (hard ? 1 : 0), 1, 4);
+    // volt turns into tonight's faults, and into heat
+    rollFaults(volt, bot) {
+      const sys = G.sysById(bot.sys);
+      const n = G.clamp(1 + Math.floor(volt / 4), 1, 4);
       const out = [];
-      for (let i = 0; i < n; i++) out.push(G.pick(pool));
+      for (let i = 0; i < n; i++) out.push(G.pick(sys.faults).id);
       return out;
     },
     serve() {
-      const c = this.cust, b = this.judged();
-      if (!c || !b || !b.scoops.length) return;
-      const chk = this.check(), o = c.order;
-      const q = G.quirkById(c.quirk);
-      let pay = 6 + 4 * o.scoops.length + (o.sauce ? 4 : 0) + (o.top ? 3 : 0);
-      let verdict;
-      if (chk.base && chk.scoops && chk.sauce && chk.top && chk.quirk) {
-        verdict = 'perfect';
-        pay += (q.pay || 3) + (c.wait < 16 ? 4 : 2);
-        G.state.today.perfect++;
-      } else if (chk.scoops && chk.quirk) { verdict = 'ok'; pay = Math.ceil(pay * 0.7); }
-      else { verdict = 'bad'; pay = Math.ceil(pay * 0.45); }
-      pay = Math.max(2, pay - c.peeks * PEEK_COST);
+      const c = this.cust, b = this.build;
+      if (!c || !b) return;
+      const gr = this.grade(), o = c.order;
+      const bot = c.bot;
+      let pay = Math.round((5 + 4 * b.scoops.length) * bot.pay);
+      pay += Math.round(gr.taste * 9);
+      pay += Math.round(gr.clean * 5);
+      if (gr.count) pay += 3;
+      if (gr.base) pay += 2;
+      if (gr.sauce && o.sauce) pay += 4;
+      if (gr.top && o.top) pay += 3;
+      pay = Math.max(2, pay);
+      let verdict = gr.taste > 0.35 && gr.count ? 'perfect' : gr.taste > -0.1 ? 'ok' : 'bad';
+      if (verdict === 'perfect') G.state.today.perfect++;
 
-      let sugar = 0;
-      for (const f of b.scoops) sugar += (G.flavorById(f) || {}).sugar || 2;
-      for (const k in (b.sauceAmt || {})) sugar += Math.min(5, Math.round(b.sauceAmt[k] / SAUCE_NEED * 3));
-      for (const k in (b.topAmt || {})) sugar += Math.min(4, Math.round(b.topAmt[k] / TOP_NEED * 2));
-      sugar += Math.round((c.headBits + c.headSauce) / 8);      // what went on the shell counts too
-      sugar = Math.round(sugar);
-      G.state.today.sugar += sugar;
-      G.state.today.jobs.push({ sp: c.sp, name: c.name, sugar, faults: this.rollFaults(b, sugar) });
+      // the sabotage
+      const volt = gr.volt;
+      G.state.today.volt += volt;
+      G.state.totVolt += volt;
+      if (volt > 0) {
+        G.state.today.jobs.push({ id: c.id, name: c.name, sys: bot.sys, volt,
+                                  faults: this.rollFaults(volt, bot) });
+        G.state.suspicion = G.clamp(G.state.suspicion + volt * 0.012 * (G.has('jammer') ? 0.6 : 1), 0, 1);
+        if (G.hasAlly('a_tank')) G.state.suspicion = Math.min(G.state.suspicion, 0.7);
+      }
 
-      if (c.quirk === 'handfeed') {
-        // already in the intake: go straight to chewing
+      if (b.base === 'none') {
         c.st = 'eat';
-        c.eat = { t: 0, build: b, pay, verdict, bites: -1, left: 0.001 };
+        c.eat = { t: 0, build: b, pay, verdict, volt, bites: -1, left: 0.001 };
       } else {
-        this.serving = { build: b, x: PLX - Math.round(G.cam.x), y: PLY, t: 0, pay, verdict };
-        this.build = null;
+        this.serving = { build: b, x: PLATE.x, y: PLATE.y - 24, t: 0, pay, verdict, volt };
         c.st = 'served';
       }
-      this.handBuild = null;
+      this.build = null;
       this.drops.length = 0; this.bits.length = 0;
       G.audio.sfx('swish');
+      if (G.state.tut < 6) G.clause && G.clause.tut(6);
     },
 
     // ---------------- update ----------------
     update(dt) {
       this.t += dt;
       const M = G.mouse;
-      const wx = M.wx, wy = M.y;
-      if (this.binWob > 0) this.binWob -= dt * 3;
       G.updateSteam(dt);
-      if (Math.random() < dt * 1.4) G.puffSteam(G.irand(10, 310), 176);
+      if (Math.random() < dt * 1.1) G.puffSteam(G.irand(10, 310), 178);
+      if (G.clause) G.clause.update(dt);
 
       if (!this.cust && this.left > 0) {
         this.spawnT -= dt;
-        if (this.spawnT <= 0) { this.spawn(); this.spawnT = 1.2; }
+        if (this.spawnT <= 0) { this.spawn(); this.spawnT = 1.4; }
       }
 
       const c = this.cust;
       if (c) {
         c.t += dt;
         if (c.st === 'arrive') {
-          c.slide = Math.max(0, c.slide - dt * 2.6);
+          c.slide = Math.max(0, c.slide - dt * 2.2);
+          c.walk += dt;
           if (c.slide <= 0) {
             c.st = 'order';
             G.audio.sfx('order');
-            if (c.quirk !== 'none') G.toast(G.quirkById(c.quirk).hint, P.hazard);
+            if (G.state.tut < 2) G.clause && G.clause.tut(2);
           }
         }
         if (c.st === 'order') {
           c.wait += dt;
-          if (c.memo > 0) c.memo -= dt;
-          if (c.peek > 0) c.peek -= dt;
-          // intake hangs open, waiting to be fed
-          c.open = 0.66 + Math.sin(this.t * 1.6) * 0.14;
-          if (c.wait > PATIENCE * 0.72) c.mood = 'angry';
+          c.open = 0.5 + Math.sin(this.t * 1.5) * 0.16;
+          if (c.wait > PATIENCE * botPatience(c) * 0.74) c.mood = 'angry';
         }
         if (c.st === 'eat') {
           c.eat.t += dt;
-          const ph = (c.eat.t * 3.4) % 1;
-          c.open = 0.2 + 0.72 * Math.pow(Math.sin(ph * Math.PI), 0.55);
+          const ph = (c.eat.t * 3.2) % 1;
+          c.open = 0.22 + 0.7 * Math.pow(Math.sin(ph * Math.PI), 0.55);
           c.eat.left = Math.max(0, 1 - c.eat.t / 1.7);
-          if (Math.floor(c.eat.t * 3.4) !== c.eat.bites) {
-            c.eat.bites = Math.floor(c.eat.t * 3.4);
+          if (Math.floor(c.eat.t * 3.2) !== c.eat.bites) {
+            c.eat.bites = Math.floor(c.eat.t * 3.2);
             G.audio.sfx('chew');
-            const col = G.flavorById(c.eat.build.scoops[0]).col;
+            const f = G.flavById(c.eat.build.scoops[0]);
             for (let i = 0; i < 4; i++)
-              this.parts.push({ x: CUST.x + G.rand(-8, 8), y: 108, vx: G.rand(-24, 24), vy: G.rand(-40, -6),
-                col, t: 0, life: 0.4, grav: 200, screen: true });
+              this.parts.push({ x: CUST.x + G.rand(-8, 8), y: (this.bot ? this.bot.mouthY : 60) + 6,
+                vx: G.rand(-24, 24), vy: G.rand(-40, -6), col: f ? f.col : '#fff', t: 0, life: 0.4, grav: 200 });
           }
           if (c.eat.t > 1.9) {
             const v = c.eat.verdict;
-            if (v === 'perfect') { G.audio.sfx('perfect'); c.mood = 'happy'; G.floatText('PERFECT +$' + c.eat.pay, CUST.x, 36, P.lime); }
-            else if (v === 'ok') { G.audio.sfx('good'); c.mood = 'happy'; G.floatText('+$' + c.eat.pay, CUST.x, 36, P.hazard); }
-            else { G.audio.sfx('bad'); c.mood = 'angry'; G.floatText('WRONG +$' + c.eat.pay, CUST.x, 36, P.warn); }
-            G.flyCoin(CUST.x, 48, c.eat.pay);
+            if (v === 'perfect') { G.audio.sfx('perfect'); c.mood = 'happy'; G.floatText('+$' + c.eat.pay + ' PERFECT', CUST.x, 40, P.lime); }
+            else if (v === 'ok') { G.audio.sfx('good'); c.mood = 'happy'; G.floatText('+$' + c.eat.pay, CUST.x, 40, P.hazard); }
+            else { G.audio.sfx('bad'); c.mood = 'angry'; G.floatText('+$' + c.eat.pay + ' GRUDGING', CUST.x, 40, P.warn); }
+            G.flyCoin(CUST.x, 50, c.eat.pay);
             G.state.today.dayEarn += c.eat.pay;
-            G.state.today.botsServed++;
+            G.state.today.served++;
             G.state.totBots++;
-            const p = G.state.today.jobs[G.state.today.jobs.length - 1];
-            if (p) G.floatText(p.faults.length + ' IN THE SHOP', CUST.x, 26, P.violetLt);
-            c.st = 'leave';
-            c.open = 0;
+            if (c.eat.volt > 0) {
+              c.st = 'glitch'; c.gt = 0;
+            } else { c.st = 'leave'; c.open = 0; }
+          }
+        }
+        if (c.st === 'glitch') {
+          // the additive lands: it seizes, sparks and staggers out
+          c.gt += dt;
+          c.mood = 'sick';
+          c.open = 0.3 + Math.sin(c.gt * 22) * 0.3;
+          if (Math.random() < dt * 14)
+            G.spark(CUST.x + G.rand(-16, 16), (this.bot ? this.bot.torsoY : 70) + G.rand(0, 20),
+              ['#ffffff', P.cyanLt, P.hazard], 3, 60);
+          if (c.gt < 0.1) { G.audio.sfx('zap'); G.shake(3, 0.3); G.screenFlash(P.cyanLt, 0.1); }
+          if (c.gt > 1.5) {
+            G.floatText('MALFUNCTION', CUST.x, 34, P.magentaLt);
+            c.st = 'leave'; c.open = 0;
           }
         }
         if (c.st === 'leave') {
-          c.slide += dt * 2.2;
-          if (c.slide > 1.2) { this.cust = null; this.handBuild = null; }
+          c.slide += dt * 1.8; c.walk += dt;
+          if (c.slide > 1.2) { this.cust = null; this.bot = null; }
         }
       }
 
       if (this.serving) {
         const s = this.serving;
-        s.t += dt * 1.7;
+        s.t += dt * 1.6;
         const e = G.easeInOut(Math.min(1, s.t));
-        s.x = G.lerp(PLX - Math.round(G.cam.x), CUST.x, e);
-        s.y = G.lerp(PLY, 118, e) - Math.sin(Math.min(1, s.t) * Math.PI) * 26;
+        s.x = G.lerp(PLATE.x, CUST.x, e);
+        s.y = G.lerp(PLATE.y - 24, (this.bot ? this.bot.mouthY : 60) + 24, e) - Math.sin(Math.min(1, s.t) * Math.PI) * 22;
         if (s.t >= 1) {
           this.cust.st = 'eat';
-          this.cust.eat = { t: 0, build: s.build, pay: s.pay, verdict: s.verdict, bites: -1, left: 1 };
+          this.cust.eat = { t: 0, build: s.build, pay: s.pay, verdict: s.verdict, volt: s.volt, bites: -1, left: 1 };
           this.serving = null;
         }
       }
 
-      // ---- held ----
+      // ---- the sweep ----
       const h = this.hold;
-      if (h && h.kind === 'scoop' && M.down) {
-        const pint = this.pints[h.pi], r = pintRect(h.pi);
-        h.fill = Math.min(1, h.fill + dt * (G.hasUp('steady') ? 1.6 : 1.2));
-        const col = Math.floor(((wx - r.x) / r.w) * COLS);
-        const bandTop = h.li / pint.layers.length;
-        for (let k = -6; k <= 6; k++) {
-          const ci = col + k;
-          if (ci < 0 || ci >= COLS) continue;
-          const fall = Math.sqrt(Math.max(0, 1 - (k / 6.5) * (k / 6.5)));
-          const target = bandTop + 0.07 + fall * 0.2;
-          if (pint.surf[ci] < target) pint.surf[ci] = Math.min(target, pint.surf[ci] + dt * 1.1 * fall);
-        }
-        h.tick += dt;
-        if (h.tick > 0.06) {
-          h.tick = 0;
-          G.audio.sfx('carveTick', { f: h.fill });
-          const fc = G.flavorById(h.fid);
-          this.parts.push({ x: wx + G.rand(-5, 5), y: wy + G.rand(-3, 3), vx: G.rand(-26, 26), vy: G.rand(-50, -12),
-            col: Math.random() < 0.5 ? fc.col : G.shade(fc.col, 0.3), t: 0, life: 0.32, grav: 220 });
-        }
-        G.audio.loop('carve', true, 0.35 + h.fill * 0.65);
-        if (h.fill >= 1) this.popBall(h);
-      } else G.audio.loop('carve', false);
+      if (h && h.kind === 'sweep' && M.down) {
+        const r = pitRect(h.pi);
+        const inside = G.inRect(M.x, M.y, r.x, r.y, r.w, r.h);
+        const f = G.flavById(h.fid);
+        if (inside) {
+          const gx = G.clamp(Math.floor(((M.x - r.x) / r.w) * GX), 0, GX - 1);
+          const gy = G.clamp(Math.floor(((M.y - r.y) / r.h) * GY), 0, GY - 1);
+          const surf = this.surf[h.pi];
+          const moved = Math.hypot(M.x - h.lastX, M.y - h.lastY);
+          h.lastX = M.x; h.lastY = M.y;
+          // the ladle is a round tool: press a disc of cells down
+          let got = 0;
+          const R = G.has('ladle') ? 2.4 : 1.9;
+          for (let j = -3; j <= 3; j++) for (let i = -3; i <= 3; i++) {
+            const cxi = gx + i, cyi = gy + j;
+            if (cxi < 0 || cxi >= GX || cyi < 0 || cyi >= GY) continue;
+            const d = Math.hypot(i, j);
+            if (d > R) continue;
+            const k = cyi * GX + cxi;
+            const bite = (1 - d / (R + 0.4)) * dt * 1.9;
+            const before = surf[k];
+            surf[k] = Math.min(1, surf[k] + bite);
+            got += surf[k] - before;
+          }
+          // sweeping earns more than standing still: reward the drag
+          const rate = 0.55 + Math.min(1, moved * 0.08) * 0.9;
+          h.fill = Math.min(1.6, h.fill + got * rate * (G.has('ladle') ? 1.25 : 1));
+          h.path.push({ x: M.x, y: M.y, t: 0 });
+          if (h.path.length > 40) h.path.shift();
+          h.tick += dt;
+          if (h.tick > 0.055) {
+            h.tick = 0;
+            G.audio.sfx('carveTick', { f: Math.min(1, h.fill) });
+            this.parts.push({ x: M.x + G.rand(-4, 4), y: M.y + G.rand(-3, 3), vx: G.rand(-22, 22),
+              vy: G.rand(-42, -10), col: Math.random() < 0.5 ? f.col : G.shade(f.col, 0.35),
+              t: 0, life: 0.3, grav: 210 });
+          }
+          G.audio.loop('carve', true, 0.3 + Math.min(1, h.fill) * 0.7);
+        } else G.audio.loop('carve', false);
+        for (const p of h.path) p.t += dt;
+      } else if (h && h.kind === 'sweep') G.audio.loop('carve', false);
 
       if (h && h.kind === 'ball') {
-        h.bx += (wx - h.bx) * Math.min(1, dt * 18);
-        h.by += (wy - h.by) * Math.min(1, dt * 18);
+        h.bx += (M.x - h.bx) * Math.min(1, dt * 20);
+        h.by += (M.y - h.by) * Math.min(1, dt * 20);
+        h.lift = Math.min(1, (this.t - h.born) * 3);
       }
+
+      // ---- sauce + toppings ----
       let pouring = false;
       if (h && h.kind === 'sauce') {
         if (G.dist(M.x, M.y, h.gx, h.gy) > 6) {
           pouring = true;
           h.emit -= dt;
-          if (h.emit <= 0 && this.drops.length < 70) {
+          if (h.emit <= 0 && this.drops.length < 60) {
             h.emit = 0.05;
-            // pouring over the robot is SCREEN space; over the bench is world space
-            const hr = this.headRect();
-            const onHead = c && c.st === 'order' && G.inRect(M.x, M.y, hr.x, hr.y, hr.w, hr.h);
-            this.drops.push({ x: onHead ? M.x : wx, y: (onHead ? M.y : wy) + 4, vx: G.rand(-5, 5), vy: 26,
-              col: G.sauceById(h.sid).col, sid: h.sid, mode: 'fall', screen: onHead });
+            this.drops.push({ x: M.x, y: M.y + 4, vx: G.rand(-5, 5), vy: 26,
+              col: G.sauceById(h.sid).col, sid: h.sid });
           }
         }
         G.audio.loop('pour', pouring, 0.85);
       }
       if (h && h.kind === 'jar') {
-        const shake = Math.abs(M.vx) > 120;
+        const shake = Math.abs(M.vx) > 110;
         h.emit -= dt;
-        if (G.dist(M.x, M.y, h.gx, h.gy) > 5 && h.emit <= 0 && this.bits.length < 60) {
+        if (G.dist(M.x, M.y, h.gx, h.gy) > 5 && h.emit <= 0 && this.bits.length < 55) {
           h.emit = shake ? 0.05 : 0.12;
-          const hr = this.headRect();
-          const onHead = c && c.st === 'order' && G.inRect(M.x, M.y, hr.x, hr.y, hr.w, hr.h);
           for (let i = 0; i < (shake ? 2 : 1); i++) {
             const tp = G.topById(h.tid);
-            this.bits.push({ x: (onHead ? M.x : wx) + G.rand(-4, 4), y: (onHead ? M.y : wy) + 4,
-              vx: G.rand(-20, 20) + G.clamp(M.vx * 0.12, -30, 30), vy: 10,
-              col: G.topBitCol(h.tid), tid: h.tid, shape: tp && tp.hard >= 2 ? 'big' : 'sml',
-              t: 0, bounces: 0, screen: onHead });
+            this.bits.push({ x: M.x + G.rand(-4, 4), y: M.y + 4,
+              vx: G.rand(-18, 18) + G.clamp(M.vx * 0.1, -28, 28), vy: 10,
+              col: G.topBitCol(h.tid), tid: h.tid, big: tp && tp.grit >= 3, t: 0 });
           }
           G.audio.sfx('grit');
         }
       }
 
-      // ---- sauce physics ----
-      const b = this.build;
+      // ---- droplet + topping physics ----
+      const b = this.build, c2 = this.cust;
+      const br = this.botRect();
       for (let i = this.drops.length - 1; i >= 0; i--) {
         const d = this.drops[i];
-        if (d.screen) {                              // landing on the robot's shell
-          d.vy += 340 * dt; d.y += d.vy * dt; d.x += d.vx * dt;
-          const hr = this.headRect();
-          if (d.y > hr.y + hr.h * 0.55 || d.y > 150) {
-            if (c && G.inRect(d.x, d.y, hr.x, hr.y, hr.w, hr.h + 20)) {
-              c.headSauce++;
-              c.shellCoat = c.shellCoat || [];
-              const sy = hr.y + hr.h * 0.14 + Math.random() * hr.h * 0.55;
-              c.shellCoat.push({ x: d.x, y: Math.round(Math.min(d.y, sy)), col: d.col });
-              if (c.shellCoat.length > 220) c.shellCoat.shift();
-            }
+        d.vy += 330 * dt; d.x += d.vx * dt; d.y += d.vy * dt;
+        let hit = false;
+        if (b && b.base !== 'none') for (let si = b.scoops.length - 1; si >= 0 && !hit; si--) {
+          const sp = this.scoopSeat(si);
+          if (G.dist(d.x, d.y, sp.x, sp.y) <= sp.r + 1) {
+            hit = true;
+            b.coat.push({ lx: d.x - PLATE.x, ly: d.y - (PLATE.y - 4), col: d.col });
+            if (b.coat.length > 400) b.coat.shift();
+            b.sauceAmt[d.sid] = (b.sauceAmt[d.sid] || 0) + 1;
             this.drops.splice(i, 1);
           }
-          continue;
         }
-        if (d.mode === 'fall') {
-          d.vy += 340 * dt; d.x += d.vx * dt; d.y += d.vy * dt;
-          let hit = false;
-          if (b) for (let si = b.scoops.length - 1; si >= 0 && !hit; si--) {
-            const sp = this.scoopPos(si);
-            if (G.dist(d.x, d.y, sp.x, sp.y) <= sp.r + 1) {
-              hit = true;
-              this.coat(d, 1.6);
-              if (Math.random() < 0.75) { d.mode = 'slide'; d.si = si; d.ang = Math.atan2(d.y - sp.y, d.x - sp.x); }
-              else this.drops.splice(i, 1);
-            }
-          }
-          if (hit) continue;
-          if (d.y > PLY + 2) { G.addStain(d.x, Math.min(d.y, PLY + 2), G.rand(1.5, 3), d.col); this.drops.splice(i, 1); }
-        } else if (d.mode === 'slide') {
-          if (!b || d.si >= b.scoops.length) { d.mode = 'fall'; continue; }
-          const sp = this.scoopPos(d.si);
-          const dir = G.angDiff(Math.PI / 2, d.ang) > 0 ? 1 : -1;
-          d.ang += dir * (62 / sp.r) * dt;
-          d.x = sp.x + Math.cos(d.ang) * (sp.r - 0.5);
-          d.y = sp.y + Math.sin(d.ang) * (sp.r - 0.5);
-          if (Math.random() < 0.9) this.coat(d, 1.3);
-          const rem = Math.abs(G.angDiff(Math.PI / 2, d.ang));
-          if (rem < 0.22 || (rem < 1.1 && Math.random() < 0.05)) { d.mode = 'fall'; d.vy = 20; }
+        if (hit) continue;
+        // on the machine itself
+        if (c2 && c2.st === 'order' && G.inRect(d.x, d.y, br.x, br.y, br.w, br.h)) {
+          c2.sauceOn++;
+          c2.shellCoat = c2.shellCoat || [];
+          c2.shellCoat.push({ x: d.x, y: d.y, col: d.col });
+          if (c2.shellCoat.length > 200) c2.shellCoat.shift();
+          this.drops.splice(i, 1); continue;
         }
+        if (d.y > 150) { this.drops.splice(i, 1); }
       }
-      // ---- topping physics ----
       for (let i = this.bits.length - 1; i >= 0; i--) {
         const p = this.bits[i];
-        p.vy += 320 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.t += dt;
-        if (p.screen) {                              // sticking to the robot
-          const hr = this.headRect();
-          if (p.y > hr.y + hr.h * 0.5 || p.y > 150) {
-            if (c && G.inRect(p.x, p.y, hr.x, hr.y, hr.w, hr.h + 20)) {
-              c.headBits++;
-              c.shellBits = c.shellBits || [];
-              const sy = hr.y + hr.h * 0.16 + Math.random() * hr.h * 0.5;
-              c.shellBits.push({ x: p.x, y: Math.round(Math.min(p.y, sy)), col: p.col, shape: p.shape });
-              if (c.shellBits.length > 140) c.shellBits.shift();
-              if (c.headBits >= HEAD_NEED) c.sprinkled = true;
-            }
-            this.bits.splice(i, 1);
-          }
-          continue;
-        }
+        p.vy += 310 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.t += dt;
         let stuck = false;
-        if (b) for (let si = b.scoops.length - 1; si >= 0; si--) {
-          const sp = this.scoopPos(si);
+        if (b && b.base !== 'none') for (let si = b.scoops.length - 1; si >= 0; si--) {
+          const sp = this.scoopSeat(si);
           if (G.dist(p.x, p.y, sp.x, sp.y) <= sp.r + 1 && p.vy > 0) {
-            if (Math.random() < 0.88) {
-              b.bits.push({ lx: p.x - PLX, ly: p.y - PLY, col: p.col, shape: p.shape });
-              if (b.bits.length > 160) b.bits.shift();
-              b.topAmt[p.tid] = (b.topAmt[p.tid] || 0) + 1;
-              stuck = true;
-            } else { p.vy *= -0.4; p.vx += G.rand(-16, 16); }
-            break;
+            b.bits.push({ lx: p.x - PLATE.x, ly: p.y - (PLATE.y - 4), col: p.col, big: p.big });
+            if (b.bits.length > 120) b.bits.shift();
+            b.topAmt[p.tid] = (b.topAmt[p.tid] || 0) + 1;
+            stuck = true; break;
           }
         }
         if (stuck) { this.bits.splice(i, 1); continue; }
-        if (p.y >= PLY + 1) {
-          p.y = PLY + 1; p.vy *= -0.4; p.vx *= 0.7; p.bounces++;
-          if (p.bounces >= 2 || Math.abs(p.vy) < 14) {
-            this.rest.push({ x: p.x, y: PLY + G.rand(0, 3), col: p.col, shape: p.shape, t: 0 });
-            if (this.rest.length > 34) this.rest.shift();
-            this.bits.splice(i, 1);
-          }
+        if (c2 && c2.st === 'order' && G.inRect(p.x, p.y, br.x, br.y, br.w, br.h)) {
+          c2.topOn++;
+          c2.shellBits = c2.shellBits || [];
+          c2.shellBits.push({ x: p.x, y: p.y, col: p.col });
+          if (c2.shellBits.length > 140) c2.shellBits.shift();
+          this.bits.splice(i, 1); continue;
         }
-        if (p.x < -10 || p.x > WORLD + 10) this.bits.splice(i, 1);
+        if (p.y > 150 || p.t > 3) this.bits.splice(i, 1);
       }
-      for (let i = this.rest.length - 1; i >= 0; i--) { this.rest[i].t += dt; if (this.rest[i].t > 5) this.rest.splice(i, 1); }
-
-      if (b) {
-        b.wobV += -b.wob * 70 * dt - b.wobV * 9 * dt; b.wob += b.wobV * dt;
-        if (b.pop > 0) b.pop = Math.max(0, b.pop - dt * 3.4);
-      }
+      if (b && b.pop > 0) b.pop = Math.max(0, b.pop - dt * 3.4);
       for (let i = this.parts.length - 1; i >= 0; i--) {
         const p = this.parts[i];
         p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.grav || 0) * dt;
@@ -598,315 +522,371 @@
 
       if (this.left === 0 && !this.cust && !this.serving) {
         this.endT += dt;
-        if (this.endT > 1.4) { G.audio.sfx('night'); G.save(); G.go('night', 'SHIFT ' + G.state.day); }
+        if (this.endT > 1.4) { G.audio.sfx('night'); G.save(); G.go('night', 'THE WORKSHOP'); }
       }
-    },
-
-    coat(d, r) {
-      const b = this.build; if (!b) return;
-      b.coat.push({ lx: d.x - PLX, ly: d.y - PLY, r, col: d.col });
-      if (b.coat.length > 700) b.coat.shift();
-      b.sauceAmt[d.sid] = (b.sauceAmt[d.sid] || 0) + 1;
     },
 
     // ---------------- draw ----------------
     draw(g) {
       const t = this.t;
-      const camX = Math.round(G.cam.x);
-      G.toastCX = 92; G.toastY = 160;
+      G.toastCX = 70; G.toastY = 34;
 
-      // ===== the street =====
+      // ===== the street outside the window =====
       G.R(g, 0, 0, G.W, G.H, P.cityDk);
-      G.cityWall(g, 0, 0, G.W, COUNTER - 8, t);
-      G.conduit(g, 0, 3, G.W, false, P.cyan);
-      G.conduit(g, 6, 13, 54, true, P.magenta);
-      // hanging signage down the wall
-      G.hangSign(g, 104, 26, 18, 16, P.magenta, t, 0);
-      G.hangSign(g, 128, 26, 18, 16, P.cyan, t, 1);
-      G.hangSign(g, 152, 26, 18, 16, P.violet, t, 2);
-      // the kiosk's own neon strip over the counter
+      G.cityWall(g, 0, 0, G.W, WORK_Y, t);
+      G.conduit(g, 0, 2, G.W, false, P.cyan);
+      G.hangSign(g, 226, 16, 16, 14, P.magenta, t, 0);
+      G.hangSign(g, 246, 16, 14, 12, P.cyan, t, 2);
+      // the café's own sign, tucked left where nothing else lands
       const fl = (Math.sin(t * 13) > 0.94) ? 0.35 : 1;
-      G.R(g, 92, 12, 136, 4, fl > 0.5 ? P.magentaLt : P.magentaDk);
-      G.R(g, 92, 11, 136, 1, fl > 0.5 ? '#ffffff' : P.magentaDk);
-      G.glow(g, 160, 26, 150, 66, P.magenta, 1.1 * fl);
-      // kiosk lettering, tucked under the strip where nothing else lands
-      G.text(g, 'SOFT SERVE', 90, 20, fl > 0.5 ? P.cyanLt : P.cyanDk, { out: OUT });
-      G.text(g, '24 HR', 90, 30, P.steel);
+      G.R(g, 8, 18, 96, 3, fl > 0.5 ? P.magentaLt : P.magentaDk);
+      G.glow(g, 60, 30, 130, 56, P.magenta, 0.9 * fl);
+      G.text(g, 'SCOOP  ·  24 HR', 10, 24, fl > 0.5 ? P.cyanLt : P.cyanDk, { out: OUT });
 
-      G.cam.push(g);
-      // ---- counter slab ----
-      G.box(g, -4, COUNTER - 8, WORLD + 8, 16, P.plate, { lit: P.plateLt, dk: P.plateDk, r: 2, band: 3 });
-      G.R(g, -4, COUNTER - 8, WORLD + 8, 1, P.cyanDk);
-      // the lower assembly shelf, where the cone actually gets built
-      G.box(g, -4, COUNTER + 6, WORLD + 8, 46, P.plateDk, { lit: P.plate, dk: P.plateDk2, r: 2, band: 4 });
-      G.R(g, -4, COUNTER + 7, WORLD + 8, 1, P.cyanDk);
-      G.speckle(g, 0, COUNTER + 10, WORLD, 40, '#0e1018', 0.08, 4);
-      // a strip of under-counter light along the back of the shelf
-      G.R(g, 0, COUNTER + 10, WORLD, 1, '#2a3450');
-
-      // ---- tubs ----
-      for (let i = 0; i < NPINT; i++) {
-        const r = pintRect(i), pt = this.pints[i];
-        G.drawPint(g, r.x, r.y, r.w, r.h, pt.layers, pt.surf, { legend: true });
+      // ===== the machine at the counter =====
+      const c = this.cust;
+      if (c) {
+        const sl = G.easeOut(G.clamp(1 - c.slide, 0, 1));
+        const cx = CUST.x + Math.round((1 - sl) * 74);
+        this.bot = G.drawBot(g, c.id, cx, CUST.y, CSCALE, {
+          t, open: c.open, mood: c.mood, walk: c.walk,
+          shellBits: c.shellBits, shellCoat: c.shellCoat,
+        });
+        // what it says it wants, in a speech tag over its head
+        if (c.st === 'order') this.speech(g, c, cx, this.bot);
+        // eating: the cone comes up to the intake
+        if (c.st === 'eat' && c.eat && c.eat.left > 0.04 && c.eat.build.base !== 'none') {
+          const scp = c.eat.build.scoops;
+          const ex = cx - Math.round(this.bot.hw * 0.5);
+          const ey = this.bot.mouthY + 32 - Math.round(Math.sin(c.eat.t * 3.2 * Math.PI * 2) * 2);
+          this.drawBuild(g, ex, ey, c.eat.build, c.eat.left);
+        }
       }
 
-      // ---- bases + bin ----
-      G.cone3(g, STAND.cone.x, COUNTER - 6, [], { w: 16, h: 20 });
-      G.box(g, STAND.cup.x - 8, STAND.cup.y + 2, 16, 16, P.plateDk, { lit: P.plate, dk: P.plateDk2, r: 1, band: 2 });
-      G.R(g, STAND.cup.x - 6, STAND.cup.y + 4, 12, 1, P.cyanDk);
-      const bw = this.binWob > 0 ? Math.sin(t * 40) * 1 : 0;
-      G.box(g, BIN.x + bw, BIN.y, BIN.w, BIN.h, P.plateDk, { r: 1, band: 2 });
-      G.R(g, BIN.x - 2 + bw, BIN.y - 3, BIN.w + 4, 3, P.plate);
-
-      // ---- sauce + toppings ----
-      G.text(g, 'SAUCE', RACK_S.x + 4, RACK_S.y - 8, P.cyanLt, { out: OUT });
-      G.box(g, RACK_S.x, RACK_S.y + 26, 56, 5, P.plateDk, { r: 1, band: 1, spec: false });
-      const sl = G.state.sauces;
-      for (let i = 0; i < sl.length; i++) {
-        if (this.hold && this.hold.kind === 'sauce' && this.hold.sid === sl[i]) continue;
-        const s = G.sauceById(sl[i]);
-        G.box(g, RACK_S.x + 3 + i * 15, RACK_S.y + 8, 11, 18, s.col, { r: 1, band: 3 });
-        G.R(g, RACK_S.x + 5 + i * 15, RACK_S.y + 5, 7, 4, P.hull);
+      // ===== the back work shelf =====
+      G.plate(g, -4, WORK_Y, 224, 10, P.plate, { r: 2, band: 3 });
+      G.R(g, -4, WORK_Y + 1, 224, 1, P.cyanDk);
+      // cone + cup stands
+      G.plate(g, CONE_ST - 11, WORK_Y - 4, 22, 5, P.plateDk, { r: 1, band: 1 });
+      G.cone(g, CONE_ST, WORK_Y - 4, { w: 14, h: 18 });
+      G.plate(g, CUP_ST - 11, WORK_Y - 4, 22, 5, P.plateDk, { r: 1, band: 1 });
+      G.cup(g, CUP_ST, WORK_Y - 4, { w: 16, h: 12 });
+      // sauce bottles
+      const sl2 = G.state.sauces;
+      for (let i = 0; i < sl2.length; i++) {
+        if (this.hold && this.hold.kind === 'sauce' && this.hold.sid === sl2[i]) continue;
+        const s = G.sauceById(sl2[i]);
+        G.plate(g, RACK_S + i * 14 - 6, WORK_Y - 20, 12, 20, s.col, { r: 1, band: 2 });
+        G.R(g, RACK_S + i * 14 - 3, WORK_Y - 23, 6, 4, P.hull);
       }
-      G.text(g, 'TOPPINGS', RACK_T.x + 4, RACK_T.y - 8, P.cyanLt, { out: OUT });
-      G.box(g, RACK_T.x, RACK_T.y + 26, 52, 5, P.plateDk, { r: 1, band: 1, spec: false });
-      const tl = G.state.tops;
-      for (let i = 0; i < tl.length; i++) {
-        if (this.hold && this.hold.kind === 'jar' && this.hold.tid === tl[i]) continue;
-        const tp = G.topById(tl[i]);
-        const bx = RACK_T.x + 3 + (i % 3) * 16, by = RACK_T.y + 6 + Math.floor(i / 3) * 24;
-        G.box(g, bx, by, 12, 20, P.plateDk2, { r: 1, band: 2 });
-        for (let k = 0; k < 5; k++) G.R(g, bx + 2 + (k % 3) * 3, by + 6 + Math.floor(k / 3) * 4, 2, 2, G.topBitCol(tp.id));
-        G.R(g, bx, by - 2, 12, 3, P.hull);
+      // topping jars
+      const tl2 = G.state.tops;
+      for (let i = 0; i < tl2.length; i++) {
+        if (this.hold && this.hold.kind === 'jar' && this.hold.tid === tl2[i]) continue;
+        const tp = G.topById(tl2[i]);
+        G.plate(g, RACK_T + i * 14 - 6, WORK_Y - 20, 12, 20, P.plateDk2, { r: 1, band: 2 });
+        for (let k = 0; k < 5; k++)
+          G.R(g, RACK_T + i * 14 - 4 + (k % 3) * 3, WORK_Y - 15 + Math.floor(k / 3) * 4, 2, 2, G.topBitCol(tp.id));
+        G.R(g, RACK_T + i * 14 - 6, WORK_Y - 22, 12, 3, P.hull);
+      }
+      G.text(g, 'SAUCE', RACK_S - 6, WORK_Y - 29, P.cyanLt, { out: OUT });
+      G.text(g, 'TOPS', RACK_T - 6, WORK_Y - 29, P.cyanLt, { out: OUT });
+
+      // ===== the pit deck, sunk in front =====
+      G.plate(g, -4, DECK_Y, G.W + 8, DECK_H, P.plate, { r: 2, band: 4 });
+      G.R(g, -4, DECK_Y + 1, G.W + 8, 1, P.cyanDk);
+      for (let i = 0; i < 5; i++) {
+        const r = pitRect(i);
+        if (i >= this.n) { this.drawBlank(g, r, i); continue; }
+        this.drawPit(g, i, r, t);
       }
 
-      // ---- plate + build ----
-      G.box(g, PLX - 16, PLY + 1, 32, 5, P.hullDk, { lit: P.hull, dk: P.plateDk2, r: 1, band: 1 });
-      G.R(g, PLX - 14, PLY + 2, 28, 1, P.cyanDk);
-      G.drawGoreWorld(g);
-      for (const r of this.rest) { g.globalAlpha = G.clamp(1 - r.t / 5, 0, 1); this.drawBit(g, r.x, r.y, r); g.globalAlpha = 1; }
-      if (this.build) this.drawBuild(g, PLX, PLY, this.build);
-      if (this.hold && this.hold.kind === 'ball' && this.build && this.build.scoops.length < 3) {
-        const np = this.scoopPos(this.build.scoops.length);
-        const near = G.dist(G.mouse.wx, G.mouse.y, np.x, np.y) < 26;
+      // the build on the plate
+      G.plate(g, PLATE.x - 13, PLATE.y - 4, 26, 5, P.hullDk, { r: 1, band: 1 });
+      if (this.build && this.build.base !== 'none') this.drawBuild(g, PLATE.x, PLATE.y - 4, this.build, 1);
+      if (this.serving) this.drawBuild(g, this.serving.x, this.serving.y, this.serving.build, 1);
+      // a seat marker while carrying a ball
+      if (this.hold && this.hold.kind === 'ball' && this.build && this.build.base !== 'none' && this.build.scoops.length < 3) {
+        const sp = this.scoopSeat(this.build.scoops.length);
+        const near = G.dist(G.mouse.x, G.mouse.y, sp.x, sp.y) < 26;
         g.globalAlpha = 0.4 + Math.abs(Math.sin(t * 5)) * (near ? 0.6 : 0.2);
         for (let i = 0; i < 10; i += 2) {
           const a = (i / 10) * Math.PI * 2;
-          G.R(g, np.x + Math.cos(a) * np.r, np.y + Math.sin(a) * np.r * 0.8, 2, 2, near ? P.lime : P.hullLt);
+          G.R(g, sp.x + Math.cos(a) * sp.r, sp.y + Math.sin(a) * sp.r * 0.8, 2, 2, near ? P.lime : P.hullLt);
         }
         g.globalAlpha = 1;
       }
-      for (const d of this.drops) if (!d.screen) G.R(g, d.x, d.y, 2, 2, d.col);
-      for (const p of this.bits) if (!p.screen) this.drawBit(g, p.x, p.y, p);
-      for (const p of this.parts) {
-        if (p.screen) continue;
-        g.globalAlpha = 1 - p.t / p.life; G.R(g, p.x, p.y, 2, 2, p.col); g.globalAlpha = 1;
-      }
-      G.cam.pop(g);
 
-      // ===== screen space: the robot, right in your face =====
-      const c = this.cust;
-      if (c) {
-        const sl2 = G.easeOut(G.clamp(1 - c.slide, 0, 1));
-        const cxp = CUST.x + Math.round((1 - sl2) * 90);
-        const bust = G.robotBust(g, c.sp, cxp, CUST.y, CSCALE,
-          { t, open: c.open, mood: c.mood, sprinkled: false });
-        bust.cx = cxp;
-        this.bust = bust;
-        // what landed on its shell, drawn on the shell
-        if (c.shellCoat) for (const s of c.shellCoat) G.R(g, s.x + (cxp - CUST.x), s.y, 2, 2, s.col);
-        if (c.shellBits) for (const s of c.shellBits) this.drawBit(g, s.x + (cxp - CUST.x), s.y, s);
-        // eating: the cone comes up into the intake in a servo mitt
-        if (c.st === 'eat' && c.eat && c.eat.left > 0.04 && c.eat.build.base !== 'none') {
-          const scp = c.eat.build.scoops;
-          const ex = cxp - Math.round(bust.hw * 0.42);
-          const ey = bust.jawY + 40 - Math.round(Math.sin(c.eat.t * 3.4 * Math.PI * 2) * 2);
-          const full = Math.floor(scp.length * c.eat.left);
-          const frac = (scp.length * c.eat.left) - full;
-          const r = G.cone3(g, ex, ey, scp.slice(0, full), { w: 15, h: 20, sr: 9 });
-          if (frac > 0.1 && full < scp.length) {
-            const rr = Math.max(3, Math.round(9 * frac));
-            G.scoop3(g, ex, r.topY - rr + 2, rr, scp[full], {});
-          }
-          G.servoMitt(g, ex - 9, ey - 12, { grip: 1 });
-        }
-        if (c.st === 'order') this.chit(g, c, cxp, bust);
-      }
-      for (const d of this.drops) if (d.screen) G.R(g, d.x, d.y, 2, 2, d.col);
-      for (const p of this.bits) if (p.screen) this.drawBit(g, p.x, p.y, p);
+      for (const d of this.drops) G.R(g, d.x, d.y, 2, 2, d.col);
+      for (const p of this.bits) { if (p.big) { G.R(g, p.x - 1, p.y - 1, 3, 3, OUT); G.R(g, p.x - 1, p.y - 1, 2, 2, p.col); } else G.R(g, p.x, p.y, 2, 2, p.col); }
       for (const p of this.parts) {
-        if (!p.screen) continue;
         g.globalAlpha = 1 - p.t / p.life; G.R(g, p.x, p.y, 2, 2, p.col); g.globalAlpha = 1;
       }
-      if (this.serving) this.drawBuild(g, this.serving.x, this.serving.y, this.serving.build, true);
       G.drawSteam(g);
 
-      // ---- held implement + servo mitt ----
-      const M = G.mouse, h = this.hold;
-      if (h && M.x >= 0) {
-        const rx = G.clamp(M.x, 6, G.W - 6), ry = G.clamp(M.y, 20, 154);
-        if (h.kind === 'scoop') {
-          G.R(g, rx + 3, ry - 4, 4, 16, P.hull);
-          G.box(g, rx - 6, ry - 2, 12, 9, P.hull, { lit: P.hullLt, dk: P.hullDk, r: 2, band: 2 });
-          if (h.fill > 0.05) G.scoop3(g, rx, ry - 2 - h.fill * 4, 3 + h.fill * 6, h.fid, {});
-          G.servoMitt(g, rx + 4, ry + 10, { grip: 1 });
-        } else if (h.kind === 'ball') {
-          G.scoop3(g, h.bx - camX, h.by - 4, 9, h.fid, {});
-          G.servoMitt(g, h.bx - camX + 8, h.by + 6, { grip: 1 });
-        } else if (h.kind === 'sauce') {
-          const s = G.sauceById(h.sid);
-          G.box(g, rx - 5, ry - 18, 11, 18, s.col, { r: 1, band: 3 });
-          G.R(g, rx - 1, ry, 2, 3, G.shade(s.col, -0.4));
-          G.servoMitt(g, rx + 6, ry - 8, { grip: 1 });
-        } else if (h.kind === 'jar') {
-          G.box(g, rx - 6, ry - 18, 12, 18, P.plateDk2, { r: 1, band: 2 });
-          for (let k = 0; k < 5; k++) G.R(g, rx - 4 + (k % 3) * 3, ry - 13 + Math.floor(k / 3) * 4, 2, 2, G.topBitCol(h.tid));
-          G.R(g, rx - 5, ry, 10, 2, P.hull);
-          G.servoMitt(g, rx + 7, ry - 8, { grip: 1 });
-        }
-        G.hideCursor = true;
-      }
+      // ---- the held tool ----
+      this.drawHand(g, t);
 
       // ---- HUD ----
-      G.box(g, 2, 2, 50, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.hazard);
-      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.hazard);
-      G.box(g, 56, 2, 54, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, 'DAY ' + G.state.day + ' ' + G.state.today.botsServed + '/' + this.total, 60, 4, P.cream);
-      const pn = G.state.today.jobs.reduce((a, p) => a + p.faults.length, 0);
-      if (pn) {
-        G.box(g, 114, 2, 52, 12, P.ink2, { r: 1, band: 1, spec: false });
-        G.text(g, pn + ' IN SHOP', 118, 4, P.violetLt);
-      }
-      if (h && h.kind === 'scoop') {
-        const f = G.flavorById(h.fid);
-        G.R(g, 108, 148, Math.round(104 * h.fill), 4, h.fill >= 1 ? P.lime : G.mix(P.hazard, P.lime, h.fill));
-        G.text(g, f.name, 160, 140, f.col, { align: 'center', out: OUT });
-      }
-
-      // ---- tray ----
-      G.R(g, 0, 156, G.W, 24, '#0c0d16');
-      G.R(g, 0, 156, G.W, 1, P.cyanDk);
-      const c2 = this.cust;
-      const canRecall = c2 && c2.st === 'order' && c2.memo <= 0;
-      G.box(g, 186, 161, 42, 16, canRecall ? P.violet : '#20242e', { r: 1, band: 2 });
-      G.text(g, 'RECALL', 207, 166, canRecall ? '#f0e8ff' : '#4a5060', { align: 'center' });
-      const cs = this.canServe();
-      G.box(g, 232, 161, 40, 16, cs ? '#2f8a48' : '#20242e', { r: 1, band: 2 });
-      G.text(g, 'SERVE', 252, 166, cs ? '#e8ffe8' : '#4a5060', { align: 'center' });
-      G.box(g, 276, 161, 40, 16, P.cyanDk, { r: 1, band: 2 });
-      G.text(g, G.cam.tx > 40 ? '< BENCH' : 'BENCH >', 296, 166, '#e8f8ff', { align: 'center' });
-      if (this.t % 7 < 3.5 && !h && !G.toasts.length) {
-        const hint = !this.build && (!c2 || c2.quirk !== 'handfeed') ? 'TAP A CONE TO START'
-          : c2 && c2.quirk === 'handfeed' ? 'DROP A BARE SCOOP IN ITS MOUTH'
-          : !this.build.scoops.length ? 'HOLD A FLAVOUR BAND'
-          : 'SAUCE, TOPPINGS, THEN SERVE';
-        G.text(g, hint, 4, 166, '#46506b');
-      }
+      this.hud(g);
+      if (G.clause) { G.clause.at(297, 162, 166, 4, 284); G.clause.draw(g); }
 
       if (this.endT > 0) {
-        g.globalAlpha = Math.min(0.75, this.endT * 0.6);
+        g.globalAlpha = Math.min(0.78, this.endT * 0.6);
         G.R(g, 0, 0, G.W, G.H, P.cityDk);
         g.globalAlpha = 1;
-        G.text(g, 'SHUTTERS DOWN', 160, 76, P.magentaLt, { align: 'center', out: OUT, sc: 2 });
-        G.text(g, 'GO AND FIX WHAT YOU SOLD', 160, 96, P.cyanLt, { align: 'center', out: OUT });
+        G.text(g, 'SHUTTERS DOWN', 160, 74, P.magentaLt, { align: 'center', out: OUT, sc: 2 });
+        G.text(g, 'NOW GO AND FIX WHAT YOU BROKE', 160, 94, P.cyanLt, { align: 'center', out: OUT });
       }
       G.grade(g, 1);
     },
 
-    drawBit(g, x, y, p) {
-      if (p.shape === 'big') { G.R(g, x - 1, y - 1, 3, 3, OUT); G.R(g, x - 1, y - 1, 2, 2, p.col); }
-      else G.R(g, x, y, 2, 2, p.col);
+    // ---- a pit, seen from above ----
+    drawPit(g, i, r, t) {
+      const pit = G.state.pits[i];
+      const f = pit ? G.flavById(pit.fid) : null;
+      // the well: a chrome rim with a hard inner shadow so it reads as sunk
+      G.plate(g, r.x - 4, r.y - 4, r.w + 8, r.h + 8, P.hullDk, { r: 2, band: 2 });
+      G.R(g, r.x - 3, r.y - 3, r.w + 6, 1, P.hullLt);
+      G.R(g, r.x - 2, r.y - 2, r.w + 4, r.h + 4, '#0b0d14');
+      G.R(g, r.x - 2, r.y - 2, r.w + 4, 2, '#05060a');
+      G.R(g, r.x - 2, r.y - 2, 2, r.h + 4, '#05060a');
+      if (!f || pit.qty <= 0) {
+        G.R(g, r.x, r.y, r.w, r.h, '#14161f');
+        for (let j = 0; j < r.h; j += 4) G.R(g, r.x, r.y + j, r.w, 1, '#1b1e29');
+        G.text(g, 'EMPTY', r.x + r.w / 2, r.y + r.h / 2 - 3, '#4a5060', { align: 'center' });
+        this.pitLabel(g, r, i, pit, f);
+        return;
+      }
+      const surf = this.surf[i];
+      const cw = r.w / GX, ch = r.h / GY;
+      const c = f.col;
+      const tone = [G.shade(c, 0.45), G.shade(c, 0.2), c, G.shade(c, -0.24), G.shade(c, -0.46), G.shade(c, -0.66)];
+      // the flat surface, shaded by how deep it has been dug
+      for (let gy = 0; gy < GY; gy++) {
+        for (let gx = 0; gx < GX; gx++) {
+          const d = surf[gy * GX + gx];
+          // light comes from the top-left, so a furrow lights its far wall
+          const dl = gx > 0 ? surf[gy * GX + gx - 1] : d;
+          const du = gy > 0 ? surf[(gy - 1) * GX + gx] : d;
+          const slope = (d - dl) + (d - du);
+          let k = d < 0.06 ? 1 : d < 0.3 ? 2 : d < 0.6 ? 3 : d < 0.85 ? 4 : 5;
+          if (slope < -0.12) k = Math.max(0, k - 2);
+          else if (slope > 0.12) k = Math.min(5, k + 1);
+          G.R(g, r.x + gx * cw, r.y + gy * ch, Math.ceil(cw), Math.ceil(ch), tone[k]);
+        }
+      }
+      // churn swirls in the undug surface, so a full pit reads as ice cream
+      for (let gy = 0; gy < GY; gy++) for (let gx = 0; gx < GX; gx++) {
+        if (surf[gy * GX + gx] > 0.05) continue;
+        const ph = Math.sin(gx * 0.9 + gy * 0.55 + i * 2.1);
+        if (ph > 0.62) G.R(g, r.x + gx * cw, r.y + gy * ch, Math.ceil(cw), 1, tone[1]);
+        else if (ph < -0.72) G.R(g, r.x + gx * cw, r.y + gy * ch, Math.ceil(cw), 1, tone[3]);
+      }
+      // a wet sheen along the top edge, and the shadow the rim casts in
+      G.R(g, r.x, r.y, r.w, 1, G.shade(c, 0.62));
+      g.globalAlpha = 0.35;
+      G.R(g, r.x, r.y, r.w, 2, '#000000');
+      G.R(g, r.x, r.y, 2, r.h, '#000000');
+      g.globalAlpha = 1;
+      if (f.fleck) for (let k = 0; k < 10; k++) {
+        const fx = r.x + 2 + Math.round(G.hash(k * 3.3, i) * (r.w - 4));
+        const fy = r.y + 2 + Math.round(G.hash(k * 7.1, i + 3) * (r.h - 4));
+        const gxi = G.clamp(Math.floor(((fx - r.x) / r.w) * GX), 0, GX - 1);
+        const gyi = G.clamp(Math.floor(((fy - r.y) / r.h) * GY), 0, GY - 1);
+        if (surf[gyi * GX + gxi] < 0.5) G.R(g, fx, fy, 2, 2, f.fleck);
+      }
+      // the sweep path glows while you are cutting
+      const h = this.hold;
+      if (h && h.kind === 'sweep' && h.pi === i)
+        for (const p of h.path) {
+          const a = G.clamp(1 - p.t / 0.5, 0, 1);
+          if (a <= 0) continue;
+          g.globalAlpha = a * 0.5;
+          G.R(g, p.x - 1, p.y - 1, 3, 3, G.shade(c, 0.7));
+          g.globalAlpha = 1;
+        }
+      this.pitLabel(g, r, i, pit, f);
+    },
+    // name plate on the deck lip, battery tucked in the corner of the well
+    pitLabel(g, r, i, pit, f) {
+      const nm = f ? f.name.split(' ')[0].slice(0, 9) : 'EMPTY';
+      G.R(g, r.x - 3, r.y + r.h + 2, r.w + 6, 9, '#0d1220');
+      G.text(g, nm, r.x + r.w / 2, r.y + r.h + 3, f ? f.col : '#4a5060', { align: 'center' });
+      const bx = r.x + 2, by = r.y + 2, bw = 18, bh = 7;
+      G.R(g, bx - 1, by - 1, bw + 4, bh + 2, OUT);
+      G.R(g, bx, by, bw, bh, '#12141c');
+      G.R(g, bx + bw, by + 2, 2, bh - 4, P.hullDk);
+      const frac = pit && pit.max ? G.clamp(pit.qty / pit.max, 0, 1) : 0;
+      for (let k = 0; k < Math.round(frac * 5); k++)
+        G.R(g, bx + 1 + k * 3.4, by + 1, 3, bh - 2, frac > 0.5 ? P.lime : frac > 0.22 ? P.hazard : P.magenta);
+      G.text(g, '' + (pit ? pit.qty : 0), bx + bw + 6, by, P.cream, { out: OUT });
+    },
+    drawBlank(g, r, i) {
+      G.plate(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, P.plateDk2, { r: 2, band: 1, spec: false });
+      for (let j = 0; j < r.h; j += 5) G.R(g, r.x, r.y + j, r.w, 2, '#181a24');
+      G.text(g, 'PIT ' + (i + 1), r.x + r.w / 2, r.y + r.h / 2 - 8, '#3a4050', { align: 'center' });
+      G.text(g, 'LOCKED', r.x + r.w / 2, r.y + r.h / 2 + 2, '#3a4050', { align: 'center' });
     },
 
-    drawBuild(g, ox, oy, b, screen) {
-      const sq = (b.pop || 0) * 0.3;
-      G.cone3(g, ox, oy, b.scoops, { w: b.base === 'cup' ? 20 : 18, h: b.base === 'cup' ? 16 : 26, sr: 10, squash: sq });
+    // ---- the cone or cup with its scoops ----
+    drawBuild(g, ox, oy, b, left) {
+      let top;
+      if (b.base === 'cup') top = G.cup(g, ox, oy, { w: 20, h: 14 });
+      else if (b.base === 'cone') top = G.cone(g, ox, oy, { w: 18, h: 24 });
+      else top = oy;
+      const keepN = left === undefined ? b.scoops.length : Math.ceil(b.scoops.length * left);
+      let sy = top - 2;
+      for (let i = 0; i < Math.min(keepN, b.scoops.length); i++) {
+        const f = G.flavById(b.scoops[i]);
+        if (!f) continue;
+        const r = Math.max(4, 10 - i);
+        G.gooScoop(g, ox, sy - Math.round(r * 0.72), r, f,
+          { squash: b.pop && i === b.scoops.length - 1 ? b.pop * 0.3 : 0 });
+        sy -= Math.round(r * 1.3);
+      }
       for (const cc of b.coat) G.R(g, ox + cc.lx, oy + cc.ly, 2, 2, cc.col);
-      for (const bit of b.bits) this.drawBit(g, ox + bit.lx, oy + bit.ly, bit);
+      for (const bt of b.bits) {
+        if (bt.big) { G.R(g, ox + bt.lx - 1, oy + bt.ly - 1, 3, 3, OUT); G.R(g, ox + bt.lx - 1, oy + bt.ly - 1, 2, 2, bt.col); }
+        else G.R(g, ox + bt.lx, oy + bt.ly, 2, 2, bt.col);
+      }
     },
 
-    // ---------------- the order chit ----------------
-    // One horizontal strip across the top of the wall, laid out from a
-    // measured cell list so it can never overflow its box. Readable for
-    // a few seconds, then the cells redact themselves and you are on
-    // your own. The quirk keeps its own tab, because remembering a weird
-    // habit on top of the order is not fun - the order is.
-    chit(g, c, cxp, bust) {
+    // ---- the ladle, the jar, the ball on its strands ----
+    drawHand(g, t) {
+      const M = G.mouse, h = this.hold;
+      if (!h || M.x < 0) return;
+      const x = G.clamp(M.x, 4, G.W - 4), y = G.clamp(M.y, 18, 148);
+      if (h.kind === 'sweep') {
+        const f = G.flavById(h.fid);
+        // a round ladle head with the gathered ice cream heaped in it
+        const rr = G.has('ladle') ? 9 : 8;
+        G.R(g, x + rr - 2, y - 16, 3, 18, P.hull);
+        G.rr2(g, x - rr - 1, y - 5, rr * 2 + 2, rr + 6, OUT);
+        G.rr2(g, x - rr, y - 4, rr * 2, rr + 4, P.hull);
+        G.R(g, x - rr + 2, y - 3, rr * 2 - 4, 1, P.hullLt);
+        if (h.fill > 0.06 && f) {
+          const hr = Math.round(2 + Math.min(1.2, h.fill) * (rr - 1));
+          G.gooScoop(g, x, y - 2 - Math.round(hr * 0.4), hr, f, { squash: 0.25 });
+        }
+        // the fill ring
+        const fr = G.clamp(h.fill, 0, 1.4);
+        const col = h.fill > SLOP ? P.magenta : h.fill >= PERFECT_LO ? P.lime : P.hazard;
+        for (let i = 0; i < 16; i++) {
+          if (i / 16 > fr / 1.4) break;
+          const a = -Math.PI / 2 + (i / 16) * Math.PI * 2;
+          G.R(g, x + Math.cos(a) * (rr + 5), y - 1 + Math.sin(a) * (rr + 5), 2, 2, col);
+        }
+        // the perfect window, marked on the ring
+        for (const m of [PERFECT_LO, PERFECT_HI]) {
+          const a = -Math.PI / 2 + (m / 1.4) * Math.PI * 2;
+          G.R(g, x + Math.cos(a) * (rr + 8), y - 1 + Math.sin(a) * (rr + 8), 2, 2, P.lime);
+        }
+        G.hideCursor = true;
+        return;
+      }
+      if (h.kind === 'ball') {
+        const f = G.flavById(h.fid);
+        if (f) {
+          // strands still hanging back to where it came from
+          if (h.lift < 1) {
+            const a = 1 - h.lift;
+            g.globalAlpha = a;
+            G.gooStrand(g, h.from.x - 3, h.from.y, h.bx - 2, h.by + h.r, G.shade(f.col, -0.2), Math.max(1, Math.round(3 * a)));
+            G.gooStrand(g, h.from.x + 3, h.from.y, h.bx + 2, h.by + h.r, G.shade(f.col, -0.3), Math.max(1, Math.round(2 * a)));
+            g.globalAlpha = 1;
+          }
+          G.gooScoop(g, h.bx, h.by, h.r, f, {});
+        }
+        G.R(g, h.bx + 8, h.by - 14, 3, 16, P.hull);
+        G.hideCursor = true;
+        return;
+      }
+      if (h.kind === 'sauce') {
+        const s = G.sauceById(h.sid);
+        G.plate(g, x - 6, y - 20, 12, 20, s.col, { r: 1, band: 3 });
+        G.R(g, x - 1, y, 2, 3, G.shade(s.col, -0.4));
+      } else if (h.kind === 'jar') {
+        G.plate(g, x - 6, y - 20, 12, 20, P.plateDk2, { r: 1, band: 2 });
+        for (let k = 0; k < 5; k++) G.R(g, x - 4 + (k % 3) * 3, y - 15 + Math.floor(k / 3) * 4, 2, 2, G.topBitCol(h.tid));
+        G.R(g, x - 5, y, 10, 2, P.hull);
+      }
+      G.hideCursor = true;
+    },
+
+    // ---- what the machine asks for ----
+    speech(g, c, cx, bot) {
       const o = c.order;
-      const shown = c.memo > 0 || c.peek > 0;
-      const uniq = [];
-      for (const f of o.scoops) { const u = uniq.find((x) => x.id === f); if (u) u.n++; else uniq.push({ id: f, n: 1 }); }
-      const chk = this.check() || {};
-      const jb = this.judged();
-
-      // ---- measure ----
-      const cells = [];
-      const baseTxt = o.base === 'cone' ? 'CONE' : o.base === 'cup' ? 'CUP' : 'NO CONE';
-      cells.push({ w: G.tw(baseTxt), ok: chk.base, draw: (x, y) => G.text(g, baseTxt, x, y, '#3a3524') });
-      for (const u of uniq) {
-        const f = G.flavorById(u.id);
-        const lbl = (u.n > 1 ? 'x' + u.n + ' ' : '') + f.name.split(' ')[0].slice(0, 4);
-        const have = jb ? jb.scoops.filter((sc) => sc === u.id).length : 0;
-        cells.push({ w: G.tw(lbl) + 9, ok: have >= u.n, draw: (x, y) => {
-          G.R(g, x, y, 7, 7, OUT); G.R(g, x, y, 6, 6, f.col);
-          G.text(g, lbl, x + 9, y, '#3a3524');
-        } });
+      const bw = 104, bh = c.read ? 42 : 32;
+      // it hangs on the wall beside the machine, never over it - the cast is
+      // tall, wide and horned, and a tag over the head buried all of that
+      const bx = G.clamp(cx - (bot.hw + 4) - bw, 110, 114);
+      const by = 16;                          // under the HUD, over the bench labels
+      G.plate(g, bx, by, bw, bh, '#e4dcc4', { r: 2, band: 2, lit: '#f4eeda', dk: '#b8ae94', spec: false });
+      for (let i = 0; i < 6; i++) G.R(g, bx + bw, by + 11 + i, 6 - i, 1, i < 2 ? '#f4eeda' : '#e4dcc4');
+      G.R(g, bx + bw, by + 17, 5, 1, '#0d1018');
+      G.R(g, bx + 1, by + 1, bw - 2, 9, '#2a2f42');
+      G.text(g, (c.name + ' · ' + c.bot.job).slice(0, 16), bx + 3, by + 2, '#d8e4f0');
+      // the craving, plus how many and in what
+      const want = o.want.toUpperCase();
+      G.text(g, 'WANTS ' + want, bx + 3, by + 13, '#3a3524');
+      let sx = bx + 3;
+      G.text(g, 'x' + o.n + ' ' + (o.base === 'cone' ? 'CONE' : 'CUP'), sx, by + 21, '#3a3524');
+      sx += 44;
+      if (o.sauce) { G.R(g, sx, by + 21, 6, 6, G.sauceById(o.sauce).col); sx += 9; }
+      if (o.top) { for (let i = 0; i < 3; i++) G.R(g, sx + i * 3, by + 22 + (i % 2) * 2, 2, 2, G.topBitCol(o.top)); sx += 12; }
+      // patience
+      const pw = G.clamp(1 - c.wait / (PATIENCE * botPatience(c)), 0, 1);
+      G.R(g, bx, by + bh, bw, 3, '#0d1220');
+      G.R(g, bx, by + bh, Math.round(bw * pw), 3, pw > 0.5 ? '#3d9a4a' : pw > 0.22 ? P.hazard : P.magenta);
+      // clause.ai's read, if you have paid for it - inside the tag, not under it
+      if (c.read) {
+        G.R(g, bx + 2, by + 30, bw - 4, 10, '#1a2a3a');
+        G.text(g, 'HATES ' + (c.bot.hates === 'none' ? 'NOTHING' : c.bot.hates.toUpperCase()),
+          bx + 5, by + 31, P.cyanLt);
       }
-      if (o.sauce) cells.push({ w: 8, ok: chk.sauce, draw: (x, y) => {
-        G.R(g, x, y, 8, 7, OUT); G.R(g, x, y + 1, 7, 5, G.sauceById(o.sauce).col);
-      } });
-      if (o.top) cells.push({ w: 11, ok: chk.top, draw: (x, y) => {
-        for (let i = 0; i < 3; i++) G.R(g, x + i * 4, y + 1 + (i % 2) * 3, 3, 3, G.topBitCol(o.top));
-      } });
-
-      const NAME_W = 44, PAD = 5;
-      let need = NAME_W + 4;
-      for (const cl of cells) need += cl.w + PAD;
-      const bx = 3, by = 17, bh = 15;
-      const bw = G.clamp(need, 120, 234);
-      G.box(g, bx, by, bw, bh, '#e4dcc4', { lit: '#f4eeda', dk: '#b8ae94', r: 2, band: 2, spec: false });
-      G.R(g, bx + 1, by + 1, NAME_W - 3, bh - 2, '#2a2f42');
-      G.text(g, c.name.slice(0, 7), bx + 4, by + 4, '#d8e4f0');
-      G.R(g, bx + NAME_W - 7, by + 4, 3, 7, shown ? P.lime : P.magenta);
-
-      // ---- draw ----
-      let cx2 = bx + NAME_W + 1;
-      for (const cl of cells) {
-        if (cx2 + cl.w > bx + bw - 2) break;
-        if (shown) { cl.draw(cx2, by + 4); if (cl.ok) G.R(g, cx2 + cl.w - 3, by + 2, 3, 3, '#2a6b34'); }
-        else G.R(g, cx2, by + 4, cl.w, 7, '#b8ae94');
-        cx2 += cl.w + PAD;
+      // the current build's read-out, so you can judge the match
+      const gr = this.grade();
+      if (gr) {
+        const m = gr.taste;
+        const col = m > 0.35 ? P.lime : m > -0.1 ? P.hazard : P.magenta;
+        G.R(g, bx + bw - 26, by + 12, 24, 8, '#1a1f2c');
+        G.text(g, (m >= 0 ? '+' : '') + Math.round(m * 100) + '%', bx + bw - 24, by + 13, col);
       }
+    },
 
-      // memo timer, then patience, in two hard bars under the strip
-      const my = by + bh;
-      const full = MEM_SHOW + (G.hasUp('loupe') ? 4 : 0);
-      G.R(g, bx, my, bw, 3, '#0d1220');
-      if (c.memo > 0) G.R(g, bx, my, Math.round(bw * G.clamp(c.memo / full, 0, 1)), 3, P.cyan);
-      else if (c.peek > 0) G.R(g, bx, my, Math.round(bw * (c.peek / PEEK_LEN)), 3, P.violet);
-      const pw = G.clamp(1 - c.wait / PATIENCE, 0, 1);
-      G.R(g, bx, my + 4, bw, 2, '#0d1220');
-      G.R(g, bx, my + 4, Math.round(bw * pw), 2, pw > 0.5 ? '#3d9a4a' : pw > 0.22 ? P.hazard : P.magenta);
-      if (c.memo <= 0 && c.peek <= 0)
-        G.text(g, 'FROM MEMORY - RECALL COSTS $' + PEEK_COST, bx + 2, my + 8, P.magentaLt, { out: OUT });
+    hud(g) {
+      const st = G.state;
+      G.plate(g, 2, 2, 52, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.R(g, 6, 6, 4, 5, P.hazard);
+      G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.hazard);
+      G.plate(g, 58, 2, 50, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.text(g, 'DAY ' + st.day + ' ' + st.today.served + '/' + this.total, 62, 4, P.cream);
+      // suspicion
+      G.plate(g, 112, 2, 74, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.text(g, 'HEAT', 116, 4, P.steel2);
+      G.R(g, 142, 5, 40, 6, '#0d1220');
+      G.R(g, 142, 5, Math.round(40 * st.suspicion), 6, st.suspicion > 0.66 ? P.magenta : st.suspicion > 0.33 ? P.hazard : P.lime);
 
-      // ---- the quirk badge, its own tab to the right of the chit ----
-      if (c.quirk !== 'none') {
-        const q = G.quirkById(c.quirk);
-        const qx = bx + bw + 3, qw = G.W - qx - 3;
-        const pulse = Math.sin(this.t * 4) > 0 ? P.hazard : G.shade(P.hazard, -0.25);
-        G.box(g, qx, by, qw, bh, '#2a1f10', { lit: '#4a3618', dk: '#160e06', r: 1, band: 1, spec: false });
-        G.R(g, qx, by, qw, 1, pulse);
-        G.text(g, q.label, qx + qw / 2, by + 4, chk.quirk ? P.lime : pulse, { align: 'center' });
-        let prog = -1;
-        if (c.quirk === 'onhead') prog = c.headBits / HEAD_NEED;
-        else if (c.quirk === 'sauceme') prog = c.headSauce / HEAD_NEED;
-        else if (c.quirk === 'handfeed') prog = c.fed / o.scoops.length;
-        G.R(g, qx, by + bh, qw, 3, '#0d1220');
-        if (prog >= 0) G.R(g, qx, by + bh, Math.round(qw * G.clamp(prog, 0, 1)), 3, P.lime);
-        else if (chk.quirk) G.R(g, qx, by + bh, qw, 3, P.lime);
-      }
+      // tray
+      G.R(g, 0, 150, G.W, 30, '#0c0d16');
+      G.R(g, 0, 150, G.W, 1, P.cyanDk);
+      G.drawBtn(g, 4, 152, 40, 16, 'LAB', { col: '#3a2a5c' });
+      const tier = G.tierIdx();
+      G.drawBtn(g, 48, 152, 44, 16, 'READ', { col: tier >= 1 && G.state.calls > 0 ? '#2a5c6b' : '#20242e' });
+      G.drawBtn(g, 96, 152, 44, 16, 'TREND', { col: tier >= 2 && G.state.calls > 0 ? '#2a5c6b' : '#20242e' });
+      const cs = this.canServe();
+      G.drawBtn(g, 194, 152, 48, 16, 'SERVE', { col: cs ? '#2f8a48' : '#20242e' });
+      G.drawBtn(g, 246, 152, 32, 16, 'BIN', { col: '#5c2030' });
+      // only 50px of tray between the two button groups, so keep it to 8 chars
+      G.text(g, 'CALLS ' + G.state.calls, 144, 154, P.steel);
+      const h = this.hold;
+      if (h && h.kind === 'sweep')
+        G.text(g, h.fill > SLOP ? 'TOO MUCH' : h.fill >= PERFECT_LO ? 'LET GO!' : 'SWEEP',
+          144, 163, h.fill > SLOP ? P.magenta : h.fill >= PERFECT_LO ? P.lime : P.hazard);
+      else if (!(G.clause && G.clause.msg)) G.text(g, 'PICK PIT', 144, 163, '#46506b');
     },
   };
+
+  function botPatience(c) { return c.bot ? c.bot.patience : 1; }
 })();
