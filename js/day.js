@@ -720,7 +720,9 @@
       const frac = pit && pit.max ? G.clamp(pit.qty / pit.max, 0, 1) : 0;
       for (let k = 0; k < Math.round(frac * 5); k++)
         G.R(g, bx + 1 + k * 3.4, by + 1, 3, bh - 2, frac > 0.5 ? P.lime : frac > 0.22 ? P.hazard : P.magenta);
-      G.text(g, '' + (pit ? pit.qty : 0), bx + bw + 6, by, P.cream, { out: OUT });
+      const qty = '' + (pit ? pit.qty : 0);
+      G.R(g, bx + bw + 4, by - 1, G.tw(qty) + 3, bh + 2, '#0d1220');
+      G.text(g, qty, bx + bw + 6, by, P.cream);
     },
     drawBlank(g, r, i) {
       G.plate(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, P.plateDk2, { r: 2, band: 1, spec: false });
@@ -826,7 +828,9 @@
       for (let i = 0; i < 6; i++) G.R(g, bx + bw, by + 11 + i, 6 - i, 1, i < 2 ? '#f4eeda' : '#e4dcc4');
       G.R(g, bx + bw, by + 17, 5, 1, '#0d1018');
       G.R(g, bx + 1, by + 1, bw - 2, 9, '#2a2f42');
-      G.text(g, (c.name + ' · ' + c.bot.job).slice(0, 16), bx + 3, by + 2, '#d8e4f0');
+      const cls = c.bot.name.replace(' UNIT', '');
+      const nameplate = c.name + '  ' + cls;
+      G.text(g, G.tw(nameplate) <= bw - 8 ? nameplate : c.name, bx + 3, by + 2, '#d8e4f0');
       // the craving, plus how many and in what
       const want = o.want.toUpperCase();
       G.text(g, 'WANTS ' + want, bx + 3, by + 13, '#3a3524');
