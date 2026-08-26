@@ -239,8 +239,9 @@
         204, 144, P.violetLt, { sc: 0.5 });
 
       G.drawSteam(g);
-      G.R(g, 0, 150, G.W, 30, '#0c0d16');
-      G.R(g, 0, 150, G.W, 1, P.magenta);
+      G.R(g, 0, 150, G.W, 30, P.woodDk);
+      G.plate(g, -4, 148, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });
+      G.hair(g, -4, 148, G.W + 8, P.woodHi);
       G.drawBtn(g, 4, 152, 68, 16, '< BACK', { col: '#3a2a5c' });
       G.drawBtn(g, 216, 152, 100, 16, 'OPEN TOMORROW', { col: loaded ? '#2f8a48' : '#5c2030' });
       if (G.clause) { G.clause.at(258, 22, 166, 4, 286, true); G.clause.draw(g); }

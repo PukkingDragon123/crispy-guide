@@ -1230,15 +1230,13 @@
       const st = G.state;
       const gl = st.today.goal || { quota: 0, take: 0 };
       // ---- money ----
-      G.plate(g, 2, 2, 52, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.hazard);
-      G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.hazard);
-      G.bevel(g, 2, 2, 52, 12, '#2a3446', '#070a12');
+      G.cosy(g, 2, 2, 52, 12, { lamp: false });
+      G.R(g, 6, 6, 4, 5, P.lampLt);
+      G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.lampLt);
 
       // ---- today's goal: a served counter and a take bar, both live ----
       const qOK = st.today.served >= gl.quota, tOK = st.today.dayEarn >= gl.take;
-      G.plate(g, 58, 2, 128, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.bevel(g, 58, 2, 128, 12, '#2a3446', '#070a12');
+      G.cosy(g, 58, 2, 128, 12, { lamp: false });
       G.text(g, 'D' + st.day + '  ' + G.chapterName(), 61, 3, P.steel2, { sc: 0.5 });
       // quota pips, on the second row beside the take bar
       for (let i = 0; i < gl.quota; i++) {
@@ -1260,8 +1258,7 @@
         { sc: 0.5, align: 'right' });
 
       // ---- heat ----
-      G.plate(g, 190, 2, 62, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.bevel(g, 190, 2, 62, 12, '#2a3446', '#070a12');
+      G.cosy(g, 190, 2, 62, 12, { lamp: false });
       G.text(g, 'HEAT', 193, 4, P.steel2, { sc: 0.5 });
       G.R(g, 193, 9, 56, 3, '#0d1220');
       G.R(g, 193, 9, Math.round(56 * st.suspicion), 3,
@@ -1269,16 +1266,18 @@
       G.text(g, Math.round(st.suspicion * 100) + '%', 249, 4,
         st.suspicion > 0.66 ? P.magenta : P.steel2, { sc: 0.5, align: 'right' });
       // ---- crew count, so the rescues feel like a tally ----
-      G.plate(g, 256, 2, 46, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.bevel(g, 256, 2, 46, 12, '#2a3446', '#070a12');
+      G.cosy(g, 256, 2, 46, 12, { lamp: false });
       G.text(g, 'CREW ' + (st.crew || []).length, 259, 3, P.violetLt, { sc: 0.5 });
       G.text(g, '+' + st.spotted, 259, 9, P.lime, { sc: 0.5 });
       G.text(g, '-' + st.missed, 299, 9, st.missed ? P.magenta : '#46506b',
         { sc: 0.5, align: 'right' });
 
       // tray
-      G.R(g, 0, 150, G.W, 30, '#0c0d16');
-      G.R(g, 0, 150, G.W, 1, P.cyanDk);
+      // the tray is a wooden counter edge now, not a steel bar
+      G.R(g, 0, 150, G.W, 30, P.woodDk);
+      G.plate(g, -4, 148, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });
+      G.hair(g, -4, 148, G.W + 8, P.woodHi);
+      G.grain(g, 0, 153, G.W, 27, '#1c1108', 0.05, 7);
       if (G.unlocked('backroom')) G.drawBtn(g, 4, 152, 56, 16, 'BACK ROOM >', { col: '#2f8a48' });
       // no ask buttons: you tap clause for those. Only the controls you
       // can actually use are drawn at all.

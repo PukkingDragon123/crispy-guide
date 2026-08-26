@@ -210,8 +210,9 @@
 
       G.drawSteam(g);
       // tray
-      G.R(g, 0, 150, G.W, 30, '#0c0d16');
-      G.R(g, 0, 150, G.W, 1, P.violet);
+      G.R(g, 0, 150, G.W, 30, P.woodDk);
+      G.plate(g, -4, 148, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });
+      G.hair(g, -4, 148, G.W + 8, P.woodHi);
       G.drawBtn(g, 4, 152, 58, 16, '< CAFE', { col: '#2a5c6b' });
       if (G.unlocked('ask_recipe')) G.drawBtn(g, 66, 152, 52, 16, 'IDEA', { col: '#3a2a5c' });
       if (G.unlocked('ask_restock')) G.drawBtn(g, 122, 152, 52, 16, 'RESTOCK', { col: '#3a2a5c' });

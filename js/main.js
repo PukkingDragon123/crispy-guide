@@ -135,9 +135,15 @@
       const a = Math.min(1, trans.hold * 4);
       gg.globalAlpha = a;
       const work = /WORKSHOP|BOOKS|ARMOURY/.test(trans.label);
-      const room = /BACK ROOM|LAB/.test(trans.label);
+      const room = /BACK ROOM|LAB|TRACY/.test(trans.label);
+      const pit = /PIT/.test(trans.label);
       const cx = G.W / 2;
-      if (work) {
+      if (pit) {
+        // a hand reaching up out of the dark
+        G.Rh(gg, cx - 3, G.H / 2 - 34, 6, 14, '#8a94a8');
+        for (let i = 0; i < 3; i++) G.Rh(gg, cx + 2, G.H / 2 - 36 + i * 3, 5, 2, '#c8d8e8');
+        G.Rh(gg, cx - 7, G.H / 2 - 26, 4, 3, '#6b7f96');
+      } else if (work) {
         G.starburst(gg, cx, G.H / 2 - 26, 11, trans.hold * 2, { talk: 1, noGlow: 1 });
       } else if (room) {
         // a door standing open, with light behind it
@@ -152,7 +158,8 @@
         if (f) G.gooScoop(gg, cx, G.H / 2 - 24, 10, f, {});
       }
       G.text(gg, trans.label, cx, G.H / 2 - 2,
-        work ? P.cyanLt : room ? P.violetLt : P.hazard, { align: 'center', out: P.ink });
+        work ? P.cyanLt : room ? P.violetLt : pit ? '#8a94a8' : P.hazard,
+        { align: 'center', out: P.ink });
       // the chapter, underneath, so the story is always visible
       if (G.state && G.state.chapters)
         G.text(gg, G.chapterName(), cx, G.H / 2 + 10, '#5a6480', { align: 'center', sc: 0.5 });
@@ -191,7 +198,8 @@
           const seen = (G.state.chapters || []);
           for (let i = 0; i < seen.length; i++)
             if (G.inRect(x, y, 12, 38 + i * 15, 296, 14)) {
-              const id = seen[i];
+              const ch = G.CHAPTERS.find((c) => c.id === seen[i]);
+              const id = (ch && ch.cine) || seen[i];
               if (!G.cine.has(id)) { G.audio.sfx('bad'); return; }
               G.audio.sfx('click');
               G.playCine(id, () => G.go('title'));
@@ -204,11 +212,7 @@
       if (this.confirm) {
         if (G.inRect(x, y, 186, 140, 38, 14)) {
           G.audio.sfx('boot'); G.reset(); this.confirm = false;
-          G.markChapter('ch1');
-          G.playCine('opening', () => {
-            G.newDayStats(); G.state.today.demand = G.rollDemand();
-            G.go('day', 'DAY 1');
-          });
+          G.go('dump', 'THE PIT');
           return;
         }
         if (G.inRect(x, y, 228, 140, 36, 14)) { this.confirm = false; G.audio.sfx('back'); return; }
@@ -230,13 +234,7 @@
           G.go('day', 'DAY ' + G.state.day);
         } else if (e.id === 'new') {
           if (this.hasSave()) this.confirm = true;
-          else {
-            G.reset(); G.markChapter('ch1');
-            G.playCine('opening', () => {
-              G.newDayStats(); G.state.today.demand = G.rollDemand();
-              G.go('day', 'DAY 1');
-            });
-          }
+          else { G.reset(); G.go('dump', 'THE PIT'); }
         } else {
           if (e.id === 'quests') for (const q of G.checkQuests()) G.toast('QUEST: ' + q.name + '  +$' + q.pay, P.lime);
           G.toasts.length = 0;
@@ -254,8 +252,8 @@
       G.R(gg, 0, 0, G.W, G.H, '#05070c');
       gg.globalAlpha = 1;
       const titles = { quests: 'THE JOB', story: 'THE STORY SO FAR', eggs: 'SECRETS' };
-      G.plate(gg, 4, 16, 264, 15, '#1a1420', { r: 1, band: 2, spec: false });
-      G.text(gg, titles[p2], 10, 20, P.hazard);
+      G.cosy(gg, 4, 16, 264, 15, { col: P.wood, trim: P.lampLt });
+      G.text(gg, titles[p2], 10, 20, P.lampLt);
       G.drawBtn(gg, 272, 18, 44, 13, 'CLOSE', { col: '#5c2030' });
 
       if (p2 === 'quests') {
@@ -265,8 +263,8 @@
         for (let i = 0; i < act.length; i++) {
           const q = act[i], ry = 42 + i * 22;
           const pr = G.questProgress(q), fr = pr / q.goal;
-          G.plate(gg, 10, ry, 300, 19, '#141a26', { r: 1, band: 1, spec: false });
-          G.R(gg, 10, ry, 2, 19, P.hazard);
+          G.cosy(gg, 10, ry, 300, 19, { col: '#241a12', lamp: false });
+          G.R(gg, 10, ry, 2, 19, P.lampDk);
           G.text(gg, q.name, 16, ry + 2, P.cream);
           G.text(gg, q.desc, 16, ry + 11, P.steel2, { sc: 0.5 });
           G.R(gg, 210, ry + 11, 70, 4, '#0d1220');
@@ -298,7 +296,7 @@
           G.R(gg, 12, ry, 2, 14, has ? P.violetLt : '#2a3040');
           G.text(gg, has ? (i + 1) + '.  ' + c.name : (i + 1) + '.  - - - -',
             18, ry + 3, has ? P.cream : '#3a4458');
-          if (has && G.cine.has(c.id)) G.text(gg, 'REPLAY', 302, ry + 4, P.violetLt,
+          if (has && G.cine.has(c.cine || c.id)) G.text(gg, 'REPLAY', 302, ry + 4, P.lampLt,
             { align: 'right', sc: 0.5 });
           else if (has) G.text(gg, 'SEEN', 302, ry + 4, P.steel, { align: 'right', sc: 0.5 });
         }
@@ -368,9 +366,7 @@
       const hs = this.hasSave();
       // ---- the save card, then the menu column ----
       if (hs && !this.panel) {
-        G.plate(gg, 176, 66, 98, 32, '#141a26',
-          { r: 1, band: 2, lit: '#232c3e', dk: '#0a0d14', spec: false });
-        G.R(gg, 178, 68, 94, 1, P.hazard);
+        G.cosy(gg, 176, 66, 98, 32, { col: '#241a12', trim: P.lampLt });
         G.text(gg, 'SHIFT ' + G.state.day, 181, 70, P.cream, { sc: 0.5 });
         G.text(gg, '$' + Math.round(G.state.money), 270, 70, P.hazard, { align: 'right', sc: 0.5 });
         G.text(gg, G.chapterName(), 181, 76, P.violetLt, { sc: 0.5 });
@@ -390,8 +386,7 @@
         G.drawBtn(gg, 186, this.rowY(i), 78, 14, rows[i].lab, { col: rows[i].col });
       // the confirm strip, so START OVER cannot happen by accident
       if (this.confirm) {
-        G.plate(gg, 176, 118, 98, 38, '#20101a', { r: 1, band: 2, spec: false });
-        G.R(gg, 178, 120, 94, 1, P.magenta);
+        G.cosy(gg, 176, 118, 98, 38, { col: '#2a1218', trim: P.magenta });
         G.text(gg, 'THROW ALL OF IT AWAY?', 225, 124, P.magentaLt, { align: 'center', sc: 0.5 });
         G.text(gg, 'SHIFT ' + G.state.day + ', ' + (G.state.crew || []).length + ' RESCUED',
           225, 131, P.steel2, { align: 'center', sc: 0.5 });

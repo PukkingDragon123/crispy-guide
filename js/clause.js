@@ -525,9 +525,7 @@
       const m = this.menuRect();
       const a = Math.min(1, this.menuT * 6);
       g.globalAlpha = a;
-      G.plate(g, m.x, m.y, m.w, m.h, '#191016',
-        { r: 2, band: 2, lit: '#2c1c22', dk: '#0b0708', spec: false });
-      G.R(g, m.x + 2, m.y + 2, m.w - 4, 1, CO);
+      G.cosy(g, m.x, m.y, m.w, m.h, { col: '#231610', trim: CO });
       G.text(g, 'ASK CLAUSE', m.x + 4, m.y + 4, CO, { sc: 0.5 });
       G.text(g, G.state.calls + ' LEFT', m.x + m.w - 4, m.y + 4, G.state.calls > 0 ? P.lime : P.magenta,
         { sc: 0.5, align: 'right' });
@@ -598,8 +596,7 @@
         const w = Math.min(maxw, tw + 12);
         const h = 6 + ls.length * 9 - 2;
         const bx = this.barR - w, by = this.barY + 13 - h;
-        G.plate(g, bx, by, w, h, '#1a1214', { r: 2, band: 1, lit: '#33201a', dk: '#0d0806', spec: false });
-        G.R(g, bx + 1, by + 1, w - 2, 1, CO);
+        G.cosy(g, bx, by, w, h, { col: '#231610', trim: CO, lamp: false });
         for (let i = 0; i < ls.length; i++) G.text(g, ls[i], bx + 5, by + 4 + i * 9, this.msgCol);
       }
     },

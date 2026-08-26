@@ -323,12 +323,12 @@
   // ---------- lookups ----------
   G.ingById   = (id) => ING.find((i) => i.id === id);
   // YOU. Not a customer, so not in the demand pool, but the rig needs a record.
-  // warm cream over mint, with a strawberry optic - it is an ice cream
-  // machine and it should look like one, not like a tank
-  const PLAYER = { id: 'player', name: 'SOFT SERVE UNIT', job: 'DECOMMISSIONED', sys: 'clockwork',
+  // A gelato chef. Cream chassis, terracotta trim, a toque and a
+  // moustache, and Tracy's spare arm bolted on where the other one was.
+  const PLAYER = { id: 'player', name: 'GELATO UNIT', job: 'CUCINA', sys: 'clockwork',
     taste: 'sweet', hates: 'none', pay: 1, patience: 1, mood: 'idle',
-    col: '#efe0c0', col2: '#8fd8c0', hue: '#ff7a9a',
-    line: 'I STILL WORK.', names: ['YOU'] };
+    col: '#f2e4c4', col2: '#c8783a', hue: '#ff7a9a',
+    line: 'ONE SCOOP. ALWAYS ONE MORE.', names: ['NONNO'] };
   G.botById    = (id) => (id === 'player' ? PLAYER : BOTS.find((b) => b.id === id) || BOTS[0]);
   G.sysById    = (id) => SYSTEMS[id] || SYSTEMS.servo;
   G.toolById   = (id) => TOOLS[id] || { name: id.toUpperCase(), hint: '' };
@@ -426,13 +426,13 @@
   // CHAPTERS. The story moves when the world does, not on a timer.
   // ------------------------------------------------------------
   const CHAPTERS = [
-    { id: 'ch1', name: 'THE SHELL',      when: (st) => st.day >= 1 },
-    { id: 'ch2', name: 'THE FIRST ONE',  when: (st) => (st.crew || []).length >= 1 },
-    { id: 'ch3', name: 'THE BACKROOM',   when: (st) => (st.flavours || []).length >= 4 },
-    { id: 'ch4', name: 'ATTENTION',      when: (st) => st.suspicion >= 0.4 },
-    { id: 'ch5', name: 'A CREW',         when: (st) => (st.crew || []).length >= 3 },
-    { id: 'ch6', name: 'THE PATROL',     when: (st) => st.suspicion >= 0.75 },
-    { id: 'ch7', name: 'WHAT SHE WANTED',when: (st) => (st.crew || []).length >= 6 },
+    { id: 'ch1', name: 'WHAT SHE TAUGHT', when: (st) => st.day >= 1, cine: 'found' },
+    { id: 'ch2', name: 'THE FIRST ONE',   when: (st) => (st.crew || []).length >= 1 },
+    { id: 'ch3', name: 'HER RECIPES',     when: (st) => (st.flavours || []).length >= 4 },
+    { id: 'ch4', name: 'ATTENTION',       when: (st) => st.suspicion >= 0.4 },
+    { id: 'ch5', name: 'A CREW',          when: (st) => (st.crew || []).length >= 3 },
+    { id: 'ch6', name: 'THE SAME PATROL', when: (st) => st.suspicion >= 0.75 },
+    { id: 'ch7', name: 'FOR TRACY',       when: (st) => (st.crew || []).length >= 6 },
   ];
   G.CHAPTERS = CHAPTERS;
   // the next chapter that has come true but has not been played

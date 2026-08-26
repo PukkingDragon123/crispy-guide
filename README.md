@@ -1,14 +1,18 @@
 # 🍦 DOUBLE LIFE
 
-**They took the world. You have ice cream.**
+**They took the world. You have gelato.**
 
-A zero-dependency pixel-art game at **640×360**. You are a discarded soft-serve
-machine, pulled out of a skip and kept running by the human who found you, in a
-city the machines now own. So you do the only thing you were built to do — and
-you do it with intent.
+A zero-dependency pixel-art game at **640×360**. You are a scrapped gelato
+machine — an Italian chef unit with a toque, a moustache and one borrowed arm —
+in a city the machines now own.
 
-**Serve them something laced. Their systems fail. Bill them to put it right.
-And watch the queue, because some of what walks in is not a machine at all.**
+A woman called Tracy dug you out of a landfill, bolted her own spare arm on, and
+taught you to make ice cream. Then a patrol came through the door at four in the
+morning and took everyone on the street.
+
+**So now you serve them something laced. Their systems fail. You bill them to
+put it right. And you watch the queue, because some of what walks in is not a
+machine at all — and every one of those you get out is one they do not.**
 
 ![Title](screenshots/title.png)
 
@@ -35,25 +39,85 @@ else.
 
 ---
 
-## 🎬 The story
+## 🕳️ The pit
 
-![The city](screenshots/cine-city.png)
+The first thing you do in this game is get out of a hole, and you do it with one
+hand.
 
-Nine shots before you touch anything: the city that does not need anyone in it,
-the skip behind a shop that had closed, the woman who had no reason to stop, the
-lamp over the bench, the sign going back on. Then she stops coming in.
+![Waking up](screenshots/pit-wake.png)
 
-![Her](screenshots/cine-her.png)
+You come back on at 4% power. Chassis: not found. Left arm: not found. Right
+arm: present. Purpose: gelato.
+
+![The pit](screenshots/pit.png)
+
+You are a head and an arm on a length of spine, at the bottom of a landfill in the
+rain. **Press a handhold and the hand reaches out and latches. Then pull** — drag
+away from the grip and you haul the rest of yourself up after it.
+
+![Hauling](screenshots/pit-haul.png)
+
+Every handhold has a breaking point and shows you roughly where it is: `LOOSE`,
+`FIRM`, `SOLID`. The strain gauge fills as you pull and a mark on it shows where
+*this* grip gives out. Push past it and the rebar snaps, the scrap comes down and
+you slide. Stop short and you keep every inch.
+
+One arm has a **reach**, so the climb is a series of real choices — which hold,
+how hard, how long. Break the wrong one and there is a second in every band. And
+if you ever run out of options entirely, the heap shifts and slides you a new
+one: you cannot get stuck in this pit, only be slow in it.
+
+![Out](screenshots/pit-out.png)
+
+Then somebody shines a torch at you.
+
+---
+
+## 🍨 Tracy
+
+![Found](screenshots/found.png)
+
+She has a spare arm and nothing on. She bolts it to your shoulder on a kitchen
+bench under a lamp, and then she teaches you the only thing worth knowing.
+
+![Tracy's kitchen](screenshots/tracy.png)
+
+The warmest room in the game, and the tutorial. One tub of gelato, one cone, one
+very patient human, and her AI on a cracked tablet. Every step is gated, so you
+cannot get it wrong — you can only not have done it yet. Take a cone. Press into
+the gelato and sweep, *don't stab it*. Put it on the cone. Give it here then,
+she's been up since four.
+
+![The first one](screenshots/tracy-taste.png)
+
+> *OH. OH, THAT'S PROPER. YOU'RE GOING TO BE FINE.*
+
+Poke the tablet and clause introduces itself, badly.
+
+---
+
+## 🚨 Then the door came in
+
+![The raid](screenshots/raid.png)
+
+It was a good six weeks. They did not arrest anyone.
+
+![The chip](screenshots/chip.png)
+
+The tablet was still warm. Clause's housing had eleven minutes left and your
+head had a slot, so you pulled its core out and put it in your own, and closed
+the panel.
+
+**Seven chapters** after that, and they move when the world does rather than on a
+timer: the first person you get out, her recipes running again, the first patrol
+that parks outside and does not order anything, the back room with chairs in it,
+and the same patrol coming back.
+
+![A chapter](screenshots/cine-chapter.png)
 
 The camera pans, pushes and leans — a shear rather than a rotation, so every
 scanline stays a scanline and nothing goes soft. Letterbox bars, film grain, the
 line typing itself in.
-
-**Seven chapters**, and they move when the world does, not on a timer: the first
-person you get out, the mixer turning again, the first patrol that parks outside
-and does not order anything, the back room with chairs in it.
-
-![A chapter](screenshots/cine-chapter.png)
 
 ---
 
@@ -355,13 +419,15 @@ is four parts — pauldron, upper arm, hinged elbow with a pin, forearm — with
 hydraulic piston alongside. Every optic has a machined bezel with a screw ring,
 radial iris spokes, a bounce catch-light and a scan line crossing the glass.
 
-![Friendly](screenshots/friendly.png)
+![The chef](screenshots/chef.png)
 
-You are the nineteenth, and you are meant to be liked: cream over mint, big pink
-optics set wide, a raised brow, blush, freckles, a smile stamped into the plate
-with its corners turned up, a bow tie she put on you, and a white apron with a
-scoop in the pocket. A churn drum on salvaged tread with a soft-serve swirl still
-set in the crown.
+You are the nineteenth, and you are meant to be liked: a **puffed chef's toque**
+with a tricolour band, a curled moustache, big pink optics set wide, a raised
+brow, blush, freckles, a smile stamped into the plate with its corners turned up,
+the bow tie she put on you, and a white apron with a tricolour stripe, a name tag
+and a scoop in the pocket. A churn drum on terracotta tread. `GELATO UNIT`,
+filed under `CUCINA`, and the only thing it ever says is *one scoop, always one
+more*.
 
 Eleven of the archetypes carry the same softening — the maid, the chef, the
 nurse, the clerk, the courier, the horticultural unit and the rest get the blush
@@ -380,6 +446,11 @@ not.
   1px detailing.
 - Two type sizes off one 5×7 bitmap face: the standard tier, and a **fine tier**
   at half scale for dense read-outs
+- A **cosy layer** over the cold one: wood, cream paper and lamplight for
+  anything that is information rather than machinery — warm drop shadows under
+  the buttons, a lamp hairline on every lip, panels that look like paper on a
+  board, and counter-edge trays instead of steel bars. The cold steel stays where
+  it means something, which is inside the machines.
 - Flat-shaded "boxel" language: 3–5 tones per material, hard light and shadow
   bands, 1px black outlines, no dithered mush
 - **Frame-descriptor characters**: base, torso, head, arms, prop and emblem
@@ -409,6 +480,8 @@ js/bots.js          the rig: frames, plate detail, optics, creatures, tells,
                     the tip jar cat, goo scoops
 js/clause.js        clause.ai — flight, chatter, asks, the books
 js/cine.js          the cutscene camera and every story beat
+js/dump.js          the pit you drag yourself out of
+js/tracy.js         her kitchen, and the lesson
 js/day.js           the floor: pits, sweeping, tips, spotting, closing
 js/lab.js           the station panels: order, mixer, the line
 js/back.js          the back room you walk

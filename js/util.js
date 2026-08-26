@@ -82,6 +82,21 @@
     amber:    '#ffb43a',
     gold:     '#ffd44a',
     cream:    '#f4f0e0',
+    // ---- cosy: wood, cream paper and lamplight. Panels and trays use
+    // these now; the cold steel stays for machinery, where it means
+    // something. ----
+    woodDk:   '#2e1f16',
+    wood:     '#4a3020',
+    woodLt:   '#7a5638',
+    woodHi:   '#b88a58',
+    paper:    '#f2e4d0',
+    paperDk:  '#d8c4a8',
+    ink3:     '#2a1c14',
+    lamp:     '#ffb26a',
+    lampLt:   '#ffd9a0',
+    lampDk:   '#c8783a',
+    warm:     '#c8a884',
+    warmDk:   '#8a7458',
     warn:     '#ff7a4a',
     // croc / player greens
     croc:     '#6bbf42',
@@ -692,19 +707,53 @@
   };
 
   // ---------- shared button ----------
+  // A button you would want to press: a warm shadow under it, a rounded
+  // body, a soft light along the top and a hairline of lamp on the lip.
   G.drawBtn = function (g, x, y, w, h, label, opts) {
     opts = opts || {};
     const hov = !opts.disabled && G.inRect(G.mouse.x, G.mouse.y, x, y, w, h);
     const base = opts.disabled ? '#3d4a4a' : opts.col || P.gum;
-    const face = hov && G.mouse.down ? G.shade(base, -0.2) : hov ? G.shade(base, 0.16) : base;
+    const face = hov && G.mouse.down ? G.shade(base, -0.2) : hov ? G.shade(base, 0.2) : base;
     const dy = hov && G.mouse.down ? 1 : 0;
-    G.rr2(g, x, y + 3, w, h, P.ink);
+    // a soft warm drop shadow rather than a hard black one
+    g.globalAlpha = 0.5;
+    G.rr2(g, x, y + 3, w, h, '#150d08');
+    g.globalAlpha = 1;
     G.rr2(g, x, y + dy, w, h, P.ink);
-    G.rr2(g, x + 1, y + 1 + dy, w - 2, h - 2, G.shade(face, -0.4));
+    G.rr2(g, x + 1, y + 1 + dy, w - 2, h - 2, G.shade(face, -0.42));
     G.rr2(g, x + 2, y + 2 + dy, w - 4, h - 4, face);
-    G.R(g, x + 3, y + 2 + dy, w - 6, 1, G.shade(face, 0.34));
-    if (label) G.text(g, label, x + w / 2, y + Math.floor((h - 7) / 2) + dy, opts.tcol || P.cream, { align: 'center', out: opts.out });
+    // top light, bottom warmth, and a lamp hairline on the very lip
+    G.R(g, x + 3, y + 2 + dy, w - 6, 1, G.shade(face, 0.36));
+    G.hair(g, x + 3, y + 1.5 + dy, w - 6, G.mix(G.shade(face, 0.6), P.lampLt, 0.35));
+    G.hair(g, x + 3, y + h - 3 + dy, w - 6, G.shade(face, -0.5));
+    if (hov) {
+      g.globalAlpha = 0.22;
+      G.glow(g, x + w / 2, y + h / 2 + dy, w + 10, h + 8, P.lamp, 1);
+      g.globalAlpha = 1;
+    }
+    if (label) G.text(g, label, x + w / 2, y + Math.floor((h - 7) / 2) + dy,
+      opts.tcol || P.paper, { align: 'center', out: opts.out });
     return hov;
+  };
+
+  // A cosy panel: paper on wood, with a lamp hairline and a soft inner
+  // shadow. Anything that is information rather than machinery uses this.
+  G.cosy = function (g, x, y, w, h, o) {
+    o = o || {};
+    const body = o.col || P.woodDk;
+    g.globalAlpha = 0.45;
+    G.rr2(g, x + 1, y + 3, w, h, '#0d0805');
+    g.globalAlpha = 1;
+    G.rr2(g, x - 1, y - 1, w + 2, h + 2, P.ink3);
+    G.rr2(g, x, y, w, h, body);
+    G.bevel(g, x + 1, y + 1, w - 2, h - 2, G.shade(body, 0.34), G.shade(body, -0.4));
+    G.hair(g, x + 2, y + 1, w - 4, o.trim || P.lampDk);
+    if (o.paper) {
+      G.rr(g, x + 3, y + 4, w - 6, h - 7, P.paperDk);
+      G.rr(g, x + 3, y + 4, w - 6, h - 8, P.paper);
+      G.grain(g, x + 4, y + 5, w - 8, h - 10, '#e0cfb4', 0.06, x + y);
+    }
+    if (o.lamp !== false) { g.globalAlpha = 0.14; G.glow(g, x + w / 2, y, w, h * 0.9, P.lamp, 1); g.globalAlpha = 1; }
   };
 
   // horizontal skill meter (used by scooping + drilling)

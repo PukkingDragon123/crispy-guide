@@ -90,6 +90,14 @@
       case 'pour': noise(t, 0.14, 0.06, 'lowpass', 600); break;
       case 'grit': osc('square', G.rand(1400, 2400), t, 0.018, 0.03); break;
       case 'grab': osc('square', 240, t, 0.045, 0.06, 340); break;
+      // hauling yourself: a servo under load, straining
+      case 'strain': osc('sawtooth', 92, t, 0.42, 0.05, 68); osc('sawtooth', 138, t + 0.05, 0.3, 0.03, 108);
+        noise(t, 0.4, 0.02, 'bandpass', 420, 3); break;
+      case 'release': osc('sine', 150, t, 0.14, 0.05, 90); noise(t, 0.12, 0.03, 'lowpass', 700); break;
+      case 'rumble': noise(t, 0.9, 0.11, 'lowpass', 260, 1, 90); osc('sine', 44, t, 0.8, 0.09, 30);
+        for (let i = 0; i < 10; i++) noise(t + i * 0.07, 0.06, 0.04, 'bandpass', 500 + i * 40, 2); break;
+      case 'snap': osc('square', 320, t, 0.05, 0.11, 90); noise(t, 0.3, 0.13, 'bandpass', 1300, 1.4);
+        osc('sawtooth', 70, t + 0.04, 0.28, 0.07, 40); break;
       // a secret: a rising arpeggio with a shimmer on top
       case 'secret': [72, 76, 79, 84, 88].forEach((n, i) => {
           osc('triangle', N2F(n), t + i * 0.07, 0.3, 0.06);

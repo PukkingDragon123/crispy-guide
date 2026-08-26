@@ -496,11 +496,11 @@
     // ---- tray and the interact button ----
     hud(g, t) {
       const st = G.state;
-      G.R(g, 0, 0, G.W, 16, '#0a0d14');
-      G.hair(g, 0, 16, G.W, '#252c3d');
-      G.plate(g, 2, 2, 52, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.hazard);
-      G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.hazard);
+      G.R(g, 0, 0, G.W, 16, '#150e09');
+      G.hair(g, 0, 16, G.W, P.lampDk);
+      G.cosy(g, 2, 2, 52, 12, { lamp: false });
+      G.R(g, 6, 6, 4, 5, P.lampLt);
+      G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.lampLt);
       G.text(g, 'THE BACK ROOM  ·  SHIFT ' + st.day, 60, 4, P.violetLt);
       const n = G.pitCount();
       const loaded = st.pits.slice(0, n).filter((p) => p && p.qty > 0).length;
@@ -510,8 +510,9 @@
       G.text(g, loaded + '/' + n + ' PITS', 262, 3, loaded ? P.lime : P.magenta, { sc: 0.5 });
       G.text(g, 'STOCK ' + stock, 262, 9, P.steel, { sc: 0.5 });
 
-      G.R(g, 0, 150, G.W, 30, '#0c0d16');
-      G.R(g, 0, 150, G.W, 1, P.violet);
+      G.R(g, 0, 150, G.W, 30, P.woodDk);
+      G.plate(g, -4, 148, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });
+      G.hair(g, -4, 148, G.W + 8, P.woodHi);
       G.drawBtn(g, 4, 152, 58, 16, '< FLOOR', { col: '#2a5c6b' });
       if (this.open === null) {
         const s = this.near();

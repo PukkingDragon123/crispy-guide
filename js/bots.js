@@ -39,7 +39,7 @@
     warden:  { base: 'legs',   torso: 'slab',    head: 'lamp',    arms: 'heavy',   prop: 'shackle', w: 1.32, h: 1.08, hs: 0.9 },
     // YOU. A soft-serve machine on salvaged tread, with a swirl still set in
     // the dispenser head forty years after the shop closed.
-    player:  { base: 'tread',  torso: 'barrel',  head: 'dome',    arms: 'can',     prop: 'swirl',   w: 1.14, h: 0.98, hs: 1.06, soft: 2 },
+    player:  { base: 'tread',  torso: 'barrel',  head: 'dome',    arms: 'can',     prop: 'toque2',  w: 1.14, h: 0.98, hs: 1.06, soft: 2 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -653,6 +653,17 @@
           }
         }
       }
+      // a moustache, curled, sitting just above where the smile lands
+      if (soft > 1) {
+        const my2 = y + Math.round(h * 0.7);
+        const mw2 = Math.round(w * 0.5);
+        G.Rh(g, cx - mw2 / 2, my2 - u(3), mw2, 1.5, '#4a3524');
+        G.hair(g, cx - mw2 / 2, my2 - u(3), mw2, '#6b4a30');
+        for (const sd of [-1, 1]) {
+          G.Rh(g, cx + sd * (mw2 / 2) - (sd > 0 ? 0 : 2), my2 - u(4), 2, 1, '#4a3524');
+          G.Rh(g, cx + sd * (mw2 / 2 + 1) - (sd > 0 ? 0 : 2), my2 - u(5), 2, 1, '#4a3524');
+        }
+      }
       // freckle dots on the very friendly ones
       if (soft > 1) for (let i = 0; i < 6; i++)
         G.Rh(g, cx - u(7) + (i % 3) * u(1.6) + (i < 3 ? 0 : u(11)),
@@ -680,7 +691,8 @@
     const open = G.clamp(o.open || 0, 0, 1);
     // the friendliest ones hold the smile through an idle twitch
     const gape = Math.round((soft > 1 && open < 0.45 ? 0 : open) * u(11));
-    G.R(g, cx - mw / 2 - 1, my - 1, mw + 2, Math.max(3, gape + u(4)) + 2, OUT);
+    if (!(soft && gape < 1))
+      G.R(g, cx - mw / 2 - 1, my - 1, mw + 2, Math.max(3, gape + u(4)) + 2, OUT);
     if (gape > 1) {
       G.R(g, cx - mw / 2, my, mw, gape, '#150f1c');
       G.R(g, cx - mw / 2, my, mw, 1, '#2a1f34');
@@ -913,6 +925,42 @@
       for (let i = 0; i < 6; i++) G.rivet(g, cx - u(10) + i * u(4), fy + 0.5, '#0b0e14', P.chrome);
       // a spot of what it last ate, crusted in the throat
       G.Rh(g, cx - u(2), fy + u(7), u(4), 1.5, '#c8a86a');
+    } else if (kind === 'toque2') {
+      // a proper chef's hat: a banded brim and a tall pleated crown
+      const bw = u(13);
+      G.R(g, cx - bw - 1, top - u(4) - 1, bw * 2 + 2, u(6), OUT);
+      G.Rh(g, cx - bw, top - u(4), bw * 2, u(5), '#fdf6ea');
+      G.hair(g, cx - bw, top - u(4), bw * 2, '#ffffff');
+      G.hair(g, cx - bw, top - 0.5, bw * 2, '#cfc2ae');
+      // the crown: one soft puffed mass, pleated, wider than the brim
+      const ch2 = u(13), cw2 = u(13.5);
+      for (let j = 0; j < ch2; j++) {
+        const p2 = j / (ch2 - 1);
+        // narrow at the brim, bulging out, then rounded over the top
+        const prof = p2 < 0.18 ? 0.66 + p2 * 1.9
+                   : p2 > 0.72 ? 1.0 - Math.pow((p2 - 0.72) / 0.28, 1.7) * 0.5
+                   : 1.0;
+        const w2 = Math.max(1, cw2 * prof);
+        const yy = top - u(4) - ch2 + j;
+        G.R(g, cx - w2 - 1, yy, w2 * 2 + 2, 1, OUT);
+        G.Rh(g, cx - w2, yy, w2 * 2, 1,
+          p2 > 0.78 ? '#ffffff' : p2 < 0.2 ? '#d8ccb8' : '#f6f0e4');
+        G.Rh(g, cx - w2, yy, 1, 1, '#ffffff');
+        G.Rh(g, cx + w2 - 1, yy, 1, 1, '#cfc2ae');
+      }
+      // pleats: soft vertical shading, not hard bands
+      for (let k = -3; k <= 3; k++) {
+        if (!k) continue;
+        G.vair(g, cx + k * u(3.6), top - u(4) - ch2 + u(2), ch2 - u(3), '#e2d6c4');
+      }
+      // a tricolour band on the brim, because she thought it was funny
+      G.Rh(g, cx - bw + 1, top - u(1.5), u(8), 1.5, '#2f8a48');
+      G.Rh(g, cx - bw + 1 + u(8), top - u(1.5), u(8), 1.5, '#f2e4d0');
+      G.Rh(g, cx - bw + 1 + u(16), top - u(1.5), u(8), 1.5, '#c8383a');
+      // and one curl of gelato tucked into the band
+      G.fc(g, cx + bw - u(2), top - u(4), u(2.4), '#f6ead6');
+      G.Rh(g, cx + bw - u(3.4), top - u(5.4), u(2), 1, '#ffffff');
+      G.Rh(g, cx + bw - u(3), top - u(3), u(3), 0.5, '#e8879a');
     } else if (kind === 'swirl') {
       // dispenser collar, then three tapering coils and a tip
       G.R(g, cx - u(9), top - u(3), u(18), u(4), OUT);
@@ -1091,6 +1139,13 @@
         G.Rh(g, ax + i * 3, ay + ah, 2, 1, '#e8dcc8');
         G.Rh(g, ax + i * 3 + 0.5, ay + ah + 1, 1, 0.5, '#cfc2ae');
       }
+      // a tricolour stripe up one side and a name tag on the bib
+      G.Rh(g, ax + 1, ay + 3, 1.5, ah - 5, '#2f8a48');
+      G.Rh(g, ax + 2.5, ay + 3, 1.5, ah - 5, '#f2e4d0');
+      G.Rh(g, ax + 4, ay + 3, 1.5, ah - 5, '#c8383a');
+      G.Rh(g, ax + aw - u(9), ay + 3, u(7), u(3), '#d8cfae');
+      G.hair(g, ax + aw - u(9), ay + 3, u(7), '#ffffff');
+      for (let i = 0; i < 3; i++) G.Rh(g, ax + aw - u(8) + i * 1.6, ay + 4.5, 1, 0.5, '#6b5a3a');
     }
 
     // the tell, if this one is not really a machine. Drawn last so it

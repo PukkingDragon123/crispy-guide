@@ -553,8 +553,8 @@
       G.drawSteam(g);
 
       // ---- HUD ----
-      G.plate(g, 2, 2, 54, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.hazard);
+      G.cosy(g, 2, 2, 54, 12, { lamp: false });
+      G.R(g, 6, 6, 4, 5, P.lampLt);
       G.text(g, '$' + Math.round(G.state.money), 13, 4, P.hazard);
       G.plate(g, 60, 2, 46, 12, P.ink2, { r: 1, band: 1, spec: false });
       G.text(g, (this.pi + 1) + '/' + this.queue.length, 64, 4, P.cyanLt);
