@@ -83,10 +83,12 @@
       // buying a pit builds it empty
       if (it.id.slice(0, 3) === 'pit') {
         const n = G.pitCount();
-        while (G.state.pits.length < n) G.state.pits.push({ fid: null, qty: 0, max: G.has('chiller') ? 18 : 12 });
+        while (G.state.pits.length < n) G.state.pits.push({ fid: null, qty: 0, max: G.pitCap() });
       }
-      if (it.id === 'chiller') for (const p of G.state.pits) p.max = 18;
+      if (it.id === 'chiller' || it.id === 'freezer')
+        for (const p of G.state.pits) p.max = G.pitCap();
       G.state.newIds.push(it.id);
+      for (const q of G.checkQuests()) G.toast('QUEST: ' + q.name + '  +$' + q.pay, P.lime);
       G.audio.sfx('unlock');
       this.flash = { t: 0 };
       G.clause.say(this.tab === 2 ? it.name + ' IS WITH US NOW.' : 'FITTED: ' + it.name + '.', P.lime, 3);

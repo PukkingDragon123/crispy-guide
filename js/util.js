@@ -505,7 +505,47 @@
   G.floaters = [];
   G.floatText = function (str, x, y, col, big) { G.floaters.push({ str, x, y, col: col || P.gold, t: 0, big: !!big }); };
 
+  // ------------------------------------------------------------
+  // THE EGG CARD. Nobody told you about these, so when you find one
+  // it deserves a moment. Lives in the juice layer so every scene
+  // gets it for free.
+  // ------------------------------------------------------------
+  G.egg = null;
+  G.showEgg = function (e) {
+    if (!e) return;
+    G.egg = { e, t: 0 };
+    G.audio.sfx('secret');
+    G.screenFlash('#ffe89a', 0.16);
+  };
+  G.drawEggCard = function (g) {
+    const E = G.egg;
+    if (!E) return;
+    const a = Math.min(1, E.t * 3) * Math.min(1, (4.6 - E.t) * 2);
+    if (a <= 0) return;
+    g.globalAlpha = a;
+    const y = 40 - (1 - Math.min(1, E.t * 3)) * 10;
+    G.R(g, 40, y, 240, 46, '#0d0a06');
+    G.bevel(g, 40, y, 240, 46, '#5c4a20', '#050403');
+    G.R(g, 42, y + 2, 236, 1, '#e0b83a');
+    // a little star, because it is a secret
+    for (let i = 0; i < 8; i++) {
+      const ang = i * Math.PI / 4 + E.t;
+      const ln = i % 2 ? 4 : 7;
+      for (let k = 0; k < ln; k++)
+        G.Rh(g, 58 + Math.cos(ang) * k - 0.5, y + 24 + Math.sin(ang) * k - 0.5, 1, 1,
+          k < 2 ? '#fff4c8' : '#e0b83a');
+    }
+    G.text(g, 'YOU FOUND SOMETHING', 78, y + 8, '#8a7440', { sc: 0.5 });
+    G.text(g, E.e.name, 78, y + 15, '#ffe89a');
+    G.text(g, E.e.note.slice(0, 44), 78, y + 27, '#c8b490', { sc: 0.5 });
+    G.text(g, '+$50', 272, y + 36, '#b6ff3a', { align: 'right', sc: 0.5 });
+    G.text(g, (G.state && G.state.eggs ? G.state.eggs.length : 0) + '/' + (G.EGGS ? G.EGGS.length : 8),
+      78, y + 36, '#8a7440', { sc: 0.5 });
+    g.globalAlpha = 1;
+  };
+
   G.updateJuice = function (dt) {
+    if (G.egg) { G.egg.t += dt; if (G.egg.t > 4.6) G.egg = null; }
     if (G.shakeT > 0) {
       G.shakeT -= dt;
       cam.sx = G.rand(-G.shakeMag, G.shakeMag);
@@ -602,6 +642,7 @@
 
   // HUD-space juice
   G.drawJuice = function (g) {
+    G.drawEggCard(g);
     for (const c of G.coinFlies) {
       if (c.t < 0) continue;
       const wob = Math.abs(Math.sin(c.t * 9));

@@ -41,8 +41,16 @@
       if (G.clause) { G.clause.enter('back'); }
     },
 
+    // a station only exists once it is any use to you
+    open2(s) {
+      if (s.id === 'mixer') return G.unlocked('mixer');
+      if (s.id === 'cold') return G.unlocked('line');
+      if (s.id === 'wall') return G.unlocked('wall');
+      return true;
+    },
+    live() { return STATIONS.filter((s) => this.open2(s)); },
     near() {
-      for (const s of STATIONS) if (Math.abs(this.px - s.x) < s.r) return s;
+      for (const s of this.live()) if (Math.abs(this.px - s.x) < s.r) return s;
       return null;
     },
     camX() { return G.clamp(this.px - G.W / 2, 0, ROOM_W - G.W); },
@@ -67,8 +75,29 @@
       }
 
       const wx = x + this.camX();
+
+      // ---- the things nobody told you about ----
+      if (G.inRect(wx, y, 292, FLOOR + 4, 18, 18)) {          // the drain
+        this.drainTaps = (this.drainTaps || 0) + 1;
+        G.audio.sfx('clack');
+        if (this.drainTaps >= 7) G.showEgg(G.findEgg('e_drain'));
+        else G.floatText('...', 300, FLOOR, P.steel);
+        return;
+      }
+      if (G.inRect(wx, y, 176, 40, 44, 34)) {                 // the defaced poster
+        G.audio.sfx('clack');
+        G.showEgg(G.findEgg('e_poster'));
+        return;
+      }
+      if (G.inRect(wx, y, 58, 32, 16, 16)) {                  // the clock
+        G.audio.sfx('clack');
+        if ((G.state.cleanShifts || 0) > 0) G.showEgg(G.findEgg('e_clock'));
+        else G.floatText('IT HAS STOPPED', 66, 26, P.steel);
+        return;
+      }
+
       // clicking a station walks you to it and uses it on arrival
-      for (const s of STATIONS)
+      for (const s of this.live())
         if (Math.abs(wx - s.x) < s.r + 8 && y < 148) {
           if (Math.abs(this.px - s.x) < s.r) { this.use(s); return; }
           this.target = { x: s.x, then: s.id };
@@ -147,7 +176,7 @@
       // ---- chrome ----
       this.hud(g, t);
       if (this.open !== null) this.panel(g, t);
-      if (G.clause) { G.clause.at(300, 160, 166, 4, 276); G.clause.draw(g); }
+      if (G.clause) { G.clause.at(300, 160, 166, 4, 276); G.clause.draw(g); G.clause.drawMenu(g); }
       G.grade(g, 1);
     },
 

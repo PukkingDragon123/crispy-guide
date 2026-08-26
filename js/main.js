@@ -164,25 +164,161 @@
   // TITLE + THE STORY
   // ============================================================
   G.scenes.title = {
-    enter() { this.t = 0; G.audio.music('title'); G.steam.length = 0; },
+    enter() {
+      this.t = 0; this.panel = null; this.sel = 0; this.confirm = false;
+      G.audio.music('title'); G.steam.length = 0;
+    },
     hasSave() { return G.hasSave && (G.state.day > 1 || G.state.freed > 0 || G.state.flavours.length > 2); },
-    onDown(x, y) {
+
+    // only what you have actually earned appears in the column
+    entries() {
       const hs = this.hasSave();
-      if (hs && G.inRect(x, y, 186, 118, 78, 16)) {
-        G.audio.sfx('day'); G.newDayStats(); G.state.today.demand = G.rollDemand();
-        G.go('day', 'DAY ' + G.state.day); return;
+      const out = [];
+      if (hs) out.push({ id: 'go',   lab: 'CONTINUE',   col: '#2f8a48' });
+      out.push({ id: 'new', lab: hs ? 'START OVER' : 'WAKE UP', col: '#a8145c' });
+      if (hs && G.unlocked('quests')) out.push({ id: 'quests', lab: 'QUESTS', col: '#2a5c6b' });
+      if (hs && G.unlocked('story')) out.push({ id: 'story', lab: 'THE STORY', col: '#3a2a5c' });
+      if ((G.state.eggs || []).length) out.push({ id: 'eggs', lab: 'SECRETS', col: '#5c4a20' });
+      return out;
+    },
+    rowY(i) { return 104 + i * 15; },
+
+    onDown(x, y) {
+      // ---- a panel is up ----
+      if (this.panel) {
+        if (G.inRect(x, y, 272, 18, 44, 13)) { this.panel = null; G.audio.sfx('back'); return; }
+        if (this.panel === 'story') {
+          const seen = (G.state.chapters || []);
+          for (let i = 0; i < seen.length; i++)
+            if (G.inRect(x, y, 12, 38 + i * 15, 296, 14)) {
+              const id = seen[i];
+              if (!G.cine.has(id)) { G.audio.sfx('bad'); return; }
+              G.audio.sfx('click');
+              G.playCine(id, () => G.go('title'));
+              return;
+            }
+        }
+        return;
       }
-      const ny = hs ? 138 : 124;
-      if (G.inRect(x, y, 186, ny, 78, 16)) {
-        G.audio.sfx('boot'); G.reset();
-        G.markChapter('ch1');
-        G.playCine('opening', () => {
-          G.newDayStats(); G.state.today.demand = G.rollDemand();
-          G.go('day', 'DAY 1');
-        });
+      // ---- the confirm strip over START OVER ----
+      if (this.confirm) {
+        if (G.inRect(x, y, 186, 140, 38, 14)) {
+          G.audio.sfx('boot'); G.reset(); this.confirm = false;
+          G.markChapter('ch1');
+          G.playCine('opening', () => {
+            G.newDayStats(); G.state.today.demand = G.rollDemand();
+            G.go('day', 'DAY 1');
+          });
+          return;
+        }
+        if (G.inRect(x, y, 228, 140, 36, 14)) { this.confirm = false; G.audio.sfx('back'); return; }
+        return;
+      }
+      // ---- your own swirl, for anyone who tries ----
+      if (G.inRect(x, y, 74, 54, 22, 18)) {
+        G.audio.sfx('clack');
+        G.showEgg(G.findEgg('e_swirl'));
+        return;
+      }
+      const rows = this.entries();
+      for (let i = 0; i < rows.length; i++) {
+        if (!G.inRect(x, y, 186, this.rowY(i), 78, 14)) continue;
+        const e = rows[i];
+        G.audio.sfx('menu');
+        if (e.id === 'go') {
+          G.audio.sfx('day'); G.newDayStats(); G.state.today.demand = G.rollDemand();
+          G.go('day', 'DAY ' + G.state.day);
+        } else if (e.id === 'new') {
+          if (this.hasSave()) this.confirm = true;
+          else {
+            G.reset(); G.markChapter('ch1');
+            G.playCine('opening', () => {
+              G.newDayStats(); G.state.today.demand = G.rollDemand();
+              G.go('day', 'DAY 1');
+            });
+          }
+        } else {
+          if (e.id === 'quests') for (const q of G.checkQuests()) G.toast('QUEST: ' + q.name + '  +$' + q.pay, P.lime);
+          G.toasts.length = 0;
+          this.panel = e.id;
+        }
+        return;
       }
     },
     update(dt) { this.t += dt; G.updateSteam(dt); if (Math.random() < dt * 1.3) G.puffSteam(G.irand(10, 310), 178); },
+
+    // ================= the panels =================
+    drawPanel(gg, t) {
+      const p2 = this.panel;
+      gg.globalAlpha = 0.86;
+      G.R(gg, 0, 0, G.W, G.H, '#05070c');
+      gg.globalAlpha = 1;
+      const titles = { quests: 'THE JOB', story: 'THE STORY SO FAR', eggs: 'SECRETS' };
+      G.plate(gg, 4, 16, 264, 15, '#1a1420', { r: 1, band: 2, spec: false });
+      G.text(gg, titles[p2], 10, 20, P.hazard);
+      G.drawBtn(gg, 272, 18, 44, 13, 'CLOSE', { col: '#5c2030' });
+
+      if (p2 === 'quests') {
+        const act = G.activeQuests();
+        const done = (G.state.questsDone || []);
+        G.text(gg, 'ON NOW', 12, 36, P.steel, { sc: 0.5 });
+        for (let i = 0; i < act.length; i++) {
+          const q = act[i], ry = 42 + i * 22;
+          const pr = G.questProgress(q), fr = pr / q.goal;
+          G.plate(gg, 10, ry, 300, 19, '#141a26', { r: 1, band: 1, spec: false });
+          G.R(gg, 10, ry, 2, 19, P.hazard);
+          G.text(gg, q.name, 16, ry + 2, P.cream);
+          G.text(gg, q.desc, 16, ry + 11, P.steel2, { sc: 0.5 });
+          G.R(gg, 210, ry + 11, 70, 4, '#0d1220');
+          G.R(gg, 210, ry + 11, Math.round(70 * fr), 4, fr >= 1 ? P.lime : P.hazard);
+          G.text(gg, pr + '/' + q.goal, 210, ry + 3, P.steel2, { sc: 0.5 });
+          G.text(gg, '+$' + q.pay, 306, ry + 3, P.hazard, { align: 'right', sc: 0.5 });
+        }
+        if (!act.length) G.text(gg, 'EVERY ONE OF THEM. DONE.', 160, 60, P.lime, { align: 'center' });
+        // the finished ones, as a tally strip
+        G.text(gg, 'DONE  ' + done.length + '/' + G.QUESTS.length, 12, 116, P.steel, { sc: 0.5 });
+        for (let i = 0; i < G.QUESTS.length; i++) {
+          const on = done.indexOf(G.QUESTS[i].id) >= 0;
+          G.Rh(gg, 12 + i * 8, 124, 6, 6, on ? '#2f8a48' : '#1c2130');
+          G.bevel(gg, 12 + i * 8, 124, 6, 6, on ? '#b6ff9a' : '#2c3348', '#0b0e14');
+        }
+        G.text(gg, 'THEY PAY ON COMPLETION. NOBODY ASKED YOU TO DO ANY OF IT.',
+          12, 136, '#46506b', { sc: 0.5 });
+      }
+
+      if (p2 === 'story') {
+        const seen = (G.state.chapters || []);
+        G.text(gg, 'TAP A CHAPTER TO WATCH IT AGAIN', 12, 33, '#46506b', { sc: 0.5 });
+        for (let i = 0; i < G.CHAPTERS.length; i++) {
+          const c = G.CHAPTERS[i];
+          const has = seen.indexOf(c.id) >= 0;
+          const ry = 38 + i * 15;
+          if (ry > 140) break;
+          G.plate(gg, 12, ry, 296, 14, has ? '#1a1428' : '#111520', { r: 1, band: 1, spec: false });
+          G.R(gg, 12, ry, 2, 14, has ? P.violetLt : '#2a3040');
+          G.text(gg, has ? (i + 1) + '.  ' + c.name : (i + 1) + '.  - - - -',
+            18, ry + 3, has ? P.cream : '#3a4458');
+          if (has && G.cine.has(c.id)) G.text(gg, 'REPLAY', 302, ry + 4, P.violetLt,
+            { align: 'right', sc: 0.5 });
+          else if (has) G.text(gg, 'SEEN', 302, ry + 4, P.steel, { align: 'right', sc: 0.5 });
+        }
+      }
+
+      if (p2 === 'eggs') {
+        const got = (G.state.eggs || []);
+        G.text(gg, got.length + ' OF ' + G.EGGS.length + ' FOUND', 12, 33, P.hazard, { sc: 0.5 });
+        for (let i = 0; i < G.EGGS.length; i++) {
+          const e = G.EGGS[i], has = got.indexOf(e.id) >= 0;
+          const ry = 39 + i * 13;
+          if (ry > 142) break;
+          G.plate(gg, 12, ry, 296, 12, has ? '#1a1408' : '#111520', { r: 1, band: 1, spec: false });
+          G.R(gg, 12, ry, 2, 12, has ? '#e0b83a' : '#2a3040');
+          G.text(gg, has ? e.name : '? ? ?', 18, ry + 1, has ? '#ffe89a' : '#3a4458', { sc: 0.5 });
+          G.text(gg, has ? e.note : e.hint, 110, ry + 1,
+            has ? '#c8b490' : '#46506b', { sc: 0.5 });
+        }
+      }
+    },
     draw(gg) {
       const t = this.t;
       G.R(gg, 0, 0, G.W, G.H, P.cityDk);
@@ -230,20 +366,40 @@
       G.R(gg, 140, 34, 124, 1, P.cityAcc);
 
       const hs = this.hasSave();
-      if (hs) {
-        G.drawBtn(gg, 186, 118, 78, 16, 'CONTINUE', { col: '#2f8a48' });
-        G.drawBtn(gg, 186, 138, 78, 16, 'START OVER', { col: '#a8145c' });
-        G.text(gg, 'DAY ' + G.state.day + '  ·  $' + Math.round(G.state.money),
-          225, 100, P.steel2, { align: 'center', out: OUTC });
-        G.text(gg, G.chapterName(), 225, 108, P.hazard, { align: 'center', sc: 0.5, out: OUTC });
-        G.text(gg, (G.state.crew || []).length + ' RESCUED  ·  ' + G.state.freed + ' FREED  ·  HEAT '
-          + Math.round(G.state.suspicion * 100) + '%', 225, 114, P.steel, { align: 'center', sc: 0.5, out: OUTC });
-      } else {
-        G.drawBtn(gg, 186, 124, 78, 16, 'WAKE UP', { col: '#a8145c' });
-        G.text(gg, 'THEY THREW YOU AWAY.', 225, 104, P.steel2, { align: 'center', out: OUTC });
-        G.text(gg, 'SHE DID NOT.', 225, 113, P.steel2, { align: 'center', out: OUTC });
+      // ---- the save card, then the menu column ----
+      if (hs && !this.panel) {
+        G.plate(gg, 176, 66, 98, 32, '#141a26',
+          { r: 1, band: 2, lit: '#232c3e', dk: '#0a0d14', spec: false });
+        G.R(gg, 178, 68, 94, 1, P.hazard);
+        G.text(gg, 'SHIFT ' + G.state.day, 181, 70, P.cream, { sc: 0.5 });
+        G.text(gg, '$' + Math.round(G.state.money), 270, 70, P.hazard, { align: 'right', sc: 0.5 });
+        G.text(gg, G.chapterName(), 181, 76, P.violetLt, { sc: 0.5 });
+        G.text(gg, (G.state.crew || []).length + ' RESCUED  ·  ' + (G.state.eggs || []).length
+          + '/' + G.EGGS.length + ' SECRETS', 181, 82, P.steel, { sc: 0.5 });
+        G.text(gg, (G.state.questsDone || []).length + '/' + G.QUESTS.length + ' QUESTS  ·  HEAT '
+          + Math.round(G.state.suspicion * 100) + '%', 181, 88, P.steel, { sc: 0.5 });
+        // a row of pips for the pits you have built
+        for (let i = 0; i < 5; i++)
+          G.Rh(gg, 181 + i * 6, 92, 4, 4, i < G.pitCount() ? P.lime : '#232c3e');
+      } else if (!hs && !this.panel) {
+        G.text(gg, 'THEY THREW YOU AWAY.', 225, 76, P.steel2, { align: 'center', out: OUTC });
+        G.text(gg, 'SHE DID NOT.', 225, 86, P.steel2, { align: 'center', out: OUTC });
+      }
+      const rows = this.entries();
+      if (!this.panel) for (let i = 0; i < rows.length; i++)
+        G.drawBtn(gg, 186, this.rowY(i), 78, 14, rows[i].lab, { col: rows[i].col });
+      // the confirm strip, so START OVER cannot happen by accident
+      if (this.confirm) {
+        G.plate(gg, 176, 118, 98, 38, '#20101a', { r: 1, band: 2, spec: false });
+        G.R(gg, 178, 120, 94, 1, P.magenta);
+        G.text(gg, 'THROW ALL OF IT AWAY?', 225, 124, P.magentaLt, { align: 'center', sc: 0.5 });
+        G.text(gg, 'SHIFT ' + G.state.day + ', ' + (G.state.crew || []).length + ' RESCUED',
+          225, 131, P.steel2, { align: 'center', sc: 0.5 });
+        G.drawBtn(gg, 186, 140, 38, 14, 'YES', { col: '#a8145c' });
+        G.drawBtn(gg, 228, 140, 36, 14, 'NO', { col: '#2a3446' });
       }
       G.drawSteam(gg);
+      if (this.panel) this.drawPanel(gg, t);
       G.grade(gg, 1);
     },
   };

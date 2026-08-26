@@ -11,7 +11,7 @@
   const OUT = P.ink;
 
   const TABS = ['ORDER', 'MIXER', 'THE LINE'];
-  const SLOTS = 4;
+  const SLOTS = 4;              // five with a centrifuge; see slotCount()
   // mixer geometry, shared by the drawing and the hit tests so they cannot drift
   const HOP_Y = 43, SH_Y = 105, IDEA_Y = 106, CHURN_Y = 122;
   const PAGE = 7;                          // order rows per page
@@ -65,6 +65,9 @@
       this.churnFlav = use;
       G.audio.sfx('unlock');
       G.clause.say((existing ? 'ANOTHER ' : 'NEW RECIPE: ') + use.name + '. ' + qty + ' SCOOPS.', P.lime, 3.2);
+      // nobody should be able to do this, so of course you can
+      if (ids.length >= 2 && ids.every((i) => i === 'thermite')) G.showEgg(G.findEgg('e_thermite'));
+      for (const q of G.checkQuests()) G.toast('QUEST: ' + q.name + '  +$' + q.pay, P.lime);
       G.save();
     },
 
@@ -72,7 +75,7 @@
       const b = G.state.batches[this.sel];
       if (!b || b.qty <= 0) { G.clause.say('NOTHING SELECTED IN THE COLD ROOM.', P.warn, 2.4); return; }
       const pit = G.state.pits[pi] || (G.state.pits[pi] = { fid: null, qty: 0, max: 12 });
-      const cap = G.has('chiller') ? 18 : 12;
+      const cap = G.pitCap();
       const take = Math.min(b.qty, cap);
       pit.fid = b.fid; pit.qty = take; pit.max = cap;
       b.qty -= take;
@@ -93,8 +96,8 @@
       // tray
       if (y >= 150) {
         if (G.inRect(x, y, 4, 152, 58, 16)) { G.audio.sfx('click'); G.go('day', 'THE CAFE'); return; }
-        if (G.inRect(x, y, 66, 152, 52, 16)) { G.clause.ask('recipe'); return; }
-        if (G.inRect(x, y, 122, 152, 52, 16)) { G.clause.ask('restock'); return; }
+        if (G.unlocked('ask_recipe') && G.inRect(x, y, 66, 152, 52, 16)) { G.clause.ask('recipe'); return; }
+        if (G.unlocked('ask_restock') && G.inRect(x, y, 122, 152, 52, 16)) { G.clause.ask('restock'); return; }
         return;
       }
 
@@ -210,10 +213,10 @@
       G.R(g, 0, 150, G.W, 30, '#0c0d16');
       G.R(g, 0, 150, G.W, 1, P.violet);
       G.drawBtn(g, 4, 152, 58, 16, '< CAFE', { col: '#2a5c6b' });
-      G.drawBtn(g, 66, 152, 52, 16, 'IDEA', { col: G.tierIdx() >= 3 ? '#3a2a5c' : '#20242e' });
-      G.drawBtn(g, 122, 152, 52, 16, 'RESTOCK', { col: G.tierIdx() >= 4 ? '#3a2a5c' : '#20242e' });
+      if (G.unlocked('ask_recipe')) G.drawBtn(g, 66, 152, 52, 16, 'IDEA', { col: '#3a2a5c' });
+      if (G.unlocked('ask_restock')) G.drawBtn(g, 122, 152, 52, 16, 'RESTOCK', { col: '#3a2a5c' });
       G.text(g, 'CALLS ' + G.state.calls, 182, 156, P.steel);
-      if (G.clause) { G.clause.at(300, 163, 166, 4, 286); G.clause.draw(g); }
+      if (G.clause) { G.clause.at(300, 163, 166, 4, 286); G.clause.draw(g); G.clause.drawMenu(g); }
       G.grade(g, 1);
     },
 

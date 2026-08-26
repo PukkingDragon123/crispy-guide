@@ -47,6 +47,9 @@
       this.total = (G.state.today.queue || 5);
       this.left = this.total;
       this.jar = { purr: 0, coins: 0, cool: 0, pets: 0 };
+      // the shutter: it rolls up when you open and down when you close
+      this.shut = { p: 1, dir: -1, t: 0, dust: [] };
+      G.audio.sfx('roll');
       this.reveal = null;                             // a disguise coming off
       this.flies = [];
       for (let i = 0; i < 5; i++) this.flies.push({ x: G.rand(10, 300), y: G.rand(30, 80),
@@ -119,22 +122,17 @@
       if (G.clause && G.clause.onDown(x, y)) return;
 
       if (this.reveal) { this.reveal.skip = true; return; }
+      // during the roll, a tap just hurries it along
+      if (this.shut && this.shut.p > 0.02 && this.shut.dir < 0) { this.shut.p = 0; return; }
 
       if (y >= 150) {                                  // the tray
-        if (G.inRect(x, y, 4, 152, 40, 16)) {
-          if (!G.state.today.closed) {
-            G.clause && G.clause.say('THE FLOOR IS OPEN. BACK ROOM AFTER CLOSE.', P.warn, 2.8);
-            G.audio.sfx('bad');
-          } else { G.audio.sfx('click'); G.go('back', 'THE BACK ROOM'); }
-          return;
+        if (G.unlocked('backroom') && G.inRect(x, y, 4, 152, 56, 16)) {
+          G.audio.sfx('click'); G.go('back', 'THE BACK ROOM'); return;
         }
-        if (G.inRect(x, y, 48, 152, 34, 16)) { if (G.clause) G.clause.ask('read'); return; }
-        if (G.inRect(x, y, 86, 152, 34, 16)) { if (G.clause) G.clause.ask('pick'); return; }
-        if (G.inRect(x, y, 124, 152, 34, 16)) { if (G.clause) G.clause.ask('spot'); return; }
-        if (G.inRect(x, y, 162, 152, 34, 16)) { if (G.clause) G.clause.ask('trend'); return; }
-        if (G.inRect(x, y, 194, 152, 48, 16) && this.canServe()) { G.audio.sfx('click'); this.serve(); return; }
-        if (G.inRect(x, y, 246, 152, 32, 16)) {          // bin
-          if (this.build) { G.audio.sfx('splat'); this.puff(PLATE.x, PLATE.y - 10, '#6b5a3a', 8); this.build = null; }
+
+        if (G.inRect(x, y, 200, 152, 44, 16) && this.canServe()) { G.audio.sfx('click'); this.serve(); return; }
+        if (this.build && G.inRect(x, y, 248, 152, 30, 16)) {   // bin, only when there is something in it
+          G.audio.sfx('splat'); this.puff(PLATE.x, PLATE.y - 10, '#6b5a3a', 8); this.build = null;
           return;
         }
         return;
@@ -151,9 +149,17 @@
       // the tip jar cat, if you bought one
       if (G.has('tipjar') && G.inRect(x, y, JAR_X - 11, WORK_Y - 30, 22, 34)) { this.pet(); return; }
 
+      // her lamp, still hanging over the counter
+      if (G.inRect(x, y, 70, 38, 13, 14)) {
+        this.bulbT = 1.2;
+        G.audio.sfx('clack');
+        if (!this.cust) G.showEgg(G.findEgg('e_bulb'));
+        return;
+      }
+
       // cone / cup stands on the back shelf
       if (G.inRect(x, y, CONE_ST - 11, WORK_Y - 26, 22, 30)) { this.take('cone'); return; }
-      if (G.inRect(x, y, CUP_ST - 11, WORK_Y - 20, 22, 24)) { this.take('cup'); return; }
+      if (G.unlocked('cup') && G.inRect(x, y, CUP_ST - 11, WORK_Y - 20, 22, 24)) { this.take('cup'); return; }
 
       // sauce bottles + topping jars, in a row along the shelf
       const sl = G.state.sauces;
@@ -187,6 +193,8 @@
       const j = this.jar;
       j.purr = 1;
       j.pets++;
+      G.state.petsTotal = (G.state.petsTotal || 0) + 1;
+      if (j.pets >= 20) G.showEgg(G.findEgg('e_cat'));
       G.audio.sfx('purr');
       if (j.cool > 0) { G.floatText('PURR', JAR_X, WORK_Y - 34, P.cyanLt); return; }
       j.cool = 5.5;
@@ -215,12 +223,14 @@
       G.state.today.dayEarn += pay;
       G.state.today.spotted++;
       G.state.spotted++;
+      for (const q of G.checkQuests()) G.floatText('QUEST +$' + q.pay, 160, 60, P.lime, 1);
       G.state.suspicion = Math.max(0, G.state.suspicion - 0.05);
       G.audio.sfx('unlock');
       G.shake(3, 0.3);
       G.screenFlash('#ffffff', 0.12);
       this.reveal = { t: 0, kind, name, perk, pay, line: G.pick(c.dis.lines), skip: false,
                       bits: [] };
+      if (kind === 'dog') this.pendingEgg = G.findEgg('e_dog');
       // the shell comes apart
       for (let i = 0; i < 22; i++)
         this.reveal.bits.push({ x: CUST.x + G.rand(-16, 16), y: G.rand(30, 86),
@@ -379,6 +389,28 @@
       if (Math.random() < dt * 1.1) G.puffSteam(G.irand(10, 310), 178);
       if (G.clause) G.clause.update(dt);
 
+      // ---- the shutter ----
+      const sh = this.shut;
+      if (sh) {
+        sh.t += dt;
+        const target = sh.dir < 0 ? 0 : 1;
+        const spd = 0.44;
+        if (sh.p !== target) {
+          sh.p = sh.dir < 0 ? Math.max(0, sh.p - dt * spd) : Math.min(1, sh.p + dt * spd);
+          if (Math.random() < dt * 26)
+            sh.dust.push({ x: G.rand(8, 300), y: 16 + sh.p * 134, vy: G.rand(6, 20),
+              vx: G.rand(-6, 6), t: 0, life: G.rand(0.5, 1.3) });
+          if (sh.p === target) { G.audio.sfx('clank'); G.shake(2, 0.2); }
+        }
+        for (let i = sh.dust.length - 1; i >= 0; i--) {
+          const d = sh.dust[i];
+          d.t += dt; d.x += d.vx * dt; d.y += d.vy * dt;
+          if (d.t > d.life) sh.dust.splice(i, 1);
+        }
+        // nothing happens on the floor until the shutter is up
+        if (sh.dir < 0 && sh.p > 0.04) { if (G.clause) G.clause.update(0); return; }
+      }
+      if (this.bulbT > 0) this.bulbT = Math.max(0, this.bulbT - dt);
       // the cat
       const j = this.jar;
       if (j) {
@@ -405,6 +437,7 @@
         if (r.t > 0.35 && !r.snd) { r.snd = 1; G.audio.sfx('reveal'); }
         if (r.t > 4.2 || (r.skip && r.t > 0.8)) {
           this.reveal = null;
+          if (this.pendingEgg) { G.showEgg(this.pendingEgg); this.pendingEgg = null; }
           if (this.cust) { this.cust.st = 'leave'; this.cust.open = 0; }
         }
         return;
@@ -454,6 +487,7 @@
             G.state.today.dayEarn += c.eat.pay;
             G.state.today.served++;
             G.state.totBots++;
+            for (const q of G.checkQuests()) G.floatText('QUEST +$' + q.pay, 160, 46, P.lime, 1);
             if (c.dis && !c.spotted) {
               // you fed a person a scoop of iron filings and did not notice
               G.state.today.missed++;
@@ -638,11 +672,14 @@
       if (this.left === 0 && !this.cust && !this.serving) {
         if (!G.state.today.closed) {
           G.state.today.closed = true;
-          G.audio.sfx('shutter');
+          this.shut.dir = 1; this.shut.t = 0;      // roll it down
+          G.audio.sfx('roll');
           const met = G.goalMet();
           G.clause && G.clause.say(met ? 'QUOTA MET. THE BACK ROOM IS YOURS.'
             : 'SHORT TODAY. THE BACK ROOM IS STILL YOURS.', met ? P.lime : P.warn, 4);
           if (!met) G.state.suspicion = Math.min(1, G.state.suspicion + 0.06);
+          if (met && !G.state.today.missed) G.state.cleanShifts = (G.state.cleanShifts || 0) + 1;
+          for (const q of G.checkQuests()) G.toast('QUEST: ' + q.name + '  +$' + q.pay, P.lime);
           G.save();
         }
         this.endT += dt;
@@ -699,9 +736,11 @@
       G.Rh(g, 258, 34, 2, 4, P.steel);
       // hanging cable with a bare bulb over the counter
       G.Rh(g, 76, 30, 0.5, 12, '#1a1f2c');
-      G.fc(g, 76, 45, 3, '#ffe89a');
+      const bt = this.bulbT || 0;
+      const bl = bt > 0 ? (Math.sin(bt * 30) > 0 ? 1.6 : 0.4) : 1;
+      G.fc(g, 76, 45, 3, bl > 1 ? '#fff8d8' : '#ffe89a');
       G.fc(g, 76, 45, 1.5, '#ffffff');
-      G.glow(g, 76, 46, 46, 34, '#ffd47a', 0.55);
+      G.glow(g, 76, 46, 46 * bl, 34 * bl, '#ffd47a', 0.55 * bl);
       // grime in the corners
       G.grain(g, 0, WORK_Y - 14, 220, 12, '#0e1219', 0.1, 9);
       // the café's own sign, tucked left where nothing else lands
@@ -744,8 +783,10 @@
       // cone + cup stands
       G.plate(g, CONE_ST - 11, WORK_Y - 4, 22, 5, P.plateDk, { r: 1, band: 1 });
       G.cone(g, CONE_ST, WORK_Y - 4, { w: 14, h: 18 });
-      G.plate(g, CUP_ST - 11, WORK_Y - 4, 22, 5, P.plateDk, { r: 1, band: 1 });
-      G.cup(g, CUP_ST, WORK_Y - 4, { w: 16, h: 12 });
+      if (G.unlocked('cup')) {
+        G.plate(g, CUP_ST - 11, WORK_Y - 4, 22, 5, P.plateDk, { r: 1, band: 1 });
+        G.cup(g, CUP_ST, WORK_Y - 4, { w: 16, h: 12 });
+      }
       // sauce bottles
       const sl2 = G.state.sauces;
       for (let i = 0; i < sl2.length; i++) {
@@ -813,13 +854,16 @@
 
       // ---- HUD ----
       this.hud(g);
-      if (G.clause) { G.clause.at(297, 162, 166, 4, 284); G.clause.draw(g); }
+      if (G.clause) { G.clause.at(297, 162, 166, 4, 284); G.clause.draw(g); G.clause.drawMenu(g); }
+
+      // ===== the shutter, over everything but the tray =====
+      if (this.shut && this.shut.p > 0.005) { this.drawShutter(g, t); this.hud(g); G.grade(g, 1); return; }
 
       // ===== a disguise coming off, held on screen =====
       if (this.reveal) { this.drawReveal(g, t); G.grade(g, 1); return; }
 
       // ===== the shift is over: a card you can read, not a wall =====
-      if (this.endT > 0) {
+      if (this.endT > 0 && (!this.shut || this.shut.p < 0.02)) {
         const a = G.clamp(this.endT * 1.4, 0, 1);
         g.globalAlpha = a * 0.6;
         G.R(g, 0, 20, G.W, 128, '#05070c');
@@ -1072,6 +1116,60 @@
       }
     },
 
+    // ---- the roller shutter, and the moment the lights come on ----
+    drawShutter(g, t) {
+      const sh = this.shut;
+      const bot = 20 + (1 - sh.p) * 0;
+      const h = Math.round(sh.p * 134);           // down to the tray line
+      const y0 = 16;
+      // the housing box the shutter rolls into
+      G.plate(g, -4, y0 - 8, G.W + 8, 9, '#39445c', { r: 1, band: 2, bolts: 1, grain: 3 });
+      G.Rh(g, -4, y0 - 1, G.W + 8, 1.5, '#0b0e14');
+      // the slats
+      for (let j = 0; j < h; j += 4) {
+        const yy = y0 + j;
+        G.R(g, 0, yy, G.W, 4, '#4a5670');
+        G.hair(g, 0, yy, G.W, '#6b7f96');
+        G.hair(g, 0, yy + 3, G.W, '#232b3a');
+        // rust and dents, stable per slat
+        if (G.hash(j, 7) > 0.72) G.grain(g, G.hash(j, 3) * 260 + 10, yy + 1, 28, 2, '#8a5230', 0.4, j);
+      }
+      // the bottom rail, with a lit lip and a pull handle
+      if (h > 0) {
+        const ry = y0 + h - 2;
+        G.R(g, -2, ry, G.W + 4, 5, '#2a3242');
+        G.hair(g, -2, ry, G.W + 4, '#8fa0bc');
+        G.Rh(g, -2, ry + 4, G.W + 4, 1, '#0b0e14');
+        G.plate(g, 150, ry + 1, 20, 4, P.chrome, { r: 1, band: 1 });
+        // warm light spilling under it
+        g.globalAlpha = 0.4 * (1 - sh.p);
+        G.R(g, 0, ry + 5, G.W, 18, '#ffd47a');
+        g.globalAlpha = 1;
+      }
+      // dust shaken loose
+      for (const d of sh.dust) {
+        g.globalAlpha = Math.max(0, 1 - d.t / d.life) * 0.6;
+        G.Rh(g, d.x, d.y, 1, 1, '#8a8878');
+        g.globalAlpha = 1;
+      }
+      // the sign flickering on as it rises
+      if (sh.p < 0.7) {
+        const fl = sh.p < 0.4 ? 1 : (Math.sin(t * 24) > 0 ? 1 : 0.2);
+        G.R(g, 90, 6, 140, 3, fl > 0.5 ? P.magentaLt : P.magentaDk);
+        G.glow(g, 160, 12, 190, 30, P.magenta, 0.9 * fl);
+        G.text(g, sh.dir < 0 ? 'OPEN' : 'CLOSED', 160, 6,
+          fl > 0.5 ? (sh.dir < 0 ? P.cyanLt : P.magentaLt) : P.cyanDk,
+          { align: 'center', out: OUT });
+      }
+      // whoever is already waiting outside, seen through the gap
+      if (sh.dir < 0 && sh.p < 0.55 && this.cust) {
+        const c = this.cust;
+        G.drawBot(g, c.id, CUST.x, CUST.y, CSCALE, { t, open: 0.1, mood: 'idle', walk: 0, noBlink: 1 });
+      }
+      G.text(g, sh.dir < 0 ? 'OPENING UP' : 'SHUTTING UP SHOP', 160, 158,
+        P.steel, { align: 'center', sc: 0.5 });
+    },
+
     // ---- the shell comes off and somebody is standing there ----
     drawReveal(g, t) {
       const r = this.reveal;
@@ -1181,17 +1279,17 @@
       // tray
       G.R(g, 0, 150, G.W, 30, '#0c0d16');
       G.R(g, 0, 150, G.W, 1, P.cyanDk);
-      G.drawBtn(g, 4, 152, 40, 16, st.today.closed ? 'BACK >' : 'LAB',
-        { col: st.today.closed ? '#2f8a48' : '#2a2434' });
-      // four things you can ask clause for, then serve and bin
-      const tier = G.tierIdx(), calls = G.state.calls > 0;
-      const ask = (bx, lab, need) => G.drawBtn(g, bx, 152, 34, 16, lab,
-        { col: tier >= need && calls ? '#2a5c6b' : '#20242e' });
-      ask(48, 'READ', 1); ask(86, 'PICK', 2); ask(124, 'SPOT', 1); ask(162, 'TREND', 2);
+      if (G.unlocked('backroom')) G.drawBtn(g, 4, 152, 56, 16, 'BACK ROOM >', { col: '#2f8a48' });
+      // no ask buttons: you tap clause for those. Only the controls you
+      // can actually use are drawn at all.
       const cs = this.canServe();
-      G.drawBtn(g, 200, 152, 44, 16, 'SERVE', { col: cs ? '#2f8a48' : '#20242e' });
-      G.drawBtn(g, 248, 152, 30, 16, 'BIN', { col: '#5c2030' });
-      G.text(g, 'CALLS ' + G.state.calls, 6, 170, P.steel, { sc: 0.5 });
+      if (cs) G.drawBtn(g, 200, 152, 44, 16, 'SERVE', { col: '#2f8a48' });
+      if (this.build) G.drawBtn(g, 248, 152, 30, 16, 'BIN', { col: '#5c2030' });
+      // always one line of guidance, and it says what is actually useful
+      const canAsk = G.clause && G.clause.menuItems().length;
+      G.text(g, canAsk ? 'TAP CLAUSE  ·  ' + G.state.calls + ' CALLS'
+        : st.today.closed ? 'GO THROUGH THE BACK' : 'PRESS A PIT AND SWEEP',
+        6, 170, canAsk && G.state.calls > 0 ? P.steel : '#46506b', { sc: 0.5 });
       const h = this.hold;
       if (h && h.kind === 'sweep')
         G.text(g, h.fill > SLOP ? 'TOO MUCH - BIN IT' : h.fill >= PERFECT_LO ? 'LET GO NOW' : 'KEEP SWEEPING',

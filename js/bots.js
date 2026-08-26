@@ -20,26 +20,26 @@
   // ------------------------------------------------------------
   const FRAME = {
     tank:    { base: 'tread',  torso: 'slab',    head: 'wedge',   arms: 'heavy',   prop: 'cannon',  w: 1.5,  h: 0.84, hs: 0.92 },
-    maid:    { base: 'skirt',  torso: 'narrow',  head: 'dome',    arms: 'slim',    prop: 'apron',   w: 0.9,  h: 1.06, hs: 1.0 },
+    maid:    { base: 'skirt',  torso: 'narrow',  head: 'dome',    arms: 'slim',    prop: 'apron',   w: 0.9,  h: 1.06, hs: 1.0, soft: 1 },
     mafia:   { base: 'legs',   torso: 'boxy',    head: 'tophat',  arms: 'heavy',   prop: 'cigar',   w: 1.2,  h: 1.0,  hs: 0.95, emblem: 'knot' },
     police:  { base: 'wheel',  torso: 'boxy',    head: 'helmet',  arms: 'baton',   prop: 'siren',   w: 1.0,  h: 1.0,  hs: 0.95, emblem: 'badge' },
-    fat:     { base: 'plinth', torso: 'barrel',  head: 'small',   arms: 'stub',    prop: 'funnel',  w: 1.72, h: 0.9,  hs: 0.74 },
-    violin:  { base: 'legs',   torso: 'violin',  head: 'narrowH', arms: 'bow',     prop: 'scroll',  w: 0.86, h: 1.16, hs: 0.8 },
-    chef:    { base: 'legs',   torso: 'boxy',    head: 'dome',    arms: 'many',    prop: 'toque',   w: 1.1,  h: 1.0,  hs: 0.9, emblem: 'stamp' },
-    nurse:   { base: 'wheel',  torso: 'narrow',  head: 'dome',    arms: 'syringe', prop: 'cross',   w: 0.95, h: 1.02, hs: 1.0 },
+    fat:     { base: 'plinth', torso: 'barrel',  head: 'small',   arms: 'stub',    prop: 'funnel',  w: 1.72, h: 0.9,  hs: 0.74, soft: 1 },
+    violin:  { base: 'legs',   torso: 'violin',  head: 'narrowH', arms: 'bow',     prop: 'scroll',  w: 0.86, h: 1.16, hs: 0.8, soft: 1 },
+    chef:    { base: 'legs',   torso: 'boxy',    head: 'dome',    arms: 'many',    prop: 'toque',   w: 1.1,  h: 1.0,  hs: 0.9, emblem: 'stamp', soft: 1 },
+    nurse:   { base: 'wheel',  torso: 'narrow',  head: 'dome',    arms: 'syringe', prop: 'cross',   w: 0.95, h: 1.02, hs: 1.0, soft: 1 },
     judge:   { base: 'plinth', torso: 'robe',    head: 'boxy',    arms: 'gavel',   prop: 'wig',     w: 1.28, h: 1.04, hs: 0.9 },
     miner:   { base: 'tread',  torso: 'boxy',    head: 'lamp',    arms: 'drill',   prop: 'none',    w: 1.2,  h: 0.94, hs: 0.9, emblem: 'star' },
-    priest:  { base: 'skirt',  torso: 'narrow',  head: 'bell',    arms: 'slim',    prop: 'halo',    w: 0.9,  h: 1.18, hs: 0.85 },
-    dj:      { base: 'plinth', torso: 'drum',    head: 'crt',     arms: 'slim',    prop: 'phones',  w: 1.06, h: 0.98, hs: 1.06 },
-    clerk:   { base: 'legs',   torso: 'filing',  head: 'boxy',    arms: 'stamp',   prop: 'specs',   w: 1.1,  h: 0.96, hs: 0.88 },
+    priest:  { base: 'skirt',  torso: 'narrow',  head: 'bell',    arms: 'slim',    prop: 'halo',    w: 0.9,  h: 1.18, hs: 0.85, soft: 1 },
+    dj:      { base: 'plinth', torso: 'drum',    head: 'crt',     arms: 'slim',    prop: 'phones',  w: 1.06, h: 0.98, hs: 1.06, soft: 1 },
+    clerk:   { base: 'legs',   torso: 'filing',  head: 'boxy',    arms: 'stamp',   prop: 'specs',   w: 1.1,  h: 0.96, hs: 0.88, soft: 1 },
     soldier: { base: 'legs',   torso: 'boxy',    head: 'helmet',  arms: 'rifle',   prop: 'webbing', w: 1.05, h: 1.0,  hs: 0.88, emblem: 'chevron' },
-    scav:    { base: 'legs',   torso: 'junk',    head: 'bucket',  arms: 'claw',    prop: 'aerial',  w: 1.0,  h: 1.0,  hs: 0.9 },
-    courier: { base: 'wheel',  torso: 'boxpack', head: 'wedge',   arms: 'slim',    prop: 'aerial',  w: 0.95, h: 0.96, hs: 0.84 },
-    garden:  { base: 'tread',  torso: 'narrow',  head: 'dome',    arms: 'can',     prop: 'moss',    w: 1.0,  h: 1.0,  hs: 0.9 },
+    scav:    { base: 'legs',   torso: 'junk',    head: 'bucket',  arms: 'claw',    prop: 'aerial',  w: 1.0,  h: 1.0,  hs: 0.9, soft: 1 },
+    courier: { base: 'wheel',  torso: 'boxpack', head: 'wedge',   arms: 'slim',    prop: 'aerial',  w: 0.95, h: 0.96, hs: 0.84, soft: 1 },
+    garden:  { base: 'tread',  torso: 'narrow',  head: 'dome',    arms: 'can',     prop: 'moss',    w: 1.0,  h: 1.0,  hs: 0.9, soft: 1 },
     warden:  { base: 'legs',   torso: 'slab',    head: 'lamp',    arms: 'heavy',   prop: 'shackle', w: 1.32, h: 1.08, hs: 0.9 },
     // YOU. A soft-serve machine on salvaged tread, with a swirl still set in
     // the dispenser head forty years after the shop closed.
-    player:  { base: 'tread',  torso: 'barrel',  head: 'dome',    arms: 'can',     prop: 'swirl',   w: 1.14, h: 0.98, hs: 0.98 },
+    player:  { base: 'tread',  torso: 'barrel',  head: 'dome',    arms: 'can',     prop: 'swirl',   w: 1.14, h: 0.98, hs: 1.06, soft: 2 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -359,7 +359,7 @@
     const pw = Math.round(w * 0.62), ph = Math.round(h * 0.38);
     const px = cx - pw / 2, py = y + Math.round(h * 0.3);
     // keyed off the chassis so a dark unit does not read as a hole
-    const hbase = G.mix(c, '#242a38', 0.55);
+    const hbase = G.mix(c, '#3a4356', 0.5);
     G.R(g, px - 1, py - 1, pw + 2, ph + 2, G.shade(c, -0.66));
     G.R(g, px, py, pw, ph, hbase);
     G.bevel(g, px, py, pw, ph, G.shade(hbase, -0.5), G.shade(hbase, 0.4));
@@ -533,8 +533,9 @@
       chestRig(g, cx, y, w, h, u, b, t);
       if (o && o.emblem) drawEmblem(g, o.emblem, cx, y + Math.round(h * 0.78), u, hue);
     }
-    // shoulder yoke over every torso: a lit collar with fasteners
-    if (w > u(14)) {
+    // shoulder yoke over every torso: a lit collar with fasteners.
+    // The soft chassis skips it - a rounded shoulder reads kinder.
+    if (w > u(14) && !(o && o.soft > 1)) {
       plate(g, cx - w / 2 - 1, y - 1, w + 2, Math.max(3, u(4)), G.shade(c, 0.12),
         { r: 1, band: 1, spec: false, bolts: 1 });
       G.seam(g, cx - w / 2 + 1.5, y + u(4), w - 3, G.shade(c, -0.5), G.shade(c, 0.2));
@@ -563,6 +564,7 @@
     // neck
     G.R(g, cx - u(4), neckY - 2, u(8), u(5), P.plateDk);
     G.R(g, cx - u(3), neckY - 1, u(6), u(3), P.plate);
+
 
     if (kind === 'bell') {
       for (let j = 0; j < h; j++) {
@@ -596,8 +598,11 @@
 
     // ---- optics ----
     const single = kind === 'lamp';
-    const eh = Math.max(4, Math.round(h * (single ? 0.52 : 0.42)));
-    const ew = single ? Math.round(w * 0.5) : Math.max(4, Math.round(w * 0.3));
+    const soft = o.soft || 0;
+    // a friendly machine has big round optics set wide, not narrow slits
+    const eg = soft ? (soft > 1 ? 0.16 : 0.08) : 0;
+    const eh = Math.max(4, Math.round(h * (single ? 0.52 : 0.42 + eg)));
+    const ew = single ? Math.round(w * 0.5) : Math.max(4, Math.round(w * (0.3 + eg * 0.6)));
     const ey = y + Math.round(h * (kind === 'crt' ? 0.24 : 0.2));
     const blink = !o.noBlink && Math.sin(t * 1.1 + cx * 0.3) > 0.9975;
     if (single) {
@@ -625,8 +630,38 @@
       }
     }
 
+    // ---- what makes it read friendly: blush, soft brows, and a smile
+    // where the intake would be when it is not open ----
+    if (soft) {
+      const bl = soft > 1 ? '#ff9ab0' : '#e08a9a';
+      const sp2 = Math.round(w * (0.23 + eg * 0.5));
+      for (const sd of [-1, 1]) {
+        // a round blush patch, low on the cheek, one tone over the plate
+        for (let j = 0; j < Math.max(2, u(3)); j++) {
+          const ww = Math.max(1, u(4) - j);
+          g.globalAlpha = 0.5;
+          G.Rh(g, cx + sd * (sp2 + u(3)) - ww / 2, ey + eh + u(1) + j * 0.5, ww, 0.5, bl);
+          g.globalAlpha = 1;
+        }
+        // a soft raised brow, which is most of the expression
+        if (mood !== 'angry') {
+          const bw2 = Math.max(3, ew - 1);
+          for (let i = 0; i < bw2; i++) {
+            const p = i / (bw2 - 1);
+            const lift = Math.sin(p * Math.PI) * (soft > 1 ? 1.5 : 1);
+            G.Rh(g, cx + sd * sp2 - bw2 / 2 + i, ey - u(2) - lift, 1, 0.5, G.shade(c, 0.42));
+          }
+        }
+      }
+      // freckle dots on the very friendly ones
+      if (soft > 1) for (let i = 0; i < 6; i++)
+        G.Rh(g, cx - u(7) + (i % 3) * u(1.6) + (i < 3 ? 0 : u(11)),
+          ey + eh + u(2.5) + Math.floor(i / 3) * 1, 0.5, 0.5, G.shade(bl, -0.2));
+    }
+
     // ---- face plate detail: seams, a serial stencil, a status pip ----
-    if (w >= 12 && h >= 12) {
+    // the friendliest faces skip all of it - the fewer lines the better
+    if (w >= 12 && h >= 12 && soft < 2) {
       G.seam(g, cx - w / 2 + 1.5, ey + eh + 1.5, w - 3, G.shade(c, -0.5), G.shade(c, 0.2));
       G.stencil(g, cx - w / 2 + 2, y + h - 4, G.shade(c, -0.55));
       const pip = Math.sin(t * 3 + cx) > 0 ? hue : G.shade(hue, -0.6);
@@ -643,7 +678,8 @@
     const my = y + Math.round(h * 0.7);
     const mw = Math.round(w * 0.62);
     const open = G.clamp(o.open || 0, 0, 1);
-    const gape = Math.round(open * u(11));
+    // the friendliest ones hold the smile through an idle twitch
+    const gape = Math.round((soft > 1 && open < 0.45 ? 0 : open) * u(11));
     G.R(g, cx - mw / 2 - 1, my - 1, mw + 2, Math.max(3, gape + u(4)) + 2, OUT);
     if (gape > 1) {
       G.R(g, cx - mw / 2, my, mw, gape, '#150f1c');
@@ -662,6 +698,24 @@
           if (bxx < cx + mw * 0.3) G.R(g, bxx, my + gape - u(3), 1, u(2), hue);
         }
       }
+    } else if (soft) {
+      // closed and friendly: a smile stamped into the plate, not a grille
+      const sw2 = Math.round(mw * (soft > 1 ? 0.98 : 0.62));
+      const dp = Math.max(1, u(soft > 1 ? 3 : 2));
+      for (let i = 0; i <= sw2; i++) {
+        const p = i / sw2;
+        const yy = my + Math.sin(p * Math.PI) * dp;
+        G.Rh(g, cx - sw2 / 2 + i, yy, 1, 1, '#2a1f2c');
+        G.Rh(g, cx - sw2 / 2 + i, yy + 1, 1, 0.5, G.shade(c, 0.34));
+      }
+      // the corners turn up
+      for (const sd of [-1, 1]) {
+        G.Rh(g, cx + sd * (sw2 / 2), my - 0.5, 1, 1, '#2a1f2c');
+        G.Rh(g, cx + sd * (sw2 / 2 + 1), my - 1.5, 1, 1, '#2a1f2c');
+      }
+      // and a little dimple either side
+      for (const sd of [-1, 1])
+        G.Rh(g, cx + sd * (sw2 / 2 + u(2)), my + 0.5, 0.5, 0.5, G.shade(c, -0.4));
     } else {
       G.R(g, cx - mw / 2, my, mw, Math.max(2, u(3)), P.plateDk2);
       for (let i = 0; i < 4; i++) G.R(g, cx - mw / 2 + 1 + i * Math.max(2, Math.round(mw / 4)), my, 1, Math.max(2, u(3)), P.hullDk);
@@ -876,7 +930,10 @@
           const ww = Math.max(1, Math.round(hw * (0.68 + 0.32 * Math.sin((0.15 + p * 0.8) * Math.PI))));
           G.R(g, cx + off - ww - 1, sy - hh + j, ww * 2 + 2, 1, OUT);
           G.R(g, cx + off - ww, sy - hh + j, ww * 2, 1,
-            p < 0.22 ? '#fffaea' : p > 0.74 ? '#c8bc98' : '#f2e6c2');
+            p < 0.22 ? '#fffdf6' : p > 0.74 ? '#c8a898' : '#f6ead6');
+          // a ribbon of sauce turned through it
+          if (j === Math.floor(hh * 0.55))
+            G.Rh(g, cx + off - ww * 0.7, sy - hh + j, ww * 1.2, 0.5, '#e8879a');
           // the lit crest and the shadow where it laps the coil below
           G.Rh(g, cx + off - ww, sy - hh + j, 1, 0.5, '#ffffff');
           if (p > 0.86) G.hair(g, cx + off - ww, sy - hh + j, ww * 2, '#a89870');
@@ -976,10 +1033,12 @@
     g.globalAlpha = 1;
 
     const base = drawBase(g, fr.base, cx, footY, bw, u, b, t, walk);
-    const torso = drawTorso(g, fr.torso, cx, base.top + 1, bw, u, b, t, { emblem: fr.emblem });
+    const torso = drawTorso(g, fr.torso, cx, base.top + 1, bw, u, b, t,
+      { emblem: fr.emblem, soft: fr.soft || 0 });
     drawArms(g, fr.arms, cx, torso.y, torso.w, torso.h, u, b, t, o);
     const hw = Math.round(u(11) * fr.hs);
-    const hd = drawHead(g, fr.head, cx, torso.y + 1, hw, u, b, t, o);
+    const hd = drawHead(g, fr.head, cx, torso.y + 1, hw, u, b, t,
+      Object.assign({}, o, { soft: fr.soft || 0 }));
     drawProp(g, fr.prop, cx, hd, u, b, t);
     if (fr.head === 'helmet') {
       // a real helmet shell over the boxy head
@@ -992,6 +1051,47 @@
     // what got shaken over it stays on it
     if (o.shellBits) for (const s of o.shellBits) G.R(g, s.x, s.y, 2, 2, s.col);
     if (o.shellCoat) for (const s of o.shellCoat) G.R(g, s.x, s.y, 2, 2, s.col);
+
+    // a bow tie on the collar, because she put one on you and you never
+    // took it off. Drawn after the head so nothing hides it.
+    if ((fr.soft || 0) > 1) {
+      const bt = '#e0485c', ty2 = hd.y + hd.h - u(1);
+      for (const sd of [-1, 1]) {
+        const n = Math.max(3, u(3.4));
+        for (let j = 0; j < n; j++) {
+          const ww = Math.max(1, u(3.6) * (1 - Math.abs(j - (n - 1) / 2) / (n / 1.7)));
+          G.R(g, Math.round(cx + sd * u(1.2) + (sd > 0 ? 0 : -ww)) - 1, ty2 + j - 1,
+            Math.round(ww) + 2, 1, OUT);
+          G.Rh(g, cx + sd * u(1.2) + (sd > 0 ? 0 : -ww), ty2 + j - 1, ww, 1,
+            j < 2 ? G.shade(bt, 0.35) : bt);
+        }
+      }
+      G.R(g, cx - u(1.5) - 1, ty2 - 1, u(3) + 2, u(3) + 1, OUT);
+      G.Rh(g, cx - u(1.5), ty2, u(3), u(3) - 1, G.shade(bt, -0.24));
+      G.Rh(g, cx - u(1.5), ty2, u(1.5), 0.5, G.shade(bt, 0.55));
+    }
+
+    // an apron, tied on, with a pocket and a scalloped hem
+    if ((fr.soft || 0) > 1) {
+      const aw = Math.round(torso.w * 0.6), ax = cx - aw / 2;
+      const ay = torso.y + Math.round(torso.h * 0.62), ah = Math.round(torso.h * 0.34);
+      G.R(g, ax - 1, ay - 1, aw + 2, ah + 2, OUT);
+      G.R(g, ax, ay, aw, ah, '#fdf6ea');
+      G.bevel(g, ax, ay, aw, ah, '#ffffff', '#cfc2ae');
+      // the waist tie, running off both sides
+      G.Rh(g, ax - u(3), ay + 1, aw + u(6), 1.5, '#e8dcc8');
+      G.hair(g, ax - u(3), ay + 1, aw + u(6), '#ffffff');
+      // a pocket with a scoop tucked in it
+      const pw = Math.round(aw * 0.44);
+      G.Rh(g, cx - pw / 2, ay + ah * 0.34, pw, ah * 0.42, '#eee2d0');
+      G.hair(g, cx - pw / 2, ay + ah * 0.34, pw, '#ffffff');
+      G.Rh(g, cx - 1, ay + ah * 0.24, 1.5, ah * 0.2, P.steel);
+      // scalloped hem
+      for (let i = 0; i * 3 < aw; i++) {
+        G.Rh(g, ax + i * 3, ay + ah, 2, 1, '#e8dcc8');
+        G.Rh(g, ax + i * 3 + 0.5, ay + ah + 1, 1, 0.5, '#cfc2ae');
+      }
+    }
 
     // the tell, if this one is not really a machine. Drawn last so it
     // sits on top of the shell it is escaping from.
@@ -1345,18 +1445,37 @@
   // ball with sagging drip lobes and stretched strands that follow
   // the tool when you lift it.
   // ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // A SCOOP. Not a hard ball - a set jelly. Smooth tone falloff,
+  // a wide gloss up top and a pin catch inside it, and a bright
+  // subsurface rim along the shaded edge where light comes through
+  // the far side. It wobbles when it lands and never quite stops.
+  // ------------------------------------------------------------
+  // o: { squash, wob (0..1 decaying), t, jiggle, flat }
   G.gooScoop = function (g, cx, cy, r, flav, o) {
     o = o || {};
     if (!flav) return;
     const c = flav.col;
-    const tone = [G.shade(c, 0.62), G.shade(c, 0.3), c, G.shade(c, -0.26), G.shade(c, -0.48)];
-    const sq = 1 + (o.squash || 0);
+    // seven bands, so the falloff reads smooth instead of stepped
+    const tone = [
+      G.mix(c, '#ffffff', 0.72), G.mix(c, '#ffffff', 0.46), G.shade(c, 0.2),
+      c, G.shade(c, -0.2), G.shade(c, -0.38), G.shade(c, -0.54),
+    ];
+    const glow = G.mix(c, '#ffffff', 0.3);          // subsurface, on the dark rim
+    // wobble: a decaying squash-stretch, plus a permanent small jiggle
+    const wob = o.wob || 0;
+    const t = o.t || 0;
+    const jig = o.jiggle === false ? 0 : Math.sin(t * 3.4) * 0.018;
+    const sq = 1 + (o.squash || 0) + Math.sin(wob * 22) * 0.16 * wob + jig;
     const rx = Math.max(2, Math.round(r * sq)), ry = Math.max(2, Math.round(r / sq));
     cx = Math.round(cx); cy = Math.round(cy);
     const tn = [];
+    // a plump superellipse: rounder shoulders than a circle
+    const E = 2.25;
+    const rowHW = (dy) => Math.round(rx * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(dy), E)), 1 / E));
     for (let j = -ry; j < ry; j++) {
       const dy = (j + 0.5) / ry;
-      const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - dy * dy)));
+      const hw = rowHW(dy);
       if (hw <= 0) continue;
       const yy = cy + j, n2 = hw * 2;
       G.R(g, cx - hw - 1, yy, n2 + 2, 1, OUT);
@@ -1364,38 +1483,79 @@
       for (let k = 0; k < n2; k++) {
         const nx = (-hw + k + 0.5) / rx;
         const nz = Math.sqrt(Math.max(0.02, 1 - nx * nx - dy * dy));
-        const li = nx * -0.46 + dy * -0.56 + nz * 0.69;
-        tn.push(li > 0.9 ? 0 : li > 0.68 ? 1 : li > 0.36 ? 2 : li > 0.1 ? 3 : 4);
+        // key from the upper left, softened, then a wrap term so the
+        // terminator is a gradient rather than a cliff
+        let li = nx * -0.42 + dy * -0.52 + nz * 0.74;
+        li = li * 0.82 + nz * 0.18;
+        tn.push(li > 0.94 ? 0 : li > 0.80 ? 1 : li > 0.64 ? 2 : li > 0.46 ? 3
+              : li > 0.30 ? 4 : li > 0.16 ? 5 : 6);
       }
       let k0 = 0;
       for (let k = 1; k <= n2; k++)
         if (k === n2 || tn[k] !== tn[k0]) { G.R(g, cx - hw + k0, yy, k - k0, 1, tone[tn[k0]]); k0 = k; }
-    }
-    // goo: sagging lobes off the underside, longer the gooier the mix
-    const goo = G.clamp((flav.goo || 0) / 4, 0.25, 1.6);
-    const lobes = rx > 7 ? 3 : 2;
-    for (let i = 0; i < lobes; i++) {
-      const nx = ((i + 0.5) / lobes * 2 - 1) * 0.7;
-      const lx = cx + Math.round(nx * rx);
-      const ly = cy + Math.round(ry * Math.sqrt(Math.max(0, 1 - nx * nx)));
-      const lh = Math.round((3 + ((i + cx) % 3)) * goo);
-      for (let j = 0; j < lh; j++) {
-        const hw = Math.max(1, Math.round(3 * (1 - j / (lh + 1))));
-        G.R(g, lx - hw - 1, ly + j, hw * 2 + 2, 1, OUT);
-        G.R(g, lx - hw, ly + j, hw * 2, 1, j > lh - 2 ? tone[4] : tone[3]);
+      // subsurface rim: one native pixel of light coming through the edge
+      if (dy > -0.35) {
+        G.Rh(g, cx - hw, yy, 0.5, 1, glow);
+        G.Rh(g, cx + hw - 0.5, yy, 0.5, 1, dy > 0.2 ? glow : tone[5]);
       }
-      if (lh > 3) G.R(g, lx - 1, ly + lh, 2, 2, tone[4]);
     }
-    // one hard wet highlight and a churned ridge
-    G.R(g, cx - Math.round(rx * 0.5), cy - Math.round(ry * 0.56),
-      Math.max(2, Math.round(rx * 0.34)), Math.max(1, Math.round(ry * 0.2)), '#ffffff');
-    for (let i = -rx + 2; i < rx - 2; i++) {
+    // goo: soft rounded drips off the underside, each with its own catch
+    const goo = G.clamp((flav.goo || 0) / 4, 0.25, 1.6);
+    const lobes = rx > 9 ? 3 : 2;
+    for (let i = 0; i < lobes; i++) {
+      const nx = ((i + 0.5) / lobes * 2 - 1) * 0.58;
+      const lx = cx + Math.round(nx * rx);
+      // start inside the ball so the drip and the ball are one mass
+      const ly = cy + Math.round(ry * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(nx), E)), 1 / E)) - 2;
+      const lh = Math.round((4 + ((i + cx) % 3)) * goo) + (wob > 0.2 ? 1 : 0) + 2;
+      const w0 = Math.max(2, rx * 0.36);
+      for (let j = 0; j < lh; j++) {
+        const p = j / lh;
+        // a neck: wide where it leaves the ball, pinched, then a bead
+        const hw = Math.max(0.5, w0 * (1 - p * 0.78) * (1 + Math.sin(p * 3.1) * 0.14));
+        G.R(g, Math.round(lx - hw) - 1, ly + j, Math.round(hw * 2) + 2, 1, OUT);
+        G.R(g, Math.round(lx - hw), ly + j, Math.round(hw * 2), 1,
+          p > 0.78 ? tone[6] : p > 0.4 ? tone[5] : tone[4]);
+        G.Rh(g, lx - hw, ly + j, 0.5, 1, glow);
+      }
+      if (lh > 4) {                                  // a bead about to let go
+        G.fc(g, lx, ly + lh + 1, Math.max(1.4, w0 * 0.4), tone[5]);
+        G.Rh(g, lx - w0 * 0.3, ly + lh + 0.5, 1, 0.5, glow);
+      }
+    }
+    // ---- the gloss: a long soft sheen laid along the shoulder, with a
+    // hot core inside it. This is what makes it read wet rather than matte.
+    const gcx = cx - rx * 0.28, gcy = cy - ry * 0.44;
+    const gw = Math.max(2.5, rx * 0.74), gh = Math.max(1.5, ry * 0.36);
+    for (let j = 0; j < gh * 2; j++) {
+      const p = (j + 0.5) / (gh * 2);
+      const w = gw * Math.sin((0.1 + p * 0.9) * Math.PI) * (1 - p * 0.34);
+      if (w < 0.5) continue;
+      // tilted, so it follows the curve instead of sitting flat on it
+      G.Rh(g, gcx - w / 2 + p * rx * 0.16, gcy + j * 0.5, w, 0.5, tone[0]);
+    }
+    for (let j = 0; j < Math.max(1, gh); j++) {
+      const w = gw * 0.44 * (1 - j / Math.max(1, gh) * 0.5);
+      G.Rh(g, gcx - w / 2, gcy + j * 0.5, w, 0.5, '#ffffff');
+    }
+    // the bounce: a soft lit crescent low on the far side
+    if (rx > 5) for (let j = 0; j < Math.max(2, ry * 0.5); j++) {
+      const p = j / Math.max(2, ry * 0.5);
+      const yy = cy + ry * 0.1 + j * 0.5;
+      const hw = rowHW((yy - cy) / ry);
+      if (hw < 2) continue;
+      G.Rh(g, cx + hw - 2, yy, 1.5, 0.5, G.mix(tone[2], '#ffffff', 0.25 * (1 - p)));
+    }
+    // a faint reflected band low across the belly - a reflection, not a ridge
+    if (rx > 6) for (let i = -rx + 3; i < rx - 3; i++) {
       const nx = i / rx;
-      if (Math.abs(nx) > 0.82) continue;
-      G.R(g, cx + i, cy + Math.round(ry * 0.16 + Math.sin(nx * 2.2) * ry * 0.22), 1, 1, tone[3]);
+      if (Math.abs(nx) > 0.66) continue;
+      G.Rh(g, cx + i, cy + ry * 0.34 + Math.sin(nx * 1.6) * ry * 0.1, 1, 0.5,
+        G.mix(tone[4], '#ffffff', 0.18));
     }
     if (flav.fleck) for (let i = 0; i < 5; i++)
-      G.R(g, cx - Math.round(rx * 0.55) + ((i * 7) % Math.max(1, rx)), cy - Math.round(ry * 0.3) + ((i * 5) % Math.max(1, ry)), 2, 2, flav.fleck);
+      G.Rh(g, cx - rx * 0.55 + ((i * 7) % Math.max(1, rx)),
+        cy - ry * 0.3 + ((i * 5) % Math.max(1, ry)), 1.5, 1.5, flav.fleck);
   };
 
   // a stretched strand of ice cream between two points

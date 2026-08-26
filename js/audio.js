@@ -90,6 +90,15 @@
       case 'pour': noise(t, 0.14, 0.06, 'lowpass', 600); break;
       case 'grit': osc('square', G.rand(1400, 2400), t, 0.018, 0.03); break;
       case 'grab': osc('square', 240, t, 0.045, 0.06, 340); break;
+      // a secret: a rising arpeggio with a shimmer on top
+      case 'secret': [72, 76, 79, 84, 88].forEach((n, i) => {
+          osc('triangle', N2F(n), t + i * 0.07, 0.3, 0.06);
+          osc('sine', N2F(n + 12), t + i * 0.07, 0.2, 0.03);
+        }); noise(t + 0.3, 0.5, 0.012, 'highpass', 3000); break;
+      // the shutter rolling: a rattling climb, then a clunk
+      case 'roll': for (let i = 0; i < 16; i++) noise(t + i * 0.05, 0.04, 0.05, 'bandpass', 700 + i * 90, 2);
+        osc('sine', 70, t + 0.8, 0.2, 0.1, 40); break;
+      case 'menu': osc('square', 520, t, 0.04, 0.05, 700); osc('square', 780, t + 0.04, 0.05, 0.035); break;
       // the cat: a low warm flutter, amplitude-wobbled by two detuned saws
       case 'purr': for (let i = 0; i < 12; i++) osc('sine', 58 + (i % 2) * 6, t + i * 0.045, 0.055, 0.055, 44);
         noise(t, 0.5, 0.012, 'lowpass', 300); break;

@@ -272,6 +272,18 @@
     { id: 'piggy',   name: 'PIGGY BANK',    kind: 'shop', price: 340, desc: 'KEEP 10% OF THE TAKE OVERNIGHT' },
     { id: 'sign',    name: 'NEON SIGN',     kind: 'shop', price: 280, desc: 'ONE MORE MACHINE THROUGH THE DOOR' },
     { id: 'lamp',    name: 'UV LAMP',       kind: 'lab',  price: 240, desc: 'A DISGUISE TELL FAINTLY GLOWS' },
+    { id: 'bell',    name: 'DOOR BELL',     kind: 'shop', price: 90,  desc: 'YOU HEAR THEM COMING SOONER' },
+    { id: 'awning',  name: 'STRIPED AWNING',kind: 'shop', price: 130, desc: 'IT LOOKS LIKE A REAL SHOP' },
+    { id: 'stools',  name: 'TWO STOOLS',    kind: 'shop', price: 170, desc: 'THEY WAIT LONGER SITTING DOWN' },
+    { id: 'fan2',    name: 'BETTER EXTRACT',kind: 'shop', price: 210, desc: 'NO MORE FLIES' },
+    { id: 'sprink',  name: 'SPRINKLE GUN',  kind: 'shop', price: 250, desc: 'TOPPINGS LAND WHERE YOU AIM' },
+    { id: 'twinscoop',name:'TWIN SCOOP',    kind: 'shop', price: 420, desc: 'TWO BALLS IN ONE SWEEP' },
+    { id: 'freezer', name: 'DEEP FREEZE',   kind: 'shop', price: 560, desc: 'PITS HOLD 24 SCOOPS' },
+    { id: 'ledger',  name: 'HONEST LEDGER', kind: 'lab',  price: 300, desc: 'SEE EVERY PRICE BEFORE YOU BUY' },
+    { id: 'centri',  name: 'CENTRIFUGE',    kind: 'lab',  price: 480, desc: 'MIX FIVE INGREDIENTS AT ONCE' },
+    { id: 'coldbox', name: 'FIELD COOLER',  kind: 'lab',  price: 380, desc: 'BATCHES KEEP OVERNIGHT' },
+    { id: 'toolroll',name: 'TOOL ROLL',     kind: 'war',  price: 320, desc: 'REPAIRS GO 25% FASTER' },
+    { id: 'decoy',   name: 'DECOY SHELL',   kind: 'war',  price: 740, desc: 'ONE MISSED DISGUISE COSTS NOTHING' },
     { id: 'scanner', name: 'BONE SCANNER',  kind: 'lab',  price: 460, desc: 'CLAUSE NAMES THE TELL OUT LOUD' },
     { id: 'emp',     name: 'EMP BATON',    kind: 'war',  price: 400, desc: 'RESISTANCE: +20% REPAIR FEES' },
     { id: 'jammer',  name: 'SIGNAL JAMMER',kind: 'war',  price: 560, desc: 'SUSPICION FALLS FASTER' },
@@ -311,9 +323,11 @@
   // ---------- lookups ----------
   G.ingById   = (id) => ING.find((i) => i.id === id);
   // YOU. Not a customer, so not in the demand pool, but the rig needs a record.
+  // warm cream over mint, with a strawberry optic - it is an ice cream
+  // machine and it should look like one, not like a tank
   const PLAYER = { id: 'player', name: 'SOFT SERVE UNIT', job: 'DECOMMISSIONED', sys: 'clockwork',
     taste: 'sweet', hates: 'none', pay: 1, patience: 1, mood: 'idle',
-    col: '#7a8a5c', col2: '#a8bc7a', hue: '#ff5d84',
+    col: '#efe0c0', col2: '#8fd8c0', hue: '#ff7a9a',
     line: 'I STILL WORK.', names: ['YOU'] };
   G.botById    = (id) => (id === 'player' ? PLAYER : BOTS.find((b) => b.id === id) || BOTS[0]);
   G.sysById    = (id) => SYSTEMS[id] || SYSTEMS.servo;
@@ -439,11 +453,133 @@
     return CHAPTERS[0].name;
   };
 
+  // ------------------------------------------------------------
+  // WHAT IS SWITCHED ON. Nothing is shown before it is earned - a
+  // greyed-out button is a promise you have not made yet.
+  // ------------------------------------------------------------
+  const UNLOCK = {
+    ask_read:  (st) => G.tierIdx() >= 1,
+    ask_pick:  (st) => G.tierIdx() >= 2,
+    ask_spot:  (st) => st.spotted > 0 || G.has('scanner') || G.has('lamp'),
+    ask_trend: (st) => G.tierIdx() >= 2,
+    ask_recipe:(st) => G.tierIdx() >= 3,
+    ask_restock:(st) => G.tierIdx() >= 4,
+    sauce:     (st) => (st.sauces || []).length > 0,
+    tops:      (st) => (st.tops || []).length > 0,
+    cup:       (st) => st.day >= 2,
+    bin:       (st) => st.day >= 2,
+    tipjar:    (st) => G.has('tipjar'),
+    backroom:  (st) => !!(st.today && st.today.closed),
+    mixer:     (st) => Object.keys(st.shelf || {}).filter((k) => st.shelf[k] > 0).length >= 2,
+    line:      (st) => (st.batches || []).length > 0,
+    wall:      (st) => (st.crew || []).length > 0,
+    quests:    (st) => st.day >= 2,
+    story:     (st) => (st.chapters || []).length > 1,
+    armoury:   (st) => st.day >= 1,
+  };
+  G.unlocked = (id) => { const f = UNLOCK[id]; return f ? !!f(G.state) : true; };
+
+  // ------------------------------------------------------------
+  // QUESTS. Not a checklist bolted on the side - each one is a thing
+  // the shop actually needs, and they open the next one when they land.
+  // ------------------------------------------------------------
+  const QUESTS = [
+    { id: 'q_serve',  name: 'OPEN THE DOORS',    desc: 'SERVE THREE MACHINES',
+      goal: 3, of: (st) => st.totBots, pay: 30 },
+    { id: 'q_lace',   name: 'THE POINT OF IT',   desc: 'SERVE A LACED SCOOP',
+      goal: 1, of: (st) => st.totVolt > 0 ? 1 : 0, pay: 40 },
+    { id: 'q_fix',    name: 'BILL THEM',         desc: 'FIX FOUR SYSTEMS',
+      goal: 4, of: (st) => st.totFixed, pay: 60 },
+    { id: 'q_mix',    name: 'INVENT SOMETHING',  desc: 'CHURN A FLAVOUR OF YOUR OWN',
+      goal: 1, of: (st) => Math.max(0, (st.flavours || []).length - 2), pay: 50 },
+    { id: 'q_spot',   name: 'LOOK CLOSER',       desc: 'FIND SOMEONE IN A SHELL',
+      goal: 1, of: (st) => st.spotted, pay: 80 },
+    { id: 'q_pit',    name: 'A SECOND FLAVOUR',  desc: 'BUILD A SECOND PIT',
+      goal: 1, of: (st) => G.has('pit2') ? 1 : 0, pay: 70 },
+    { id: 'q_crew3',  name: 'A CREW',            desc: 'GET THREE OF THEM OUT',
+      goal: 3, of: (st) => (st.crew || []).length, pay: 160 },
+    { id: 'q_cat',    name: 'SOMETHING SOFT',    desc: 'PUT A CAT ON THE COUNTER',
+      goal: 1, of: (st) => G.has('tipjar') ? 1 : 0, pay: 60 },
+    { id: 'q_clean',  name: 'A CLEAN SHIFT',     desc: 'HIT A QUOTA WITH NOBODY LET THROUGH',
+      goal: 1, of: (st) => st.cleanShifts || 0, pay: 140 },
+    { id: 'q_plan',   name: 'PAY THE HELP',      desc: 'PUT CLAUSE ON THE PRO PLAN',
+      goal: 1, of: (st) => G.tierIdx() >= 2 ? 1 : 0, pay: 90 },
+    { id: 'q_all8',   name: 'EVERY SYSTEM',      desc: 'REPAIR ALL EIGHT KINDS OF MACHINE',
+      goal: 8, of: (st) => new Set((st.sysDone || [])).size, pay: 300 },
+    { id: 'q_crew6',  name: 'WHAT SHE WANTED',   desc: 'GET SIX OF THEM OUT',
+      goal: 6, of: (st) => (st.crew || []).length, pay: 400 },
+  ];
+  G.QUESTS = QUESTS;
+  G.questProgress = function (q) { return G.clamp(q.of(G.state), 0, q.goal); };
+  G.questDone = (id) => (G.state.questsDone || []).indexOf(id) >= 0;
+  // the three you are on: the earliest unfinished ones
+  G.activeQuests = function () {
+    return QUESTS.filter((q) => !G.questDone(q.id)).slice(0, 3);
+  };
+  // called after anything that could complete one
+  G.checkQuests = function () {
+    const done = G.state.questsDone || (G.state.questsDone = []);
+    const paid = [];
+    for (const q of QUESTS) {
+      if (done.indexOf(q.id) >= 0) continue;
+      if (G.questProgress(q) >= q.goal) {
+        done.push(q.id);
+        G.state.money += q.pay;
+        paid.push(q);
+      }
+    }
+    return paid;
+  };
+
+  // ------------------------------------------------------------
+  // EASTER EGGS. Nobody tells you about these.
+  // ------------------------------------------------------------
+  const EGGS = [
+    { id: 'e_cat',    name: 'THE PATIENT CAT',
+      hint: 'PET THE CAT TWENTY TIMES IN ONE SHIFT',
+      note: 'IT HAS DECIDED YOU ARE ITS PERSON. TIPS UP FOREVER.' },
+    { id: 'e_drain',  name: 'SOMETHING IN THE DRAIN',
+      hint: 'TAP THE DRAIN IN THE BACK ROOM SEVEN TIMES',
+      note: 'A SPARE KEY, A PHOTOGRAPH, AND A NAME YOU KNOW.' },
+    { id: 'e_bulb',   name: 'HER LAMP',
+      hint: 'TAP THE BULB OVER THE COUNTER WHILE NOBODY IS WAITING',
+      note: 'IT STILL HAS HER FINGERPRINTS ON THE SWITCH.' },
+    { id: 'e_thermite', name: 'ABSOLUTELY NOT',
+      hint: 'CHURN A FLAVOUR THAT IS ONLY THERMITE',
+      note: 'CLAUSE FILED A FORMAL OBJECTION. IT IS DELICIOUS.' },
+    { id: 'e_poster', name: 'THE DEFACED POSTER',
+      hint: 'TAP THE POSTER IN THE BACK ROOM',
+      note: 'SOMEONE GOT THERE BEFORE YOU. THEY USED RED.' },
+    { id: 'e_swirl',  name: 'YOUR OWN CROWN',
+      hint: 'TAP YOUR OWN SWIRL ON THE TITLE SCREEN',
+      note: 'STILL SOFT. AFTER ALL THIS TIME.' },
+    { id: 'e_clock',  name: 'CLOSING TIME',
+      hint: 'TAP THE BACK ROOM CLOCK AFTER A CLEAN SHIFT',
+      note: 'IT HAS ONLY EVER SHOWN ONE TIME. THE TIME SHE LEFT.' },
+    { id: 'e_dog',    name: 'GOOD DOG',
+      hint: 'RESCUE A DOG',
+      note: 'IT HAS NOT STOPPED WAGGING. THE WHOLE CHASSIS.' },
+  ];
+  G.EGGS = EGGS;
+  G.eggById = (id) => EGGS.find((e) => e.id === id);
+  G.foundEgg = (id) => (G.state.eggs || []).indexOf(id) >= 0;
+  G.findEgg = function (id) {
+    G.state.eggs = G.state.eggs || [];
+    if (G.state.eggs.indexOf(id) >= 0) return false;
+    const e = G.eggById(id);
+    if (!e) return false;
+    G.state.eggs.push(id);
+    G.state.money += 50;
+    G.save();
+    return e;
+  };
+
   G.tierIdx    = () => G.clamp(G.state.tier || 0, 0, TIERS.length - 1);
   G.tier       = () => TIERS[G.tierIdx()];
   G.has        = (id) => G.state.owned.indexOf(id) >= 0;
   G.hasAlly    = (id) => G.state.allies.indexOf(id) >= 0;
   G.faultOf    = (sysId, fid) => G.sysById(sysId).faults.find((f) => f.id === fid);
+  G.pitCap     = () => G.has('freezer') ? 24 : G.has('chiller') ? 18 : 12;
   G.pitCount   = () => 1 + (G.has('pit2') ? 1 : 0) + (G.has('pit3') ? 1 : 0)
                          + (G.has('pit4') ? 1 : 0) + (G.has('pit5') ? 1 : 0);
 
@@ -507,7 +643,7 @@
   };
 
   // ---------- save ----------
-  const SAVE_KEY = 'doubleLife.save.v5';
+  const SAVE_KEY = 'doubleLife.save.v7';
 
   function starterFlavours() {
     const a = G.mixFlavour(['cream', 'sugar', 'vanilla'], 1);
@@ -541,6 +677,11 @@
       chapters: [],                                   // story beats already played
       spotted: 0, missed: 0,                          // disguises found and let through
       tips: 0,                                        // what the cat brought in
+      questsDone: [],                                 // quests already paid out
+      eggs: [],                                       // easter eggs found
+      sysDone: [],                                    // system ids you have repaired
+      cleanShifts: 0,                                 // quota met with nobody let through
+      petsTotal: 0,
       totBots: 0, totFixed: 0, totMisdx: 0, totVolt: 0,
       newIds: [],
       today: null,
@@ -561,7 +702,9 @@
           if (!G.state.flavours || !G.state.flavours.length) G.state.flavours = starterFlavours();
           if (!G.state.pits || !G.state.pits.length)
             G.state.pits = [{ fid: G.state.flavours[0].id, qty: 12, max: 12 }];
-          for (const k of ['crew', 'chapters', 'hist']) if (!G.state[k]) G.state[k] = [];
+          for (const k of ['crew', 'chapters', 'hist', 'questsDone', 'eggs', 'sysDone'])
+            if (!G.state[k]) G.state[k] = [];
+          for (const k of ['cleanShifts', 'petsTotal']) if (G.state[k] === undefined) G.state[k] = 0;
           for (const k of ['spotted', 'missed', 'tips']) if (G.state[k] === undefined) G.state[k] = 0;
           G.hasSave = true;
         }

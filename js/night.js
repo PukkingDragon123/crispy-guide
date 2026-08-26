@@ -206,6 +206,9 @@
         G.spark(BAY.x + BAY.w / 2, BAY.y + BAY.h / 2, ['#fff', P.lime], 14);
         this.pay(f.def.pay, BAY.x + BAY.w / 2, BAY.y + 20, 'FIXED');
         G.state.today.fixed++; G.state.totFixed++;
+        G.state.sysDone = G.state.sysDone || [];
+        if (G.state.sysDone.indexOf(this.job.sys) < 0) G.state.sysDone.push(this.job.sys);
+        for (const q of G.checkQuests()) G.toast('QUEST: ' + q.name + '  +$' + q.pay, P.lime);
         this.mood = 'idle';
         const nxt = this.faults.findIndex((x) => !x.done);
         if (nxt >= 0) { this.sel = nxt; this.tool = null; }

@@ -146,6 +146,7 @@
     point: null,                       // {x,y} it is currently indicating
     parked: true,                      // sitting in its corner vs out in the room
     idleT: 6, saidT: 0, lastIdle: -1,
+    menu: false, menuT: 0,
     react: {},                         // cooldowns per reaction id
 
     at(ax, ay, barY, barL, barR, inline) {
@@ -179,6 +180,7 @@
       this.react = {};
       this.idleT = 7;
       this.parked = true;
+      this.menu = false;
       this.fx = this.ax; this.fy = this.ay;
       if (scene === 'day') {
         if (G.state.tut < 1) this.tut(0);
@@ -396,6 +398,7 @@
         if (this.msgT <= 0) { this.msg = null; this.pump(); }
       }
       if (this.talk > 0) this.talk -= dt;
+      if (this.menu) this.menuT += dt;
 
       // ---- flight: a spring toward the target, with a bob ----
       if (this.parked) { this.tx = this.ax; this.ty = this.ay; }
@@ -453,20 +456,94 @@
     },
 
     // returns true when it swallowed the click
-    onDown(x, y) {
-      // the avatar itself: tap for the next tutorial beat or a nudge
-      if (G.inRect(x, y, this.ax - 11, this.ay - 11, 22, 24)) {
+    // ------------------------------------------------------------
+    // THE MENU. There are no ask buttons on the tray any more - you
+    // tap clause and its options fan out above it. Only the ones you
+    // have actually unlocked appear at all.
+    // ------------------------------------------------------------
+    menuItems() {
+      const all = [
+        { id: 'read',  lab: 'READ THEM',   need: 'ask_read',  hint: 'NAME, CRAVING, HATRED' },
+        { id: 'pick',  lab: 'PICK A PIT',  need: 'ask_pick',  hint: 'BEST MATCH ON THE LINE' },
+        { id: 'spot',  lab: 'LOOK AGAIN',  need: 'ask_spot',  hint: 'IS THAT REALLY A MACHINE' },
+        { id: 'trend', lab: 'THE DISTRICT',need: 'ask_trend', hint: 'WHAT THEY WANT TODAY' },
+        { id: 'recipe',lab: 'A RECIPE',    need: 'ask_recipe',hint: 'FROM WHAT IS ON THE SHELF' },
+        { id: 'restock',lab:'RESTOCK',     need: 'ask_restock',hint:'FILL THE SHELF FOR ME' },
+      ];
+      const scene = this.scene;
+      return all.filter((it) => {
+        if (!G.unlocked(it.need)) return false;
+        if (scene === 'day') return it.id !== 'restock';
+        if (scene === 'back') return it.id === 'recipe' || it.id === 'restock' || it.id === 'trend';
+        return false;
+      });
+    },
+    menuRect() {
+      const items = this.menuItems();
+      const w = 112, h = items.length * 13 + 15;
+      // hard left, rising out of the tray: it never covers the customer
+      const x = 4;
+      const y = G.clamp((this.barY || 150) - h - 4, 18, G.H - h - 4);
+      return { x, y, w, h, items };
+    },
+    toggleMenu() {
+      const items = this.menuItems();
+      if (!items.length) {
+        // nothing unlocked yet: it just talks to you instead
         if (G.state.tut < TUT.length) this.tut(G.state.tut);
         else this.say(G.pick([
-          'STILL HERE.',
-          'THE PITS DRAIN. WATCH THE BATTERIES.',
-          'SHE WOULD HAVE LIKED THIS ONE.',
-          'HEAT AT ' + Math.round(G.state.suspicion * 100) + '%.',
-          'ASK ME FOR A READ ON THE NEXT ONE.',
-        ]), COL, 2.8);
+          'NOTHING I CAN DO FOR YOU YET. BUY ME A PLAN.',
+          'STILL HERE. STILL FREE. STILL LIMITED.',
+        ]), COL, 3);
+        return;
+      }
+      this.menu = !this.menu;
+      G.audio.sfx('menu');
+      if (this.menu) this.menuT = 0;
+    },
+    onDown(x, y) {
+      // an open menu eats the click
+      if (this.menu) {
+        const m = this.menuRect();
+        for (let i = 0; i < m.items.length; i++) {
+          if (G.inRect(x, y, m.x + 2, m.y + 13 + i * 13, m.w - 4, 12)) {
+            this.menu = false;
+            this.ask(m.items[i].id);
+            return true;
+          }
+        }
+        this.menu = false;
+        G.audio.sfx('back');
         return true;
       }
+      // the mark itself: open the menu
+      if (G.inRect(x, y, this.ax - 12, this.ay - 12, 24, 26)) { this.toggleMenu(); return true; }
       return false;
+    },
+    drawMenu(g) {
+      if (!this.menu) return;
+      const m = this.menuRect();
+      const a = Math.min(1, this.menuT * 6);
+      g.globalAlpha = a;
+      G.plate(g, m.x, m.y, m.w, m.h, '#191016',
+        { r: 2, band: 2, lit: '#2c1c22', dk: '#0b0708', spec: false });
+      G.R(g, m.x + 2, m.y + 2, m.w - 4, 1, CO);
+      G.text(g, 'ASK CLAUSE', m.x + 4, m.y + 4, CO, { sc: 0.5 });
+      G.text(g, G.state.calls + ' LEFT', m.x + m.w - 4, m.y + 4, G.state.calls > 0 ? P.lime : P.magenta,
+        { sc: 0.5, align: 'right' });
+      for (let i = 0; i < m.items.length; i++) {
+        const it = m.items[i], ry = m.y + 13 + i * 13;
+        const hov = G.inRect(G.mouse.x, G.mouse.y, m.x + 2, ry, m.w - 4, 12);
+        const can = G.state.calls > 0;
+        G.R(g, m.x + 2, ry, m.w - 4, 12, hov && can ? '#3a2018' : '#100a0c');
+        G.R(g, m.x + 2, ry, 1.5, 12, can ? CO : '#3a3038');
+        G.text(g, it.lab, m.x + 7, ry + 1, can ? '#f4eeda' : '#6b5c60');
+        G.text(g, it.hint, m.x + 7, ry + 8, can ? '#8a7468' : '#4a4048', { sc: 0.5 });
+      }
+      // a stem down into the tray, where the mark lives
+      for (let i = 0; i < 5; i++)
+        G.Rh(g, m.x + 8 + i * 0.5, m.y + m.h + i * 0.5, 4 - i * 0.7, 0.5, '#2c1c22');
+      g.globalAlpha = 1;
     },
 
     // the avatar on its stand, top right, plus the speech bar
@@ -497,6 +574,12 @@
         // a little hand, pointing
         const a2 = Math.atan2(py - ay, px - ax);
         G.Rh(g, ax + Math.cos(a2) * 9 - 1, ay + Math.sin(a2) * 9 - 1, 2, 2, COL);
+      }
+      // a ring around the mark when it has something you can ask for
+      if (!this.inline && !this.menu && this.menuItems().length && G.state.calls > 0) {
+        g.globalAlpha = 0.35 + Math.sin(t * 3) * 0.15;
+        G.oc(g, ax, ay, 12, CO);
+        g.globalAlpha = 1;
       }
       G.starburst(g, ax, ay, this.inline ? 6 : 8, t, { talk: this.talk > 0 });
       if (this.inline) {

@@ -15,6 +15,24 @@ And watch the queue, because some of what walks in is not a machine at all.**
 **▶ Play it:** open `index.html` in a browser. No build step, no dependencies,
 no asset files — every sprite, sound and note is generated in code.
 
+The menu carries your save, and two logs it opens once you have earned them:
+
+![Quests](screenshots/quests.png)
+
+**QUESTS** — twelve of them, and none was asked of you. Each one is a thing the
+shop actually needs, they pay on completion, and the panel settles up any you
+finished without noticing.
+
+![The story](screenshots/storylog.png)
+
+**THE STORY** — every chapter you have seen, and any of them replayable.
+
+![Secrets](screenshots/secrets.png)
+
+**SECRETS** — eight of them. Nobody tells you about these; the ones you have not
+found show you where to look, which is more than the game gives you anywhere
+else.
+
 ---
 
 ## 🎬 The story
@@ -40,6 +58,13 @@ and does not order anything, the back room with chairs in it.
 ---
 
 ## ☀️ The floor
+
+![Opening up](screenshots/opening-up.png)
+
+Every shift starts with the shutter. It rattles up slat by slat, dust comes off
+it, the sign flickers on, warm light spills under the bottom rail onto the pits,
+and whoever was already waiting outside is standing there when it clears. At the
+close it rolls back down.
 
 ![The café](screenshots/cafe.png)
 
@@ -70,9 +95,15 @@ you dug an hour ago is still there in the light.
 
 ![Carrying](screenshots/carry.png)
 
-Scoops are shaded off the **sphere normal** into five flat tones, with sagging
-goo lobes that grow with the mix's own `goo` value. Corn syrup and banana run.
-Charcoal and iron filings hold their shape.
+![Jelly](screenshots/jelly.png)
+
+A scoop is not a hard ball — it is a **set jelly**. Seven tone bands off a
+plumped superellipse with a wrap term, so the terminator is a gradient rather
+than a cliff. A long soft sheen laid along the shoulder with a hot core inside
+it. A **subsurface rim** where light comes through the far side, so the shaded
+edge is brighter than the middle. Drips that grow out of the ball through a
+pinched neck into a bead about to let go. And it wobbles when it lands and never
+quite stops.
 
 ### The tip jar
 
@@ -224,14 +255,26 @@ It also **watches**, and says something when it matters: a pit about to run dry,
 nothing loaded at all, heat climbing, one more to hit quota, a machine losing
 patience, and — the useful one — *look again, something on that one is wrong*.
 
-Four things you can ask it for outright:
+### Tap it to ask it
+
+![Ask clause](screenshots/ask-clause.png)
+
+There are no ask buttons on the tray. You tap clause and its options rise out of
+the corner — and **only the ones you have actually unlocked appear at all**,
+because a greyed-out button is a promise nobody made you.
 
 | Ask | What you get |
 |---|---|
-| **READ** | The machine's name, craving, hatred and its line |
-| **PICK** | Which pit best matches whoever is at the counter, with the % |
-| **SPOT** | It names the tell and flies over to point at it |
-| **TREND** | What the district is chasing today, and what nobody wants |
+| **READ THEM** | The machine's name, craving, hatred and its line |
+| **PICK A PIT** | Which pit best matches whoever is at the counter, with the % |
+| **LOOK AGAIN** | It names the tell and flies over to point at it |
+| **THE DISTRICT** | What the district is chasing today, and what nobody wants |
+| **A RECIPE** | The best mix your shelf can actually make |
+| **RESTOCK** | It fills the shelf for you |
+
+The same rule runs everywhere: no cup stand until day two, no bin until there is
+something in it, no back-room door until the shutter is down, no mixer until you
+have two things on the shelf, no wall until somebody is on it.
 
 ![The books](screenshots/books.png)
 
@@ -269,6 +312,18 @@ twin churn, the assay bench, and the new ones:
 | **NEON SIGN** | One more machine through the door |
 | **UV LAMP** | A disguise tell faintly glows |
 | **BONE SCANNER** | clause names the tell out loud |
+| **DOOR BELL** | You hear them coming sooner |
+| **STRIPED AWNING** | It looks like a real shop |
+| **TWO STOOLS** | They wait longer sitting down |
+| **BETTER EXTRACT** | No more flies |
+| **SPRINKLE GUN** | Toppings land where you aim |
+| **TWIN SCOOP** | Two balls in one sweep |
+| **DEEP FREEZE** | Pits hold 24 scoops |
+| **HONEST LEDGER** | See every price before you buy |
+| **CENTRIFUGE** | Mix five ingredients at once |
+| **FIELD COOLER** | Batches keep overnight |
+| **TOOL ROLL** | Repairs go 25% faster |
+| **DECOY SHELL** | One missed disguise costs nothing |
 
 ![Arms](screenshots/arms.png)
 
@@ -300,8 +355,18 @@ is four parts — pauldron, upper arm, hinged elbow with a pin, forearm — with
 hydraulic piston alongside. Every optic has a machined bezel with a screw ring,
 radial iris spokes, a bounce catch-light and a scan line crossing the glass.
 
-You are the nineteenth: a churn drum on salvaged tread, a dispenser head, a
-nozzle for an arm, and a soft-serve swirl still set in the crown.
+![Friendly](screenshots/friendly.png)
+
+You are the nineteenth, and you are meant to be liked: cream over mint, big pink
+optics set wide, a raised brow, blush, freckles, a smile stamped into the plate
+with its corners turned up, a bow tie she put on you, and a white apron with a
+scoop in the pocket. A churn drum on salvaged tread with a soft-serve swirl still
+set in the crown.
+
+Eleven of the archetypes carry the same softening — the maid, the chef, the
+nurse, the clerk, the courier, the horticultural unit and the rest get the blush
+and the brow. The siege unit, the enforcer, the magistrate and the warden do
+not.
 
 ---
 
@@ -323,7 +388,10 @@ nozzle for an arm, and a soft-serve swirl still set in the crown.
   lighting
 - A shot-based **cutscene camera**: pan, push and shear, letterbox, film grain
 - All audio synthesised with WebAudio — servo whines, arc zaps, a cat's purr, a
-  shell coming off, shutters, footsteps. No sample files.
+  shell coming off, a shutter rolling, footsteps, and the five-note arpeggio for
+  a secret. No sample files.
+- A single `unlocked(id)` table drives every hidden control, so the UI can only
+  show you what you have
 - Save via `localStorage`; mouse and touch
 
 ## Layout
