@@ -485,25 +485,59 @@
       G.R(g, 0, 0, G.W, G.H, P.cityDk);
       G.cityWall(g, 0, 0, G.W, G.H, t);
       g.globalAlpha = 0.4; G.R(g, 0, 0, G.W, G.H, '#0a0c14'); g.globalAlpha = 1;
-      // the lamp
+      // the inspection lamp: a stem, a shade, a hot tube and a cage
       G.R(g, 156, 0, 3, 8, P.plateDk);
-      G.plate(g, 128, 8, 60, 7, P.plateDk, { r: 1, band: 1 });
+      G.vair(g, 157, 0, 8, P.chrome);
+      for (let j = 0; j < 7; j++) {
+        const hw = 30 - j * 2;
+        G.Rh(g, 158 - hw, 8 + j, hw * 2, 1, j < 2 ? P.steel2 : P.plateDk);
+      }
+      G.hair(g, 128, 8, 60, P.chrome);
       G.R(g, 132, 14, 52, 2, '#fff8d8');
+      G.hair(g, 132, 14, 52, '#ffffff');
+      for (let i = 0; i < 9; i++) G.vair(g, 134 + i * 6, 14, 2, '#7a6a48');
       G.glow(g, 158, 70, 220, 110, '#ffeec0', 1.15);
+      // a cool bounce from the left, so the bay is not lit from one side only
+      G.glow(g, 40, 60, 130, 100, '#8fb8ff', 0.28);
 
       const jx = this.jolt > 0 ? Math.round(Math.sin(t * 60) * 2) : 0;
       g.save(); g.translate(jx, 0);
 
-      // the bench it is laid out on
-      G.plate(g, 0, BAY.y + BAY.h + 6, G.W, 24, P.plate, { r: 2, band: 3 });
+      // the bench it is laid out on: a steel top, a scored surface and
+      // the clutter of a place where things get taken apart
+      G.plate(g, 0, BAY.y + BAY.h + 6, G.W, 24, P.plate, { r: 2, band: 3, bolts: 1, grain: 4 });
+      G.hair(g, 0, BAY.y + BAY.h + 7, G.W, P.chrome);
+      for (let i = 0; i < 30; i++)
+        G.hair(g, G.hash(i, 3) * 300 + 6, BAY.y + BAY.h + 12 + G.hash(i, 9) * 12,
+          4 + G.hash(i, 5) * 14, '#4a5670');
+      // a vice at one end and a parts tin at the other
+      G.plate(g, 6, BAY.y + BAY.h - 4, 22, 12, '#3a4459', { r: 1, band: 2, bolts: 1 });
+      G.Rh(g, 10, BAY.y + BAY.h - 1, 14, 3, '#5c6a86');
+      G.Rh(g, 16, BAY.y + BAY.h + 2, 3, 8, '#48546c');
+      G.plate(g, 292, BAY.y + BAY.h - 2, 24, 10, '#2f5c6b', { r: 1, band: 2 });
+      for (let i = 0; i < 5; i++)
+        G.Rh(g, 295 + i * 4, BAY.y + BAY.h - 1, 2, 2, ['#8a94a8', '#c9a02a', '#8a94a8'][i % 3]);
 
-      // the opened panel
+      // the opened panel, with a hinged lid thrown back and a lit lip
       G.plate(g, BAY.x - 6, BAY.y - 6, BAY.w + 12, BAY.h + 12, this.bot.col,
-        { r: 3, band: 4, lit: this.bot.col2, dk: G.shade(this.bot.col, -0.45) });
+        { r: 3, band: 4, lit: this.bot.col2, dk: G.shade(this.bot.col, -0.45),
+          bolts: 1, notch: 1, grain: 5 });
       G.R(g, BAY.x - 3, BAY.y - 3, BAY.w + 6, 1, this.bot.hue);
+      G.glow(g, BAY.x + BAY.w / 2, BAY.y - 3, BAY.w, 10, this.bot.hue, 0.4);
+      // fasteners all round the opening, some of them lying loose on the bench
+      for (let i = 0; i < 9; i++) {
+        G.rivet(g, BAY.x - 4.5 + i * (BAY.w / 8), BAY.y - 4.5, '#0b0e14', G.shade(this.bot.col, 0.5));
+        G.rivet(g, BAY.x - 4.5 + i * (BAY.w / 8), BAY.y + BAY.h + 2.5, '#0b0e14', G.shade(this.bot.col, 0.5));
+      }
+      for (let i = 0; i < 4; i++)
+        G.rivet(g, 40 + i * 13 + (i % 2) * 4, BAY.y + BAY.h + 16, '#0b0e14', P.chrome);
       G.plate(g, BAY.x, BAY.y, BAY.w, BAY.h, '#0d1018', { r: 2, band: 1, lit: '#181d28', dk: '#070a10', spec: false });
+      G.bevel(g, BAY.x, BAY.y, BAY.w, BAY.h, '#050709', '#2a3446');
       // the chassis floor: ribs and a couple of loom runs so it has depth
-      for (let j = BAY.y + 6; j < BAY.y + BAY.h - 2; j += 9) G.R(g, BAY.x + 3, j, BAY.w - 6, 1, '#151a24');
+      for (let j = BAY.y + 6; j < BAY.y + BAY.h - 2; j += 9) {
+        G.R(g, BAY.x + 3, j, BAY.w - 6, 1, '#151a24');
+        G.hair(g, BAY.x + 3, j + 1, BAY.w - 6, '#1d2432');
+      }
       for (const sx of [BAY.x + 5, BAY.x + BAY.w - 7])
         for (let k = 0; k < BAY.h - 6; k++)
           G.R(g, sx + Math.round(Math.sin(k * 0.3) * 2), BAY.y + 3 + k, 2, 1,
@@ -734,14 +768,22 @@
         G.plate(g, bd.x + bd.w - 6, bd.y + 8, pt.pegs[3].x - bd.x - bd.w + 14, 44, '#3a2412',
           { r: 1, band: 2, spec: false });
         for (let i = 0; i < 5; i++) G.R(g, bd.x + bd.w + 6 + i * 14, bd.y + 10, 1, 40, '#5c4020');
-        // strings: taut, or shivering if that peg is slack
+        // strings: taut hairs, or one clean sag per string if the peg is slack
+        const sx0 = bd.x + 6, sx1 = pt.pegs[3].x, sL = Math.max(1, sx1 - sx0);
         for (let i = 0; i < 4; i++) {
-          const sy = bd.y + 14 + i * 10;
-          const slack = has('detune') && !stOf('detune').pegs[i] ? 1.6 : 0;
-          for (let x = bd.x + 6; x < pt.pegs[3].x; x += 1)
-            G.R(g, x, sy + Math.round(Math.sin((x - bd.x) * 0.5 + t * 22) * slack), 1, 1,
-              slack ? '#fff4d8' : (i % 2 ? '#e8dcc0' : '#c8bca0'));
+          const sy = bd.y + 12 + i * 11;
+          const slack = has('detune') && !stOf('detune').pegs[i];
+          for (let x = sx0; x < sx1; x += 0.5) {
+            const u = (x - sx0) / sL;
+            const sag = slack ? Math.sin(u * Math.PI) * 3.5 + Math.sin(t * 14 + u * 5) * 0.5 : 0;
+            G.Rh(g, x, sy + sag, 0.5, slack ? 1 : 0.5, slack ? '#fff4d8' : (i % 2 ? '#e8dcc0' : '#c8bca0'));
+          }
+          // the bridge saddle each string crosses
+          G.Rh(g, bd.x + bd.w * 0.62, sy - 0.5, 1, 2, '#2a1a08');
         }
+        // bridge and tailpiece, so the strings are anchored to something
+        G.plate(g, bd.x + bd.w * 0.6, bd.y + 8, 4, 44, '#2a1a08', { r: 1, band: 1, spec: false });
+        G.plate(g, bd.x + 2, bd.y + 10, 5, 40, '#3a2412', { r: 1, band: 1, spec: false, bolts: 1 });
         for (let i = 0; i < 4; i++) {
           const pg = pt.pegs[i];
           const tuned = !has('detune') || stOf('detune').pegs[i];

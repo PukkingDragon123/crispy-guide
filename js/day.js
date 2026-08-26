@@ -128,8 +128,10 @@
           } else { G.audio.sfx('click'); G.go('back', 'THE BACK ROOM'); }
           return;
         }
-        if (G.inRect(x, y, 48, 152, 44, 16)) { if (G.clause) G.clause.ask('read'); return; }
-        if (G.inRect(x, y, 96, 152, 44, 16)) { if (G.clause) G.clause.ask('trend'); return; }
+        if (G.inRect(x, y, 48, 152, 34, 16)) { if (G.clause) G.clause.ask('read'); return; }
+        if (G.inRect(x, y, 86, 152, 34, 16)) { if (G.clause) G.clause.ask('pick'); return; }
+        if (G.inRect(x, y, 124, 152, 34, 16)) { if (G.clause) G.clause.ask('spot'); return; }
+        if (G.inRect(x, y, 162, 152, 34, 16)) { if (G.clause) G.clause.ask('trend'); return; }
         if (G.inRect(x, y, 194, 152, 48, 16) && this.canServe()) { G.audio.sfx('click'); this.serve(); return; }
         if (G.inRect(x, y, 246, 152, 32, 16)) {          // bin
           if (this.build) { G.audio.sfx('splat'); this.puff(PLATE.x, PLATE.y - 10, '#6b5a3a', 8); this.build = null; }
@@ -678,8 +680,8 @@
       }
       const drip = (t * 0.6) % 1;
       G.Rh(g, 148, 33 + drip * 18, 0.5, 1.5, '#5fbfd8');
-      // extraction fan, turning
-      const fx = 196, fy = 44;
+      // extraction fan, turning - kept left, where the order tag never lands
+      const fx = 26, fy = 54;
       G.R(g, fx - 12, fy - 12, 24, 24, '#151a26');
       G.bevel(g, fx - 12, fy - 12, 24, 24, '#2a3242', '#0b0e14');
       for (let k = 0; k < 4; k++) {
@@ -689,18 +691,17 @@
       }
       G.fc(g, fx, fy, 2, '#6b7f96');
       for (let i = -1; i < 2; i++) { G.hair(g, fx - 11, fy + i * 7, 22, '#0f131c'); }
-      // a notice board with the day's chapter on it
-      G.plate(g, 108, 36, 62, 26, '#8a7a52', { r: 1, band: 2, spec: false, grain: 2 });
-      G.R(g, 110, 38, 58, 22, '#e8e0c8');
-      G.grain(g, 110, 38, 58, 22, '#cfc4a4', 0.1, 3);
-      G.text(g, G.chapterName().slice(0, 13), 139, 41, '#3a3524', { align: 'center', sc: 0.5 });
-      for (let i = 0; i < 4; i++) G.hair(g, 113, 48 + i * 3, 52 - (i % 2) * 8, '#9a8f70');
-      G.rivet(g, 110, 38, '#5c4a28', '#d8c8a0'); G.rivet(g, 166, 38, '#5c4a28', '#d8c8a0');
+      // a first aid box and a fire bucket, behind where the machine stands
+      G.plate(g, 226, 34, 20, 16, '#d8d0c0', { r: 1, band: 2, spec: false });
+      G.R(g, 233, 38, 6, 2, '#c02020'); G.R(g, 235, 36, 2, 6, '#c02020');
+      G.plate(g, 252, 38, 14, 12, '#8a2f42', { r: 2, band: 2 });
+      G.Rh(g, 253, 40, 12, 2, '#5c2030');
+      G.Rh(g, 258, 34, 2, 4, P.steel);
       // hanging cable with a bare bulb over the counter
-      G.Rh(g, 58, 30, 0.5, 12, '#1a1f2c');
-      G.fc(g, 58, 45, 3, '#ffe89a');
-      G.fc(g, 58, 45, 1.5, '#ffffff');
-      G.glow(g, 58, 46, 46, 34, '#ffd47a', 0.55);
+      G.Rh(g, 76, 30, 0.5, 12, '#1a1f2c');
+      G.fc(g, 76, 45, 3, '#ffe89a');
+      G.fc(g, 76, 45, 1.5, '#ffffff');
+      G.glow(g, 76, 46, 46, 34, '#ffd47a', 0.55);
       // grime in the corners
       G.grain(g, 0, WORK_Y - 14, 220, 12, '#0e1219', 0.1, 9);
       // the café's own sign, tucked left where nothing else lands
@@ -1140,24 +1141,24 @@
       const qOK = st.today.served >= gl.quota, tOK = st.today.dayEarn >= gl.take;
       G.plate(g, 58, 2, 128, 12, P.ink2, { r: 1, band: 1, spec: false });
       G.bevel(g, 58, 2, 128, 12, '#2a3446', '#070a12');
-      G.text(g, 'D' + st.day, 61, 4, P.steel2, { sc: 0.5 });
-      G.text(g, 'SHIFT', 61, 9, '#46506b', { sc: 0.5 });
-      // quota pips
+      G.text(g, 'D' + st.day + '  ' + G.chapterName(), 61, 3, P.steel2, { sc: 0.5 });
+      // quota pips, on the second row beside the take bar
       for (let i = 0; i < gl.quota; i++) {
-        const px = 78 + i * 5;
+        const px = 61 + i * 5;
         const on = st.today.served > i;
-        G.Rh(g, px, 4, 3.5, 3.5, on ? P.lime : '#20263a');
-        G.bevel(g, px, 4, 3.5, 3.5, on ? '#b6ff9a' : '#2c3348', '#0b0e14');
+        G.Rh(g, px, 8.5, 3.5, 3.5, on ? P.lime : '#20263a');
+        G.bevel(g, px, 8.5, 3.5, 3.5, on ? '#b6ff9a' : '#2c3348', '#0b0e14');
       }
-      G.text(g, st.today.served + '/' + gl.quota, 78 + gl.quota * 5 + 2, 3,
+      G.text(g, st.today.served + '/' + gl.quota, 61 + gl.quota * 5 + 2, 8,
         qOK ? P.lime : P.steel2, { sc: 0.5 });
       if (st.today.closed) G.text(g, 'CLOSED', 183, 3, P.magentaLt, { sc: 0.5, align: 'right' });
       // take bar, with the figures beside it rather than over it
       const tf = G.clamp(st.today.dayEarn / Math.max(1, gl.take), 0, 1);
-      G.R(g, 78, 9, 58, 4, '#0d1220');
-      G.R(g, 78, 9, Math.round(58 * tf), 4, tOK ? P.lime : P.hazard);
-      G.hair(g, 78, 9, Math.round(58 * tf), tOK ? '#dfffcf' : '#ffd8a0');
-      G.text(g, '$' + st.today.dayEarn + '/' + gl.take, 183, 9, tOK ? P.lime : P.steel2,
+      const bx0 = 61 + gl.quota * 5 + 24;
+      G.R(g, bx0, 9, 183 - bx0 - 34, 4, '#0d1220');
+      G.R(g, bx0, 9, Math.round((183 - bx0 - 34) * tf), 4, tOK ? P.lime : P.hazard);
+      G.hair(g, bx0, 9, Math.round((183 - bx0 - 34) * tf), tOK ? '#dfffcf' : '#ffd8a0');
+      G.text(g, '$' + st.today.dayEarn + '/' + gl.take, 183, 8, tOK ? P.lime : P.steel2,
         { sc: 0.5, align: 'right' });
 
       // ---- heat ----
@@ -1182,19 +1183,22 @@
       G.R(g, 0, 150, G.W, 1, P.cyanDk);
       G.drawBtn(g, 4, 152, 40, 16, st.today.closed ? 'BACK >' : 'LAB',
         { col: st.today.closed ? '#2f8a48' : '#2a2434' });
-      const tier = G.tierIdx();
-      G.drawBtn(g, 48, 152, 44, 16, 'READ', { col: tier >= 1 && G.state.calls > 0 ? '#2a5c6b' : '#20242e' });
-      G.drawBtn(g, 96, 152, 44, 16, 'TREND', { col: tier >= 2 && G.state.calls > 0 ? '#2a5c6b' : '#20242e' });
+      // four things you can ask clause for, then serve and bin
+      const tier = G.tierIdx(), calls = G.state.calls > 0;
+      const ask = (bx, lab, need) => G.drawBtn(g, bx, 152, 34, 16, lab,
+        { col: tier >= need && calls ? '#2a5c6b' : '#20242e' });
+      ask(48, 'READ', 1); ask(86, 'PICK', 2); ask(124, 'SPOT', 1); ask(162, 'TREND', 2);
       const cs = this.canServe();
-      G.drawBtn(g, 194, 152, 48, 16, 'SERVE', { col: cs ? '#2f8a48' : '#20242e' });
-      G.drawBtn(g, 246, 152, 32, 16, 'BIN', { col: '#5c2030' });
-      // only 50px of tray between the two button groups, so keep it to 8 chars
-      G.text(g, 'CALLS ' + G.state.calls, 144, 154, P.steel);
+      G.drawBtn(g, 200, 152, 44, 16, 'SERVE', { col: cs ? '#2f8a48' : '#20242e' });
+      G.drawBtn(g, 248, 152, 30, 16, 'BIN', { col: '#5c2030' });
+      G.text(g, 'CALLS ' + G.state.calls, 6, 170, P.steel, { sc: 0.5 });
       const h = this.hold;
       if (h && h.kind === 'sweep')
-        G.text(g, h.fill > SLOP ? 'TOO MUCH' : h.fill >= PERFECT_LO ? 'LET GO!' : 'SWEEP',
-          144, 163, h.fill > SLOP ? P.magenta : h.fill >= PERFECT_LO ? P.lime : P.hazard);
-      else if (!(G.clause && G.clause.msg)) G.text(g, 'PICK PIT', 144, 163, '#46506b');
+        G.text(g, h.fill > SLOP ? 'TOO MUCH - BIN IT' : h.fill >= PERFECT_LO ? 'LET GO NOW' : 'KEEP SWEEPING',
+          100, 170, h.fill > SLOP ? P.magenta : h.fill >= PERFECT_LO ? P.lime : P.hazard, { sc: 0.5 });
+      else if (!(G.clause && G.clause.msg))
+        G.text(g, st.today.closed ? 'SHIFT OVER - GO THROUGH THE BACK'
+          : 'PRESS A PIT AND SWEEP', 48, 170, '#46506b', { sc: 0.5 });
     },
   };
 

@@ -87,7 +87,7 @@
       lab.tab = s.tab;
       lab.scroll = 0;
       this.open = s.tab;
-      if (G.clause) G.clause.at(300, 163, 166, 4, 286);
+      if (G.clause) G.clause.at(300, 160, 166, 4, 276);
     },
     close() { G.audio.sfx('back'); this.open = null; },
     crewDown(x, y) {
@@ -147,7 +147,7 @@
       // ---- chrome ----
       this.hud(g, t);
       if (this.open !== null) this.panel(g, t);
-      if (G.clause) { G.clause.at(300, 163, 166, 4, 286); G.clause.draw(g); }
+      if (G.clause) { G.clause.at(300, 160, 166, 4, 276); G.clause.draw(g); }
       G.grade(g, 1);
     },
 

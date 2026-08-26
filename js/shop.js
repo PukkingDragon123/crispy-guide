@@ -41,22 +41,26 @@
 
   // ================= THE ARMOURY =================
   const TABS = ['UPGRADES', 'ARMS', 'CREW', 'CLAUSE'];
+  const ROWS = 6;                       // rows per page
 
   G.scenes.shop = {
     enter() {
       this.t = 0;
       this.tab = 0;
+      this.page = 0;
       this.flash = null;
       G.steam.length = 0;
       G.audio.music('title');
       if (G.clause) G.clause.enter('shop');
     },
-    rows() {
+    all() {
       if (this.tab === 0) return G.DATA.arms.filter((a) => a.kind === 'shop' || a.kind === 'lab');
       if (this.tab === 1) return G.DATA.arms.filter((a) => a.kind === 'war');
       if (this.tab === 2) return G.DATA.allies;
       return G.DATA.tiers.slice(1);
     },
+    pages() { return Math.max(1, Math.ceil(this.all().length / ROWS)); },
+    rows() { return this.all().slice(this.page * ROWS, this.page * ROWS + ROWS); },
     buy(it) {
       if (this.tab === 3) {
         const idx = G.DATA.tiers.indexOf(it);
@@ -91,22 +95,40 @@
     onDown(x, y) {
       if (G.clause && G.clause.onDown(x, y)) return;
       for (let i = 0; i < TABS.length; i++)
-        if (G.inRect(x, y, 4 + i * 56, 16, 52, 13)) { this.tab = i; G.audio.sfx('clack'); return; }
+        if (G.inRect(x, y, 4 + i * 62, 16, 58, 13)) { this.tab = i; this.page = 0; G.audio.sfx('clack'); return; }
       const list = this.rows();
-      for (let i = 0; i < list.length && i < 6; i++)
+      for (let i = 0; i < list.length && i < ROWS; i++)
         if (G.inRect(x, y, 8, 32 + i * 17, 304, 15)) { this.buy(list[i]); return; }
-      if (G.inRect(x, y, 4, 152, 68, 16)) { G.audio.sfx('click'); G.go('lab', 'THE LAB'); return; }
+      if (this.pages() > 1) {
+        if (G.inRect(x, y, 8, 136, 18, 11)) { this.page = (this.page + this.pages() - 1) % this.pages(); G.audio.sfx('clack'); return; }
+        if (G.inRect(x, y, 30, 136, 18, 11)) { this.page = (this.page + 1) % this.pages(); G.audio.sfx('clack'); return; }
+      }
+      if (G.inRect(x, y, 4, 152, 68, 16)) { G.audio.sfx('click'); G.go('back', 'THE BACK ROOM'); return; }
       if (G.inRect(x, y, 216, 152, 100, 16)) {
         G.audio.sfx('day');
+        // the piggy bank keeps a slice of the take overnight
+        if (G.has('piggy')) {
+          const keep = Math.round((G.state.today ? G.state.today.dayEarn : 0) * 0.1);
+          if (keep > 0) { G.state.money += keep; G.toast('PIGGY BANK +$' + keep, P.hazard); }
+        }
         G.state.day++;
         G.newDayStats();
         G.state.today.demand = G.rollDemand();
-        if (G.hasAlly('a_scav')) {                     // the magpie brings something home
+        if (G.hasAlly('a_scav') || G.hasPerk('p_mouse')) {   // something turns up overnight
           const id = G.pick(G.DATA.ing).id;
           G.state.shelf[id] = (G.state.shelf[id] || 0) + 1;
         }
         G.save();
-        G.go('day', 'DAY ' + G.state.day);
+        // a chapter that has come true plays before the doors open
+        const ch = G.dueChapter();
+        if (ch && G.cine.has(ch.id)) {
+          G.markChapter(ch.id);
+          G.save();
+          G.playCine(ch.id, () => G.go('day', 'DAY ' + G.state.day));
+        } else {
+          if (ch) G.markChapter(ch.id);
+          G.go('day', 'DAY ' + G.state.day);
+        }
       }
     },
     update(dt) {
@@ -123,9 +145,26 @@
       G.toastY = 138; G.toastCX = 110;
       G.R(g, 0, 0, G.W, G.H, P.cityDk);
       G.cityWall(g, 0, 0, G.W, G.H, t);
-      g.globalAlpha = 0.45; G.R(g, 0, 0, G.W, G.H, '#0a0c14'); g.globalAlpha = 1;
+      g.globalAlpha = 0.55; G.R(g, 0, 0, G.W, G.H, '#0a0c14'); g.globalAlpha = 1;
+      // ---- the lock-up: racking, crates, a strip light, a roller door ----
+      for (let r = 0; r < 3; r++) {
+        const ry2 = 46 + r * 40;
+        G.plate(g, -6, ry2, 332, 4, '#3a2c1c', { r: 1, band: 1, spec: false, grain: r + 1 });
+        for (let cxx = 8; cxx < 320; cxx += 54) G.plate(g, cxx, ry2 + 4, 4, 36, '#2e2416', { r: 1, band: 1, spec: false });
+        for (let i = 0; i < 7; i++) {
+          const bx = 14 + i * 46, hh = 12 + ((i * 5 + r) % 3) * 5;
+          const col = ['#5c6a86', '#7a5c4a', '#3f6b5c', '#6b5a3a'][(i + r) % 4];
+          G.plate(g, bx, ry2 - hh, 34, hh, col, { r: 1, band: 2, spec: false, bolts: 1 });
+          G.Rh(g, bx + 6, ry2 - hh + 4, 20, 3, G.shade(col, -0.5));
+        }
+      }
+      g.globalAlpha = 0.62; G.R(g, 0, 28, G.W, 124, '#090c14'); g.globalAlpha = 1;
+      // one strip light over the counter
+      G.R(g, 132, 30, 56, 4, '#2a3242');
+      G.Rh(g, 134, 33, 52, 1.5, '#dfeaf4');
+      G.glow(g, 160, 46, 200, 90, '#8fd8ff', 0.28);
       G.conduit(g, 0, 2, G.W, false, P.magenta);
-      G.glow(g, 160, 80, 240, 130, '#ff7a4a', 0.4);
+      G.glow(g, 160, 80, 240, 130, '#ff7a4a', 0.3);
 
       // HUD
       G.plate(g, 2, 2, 56, 12, P.ink2, { r: 1, band: 1, spec: false });
@@ -139,13 +178,13 @@
 
       for (let i = 0; i < TABS.length; i++) {
         const on = this.tab === i;
-        G.plate(g, 4 + i * 56, 16, 52, 13, on ? '#8a3a2a' : '#1c1e2a', { r: 1, band: 1, spec: false });
-        if (on) G.R(g, 4 + i * 56, 16, 52, 1, P.hazard);
-        G.text(g, TABS[i].slice(0, 8), 4 + i * 56 + 26, 19, on ? '#ffe8dc' : '#5a6070', { align: 'center' });
+        G.plate(g, 4 + i * 62, 16, 58, 13, on ? '#8a3a2a' : '#1c1e2a', { r: 1, band: 1, spec: false });
+        if (on) G.R(g, 4 + i * 62, 16, 58, 1, P.hazard);
+        G.text(g, TABS[i], 4 + i * 62 + 29, 19, on ? '#ffe8dc' : '#5a6070', { align: 'center' });
       }
 
       const list = this.rows();
-      for (let i = 0; i < list.length && i < 6; i++) {
+      for (let i = 0; i < list.length && i < ROWS; i++) {
         const it = list[i], ry = 32 + i * 17;
         const owned = this.tab === 3 ? G.DATA.tiers.indexOf(it) <= G.tierIdx()
           : this.tab === 2 ? G.hasAlly(it.id) : G.has(it.id);
@@ -171,27 +210,38 @@
       }
       if (!list.length) G.text(g, 'NOTHING HERE', 160, 80, '#4a5060', { align: 'center' });
 
+      // paging, when a tab has more than fits
+      if (this.pages() > 1) {
+        G.plate(g, 8, 136, 18, 11, '#2a3a4c', { r: 1, band: 1, spec: false });
+        G.text(g, '<', 17, 138, P.cream, { align: 'center', sc: 0.5 });
+        G.plate(g, 30, 136, 18, 11, '#2a3a4c', { r: 1, band: 1, spec: false });
+        G.text(g, '>', 39, 138, P.cream, { align: 'center', sc: 0.5 });
+        G.text(g, (this.page + 1) + '/' + this.pages(), 54, 138, P.steel, { sc: 0.5 });
+      }
+
       // the line at a glance, so you know if you can even open tomorrow
       const n = G.pitCount();
-      G.text(g, 'LINE:', 8, 142, P.steel);
+      G.text(g, 'LINE:', 76, 138, P.steel, { sc: 0.5 });
       for (let i = 0; i < 5; i++) {
-        const px = 34 + i * 22;
+        const px = 98 + i * 20;
         const pit = G.state.pits[i];
         const f = pit ? G.flavById(pit.fid) : null;
-        G.plate(g, px, 138, 18, 10, i < n ? P.plateDk : '#161822', { r: 1, band: 1, spec: false });
-        if (i < n && f) G.R(g, px + 2, 140, 14, 6, f.col);
-        else if (i < n) G.text(g, '-', px + 9, 140, '#4a5060', { align: 'center' });
+        G.plate(g, px, 136, 16, 11, i < n ? P.plateDk : '#161822', { r: 1, band: 1, spec: false });
+        if (i < n && f) { G.R(g, px + 2, 138, 12, 7, f.col); G.hair(g, px + 2, 138, 12, G.shade(f.col, 0.5)); }
+        else if (i < n) G.text(g, '-', px + 8, 138, '#4a5060', { align: 'center', sc: 0.5 });
       }
       const loaded = G.state.pits.slice(0, n).filter((p) => p && p.qty > 0).length;
-      G.text(g, loaded ? loaded + '/' + n + ' PITS LOADED' : 'NO PITS LOADED - GO TO THE LAB',
-        152, 140, loaded ? P.lime : P.magenta);
+      G.text(g, loaded ? loaded + '/' + n + ' LOADED' : 'NOTHING LOADED - GO BACK',
+        204, 138, loaded ? P.lime : P.magenta, { sc: 0.5 });
+      G.text(g, 'CREW ' + (G.state.crew || []).length + '  ·  RESCUED ' + G.state.spotted,
+        204, 144, P.violetLt, { sc: 0.5 });
 
       G.drawSteam(g);
       G.R(g, 0, 150, G.W, 30, '#0c0d16');
       G.R(g, 0, 150, G.W, 1, P.magenta);
-      G.drawBtn(g, 4, 152, 68, 16, '< LAB', { col: '#3a2a5c' });
+      G.drawBtn(g, 4, 152, 68, 16, '< BACK', { col: '#3a2a5c' });
       G.drawBtn(g, 216, 152, 100, 16, 'OPEN TOMORROW', { col: loaded ? '#2f8a48' : '#5c2030' });
-      if (G.clause) { G.clause.at(240, 22, 166, 4, 286, true); G.clause.draw(g); }
+      if (G.clause) { G.clause.at(258, 22, 166, 4, 286, true); G.clause.draw(g); }
       if (this.flash) {
         g.globalAlpha = (1 - this.flash.t / 0.5) * 0.4;
         G.R(g, 0, 0, G.W, G.H, P.hazard);

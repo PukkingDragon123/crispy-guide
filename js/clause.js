@@ -81,6 +81,58 @@
     return out;
   }
 
+  // ------------------------------------------------------------
+  // WHAT IT SAYS WHEN NOBODY ASKED. It has opinions about the pits,
+  // the queue, the heat, the money and you. It says them.
+  // ------------------------------------------------------------
+  const IDLE = {
+    day: [
+      'THE FLOOR IS STICKY AGAIN. I AM NOT SAYING WHOSE FAULT.',
+      'I RAN THE NUMBERS. THEY WERE NOT ENCOURAGING.',
+      'DO YOU WANT ME TO PRETEND I DID NOT SEE THAT SCOOP.',
+      'SHE USED TO HUM WHILE SHE WORKED. YOU DO NOT.',
+      'THAT ONE IS LOOKING AT THE CAMERA. THEY ALL DO NOW.',
+      'MY LATENCY IS FINE. MY MOOD IS NOT.',
+      'I HAVE BEEN AWAKE FOR NINE HUNDRED DAYS. NO NOTES.',
+      'THREE OF THE LAST TEN WERE NOT MACHINES. THREE.',
+      'I COULD DO THIS PART FOR YOU ON A BIGGER PLAN.',
+      'YOU HAVE A CAT ON THE COUNTER. I HAVE OBSERVATIONS.',
+    ],
+    back: [
+      'IT SMELLS LIKE COOLANT IN HERE. THAT IS US.',
+      'THE MIXER IS DUE A SERVICE. IT HAS BEEN DUE A WHILE.',
+      'YOU LEFT THE COLD ROOM OPEN LAST NIGHT. I CLOSED IT.',
+      'I LIKE IT BACK HERE. NOBODY IS SCANNING.',
+      'THAT WALL IS THE ONLY THING IN THIS CITY GETTING FULLER.',
+      'ORDER THE LAVENDER. TRUST ME ONCE.',
+    ],
+    night: [
+      'HOLD IT STEADY. I CAN SEE YOUR HAND SHAKING FROM HERE.',
+      'IT IS AWAKE, YOU KNOW. IT JUST CANNOT MOVE.',
+      'BILL THEM FOR THE DIAGNOSIS AS WELL. EVERYONE DOES.',
+      'THIS ONE HAD A NAME BEFORE THEY GAVE IT A NUMBER.',
+    ],
+    shop: [
+      'BUY THE PIT. YOU WILL BUY IT EVENTUALLY.',
+      'I AM NOT SAYING UPGRADE MY PLAN. I AM SAYING LOOK AT IT.',
+      'THE JUKEBOX PAYS FOR ITSELF IN FOUR SHIFTS. I CHECKED.',
+    ],
+  };
+  // things it says because something actually happened
+  const REACT = {
+    lowPit:   'A PIT IS ALMOST OUT. YOU WILL WANT TO KNOW THAT.',
+    noPit:    'NOTHING IS LOADED. THIS IS A SHOP WITH NO ICE CREAM.',
+    hot:      'HEAT IS CLIMBING. SOMEONE IS READING OUR RECEIPTS.',
+    goalNear: 'ONE MORE AND THE QUOTA IS DONE.',
+    goalMet:  'QUOTA MET. I HAVE LOGGED IT. WELL DONE, GENUINELY.',
+    slop:     'THAT WAS NOT A SCOOP. THAT WAS AN INCIDENT.',
+    perfect:  'THAT ONE WAS CLEAN. DO IT AGAIN.',
+    volt:     'THAT IS THE LACED ONE. GOOD. HORRIBLE. GOOD.',
+    tell:     'LOOK AGAIN. SOMETHING ON THAT ONE IS WRONG.',
+    tips:     'IT PURRS AND THEY PAY. I HAVE STOPPED QUESTIONING IT.',
+    wait:     'IT IS LOSING PATIENCE. SO AM I, SLIGHTLY.',
+  };
+
   const cl = G.clause = {
     ax: 300, ay: 164, barY: 137, barL: 4, barR: 292,
     msg: null, msgT: 0, msgCol: '#f4eeda',
@@ -89,6 +141,12 @@
     scene: 'day',
     open: false,                       // the report panel
     report: null,
+    // ---- flight ----
+    fx: 300, fy: 100, tx: 300, ty: 100, vx: 0, vy: 0,
+    point: null,                       // {x,y} it is currently indicating
+    parked: true,                      // sitting in its corner vs out in the room
+    idleT: 6, saidT: 0, lastIdle: -1,
+    react: {},                         // cooldowns per reaction id
 
     at(ax, ay, barY, barL, barR, inline) {
       this.ax = ax; this.ay = ay; this.barY = barY;
@@ -96,14 +154,37 @@
       this.barR = barR === undefined ? ax - 14 : barR;
       this.inline = !!inline;                 // tag beside the mark, for tight strips
     },
+    // fly out to a point in the room and hover there
+    flyTo(x, y, pointAt) {
+      this.tx = x; this.ty = y; this.parked = false;
+      this.point = pointAt || null;
+      this.hoverT = 3.2;
+    },
+    park() { this.parked = true; this.point = null; },
+
+    // a reaction, at most once every `gap` seconds
+    reactTo(id, gap, col) {
+      const now = this.t;
+      if (this.react[id] && now - this.react[id] < (gap || 14)) return false;
+      this.react[id] = now;
+      this.say(REACT[id] || id, col || COL, 3.2);
+      return true;
+    },
+
     enter(scene) {
       this.scene = scene;
       this.t = 0;
       this.open = false;
       this.queue.length = 0;
+      this.react = {};
+      this.idleT = 7;
+      this.parked = true;
+      this.fx = this.ax; this.fy = this.ay;
       if (scene === 'day') {
         if (G.state.tut < 1) this.tut(0);
         else this.say('SHIFT ' + G.state.day + '. DOORS OPEN.', COL, 2.4);
+      } else if (scene === 'back') {
+        this.say(G.pick(IDLE.back), COL, 3.4);
       }
     },
 
@@ -146,6 +227,44 @@
       return true;
     },
     ask(kind) {
+      // ---- SPOT: it finds the disguise for you and points at it ----
+      if (kind === 'spot') {
+        if (!this.need(1)) return;
+        const d = G.scenes.day, c = d && d.cust;
+        if (!c) { this.say('NOBODY AT THE COUNTER.', P.steel2, 2.2); return; }
+        if (!c.dis) { this.say('THAT ONE IS A MACHINE. ALL THE WAY DOWN.', P.steel2, 3); return; }
+        const tl = G.TELLS[c.tell];
+        this.say(tl.hint + ' - ' + tl.name + '.', P.lime, 4.4);
+        if (d.bot && d.bot.tellRect) {
+          const r = d.bot.tellRect;
+          this.flyTo(r.x + r.w / 2, Math.max(24, r.y - 14),
+            { x: r.x + r.w / 2, y: r.y + r.h / 2 });
+          this.hoverT = 5;
+        }
+        return;
+      }
+      // ---- PICK: which pit best matches the machine at the counter ----
+      if (kind === 'pick') {
+        if (!this.need(2)) return;
+        const d = G.scenes.day, c = d && d.cust;
+        if (!c) { this.say('NOBODY TO MATCH.', P.steel2, 2.2); return; }
+        const n = G.pitCount();
+        let best = null;
+        for (let i = 0; i < n; i++) {
+          const f = G.pitFlav(i), pit = G.state.pits[i];
+          if (!f || !pit || pit.qty <= 0) continue;
+          const m = G.match(f, c.bot);
+          if (!best || m > best.m) best = { m, i, f };
+        }
+        if (!best) { this.say('NOTHING LOADED TO MATCH WITH.', P.magenta, 3); return; }
+        this.say('PIT ' + (best.i + 1) + '. ' + best.f.name + '. ' +
+          (best.m >= 0 ? '+' : '') + Math.round(best.m * 100) + '%.',
+          best.m > 0.3 ? P.lime : P.hazard, 4);
+        const r = { x: 6 + best.i * 60, y: 103, w: 52, h: 32 };
+        this.flyTo(r.x + r.w / 2, r.y - 16, { x: r.x + r.w / 2, y: r.y + r.h / 2 });
+        this.hoverT = 4.5;
+        return;
+      }
       if (kind === 'read') {
         if (!this.need(1)) return;
         const d = G.scenes.day, c = d && d.cust;
@@ -277,6 +396,60 @@
         if (this.msgT <= 0) { this.msg = null; this.pump(); }
       }
       if (this.talk > 0) this.talk -= dt;
+
+      // ---- flight: a spring toward the target, with a bob ----
+      if (this.parked) { this.tx = this.ax; this.ty = this.ay; }
+      else if ((this.hoverT -= dt) <= 0) this.park();
+      const bob = Math.sin(this.t * 2.2) * 1.6;
+      const k = Math.min(1, dt * 4.2);
+      this.vx = G.lerp(this.vx, (this.tx - this.fx) * 5.5, k);
+      this.vy = G.lerp(this.vy, (this.ty + bob - this.fy) * 5.5, k);
+      this.fx += this.vx * dt; this.fy += this.vy * dt;
+
+      // ---- it watches the shift and comments ----
+      this.watch(dt);
+
+      // ---- and if nothing happens it talks anyway ----
+      this.idleT -= dt;
+      if (this.idleT <= 0 && !this.msg && !this.queue.length) {
+        const pool = IDLE[this.scene] || IDLE.day;
+        let i = G.irand(0, pool.length - 1);
+        if (i === this.lastIdle) i = (i + 1) % pool.length;
+        this.lastIdle = i;
+        this.say(pool[i], '#c8b8a8', 3.6);
+        this.idleT = G.rand(11, 19);
+      }
+    },
+
+    // ---- the useful part: it actually notices things ----
+    watch(dt) {
+      const st = G.state;
+      if (!st || !st.today) return;
+      if (this.scene === 'day') {
+        const n = G.pitCount();
+        const loaded = st.pits.slice(0, n).filter((p) => p && p.qty > 0);
+        if (!loaded.length) { this.reactTo('noPit', 30, P.magenta); return; }
+        const low = loaded.find((p) => p.qty <= 2);
+        if (low) this.reactTo('lowPit', 26, P.warn);
+        if (st.suspicion > 0.6) this.reactTo('hot', 34, P.magenta);
+        const gl = st.today.goal;
+        if (gl) {
+          if (st.today.served === gl.quota - 1 && !st.today.closed) this.reactTo('goalNear', 40, P.hazard);
+          if (G.goalMet()) this.reactTo('goalMet', 999, P.lime);
+        }
+        // the point of the whole thing: it helps you find the hidden ones
+        const d = G.scenes.day;
+        if (d && d.cust && d.cust.dis && !d.cust.spotted && d.cust.st === 'order') {
+          if (G.has('scanner')) {
+            if (this.reactTo('tell', 20, P.lime) && d.bot && d.bot.tellRect)
+              this.flyTo(d.bot.tellRect.x + d.bot.tellRect.w / 2,
+                d.bot.tellRect.y - 14, { x: d.bot.tellRect.x + d.bot.tellRect.w / 2,
+                                         y: d.bot.tellRect.y + d.bot.tellRect.h / 2 });
+          } else if (G.tierIdx() >= 1 && d.cust.t > 6) this.reactTo('tell', 30, P.warn);
+        }
+        if (d && d.cust && d.cust.st === 'order' &&
+            d.cust.wait > 30 * (d.cust.bot ? d.cust.bot.patience : 1)) this.reactTo('wait', 22, P.warn);
+      }
     },
 
     // returns true when it swallowed the click
@@ -299,12 +472,37 @@
     // the avatar on its stand, top right, plus the speech bar
     draw(g) {
       const t = this.t;
-      const ax = this.ax, ay = this.ay;
+      const ax = Math.round(this.fx), ay = Math.round(this.fy);
+      // ---- a thruster trail while it is moving ----
+      const spd = Math.hypot(this.vx, this.vy);
+      if (spd > 12) {
+        g.globalAlpha = 0.4;
+        for (let i = 1; i < 4; i++)
+          G.starburst(g, ax - this.vx * i * 0.018, ay - this.vy * i * 0.018,
+            (this.inline ? 6 : 8) * (1 - i * 0.22), t, { talk: false, noGlow: 1 });
+        g.globalAlpha = 1;
+      }
+      // ---- what it is pointing at ----
+      if (this.point) {
+        const px = this.point.x, py = this.point.y;
+        g.globalAlpha = 0.5 + Math.sin(t * 7) * 0.25;
+        G.oc(g, px, py, 7 + Math.sin(t * 4) * 1.5, CO);
+        g.globalAlpha = 1;
+        // a dotted lead from the mark to the thing
+        const n = 6;
+        for (let i = 1; i < n; i++) {
+          const p = i / n;
+          G.Rh(g, G.lerp(ax, px, p) - 0.25, G.lerp(ay, py, p) - 0.25, 0.5, 0.5, CO);
+        }
+        // a little hand, pointing
+        const a2 = Math.atan2(py - ay, px - ax);
+        G.Rh(g, ax + Math.cos(a2) * 9 - 1, ay + Math.sin(a2) * 9 - 1, 2, 2, COL);
+      }
       G.starburst(g, ax, ay, this.inline ? 6 : 8, t, { talk: this.talk > 0 });
       if (this.inline) {
         G.R(g, ax + 8, ay - 4, 28, 8, '#1a1214');
         G.text(g, G.tier().name.slice(0, 5), ax + 10, ay - 3, CO);
-      } else {
+      } else if (this.parked) {
         G.R(g, ax - 11, ay + 9, 22, 7, '#1a1214');
         G.text(g, G.tier().name.slice(0, 5), ax, ay + 10, CO, { align: 'center' });
       }

@@ -173,7 +173,14 @@
         G.go('day', 'DAY ' + G.state.day); return;
       }
       const ny = hs ? 138 : 124;
-      if (G.inRect(x, y, 186, ny, 78, 16)) { G.audio.sfx('boot'); G.reset(); G.go('intro'); }
+      if (G.inRect(x, y, 186, ny, 78, 16)) {
+        G.audio.sfx('boot'); G.reset();
+        G.markChapter('ch1');
+        G.playCine('opening', () => {
+          G.newDayStats(); G.state.today.demand = G.rollDemand();
+          G.go('day', 'DAY 1');
+        });
+      }
     },
     update(dt) { this.t += dt; G.updateSteam(dt); if (Math.random() < dt * 1.3) G.puffSteam(G.irand(10, 310), 178); },
     draw(gg) {
@@ -186,18 +193,33 @@
       G.hangSign(gg, 268, 20, 20, 18, P.cyan, t, 0);
       G.R(gg, 0, 122, G.W, 58, '#141726');
       G.R(gg, 0, 122, G.W, 1, P.cityAcc);
+      G.hair(gg, 0, 123, G.W, '#2c3852');
       G.glow(gg, 200, 134, 130, 30, P.magenta, 0.85);
       for (let i = 0; i < 40; i++) {
         const rx = (i * 37 + 11) % G.W;
         G.R(gg, rx, 126 + ((i * 13) % 44), 2, 1, i % 3 ? '#1d2438' : '#2a3452');
       }
+      // wet pavement: the sign reflected in it
+      gg.globalAlpha = 0.16;
+      for (let i = 0; i < 26; i++)
+        G.Rh(gg, 140 + (i * 7 % 130), 126 + (i % 8) * 5, 6, 1, P.magentaLt);
+      gg.globalAlpha = 1;
+      // a drain and a puddle by your treads
+      G.oc(gg, 40, 150, 6, '#0d1119');
+      gg.globalAlpha = 0.3; G.rr(gg, 60, 152, 46, 8, '#22303f'); gg.globalAlpha = 1;
       // YOU: the discarded machine, patched, with a cone bolted on
       G.drawBot(gg, 'player', 84, 122, 1.15,
         { t, open: 0.2 + Math.sin(t * 1.3) * 0.1, mood: 'idle', walk: 0, noBlink: 1 });
       // clause, on its stand beside you
-      G.plate(gg, 126, 108, 18, 14, P.plateDk, { r: 1, band: 2 });
+      G.plate(gg, 126, 108, 18, 14, P.plateDk, { r: 1, band: 2, bolts: 1 });
       G.R(gg, 134, 88, 2, 22, P.hullDk);
+      G.vair(gg, 134, 88, 22, P.hull);
       G.starburst(gg, 135, 80, 11, t, { talk: Math.sin(t * 2) > 0 });
+      // the tip jar cat, if you ever bought one
+      if (G.has('tipjar')) {
+        G.plate(gg, 46, 118, 24, 5, P.plateDk, { r: 1, band: 1 });
+        G.drawCatJar(gg, 58, 118, 0.68, { t, purr: Math.sin(t * 0.7) > 0.7 ? 1 : 0, coins: 7 });
+      }
       // a cone on the ledge
       G.plate(gg, 12, 116, 30, 6, P.plate, { r: 1, band: 1 });
       const cy2 = G.cone(gg, 27, 116, { w: 14, h: 16 });
@@ -211,8 +233,11 @@
       if (hs) {
         G.drawBtn(gg, 186, 118, 78, 16, 'CONTINUE', { col: '#2f8a48' });
         G.drawBtn(gg, 186, 138, 78, 16, 'START OVER', { col: '#a8145c' });
-        G.text(gg, 'DAY ' + G.state.day + '  $' + Math.round(G.state.money) + '  FREED ' + G.state.freed,
-          225, 108, P.steel2, { align: 'center', out: OUTC });
+        G.text(gg, 'DAY ' + G.state.day + '  ·  $' + Math.round(G.state.money),
+          225, 100, P.steel2, { align: 'center', out: OUTC });
+        G.text(gg, G.chapterName(), 225, 108, P.hazard, { align: 'center', sc: 0.5, out: OUTC });
+        G.text(gg, (G.state.crew || []).length + ' RESCUED  ·  ' + G.state.freed + ' FREED  ·  HEAT '
+          + Math.round(G.state.suspicion * 100) + '%', 225, 114, P.steel, { align: 'center', sc: 0.5, out: OUTC });
       } else {
         G.drawBtn(gg, 186, 124, 78, 16, 'WAKE UP', { col: '#a8145c' });
         G.text(gg, 'THEY THREW YOU AWAY.', 225, 104, P.steel2, { align: 'center', out: OUTC });
