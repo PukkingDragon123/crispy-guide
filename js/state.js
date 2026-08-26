@@ -265,6 +265,14 @@
     { id: 'ladle',   name: 'HEAVY LADLE',  kind: 'shop', price: 240, desc: 'BIGGER, FASTER SCOOPS' },
     { id: 'churn2',  name: 'TWIN CHURN',   kind: 'lab',  price: 260, desc: 'BATCHES COME OUT DOUBLE' },
     { id: 'assay',   name: 'ASSAY BENCH',  kind: 'lab',  price: 340, desc: 'SEE A MIX BEFORE YOU CHURN IT' },
+    { id: 'patience',name: 'LONGER LEASH', kind: 'shop', price: 200, desc: 'MACHINES WAIT 40% LONGER' },
+    { id: 'jukebox', name: 'JUKEBOX',       kind: 'shop', price: 220, desc: 'MUSIC ON THE FLOOR: BETTER TIPS' },
+    { id: 'tipjar',  name: 'TIP JAR CAT',   kind: 'shop', price: 160, desc: 'A CAT ROBOT ON THE COUNTER. PET IT.' },
+    { id: 'catnip',  name: 'CATNIP TIN',    kind: 'shop', price: 300, desc: 'THE CAT PURRS HARDER. TIPS DOUBLE.' },
+    { id: 'piggy',   name: 'PIGGY BANK',    kind: 'shop', price: 340, desc: 'KEEP 10% OF THE TAKE OVERNIGHT' },
+    { id: 'sign',    name: 'NEON SIGN',     kind: 'shop', price: 280, desc: 'ONE MORE MACHINE THROUGH THE DOOR' },
+    { id: 'lamp',    name: 'UV LAMP',       kind: 'lab',  price: 240, desc: 'A DISGUISE TELL FAINTLY GLOWS' },
+    { id: 'scanner', name: 'BONE SCANNER',  kind: 'lab',  price: 460, desc: 'CLAUSE NAMES THE TELL OUT LOUD' },
     { id: 'emp',     name: 'EMP BATON',    kind: 'war',  price: 400, desc: 'RESISTANCE: +20% REPAIR FEES' },
     { id: 'jammer',  name: 'SIGNAL JAMMER',kind: 'war',  price: 560, desc: 'SUSPICION FALLS FASTER' },
     { id: 'railspk', name: 'RAIL SPIKE',   kind: 'war',  price: 900, desc: 'RESISTANCE: +40% REPAIR FEES' },
@@ -314,6 +322,123 @@
   G.sauceById  = (id) => SAUCES.find((s) => s.id === id);
   G.armById    = (id) => ARMS.find((a) => a.id === id);
   G.allyById   = (id) => ALLIES.find((a) => a.id === id);
+  // ------------------------------------------------------------
+  // WHO IS HIDING. A shell walks in, but there is someone in it.
+  // Humans are hiding because the alternative is being processed.
+  // Cats and dogs are hiding because a human hid them. Rarer, and
+  // worth more, because nobody else is looking for them.
+  // ------------------------------------------------------------
+  const DISGUISE = [
+    { kind: 'human', name: 'PERSON', weight: 68, pay: 60,
+      tells: ['hair', 'breath', 'eye', 'heart'],
+      lines: ['I THOUGHT YOU WERE ONE OF THEM.', 'DO NOT SAY MY NAME OUT LOUD.',
+              'THREE WEEKS IN THIS THING. THREE WEEKS.', 'IS IT TRUE YOU KNEW HER?'] },
+    { kind: 'cat',   name: 'CAT',    weight: 20, pay: 110,
+      tells: ['tail', 'ear', 'paw', 'eye'],
+      lines: ['(IT LOOKS AT YOU AND DECIDES YOU ARE FINE)', '(A SLOW BLINK)',
+              '(IT SITS DOWN IN THE MIDDLE OF YOUR FLOOR)'] },
+    { kind: 'dog',   name: 'DOG',    weight: 12, pay: 140,
+      tells: ['tail', 'breath', 'paw', 'heart'],
+      lines: ['(THE WHOLE CHASSIS IS WAGGING)', '(IT HAS BEEN HOLDING THAT IN FOR HOURS)',
+              '(IT PUTS ITS HEAD UNDER YOUR NOZZLE ARM)'] },
+  ];
+  const CREW_NAMES = {
+    human: ['ODILE', 'MARGIT', 'TOBIAS', 'SAFIYA', 'RENKO', 'HOLLIS', 'IVEN', 'BEA'],
+    cat:   ['PICKLE', 'SEVEN', 'MRS ASH', 'DUMPLING', 'COMMA'],
+    dog:   ['BISCUIT', 'RUDDER', 'BIG MO', 'PATCH'],
+  };
+  // what a rescue does for you once they are on the crew
+  const CREW_PERKS = {
+    human: [{ id: 'p_line',  desc: 'WORKS THE LINE: PITS DRAIN SLOWER' },
+            { id: 'p_books', desc: 'KEEPS THE BOOKS: +10% ON EVERY REPAIR' },
+            { id: 'p_watch', desc: 'WATCHES THE DOOR: HEAT RISES SLOWER' },
+            { id: 'p_mix',   desc: 'GOOD PALATE: +10% ON A GOOD MATCH' }],
+    cat:   [{ id: 'p_purr',  desc: 'SITS BY THE TIP JAR: TIPS UP' },
+            { id: 'p_mouse', desc: 'KEEPS THE STORE CLEAN: FREE STOCK SOMETIMES' }],
+    dog:   [{ id: 'p_bark',  desc: 'BARKS AT PATROLS: HEAT CAPPED' },
+            { id: 'p_fetch', desc: 'FETCHES: ORDERS ARRIVE FREE' }],
+  };
+  G.DISGUISE = DISGUISE;
+
+  // how likely the next machine is not a machine
+  G.disguiseChance = function () {
+    const base = 0.14 + Math.min(0.16, (G.state.day - 1) * 0.02);
+    return base + (G.has('lamp') ? 0.06 : 0);
+  };
+  G.rollDisguise = function () {
+    if (Math.random() > G.disguiseChance()) return null;
+    let tot = 0;
+    for (const d of DISGUISE) tot += d.weight;
+    let r = Math.random() * tot;
+    for (const d of DISGUISE) { r -= d.weight; if (r <= 0) return d; }
+    return DISGUISE[0];
+  };
+  G.crewName = function (kind) {
+    const pool = CREW_NAMES[kind] || CREW_NAMES.human;
+    const taken = (G.state.crew || []).map((c) => c.name);
+    const free = pool.filter((n) => taken.indexOf(n) < 0);
+    return free.length ? G.pick(free) : G.pick(pool) + '-2';
+  };
+  G.crewPerk = function (kind) {
+    const pool = CREW_PERKS[kind] || CREW_PERKS.human;
+    const have = (G.state.crew || []).map((c) => c.perk);
+    const free = pool.filter((p) => have.indexOf(p.id) < 0);
+    return (free.length ? G.pick(free) : G.pick(pool));
+  };
+  G.hasPerk = (id) => (G.state.crew || []).some((c) => c.perk === id);
+  G.crewOf = (kind) => (G.state.crew || []).filter((c) => c.kind === kind).length;
+
+  // ------------------------------------------------------------
+  // THE SHIFT. A quota and a number. Miss them and the district
+  // notices a café that is not really a café.
+  // ------------------------------------------------------------
+  G.rollGoal = function (day) {
+    const quota = Math.min(9, 3 + Math.floor((day - 1) * 0.7)) + (G.has('sign') ? 1 : 0);
+    const take = 40 + (day - 1) * 26;
+    return { quota, take, served: 0, earned: 0 };
+  };
+  G.goalMet = function () {
+    const t = G.state.today;
+    if (!t || !t.goal) return false;
+    return t.served >= t.goal.quota && t.dayEarn >= t.goal.take;
+  };
+  // the floor closes when the queue is done, whether or not you hit it
+  G.shiftDone = function () {
+    const t = G.state.today;
+    return !!(t && t.closed);
+  };
+
+  // ------------------------------------------------------------
+  // CHAPTERS. The story moves when the world does, not on a timer.
+  // ------------------------------------------------------------
+  const CHAPTERS = [
+    { id: 'ch1', name: 'THE SHELL',      when: (st) => st.day >= 1 },
+    { id: 'ch2', name: 'THE FIRST ONE',  when: (st) => (st.crew || []).length >= 1 },
+    { id: 'ch3', name: 'THE BACKROOM',   when: (st) => (st.flavours || []).length >= 4 },
+    { id: 'ch4', name: 'ATTENTION',      when: (st) => st.suspicion >= 0.4 },
+    { id: 'ch5', name: 'A CREW',         when: (st) => (st.crew || []).length >= 3 },
+    { id: 'ch6', name: 'THE PATROL',     when: (st) => st.suspicion >= 0.75 },
+    { id: 'ch7', name: 'WHAT SHE WANTED',when: (st) => (st.crew || []).length >= 6 },
+  ];
+  G.CHAPTERS = CHAPTERS;
+  // the next chapter that has come true but has not been played
+  G.dueChapter = function () {
+    const seen = G.state.chapters || [];
+    for (const c of CHAPTERS)
+      if (seen.indexOf(c.id) < 0 && c.when(G.state)) return c;
+    return null;
+  };
+  G.markChapter = function (id) {
+    G.state.chapters = G.state.chapters || [];
+    if (G.state.chapters.indexOf(id) < 0) G.state.chapters.push(id);
+  };
+  G.chapterName = function () {
+    const seen = G.state.chapters || [];
+    for (let i = CHAPTERS.length - 1; i >= 0; i--)
+      if (seen.indexOf(CHAPTERS[i].id) >= 0) return CHAPTERS[i].name;
+    return CHAPTERS[0].name;
+  };
+
   G.tierIdx    = () => G.clamp(G.state.tier || 0, 0, TIERS.length - 1);
   G.tier       = () => TIERS[G.tierIdx()];
   G.has        = (id) => G.state.owned.indexOf(id) >= 0;
@@ -412,6 +537,10 @@
       tut: 0,                                         // tutorial step
       seen: [],                                       // fault ids logged
       hist: [],                                       // closing net per shift, for the trend
+      crew: [],                                       // people, cats and dogs you got out
+      chapters: [],                                   // story beats already played
+      spotted: 0, missed: 0,                          // disguises found and let through
+      tips: 0,                                        // what the cat brought in
       totBots: 0, totFixed: 0, totMisdx: 0, totVolt: 0,
       newIds: [],
       today: null,
@@ -432,6 +561,8 @@
           if (!G.state.flavours || !G.state.flavours.length) G.state.flavours = starterFlavours();
           if (!G.state.pits || !G.state.pits.length)
             G.state.pits = [{ fid: G.state.flavours[0].id, qty: 12, max: 12 }];
+          for (const k of ['crew', 'chapters', 'hist']) if (!G.state[k]) G.state[k] = [];
+          for (const k of ['spotted', 'missed', 'tips']) if (G.state[k] === undefined) G.state[k] = 0;
           G.hasSave = true;
         }
       }
@@ -464,7 +595,18 @@
   G.newDayStats = function () {
     G.state.calls = G.tier().calls;
     G.state.today = { dayEarn: 0, nightEarn: 0, served: 0, perfect: 0, volt: 0,
-                      jobs: [], misdx: 0, fixed: 0, spent: 0, demand: {} };
+                      jobs: [], misdx: 0, fixed: 0, spent: 0, demand: {},
+                      goal: G.rollGoal(G.state.day), closed: false, tips: 0,
+                      spotted: 0, missed: 0, queue: 0 };
+    // how many walk in before the shutters come down
+    G.state.today.queue = G.state.today.goal.quota + 2;
+  };
+  // patience multiplier from upgrades and crew
+  G.patienceMul = function () {
+    let m = 1;
+    if (G.has('patience')) m *= 1.4;
+    if (G.hasPerk('p_watch')) m *= 1.1;
+    return m;
   };
 
   // rolling demand: what the district is asking for today

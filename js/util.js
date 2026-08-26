@@ -6,8 +6,21 @@
 // ============================================================
 (function () {
   const G = (window.GAME = {});
-  G.W = 320;
-  G.H = 180;
+  // ------------------------------------------------------------
+  // TWO GRIDS.
+  // The canvas raster is 640x360. Everything is authored in a
+  // 320x180 LOGICAL space and drawn through a 2x canvas transform,
+  // so a logical 1 is two hard pixels. That keeps every layout
+  // honest while giving the art a finer grid to work on: pass
+  // half-units (x.5) to the Rh/hair/bevel family below and you land
+  // on a single native pixel. Big flat forms, 1px detailing.
+  // ------------------------------------------------------------
+  G.W = 320;                     // logical width  (author in these)
+  G.H = 180;                     // logical height
+  G.PX = 2;                      // native pixels per logical unit
+  G.WN = 640;                    // native raster width
+  G.HN = 360;                    // native raster height
+  G.HALF = 0.5;                  // one native pixel, in logical units
 
   // ---------- math ----------
   G.clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -176,6 +189,60 @@
     g.fillStyle = c;
     g.fillRect(x + 2, y, w - 4, h); g.fillRect(x + 1, y + 1, w - 2, h - 2); g.fillRect(x, y + 2, w, h - 4);
   };
+  // ---------- half-unit detail (native pixel grid) ----------
+  // No rounding, so x/y/w/h in steps of 0.5 land on exact native
+  // pixels. This is the tier the fine art lives on.
+  G.Rh = function (g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  // a single-native-pixel horizontal / vertical hair
+  G.hair = function (g, x, y, w, c) { g.fillStyle = c; g.fillRect(x, y, w, 0.5); };
+  G.vair = function (g, x, y, h, c) { g.fillStyle = c; g.fillRect(x, y, 0.5, h); };
+  // a two-tone bevel around a box: light top-left, dark bottom-right,
+  // one native pixel each. This alone is most of the "detailed" read.
+  G.bevel = function (g, x, y, w, h, lit, dk) {
+    g.fillStyle = lit; g.fillRect(x, y, w, 0.5); g.fillRect(x, y, 0.5, h);
+    g.fillStyle = dk;  g.fillRect(x, y + h - 0.5, w, 0.5); g.fillRect(x + w - 0.5, y, 0.5, h);
+  };
+  // a recessed panel seam: dark hair with a lit hair under it
+  G.seam = function (g, x, y, w, dk, lit) {
+    g.fillStyle = dk; g.fillRect(x, y, w, 0.5);
+    if (lit) { g.fillStyle = lit; g.fillRect(x, y + 0.5, w, 0.5); }
+  };
+  G.vseam = function (g, x, y, h, dk, lit) {
+    g.fillStyle = dk; g.fillRect(x, y, 0.5, h);
+    if (lit) { g.fillStyle = lit; g.fillRect(x + 0.5, y, 0.5, h); }
+  };
+  // a rivet: one dark native pixel with a lit one above-left
+  G.rivet = function (g, x, y, dk, lit) {
+    g.fillStyle = dk; g.fillRect(x, y, 1, 1);
+    g.fillStyle = lit; g.fillRect(x, y, 0.5, 0.5);
+  };
+  G.rivetRow = function (g, x, y, n, step, dk, lit) {
+    for (let i = 0; i < n; i++) G.rivet(g, x + i * step, y, dk, lit);
+  };
+  // fine speckle over a box, native pixels, stable per position
+  G.grain = function (g, x, y, w, h, col, density, seed) {
+    g.fillStyle = col;
+    seed = seed || 0;
+    for (let j = 0; j < h * 2; j++) {
+      for (let i = 0; i < w * 2; i++) {
+        if (G.hash(i + seed * 13.1, j + seed * 7.7) > 1 - density)
+          g.fillRect(x + i * 0.5, y + j * 0.5, 0.5, 0.5);
+      }
+    }
+  };
+  // a lit corner notch, for machined-looking plate corners
+  G.notch = function (g, x, y, s, col) {
+    g.fillStyle = col;
+    for (let i = 0; i < s * 2; i++) g.fillRect(x + i * 0.5, y + i * 0.5, 0.5, 0.5);
+  };
+  // wear: chipped paint along an edge
+  G.wear = function (g, x, y, w, col, seed, density) {
+    g.fillStyle = col;
+    for (let i = 0; i < w * 2; i++)
+      if (G.hash(i * 1.7 + (seed || 0) * 31.3, 4.2) > 1 - (density === undefined ? 0.34 : density))
+        g.fillRect(x + i * 0.5, y, 0.5, 0.5);
+  };
+
   // 1px line (Bresenham, crisp)
   G.line = function (g, x0, y0, x1, y1, c, thick) {
     x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);

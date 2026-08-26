@@ -90,6 +90,15 @@
       case 'pour': noise(t, 0.14, 0.06, 'lowpass', 600); break;
       case 'grit': osc('square', G.rand(1400, 2400), t, 0.018, 0.03); break;
       case 'grab': osc('square', 240, t, 0.045, 0.06, 340); break;
+      // the cat: a low warm flutter, amplitude-wobbled by two detuned saws
+      case 'purr': for (let i = 0; i < 12; i++) osc('sine', 58 + (i % 2) * 6, t + i * 0.045, 0.055, 0.055, 44);
+        noise(t, 0.5, 0.012, 'lowpass', 300); break;
+      // a shell coming off: a snap, a hiss, then a warm chord
+      case 'reveal': osc('square', 180, t, 0.05, 0.09, 900);
+        noise(t + 0.03, 0.4, 0.07, 'highpass', 1400, 0.8);
+        [60, 64, 67, 72].forEach((n, i) => osc('triangle', N2F(n), t + 0.14 + i * 0.06, 0.36, 0.06)); break;
+      case 'step': noise(t, 0.05, 0.035, 'lowpass', 500); osc('sine', 90, t, 0.04, 0.04, 60); break;
+      case 'shutter': noise(t, 0.35, 0.1, 'lowpass', 700, 1, 200); osc('sawtooth', 140, t, 0.3, 0.05, 40); break;
       case 'bell': osc('triangle', 1320, t, 0.35, 0.09); osc('triangle', 1760, t + 0.02, 0.45, 0.04); break;
       case 'doorbell': osc('triangle', 660, t, 0.3, 0.09); osc('triangle', 494, t + 0.16, 0.4, 0.09);
         noise(t, 0.3, 0.015, 'highpass', 2000); break;

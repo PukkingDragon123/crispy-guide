@@ -52,6 +52,7 @@
     x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
     if (w < 1 || h < 1) return;
     const lit = o.lit || G.shade(c, 0.3), dk = o.dk || G.shade(c, -0.34), dk2 = G.shade(c, -0.58);
+    const hot = G.shade(c, 0.55);
     const r = o.r === undefined ? 2 : o.r;
     G.rr2(g, x - 1, y - 1, w + 2, h + 2, OUT);
     if (r >= 2) G.rr2(g, x, y, w, h, c); else G.R(g, x, y, w, h, c);
@@ -60,11 +61,71 @@
     G.R(g, x + 1, y + h - band - 1, w - 2, band + 1, dk); // bottom shade
     G.R(g, x + 1, y + h - 1, w - 2, 1, dk2);            // contact edge
     if (o.side !== false) G.R(g, x + w - 2, y + 1, 1, h - 2, dk);
-    if (o.spec !== false && w > 5 && h > 4) G.R(g, x + 2, y + 1, Math.max(1, Math.round(w * 0.3)), 1, '#ffffff');
+
+    // ---- the fine tier: single native pixels on the half grid ----
+    if (w > 3 && h > 3) {
+      G.hair(g, x + 1, y, w - 2, hot);                            // hot top edge
+      G.hair(g, x + 1, y + band, w - 2, G.shade(c, -0.16));       // seam under the light band
+      G.vair(g, x + 1, y + 1, h - 2, G.shade(c, 0.16));           // left edge catch
+      G.hair(g, x + 1, y + h - band - 1, w - 2, G.shade(c, -0.5));// seam over the shade band
+    }
+    if (o.grain) G.grain(g, x + 1, y + band, w - 2, Math.max(1, h - band - 2), dk2, 0.09, o.grain);
+    if (o.wear !== false && w > 7 && h > 5) G.wear(g, x + 1, y + h - 1.5, w - 2, dk2, w + h, 0.22);
+    if (o.spec !== false && w > 5 && h > 4) {
+      G.R(g, x + 2, y + 1, Math.max(1, Math.round(w * 0.3)), 1, '#ffffff');
+      G.hair(g, x + 2, y + 0.5, Math.max(1, Math.round(w * 0.42)), '#ffffff');
+    }
     if (o.rivets && w > 10) for (let i = 0; i < 2; i++)
-      G.R(g, x + 2 + i * (w - 6), y + Math.round(h * 0.5), 2, 2, dk2);
+      G.rivet(g, x + 2 + i * (w - 6), y + Math.round(h * 0.5), dk2, hot);
+    // a row of fasteners along the top, the classic "built" read
+    if (o.bolts && w > 14) {
+      const n = Math.max(2, Math.min(9, Math.floor((w - 6) / 4)));
+      for (let i = 0; i < n; i++) G.rivet(g, x + 3 + i * ((w - 7) / (n - 1)), y + band + 1, dk2, hot);
+    }
+    // louvred vent slots, cut into the lower half
+    if (o.vent && w > 12 && h > 9) {
+      const vw = Math.min(w - 8, Math.round(w * 0.5)), vx = x + Math.round((w - vw) / 2);
+      for (let i = 0; i < 3; i++) {
+        const vy = y + h - band - 2 - i * 2;
+        G.Rh(g, vx, vy, vw, 1, dk2);
+        G.hair(g, vx, vy + 1, vw, G.shade(c, 0.2));
+      }
+    }
+    // hazard chevrons, for the heavy chassis
+    if (o.hazard && w > 12) {
+      for (let i = 0; i < Math.floor(w / 4); i++) {
+        G.Rh(g, x + 2 + i * 4, y + h - band - 1.5, 2, 1, i % 2 ? '#12141c' : P.hazard);
+      }
+    }
+    if (o.notch && w > 8 && h > 8) {
+      G.notch(g, x + 1, y + 1, 2, hot);
+      G.notch(g, x + w - 3, y + h - 3, 2, dk2);
+    }
   }
   G.plate = plate;
+
+  // a stencilled unit marking - three tiny bars and a block, reads as
+  // a serial at any size without needing the font
+  function stencil(g, x, y, col) {
+    G.Rh(g, x, y, 1, 0.5, col);
+    G.Rh(g, x + 1.5, y, 0.5, 1.5, col);
+    G.Rh(g, x + 2.5, y, 1, 1.5, col);
+    G.Rh(g, x, y + 1, 1, 0.5, col);
+  }
+  G.stencil = stencil;
+
+  // a cable loom: a slack catenary of two tones
+  function loom(g, x0, y0, x1, y1, sag, col, lit) {
+    const n = Math.max(4, Math.round(Math.abs(x1 - x0) * 2));
+    for (let i = 0; i <= n; i++) {
+      const p = i / n;
+      const px = x0 + (x1 - x0) * p;
+      const py = y0 + (y1 - y0) * p + Math.sin(p * Math.PI) * sag;
+      G.Rh(g, px, py, 0.5, 1, col);
+      if (lit) G.Rh(g, px, py, 0.5, 0.5, lit);
+    }
+  }
+  G.loom = loom;
 
   // a lit strip: the neon accent that says which unit this is
   function accent(g, x, y, w, h, col) { G.R(g, x, y, w, h, col); G.glow(g, x + w / 2, y + h / 2, w, h + 4, col, 0.6); }
@@ -104,6 +165,17 @@
       const c = j < 1 ? P.hullLt : j >= h - 1 ? P.hullDk : P.hull;
       G.R(g, Math.round(cx - rows[j]), y + j, rows[j] * 2, 1, c);
     }
+    // machined bezel: a bright rim hair on the upper left, dark on the
+    // lower right, and a ring of tiny screws on anything big enough
+    for (let j = 0; j < h; j++) {
+      const hw = rows[j];
+      G.Rh(g, cx - hw, y + j, 0.5, 0.5, j < h * 0.5 ? '#e8f0ff' : P.hullDk);
+      G.Rh(g, cx + hw - 0.5, y + j + 0.5, 0.5, 0.5, j < h * 0.5 ? P.hull : '#0f1218');
+    }
+    if (w >= 9) for (let k = 0; k < 4; k++) {
+      const a = Math.PI * 0.25 + k * Math.PI * 0.5;
+      G.Rh(g, cx + Math.cos(a) * (w * 0.42) - 0.25, cy + Math.sin(a) * (h * 0.42) - 0.25, 0.5, 0.5, '#0f1218');
+    }
     const ir = Math.max(2, Math.round(Math.min(w, h) * 0.76));
     const irows = ballRows(ir, ir);
     const ix = cx + (o.lookX || 0) * (w / 2 - ir / 2);
@@ -120,7 +192,24 @@
       const hw = prows ? prows[j] : pw / 2;
       G.R(g, Math.round(ix - hw), Math.round(iy - ph / 2) + j, Math.max(1, Math.round(hw * 2)), 1, '#ffffff');
     }
+    // radial iris texture: fine spokes off the pupil
+    if (ir >= 7) for (let k = 0; k < 8; k++) {
+      const a = k * Math.PI / 4 + 0.4;
+      const r0 = ir * 0.3, r1 = ir * 0.46;
+      for (let rr = r0; rr < r1; rr += 0.5)
+        G.Rh(g, ix + Math.cos(a) * rr - 0.25, iy + Math.sin(a) * rr - 0.25, 0.5, 0.5, G.shade(hue, 0.5));
+    }
     if (w > 6) G.R(g, Math.round(cx - rows[1] * 0.6), y + 1, 1, 1, '#ffffff');
+    // a bounce catch-light at the lower right, one native pixel
+    if (w >= 8) G.Rh(g, cx + w * 0.2, cy + h * 0.24, 0.5, 0.5, G.shade(hue, 0.75));
+    // the scan line crossing the glass
+    if (w >= 10 && !o.noScan) {
+      const sy = y + 1 + ((o.t || 0) * 9 % (h - 2));
+      g.globalAlpha = 0.5;
+      const j = G.clamp(Math.floor(sy - y), 0, h - 1);
+      G.Rh(g, cx - rows[j] + 0.5, sy, rows[j] * 2 - 1, 0.5, '#ffffff');
+      g.globalAlpha = 1;
+    }
     if (!o.noGlow) G.glow(g, cx, cy, w * 0.9, h * 0.9, hue, 0.7);
   };
 
@@ -131,18 +220,33 @@
     const c = b.col, c2 = b.col2, hue = b.hue;
     if (kind === 'tread') {
       const w = Math.round(bw * 1.06), h = u(11);
-      plate(g, cx - w / 2, footY - h, w, h, c2, { r: 2, band: 2 });
-      // road wheels + a moving track
-      const off = Math.floor((walk * 20) % Math.max(2, u(5)));
+      plate(g, cx - w / 2, footY - h, w, h, c2, { r: 2, band: 2, hazard: 1, grain: 3 });
+      // road wheels with hubs, plus a drive sprocket at each end
+      const off = (walk * 20) % Math.max(2, u(5));
       for (let i = 0; i < 5; i++) {
         const wx = cx - w / 2 + u(3) + i * ((w - u(6)) / 4);
         G.R(g, wx - 2, footY - h + u(3), 4, h - u(5), P.plateDk2);
+        G.rivet(g, wx - 0.5, footY - h / 2 - 0.5, '#0b0e14', P.hullLt);
       }
+      for (const s of [-1, 1]) {
+        const sx = cx + s * (w / 2 - u(3));
+        G.fc(g, sx, footY - h / 2, u(3.4), P.plateDk);
+        G.oc(g, sx, footY - h / 2, u(3.4), '#0b0e14');
+        for (let k = 0; k < 6; k++) {
+          const a = walk * 4 * s + k * Math.PI / 3;
+          G.Rh(g, sx + Math.cos(a) * u(3) - 0.5, footY - h / 2 + Math.sin(a) * u(3) - 0.5, 1, 1, P.hullLt);
+        }
+      }
+      // the track: link plates top and bottom, with a lit edge
       for (let k = 0; k < w; k += Math.max(3, u(5))) {
-        G.R(g, cx - w / 2 + ((k + off) % w), footY - h, 2, 2, P.hullDk);
-        G.R(g, cx - w / 2 + ((k + off) % w), footY - 3, 2, 2, P.hullDk);
+        const lx = cx - w / 2 + ((k + off) % w);
+        G.R(g, lx, footY - h, 2, 2, P.hullDk);
+        G.hair(g, lx, footY - h, 2, P.hull);
+        G.R(g, lx, footY - 3, 2, 2, P.hullDk);
+        G.hair(g, lx, footY - 3, 2, P.hull);
       }
       G.R(g, cx - w / 2 + 2, footY - 2, w - 4, 2, P.plateDk2);
+      G.hair(g, cx - w / 2 + 2, footY - 2, w - 4, P.plateDk);
       return { top: footY - h, w };
     }
     if (kind === 'wheel') {
@@ -170,15 +274,29 @@
         G.R(g, cx - hw - 1, footY - h + j, hw * 2 + 2, 1, OUT);
         G.R(g, cx - hw, footY - h + j, hw * 2, 1, j < 2 ? G.shade(c, 0.25) : p > 0.86 ? G.shade(c, -0.4) : c);
         if (j % 5 === 2) G.R(g, cx - hw + 1, footY - h + j, hw * 2 - 2, 1, G.shade(c, -0.2));
+        // pleat lines, fanning out with the flare
+        if (j > 3) for (let k = -3; k <= 3; k++)
+          G.vair(g, cx + k * (hw / 3.4), footY - h + j, 1, G.shade(c, k % 2 ? -0.3 : 0.16));
       }
+      // hem: a dark band with a lit lip, and toes peeking out
+      G.Rh(g, cx - Math.round(w * 0.46), footY - 3, Math.round(w * 0.92), 2, G.shade(c, -0.5));
+      G.hair(g, cx - Math.round(w * 0.46), footY - 3, Math.round(w * 0.92), G.shade(c, 0.2));
       G.R(g, cx - Math.round(w * 0.4), footY - 2, Math.round(w * 0.8), 2, P.plateDk2);
+      for (const s of [-1, 1]) G.Rh(g, cx + s * u(5) - 1.5, footY - 2, 3, 2, P.hull);
       return { top: footY - h, w };
     }
     if (kind === 'plinth') {
       const w = Math.round(bw * 1.0), h = u(9);
-      plate(g, cx - w / 2, footY - h, w, h, P.plateDk, { r: 1, band: 2 });
+      plate(g, cx - w / 2, footY - h, w, h, P.plateDk, { r: 1, band: 2, bolts: 1, grain: 5 });
       G.R(g, cx - w / 2 + 2, footY - h + 2, w - 4, 1, hue);
-      G.R(g, cx - w / 2 - 2, footY - 3, w + 4, 3, P.plate);
+      G.glow(g, cx, footY - h + 2, w, 5, hue, 0.5);
+      // stepped base course with a lit nose
+      plate(g, cx - w / 2 - 2, footY - 4, w + 4, 4, P.plate, { r: 1, band: 1, spec: false });
+      G.hair(g, cx - w / 2 - 2, footY - 4, w + 4, P.chrome);
+      G.Rh(g, cx - w / 2 - 3, footY - 1.5, w + 6, 1.5, '#0b0e14');
+      // fluting
+      for (let i = 0; i < 6; i++)
+        G.vseam(g, cx - w / 2 + 3 + i * ((w - 6) / 5), footY - h + 3, h - 4, '#0b0e14', P.steel);
       return { top: footY - h, w };
     }
     // legs: two piston columns with a stride
@@ -187,9 +305,22 @@
     for (const s of [-1, 1]) {
       const lx = cx + s * Math.round(bw * 0.24) - lw / 2;
       const ly = footY - lh + (s < 0 ? sw : -sw);
+      const kny = ly + Math.round(lh * 0.4);
       plate(g, lx, ly, lw, lh - Math.abs(sw), c2, { r: 1, band: 2, spec: false });
-      G.R(g, lx + 1, ly + Math.round(lh * 0.4), lw - 2, 2, P.plateDk2);   // knee
-      plate(g, lx - 2, footY - 4 + (s < 0 ? sw : -sw), lw + 4, 4, P.plateDk, { r: 1, band: 1, spec: false });
+      // knee: a hinge block with a lit pin and a shin plate below
+      G.R(g, lx - 1, kny, lw + 2, 3, P.plateDk2);
+      G.hair(g, lx - 1, kny, lw + 2, G.shade(c2, 0.3));
+      G.rivet(g, lx + lw / 2 - 0.5, kny + 0.5, '#0b0e14', P.hullLt);
+      G.vseam(g, lx + lw / 2, kny + 3, lh * 0.5, G.shade(c2, -0.5), G.shade(c2, 0.2));
+      // ankle piston
+      G.Rh(g, lx + lw - 1, kny + 3, 1, lh * 0.4, P.hullDk);
+      G.vair(g, lx + lw - 1, kny + 3, lh * 0.4, P.hullLt);
+      // foot: pad, toe cap, tread
+      const fy = footY - 4 + (s < 0 ? sw : -sw);
+      plate(g, lx - 2, fy, lw + 4, 4, P.plateDk, { r: 1, band: 1, spec: false });
+      G.Rh(g, lx - 2, fy + 3, lw + 4, 1, '#0b0e14');
+      for (let i = 0; i < 3; i++) G.Rh(g, lx - 1 + i * ((lw + 2) / 3), fy + 2.5, 1.5, 1, P.hullDk);
+      G.Rh(g, lx + (s > 0 ? lw - 1 : -2), fy - 1, 3, 2, P.hull);
     }
     return { top: footY - lh, w: Math.round(bw * 0.7) };
   }
@@ -221,6 +352,44 @@
     }
   }
 
+  // A chest that reads as machinery: a recessed housing, a louvred
+  // radiator, a live power bar, a serial stencil and warning tags.
+  function chestRig(g, cx, y, w, h, u, b, t) {
+    const c = b.col, hue = b.hue;
+    const pw = Math.round(w * 0.62), ph = Math.round(h * 0.38);
+    const px = cx - pw / 2, py = y + Math.round(h * 0.3);
+    // keyed off the chassis so a dark unit does not read as a hole
+    const hbase = G.mix(c, '#242a38', 0.55);
+    G.R(g, px - 1, py - 1, pw + 2, ph + 2, G.shade(c, -0.66));
+    G.R(g, px, py, pw, ph, hbase);
+    G.bevel(g, px, py, pw, ph, G.shade(hbase, -0.5), G.shade(hbase, 0.4));
+    // radiator fins
+    for (let i = 0; i * 2 < ph - 3; i++) {
+      G.Rh(g, px + 1.5, py + 1.5 + i * 2, pw - 3, 1, G.shade(hbase, -0.3));
+      G.hair(g, px + 1.5, py + 1.5 + i * 2, pw - 3, G.shade(hbase, 0.34));
+    }
+    // the power bar, alive
+    const bw2 = Math.max(2, Math.round((pw - 4) * (0.5 + Math.sin(t * 2.6) * 0.4)));
+    G.R(g, px + 2, py + ph - 3, bw2, 2, hue);
+    G.hair(g, px + 2, py + ph - 3, bw2, G.shade(hue, 0.6));
+    G.glow(g, px + 2 + bw2 / 2, py + ph - 2, bw2 + 4, 5, hue, 0.5);
+    // fasteners around the housing
+    G.rivetRow(g, px - 0.5, py - 0.5, Math.max(2, Math.floor(pw / 5)), 5, '#0b0e14', G.shade(c, 0.5));
+    G.rivetRow(g, px - 0.5, py + ph - 0.5, Math.max(2, Math.floor(pw / 5)), 5, '#0b0e14', G.shade(c, 0.5));
+    // a warning tag and a serial, stencilled
+    G.Rh(g, cx - w / 2 + 2, y + h - u(6), 3, 2, P.hazard);
+    G.Rh(g, cx - w / 2 + 2.5, y + h - u(6) + 0.5, 2, 1, '#12141c');
+    G.stencil(g, cx + w / 2 - 6, y + h - u(6), G.shade(c, -0.55));
+    // side ribs
+    for (let i = 0; i < 3; i++) {
+      G.Rh(g, cx - w / 2 + 1.5, y + h * 0.34 + i * 3, u(3), 1, G.shade(c, -0.44));
+      G.hair(g, cx - w / 2 + 1.5, y + h * 0.34 + i * 3 + 1, u(3), G.shade(c, 0.16));
+      G.Rh(g, cx + w / 2 - u(3) - 1.5, y + h * 0.34 + i * 3, u(3), 1, G.shade(c, -0.44));
+      G.hair(g, cx + w / 2 - u(3) - 1.5, y + h * 0.34 + i * 3 + 1, u(3), G.shade(c, 0.16));
+    }
+  }
+  G.chestRig = chestRig;
+
   function drawTorso(g, kind, cx, baseTop, bw, u, b, t, o) {
     const c = b.col, c2 = b.col2, hue = b.hue;
     let w = bw, h = u(26);
@@ -244,16 +413,30 @@
         G.R(g, cx - hw - 1, y + j, hw * 2 + 2, 1, OUT);
         G.R(g, cx - hw, y + j, hw * 2, 1, j < 3 ? G.shade(c, 0.28) : p > 0.82 ? G.shade(c, -0.4) : c);
       }
-      // hoop bands
+      // hoop bands, each with a lit crown, a shadow and riveted laps
       for (let k = 1; k < 4; k++) {
         const j = Math.round(h * k / 4), p = j / (h - 1);
         const hw = Math.round((w / 2) * (Math.sin(p * Math.PI) * 0.22 + 0.78));
         G.R(g, cx - hw, y + j, hw * 2, 2, G.shade(c, -0.3));
-        G.R(g, cx - hw, y + j, hw * 2, 1, G.shade(c, 0.12));
+        G.hair(g, cx - hw, y + j, hw * 2, G.shade(c, 0.34));
+        G.hair(g, cx - hw, y + j + 2, hw * 2, G.shade(c, -0.55));
+        for (let i = 0; i < 4; i++)
+          G.rivet(g, cx - hw + 1 + i * ((hw * 2 - 3) / 3), y + j + 0.5, G.shade(c, -0.6), G.shade(c, 0.5));
       }
-      // a full-belly gauge
-      G.R(g, cx - u(9), y + Math.round(h * 0.42), u(18), u(7), P.plateDk2);
-      G.R(g, cx - u(8), y + Math.round(h * 0.42) + 1, Math.round(u(16) * (0.55 + Math.sin(t * 1.4) * 0.3)), u(5), hue);
+      // vertical weld seam down the belly
+      G.vseam(g, cx + u(4), y + 2, h - 4, G.shade(c, -0.5), G.shade(c, 0.2));
+      // a full-belly gauge in a machined bezel
+      const gx = cx - u(9), gy = y + Math.round(h * 0.42);
+      G.R(g, gx - 1, gy - 1, u(18) + 2, u(7) + 2, G.shade(c, -0.62));
+      G.R(g, gx, gy, u(18), u(7), '#141824');
+      G.bevel(g, gx, gy, u(18), u(7), '#0a0d14', G.shade(c, 0.4));
+      G.R(g, gx + 1, gy + 1, Math.round(u(16) * (0.55 + Math.sin(t * 1.4) * 0.3)), u(5), hue);
+      G.hair(g, gx + 1, gy + 1, Math.round(u(16) * (0.55 + Math.sin(t * 1.4) * 0.3)), G.shade(hue, 0.6));
+      for (let i = 1; i < 6; i++) G.vair(g, gx + i * (u(18) / 6), gy + 1, u(5), '#0a0d14');
+      // an inspection hatch with a pull ring
+      const hx = cx - u(5);
+      plate(g, hx, y + u(4), u(10), u(7), G.shade(c, 0.06), { r: 1, band: 1, spec: false, bolts: 1 });
+      G.oc(g, hx + u(5), y + u(8), u(2), G.shade(c, -0.6));
     } else if (kind === 'violin') {
       // an hourglass resonator with f-holes and a bridge
       for (let j = 0; j < h; j++) {
@@ -321,22 +504,44 @@
       G.R(g, cx - w / 2 - u(3), y + u(4) + Math.round(h * 0.3), Math.round(w * 0.5), 2, '#5c4420');
       G.R(g, cx - u(6), y + u(4), u(12), 1, hue);
     } else if (kind === 'slab') {
-      plate(g, cx - w / 2, y, w, h, c, { r: 2, band: 4, rivets: 1 });
-      // sloped glacis and a vision slit
+      plate(g, cx - w / 2, y, w, h, c, { r: 2, band: 4, rivets: 1, grain: 7, hazard: 1 });
+      // sloped glacis, with a welded lip where it meets the hull
       for (let j = 0; j < u(7); j++)
         G.R(g, cx - w / 2 + 1 + j, y + j, w - 2 - j * 2, 1, G.shade(c, 0.16 - j * 0.03));
-      G.R(g, cx - u(12), y + u(9), u(24), u(4), P.plateDk2);
-      accent(g, cx - u(11), y + u(10), u(22), 1, hue);
+      G.seam(g, cx - w / 2 + u(7), y + u(7), w - u(14), G.shade(c, -0.55), G.shade(c, 0.24));
+      // riveted armour laps down both flanks
+      for (const sd of [-1, 1]) for (let i = 0; i < 5; i++)
+        G.rivet(g, cx + sd * (w / 2 - 3.5), y + u(9) + i * u(2.6), G.shade(c, -0.62), G.shade(c, 0.5));
+      // the vision block: recessed, with a lit slit and a wiper
+      const vx = cx - u(12), vy = y + u(9);
+      G.R(g, vx - 1, vy - 1, u(24) + 2, u(4) + 2, G.shade(c, -0.66));
+      G.R(g, vx, vy, u(24), u(4), '#12151f');
+      G.bevel(g, vx, vy, u(24), u(4), '#090c12', G.shade(c, 0.34));
+      accent(g, vx + 1, vy + 1, u(22), 1, hue);
+      G.Rh(g, vx + u(20), vy - 1.5, 1, u(6), P.hullDk);
+      // stowage box and two tow hooks
+      plate(g, cx + w / 2 - u(9), y + h - u(9), u(8), u(6), G.shade(c, -0.12),
+        { r: 1, band: 1, spec: false, bolts: 1 });
+      for (const sd of [-1, 1]) {
+        G.Rh(g, cx + sd * (w / 2 - u(4)) - 1, y + h - 3.5, 2, 1, P.hull);
+        G.Rh(g, cx + sd * (w / 2 - u(4)) - 1.5, y + h - 2.5, 3, 1, P.hullDk);
+      }
+      G.stencil(g, cx - w / 2 + 3, y + h - u(6), G.shade(c, -0.6));
     } else {
-      plate(g, cx - w / 2, y, w, h, c, { r: 2, band: 3, rivets: kind === 'boxy' ? 1 : 0 });
-      // chest vent + status light on the plain frames
-      G.R(g, cx - Math.round(w * 0.3), y + Math.round(h * 0.32), Math.round(w * 0.6), Math.round(h * 0.34), P.plateDk2);
-      for (let i = 0; i < 3; i++)
-        G.R(g, cx - Math.round(w * 0.28), y + Math.round(h * 0.34) + i * 3, Math.round(w * 0.56), 1, P.plateDk);
-      G.R(g, cx - Math.round(w * 0.26), y + Math.round(h * 0.36),
-        Math.round(w * 0.52 * (0.5 + Math.sin(t * 2.6) * 0.4)), 2, hue);
+      plate(g, cx - w / 2, y, w, h, c, { r: 2, band: 3, bolts: 1, notch: 1,
+        rivets: kind === 'boxy' ? 1 : 0 });
+      chestRig(g, cx, y, w, h, u, b, t);
       if (o && o.emblem) drawEmblem(g, o.emblem, cx, y + Math.round(h * 0.78), u, hue);
     }
+    // shoulder yoke over every torso: a lit collar with fasteners
+    if (w > u(14)) {
+      plate(g, cx - w / 2 - 1, y - 1, w + 2, Math.max(3, u(4)), G.shade(c, 0.12),
+        { r: 1, band: 1, spec: false, bolts: 1 });
+      G.seam(g, cx - w / 2 + 1.5, y + u(4), w - 3, G.shade(c, -0.5), G.shade(c, 0.2));
+    }
+    // cable looms running out of the collar into the chest
+    if (w > u(12)) for (const s of [-1, 1])
+      G.loom(g, cx + s * (w * 0.3), y + u(3), cx + s * (w * 0.14), y + u(9), u(2), '#1a1f2e', P.hullDk);
     return { y, w, h, top: y };
   }
 
@@ -397,11 +602,11 @@
     const blink = !o.noBlink && Math.sin(t * 1.1 + cx * 0.3) > 0.9975;
     if (single) {
       G.lens(g, cx - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, slit: mood === 'angry',
-        lookX: Math.sin(t * 0.6) * 0.25 });
+        t, lookX: Math.sin(t * 0.6) * 0.25 });
     } else {
       const sp = Math.round(w * 0.23);
       for (const s of [-1, 1]) {
-        G.lens(g, cx + s * sp - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead,
+        G.lens(g, cx + s * sp - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, t,
           slit: mood === 'angry', lookX: mood === 'angry' ? s * -0.3 : Math.sin(t * 0.6) * 0.25,
           lookY: mood === 'sick' ? 0.3 : 0 });
       }
@@ -417,6 +622,20 @@
             G.R(g, bxx + i, yy, 1, 1, G.shade(c, 0.3));
           }
         }
+      }
+    }
+
+    // ---- face plate detail: seams, a serial stencil, a status pip ----
+    if (w >= 12 && h >= 12) {
+      G.seam(g, cx - w / 2 + 1.5, ey + eh + 1.5, w - 3, G.shade(c, -0.5), G.shade(c, 0.2));
+      G.stencil(g, cx - w / 2 + 2, y + h - 4, G.shade(c, -0.55));
+      const pip = Math.sin(t * 3 + cx) > 0 ? hue : G.shade(hue, -0.6);
+      G.Rh(g, cx + w / 2 - 3, y + h - 4, 1, 1, pip);
+      G.Rh(g, cx + w / 2 - 3, y + h - 4, 0.5, 0.5, '#ffffff');
+      // side grilles by the jaw
+      for (let i = 0; i < 3; i++) {
+        G.Rh(g, cx - w / 2 + 1.5, y + h * 0.52 + i * 1.5, 2, 0.5, G.shade(c, -0.55));
+        G.Rh(g, cx + w / 2 - 3.5, y + h * 0.52 + i * 1.5, 2, 0.5, G.shade(c, -0.55));
       }
     }
 
@@ -457,17 +676,48 @@
     const c = b.col2, hue = b.hue;
     const sway = Math.sin(t * 1.6) * u(1);
     const sy = ty + Math.round(th * 0.2);
+    // a limb is a pauldron, an upper section, a hinged elbow with a
+    // piston beside it, and a forearm. Four parts instead of one slab.
     function limb(s, len, wd, col) {
       const x = cx + s * (tw / 2 + wd / 2 - 1);
-      plate(g, x - wd / 2, sy, wd, len, col || c, { r: 1, band: 2, spec: false });
-      G.R(g, x - wd / 2, sy + Math.round(len * 0.45), wd, 2, P.plateDk2);
+      const base = col || c;
+      const el = sy + Math.round(len * 0.45);
+      // shoulder pauldron, overhanging the joint
+      plate(g, x - wd / 2 - 1, sy - 2, wd + 2, Math.max(3, u(5)), G.shade(base, 0.1),
+        { r: 1, band: 2, spec: false, bolts: 1 });
+      // upper arm
+      plate(g, x - wd / 2, sy + u(2), wd, el - sy - u(1), base, { r: 1, band: 2, spec: false });
+      // the elbow: a dark hinge with a lit pin
+      G.R(g, x - wd / 2, el, wd, 2, P.plateDk2);
+      G.Rh(g, x - wd / 2, el, wd, 0.5, G.shade(base, 0.3));
+      G.rivet(g, x - 1, el, '#0d1018', P.hullLt);
+      // forearm
+      plate(g, x - wd / 2 + 0.5, el + 2, Math.max(2, wd - 1), len - (el - sy) - 2, base,
+        { r: 1, band: 2, spec: false });
+      // hydraulic piston running alongside
+      if (wd >= u(5)) {
+        const px = x + s * (wd / 2 - 1);
+        G.Rh(g, px, sy + u(3), 1, el - sy - u(2), P.hullDk);
+        G.vair(g, px, sy + u(3), el - sy - u(2), P.hullLt);
+        G.Rh(g, px - 0.5, el - 1, 2, 2, P.hull);
+      }
       return { x, y: sy + len };
     }
     if (kind === 'heavy') {
       for (const s of [-1, 1]) {
         const e = limb(s, Math.round(th * 0.9) + sway * s, u(9));
-        plate(g, e.x - u(6), e.y - u(2), u(12), u(9), P.plateDk, { r: 2, band: 2 });   // fist
-        G.R(g, e.x - u(4), e.y + u(1), u(8), 1, hue);
+        plate(g, e.x - u(6), e.y - u(2), u(12), u(9), P.plateDk, { r: 2, band: 2, bolts: 1 });
+        // knuckles: four fingers folded over
+        for (let i = 0; i < 4; i++) {
+          const kx = e.x - u(5) + i * u(2.6);
+          G.Rh(g, kx, e.y - u(1), u(2), u(3), P.plate);
+          G.hair(g, kx, e.y - u(1), u(2), P.hullLt);
+          G.vair(g, kx + u(2) - 0.5, e.y - u(1), u(3), '#0d1018');
+        }
+        // a thumb across the front and a lit power line
+        G.Rh(g, e.x + s * u(5), e.y + u(1), u(2), u(4), P.plate);
+        G.R(g, e.x - u(4), e.y + u(5), u(8), 1, hue);
+        G.glow(g, e.x, e.y + u(5), u(12), u(4), hue, 0.5);
       }
     } else if (kind === 'stub') {
       for (const s of [-1, 1]) {
@@ -552,10 +802,25 @@
     const hue = b.hue, c = b.col;
     const top = hd.y, w = hd.w;
     if (kind === 'cannon') {
-      G.R(g, cx + w * 0.3, top - u(3), u(20), u(6), OUT);
-      G.R(g, cx + w * 0.3, top - u(2), u(19), u(4), P.plateDk);
-      G.R(g, cx + w * 0.3, top - u(2), u(19), 1, P.plate);
-      G.R(g, cx + w * 0.3 + u(17), top - u(3), u(4), u(6), P.hullDk);
+      const bx = cx + w * 0.3, by = top - u(2);
+      // mantlet: a bolted collar where the barrel leaves the turret
+      plate(g, bx - u(3), by - u(3), u(6), u(8), P.plate, { r: 1, band: 2, bolts: 1 });
+      // the tube, with a lit crown and a shadowed belly
+      G.R(g, bx, by - 1, u(19), u(6), OUT);
+      G.R(g, bx, by, u(19), u(4), P.plateDk);
+      G.hair(g, bx, by, u(19), P.chrome);
+      G.hair(g, bx, by + 1, u(19), P.plate);
+      G.hair(g, bx, by + u(4) - 0.5, u(19), '#0b0e14');
+      // reinforcing bands
+      for (let i = 0; i < 3; i++) {
+        G.Rh(g, bx + u(4) + i * u(4), by - 0.5, 1.5, u(5), P.plate);
+        G.hair(g, bx + u(4) + i * u(4), by - 0.5, 1.5, P.chrome);
+      }
+      // muzzle brake: two vented blocks and a bore
+      G.R(g, bx + u(16), by - u(1), u(5), u(6), P.hullDk);
+      G.hair(g, bx + u(16), by - u(1), u(5), P.hull);
+      G.Rh(g, bx + u(17.5), by - u(1), 1, u(6), '#0b0e14');
+      G.Rh(g, bx + u(20.5), by + u(1), 1.5, u(2), '#000000');
     } else if (kind === 'apron') {
       const ay = top + hd.h + u(5);
       G.R(g, cx - u(3), ay - u(3), u(6), u(4), '#f8f8f2');            // bib strap
@@ -579,32 +844,49 @@
       G.R(g, cx + 0, top - u(4), u(5), u(3), on ? '#2a6aff' : '#1a2a5c');
       if (on) G.glow(g, cx, top - u(3), u(16), u(9), '#ff3a6a', 1);
     } else if (kind === 'funnel') {
+      const fy = top - u(9);
       for (let j = 0; j < u(9); j++) {
         const hw = Math.round(u(11) * (1 - j / u(11)));
-        G.R(g, cx - hw - 1, top - u(9) + j, hw * 2 + 2, 1, OUT);
-        G.R(g, cx - hw, top - u(9) + j, hw * 2, 1, j < 2 ? P.hullLt : P.hull);
+        G.R(g, cx - hw - 1, fy + j, hw * 2 + 2, 1, OUT);
+        G.R(g, cx - hw, fy + j, hw * 2, 1, j < 2 ? P.hullLt : P.hull);
+        // one lit edge and one shaded edge down the cone
+        G.Rh(g, cx - hw, fy + j, 0.5, 1, P.chrome);
+        G.Rh(g, cx + hw - 0.5, fy + j, 0.5, 1, P.hullDk);
       }
+      // rolled rim at the mouth, with rivets
+      G.Rh(g, cx - u(11), fy - 1.5, u(22), 1.5, P.chrome);
+      G.hair(g, cx - u(11), fy - 1.5, u(22), '#ffffff');
+      for (let i = 0; i < 6; i++) G.rivet(g, cx - u(10) + i * u(4), fy + 0.5, '#0b0e14', P.chrome);
+      // a spot of what it last ate, crusted in the throat
+      G.Rh(g, cx - u(2), fy + u(7), u(4), 1.5, '#c8a86a');
     } else if (kind === 'swirl') {
       // dispenser collar, then three tapering coils and a tip
       G.R(g, cx - u(9), top - u(3), u(18), u(4), OUT);
       G.R(g, cx - u(8), top - u(2), u(16), u(2), P.steel);
       G.R(g, cx - u(8), top - u(2), u(16), 1, P.steel2);
-      const coil = [[u(8), u(4)], [u(6), u(3)], [u(4), u(3)]];
+      // three coils, each a rounded band rather than a flat plate
+      const coil = [[u(8), u(5)], [u(6), u(4)], [u(4), u(3)]];
       let sy = top - u(4);
       for (let i = 0; i < coil.length; i++) {
         const hw = coil[i][0], hh = coil[i][1];
         const off = (i % 2 ? 1 : -1) * u(1);
         for (let j = 0; j < hh; j++) {
           const p = j / Math.max(1, hh - 1);
-          const ww = Math.round(hw * (1 - p * 0.18));
+          // a fat lobe: widest at the middle, tucked at both ends
+          const ww = Math.max(1, Math.round(hw * (0.68 + 0.32 * Math.sin((0.15 + p * 0.8) * Math.PI))));
           G.R(g, cx + off - ww - 1, sy - hh + j, ww * 2 + 2, 1, OUT);
           G.R(g, cx + off - ww, sy - hh + j, ww * 2, 1,
-            j === 0 ? '#fffaea' : p > 0.72 ? '#c8bc98' : '#f2e6c2');
+            p < 0.22 ? '#fffaea' : p > 0.74 ? '#c8bc98' : '#f2e6c2');
+          // the lit crest and the shadow where it laps the coil below
+          G.Rh(g, cx + off - ww, sy - hh + j, 1, 0.5, '#ffffff');
+          if (p > 0.86) G.hair(g, cx + off - ww, sy - hh + j, ww * 2, '#a89870');
         }
-        sy -= hh;
+        sy -= hh - 1;
       }
-      G.R(g, cx - u(1), sy - u(3), u(2), u(3), '#f2e6c2');
-      G.R(g, cx - u(1), sy - u(3), u(2), 1, '#fffaea');
+      // the tip, curled over
+      G.Rh(g, cx - u(1.5), sy - u(3), u(3), u(3), '#f2e6c2');
+      G.Rh(g, cx - u(1.5), sy - u(3), u(2), 1, '#fffaea');
+      G.Rh(g, cx + u(0.5), sy - u(4), u(1.5), u(1.5), '#f2e6c2');
     } else if (kind === 'scroll') {
       G.R(g, cx - 1, top - u(9), 2, u(10), '#4a2f18');
       for (let i = 0; i < 4; i++) G.R(g, cx - u(3) + i * 2, top - u(8), 1, u(4), '#e8dcc0');
@@ -711,9 +993,351 @@
     if (o.shellBits) for (const s of o.shellBits) G.R(g, s.x, s.y, 2, 2, s.col);
     if (o.shellCoat) for (const s of o.shellCoat) G.R(g, s.x, s.y, 2, 2, s.col);
 
-    return { cx, headTop: hd.y, headY: hd.y + hd.h / 2, mouthY: hd.mouthY, gape: hd.gape,
+    // the tell, if this one is not really a machine. Drawn last so it
+    // sits on top of the shell it is escaping from.
+    let tellRect = null;
+    if (o.tell) tellRect = G.drawTell(g, {
+      cx, footY, headTop: hd.y, mouthY: hd.mouthY, torsoY: torso.y,
+      hw: Math.round(Math.max(hd.w / 2, torso.w / 2)),
+    }, o.tell, t, u);
+
+    return { cx, footY, tellRect, headTop: hd.y, headY: hd.y + hd.h / 2, mouthY: hd.mouthY, gape: hd.gape,
              hw: Math.round(Math.max(hd.w / 2, torso.w / 2)), top: Math.min(hd.y - u(12), hd.y),
              torsoY: torso.y, torsoW: torso.w, torsoH: torso.h, hue: b.hue };
+  };
+
+
+  // ============================================================
+  // WHAT IS ACTUALLY IN THERE
+  // Some of the queue is not a machine. A person, or a cat, or a dog,
+  // walking around inside a stolen shell because the alternative is
+  // being processed. They always leak something. Find it, click it,
+  // and the shell comes off.
+  // ============================================================
+  G.TELLS = {
+    tail:   { name: 'A TAIL',            hint: 'SOMETHING IS SWISHING UNDER THE CHASSIS' },
+    hair:   { name: 'HAIR',              hint: 'A STRAND CAUGHT IN THE HEAD SEAM' },
+    ear:    { name: 'AN EAR',            hint: 'THE HEAD PLATE IS BEING PUSHED UP' },
+    breath: { name: 'BREATH',            hint: 'IT IS FOGGING ITS OWN INTAKE' },
+    paw:    { name: 'A PAW',             hint: 'THAT IS NOT A GRIPPER' },
+    eye:    { name: 'A REAL EYE',        hint: 'ONE OPTIC HAS A WET PUPIL' },
+    heart:  { name: 'A HEARTBEAT',       hint: 'THE CHEST PANEL IS TICKING WRONG' },
+  };
+
+  // Draw the tell on a machine and return the rect you have to click.
+  // Everything here is deliberately small: one or two native pixels of
+  // wrongness on a body full of right pixels.
+  G.drawTell = function (g, bot, tell, t, u) {
+    u = u || ((v) => v);
+    const cx = bot.cx;
+    let r = null;
+    if (tell === 'tail') {
+      const y0 = bot.footY - u(3);
+      const sw = Math.sin(t * 2.6) * u(4);
+      const x0 = cx + bot.hw * 0.7;
+      for (let i = 0; i < 12; i++) {
+        const p = i / 11;
+        const px = x0 + p * u(9);
+        const py = y0 - Math.sin(p * 2.1) * u(4) + sw * p * 0.5;
+        G.Rh(g, px, py, 1, 1, p > 0.8 ? '#f0e4d0' : '#4a3a2c');
+        G.hair(g, px, py, 1, p > 0.8 ? '#ffffff' : '#6b5442');
+      }
+      r = { x: x0, y: y0 - u(6), w: u(10), h: u(8) };
+    } else if (tell === 'hair') {
+      const hx = cx - bot.hw * 0.4, hy = bot.headTop + u(1);
+      for (let i = 0; i < 5; i++) {
+        const p = i / 4;
+        G.Rh(g, hx + p * u(4) + Math.sin(t * 3 + i) * 0.5, hy - p * u(4), 0.5, 1, '#6b4a2a');
+        G.Rh(g, hx + p * u(4) + 0.5, hy - p * u(4), 0.5, 0.5, '#a8763c');
+      }
+      r = { x: hx - u(2), y: hy - u(5), w: u(8), h: u(6) };
+    } else if (tell === 'ear') {
+      const ex = cx + bot.hw * 0.5, ey = bot.headTop;
+      const lift = Math.sin(t * 1.4) > 0.6 ? -1 : 0;
+      for (let j = 0; j < u(4); j++) {
+        const hw = u(3) * (1 - j / u(4));
+        G.Rh(g, ex - hw, ey - u(4) + j + lift, hw * 2, 1, '#3a2c22');
+        G.Rh(g, ex - hw + 0.5, ey - u(4) + j + lift, hw, 0.5, '#8a6a4a');
+      }
+      G.Rh(g, ex - u(1), ey - u(2) + lift, u(2), 1, '#d97a8a');
+      r = { x: ex - u(4), y: ey - u(6), w: u(8), h: u(7) };
+    } else if (tell === 'breath') {
+      const mx = cx, my = bot.mouthY + u(2);
+      const ph = (t * 0.7) % 1;
+      g.globalAlpha = 0.5 * (1 - ph);
+      for (let i = 0; i < 4; i++)
+        G.Rh(g, mx - u(3) + i * u(2) + Math.sin(t * 2 + i) * 1, my + u(2) - ph * u(7), 1.5, 1.5, '#dfeaf4');
+      g.globalAlpha = 1;
+      r = { x: mx - u(5), y: my - u(6), w: u(10), h: u(9) };
+    } else if (tell === 'paw') {
+      const px = cx - bot.hw - u(1), py = bot.footY - u(11);
+      G.Rh(g, px, py, u(5), u(4), '#c8b298');
+      G.bevel(g, px, py, u(5), u(4), '#e8dcc8', '#8a7460');
+      for (let i = 0; i < 3; i++) G.Rh(g, px + 0.5 + i * u(1.6), py + u(3.5), 1, 1, '#d99aa8');
+      r = { x: px - u(2), y: py - u(2), w: u(9), h: u(8) };
+    } else if (tell === 'eye') {
+      const ex = cx - bot.hw * 0.42, ey = bot.headTop + u(6);
+      G.fc(g, ex, ey, u(2.4), '#f4ece0');
+      G.fc(g, ex, ey, u(1.5), '#3a2a1c');
+      G.fc(g, ex, ey, u(0.8), '#0b0806');
+      G.Rh(g, ex - u(1), ey - u(1), 1, 1, '#ffffff');
+      G.Rh(g, ex - u(2.5), ey - u(3), u(5), 1, '#2a1c12');
+      r = { x: ex - u(4), y: ey - u(4), w: u(8), h: u(8) };
+    } else {                                            // heart
+      const hx = cx - u(3), hy = bot.torsoY + u(9);
+      const beat = Math.sin(t * 7) > 0.7 ? 1 : 0;
+      G.Rh(g, hx, hy, u(6), u(4), '#1a1f2c');
+      G.Rh(g, hx + 1, hy + 1, u(4), u(2), beat ? '#ff5d84' : '#5c2a3a');
+      if (beat) G.glow(g, hx + u(3), hy + u(2), u(9), u(6), '#ff5d84', 0.7);
+      r = { x: hx - u(2), y: hy - u(2), w: u(10), h: u(8) };
+    }
+    return r;
+  };
+
+  // ---- the creature under the shell ----
+  G.drawCreature = function (g, kind, cx, footY, scale, o) {
+    o = o || {};
+    const S = scale || 1;
+    const u = (v) => Math.max(1, Math.round(v * S));
+    const t = o.t || 0;
+    cx = Math.round(cx); footY = Math.round(footY);
+    g.globalAlpha = 0.32;
+    G.rr(g, cx - u(12), footY - 2, u(24), 4, '#000000');
+    g.globalAlpha = 1;
+
+    if (kind === 'human') {
+      const skin = o.skin || '#c8a184', skinD = G.shade(skin, -0.3), skinL = G.shade(skin, 0.28);
+      const coat = o.coat || '#3a4a5c';
+      const hairc = o.hair || '#3a2a1c';
+      const bob = Math.sin(t * 1.8) * 0.5;
+      // legs and boots
+      for (const sd of [-1, 1]) {
+        G.Rh(g, cx + sd * u(4) - u(2), footY - u(14), u(4), u(14), G.shade(coat, -0.35));
+        G.vair(g, cx + sd * u(4) - u(2), footY - u(14), u(14), G.shade(coat, -0.1));
+        G.Rh(g, cx + sd * u(4) - u(3), footY - u(3), u(6), u(3), '#241c18');
+        G.hair(g, cx + sd * u(4) - u(3), footY - u(3), u(6), '#463830');
+      }
+      // coat body
+      const by = footY - u(32);
+      G.Rh(g, cx - u(9), by, u(18), u(19), coat);
+      G.bevel(g, cx - u(9), by, u(18), u(19), G.shade(coat, 0.3), G.shade(coat, -0.42));
+      G.vseam(g, cx, by + u(3), u(16), G.shade(coat, -0.5), G.shade(coat, 0.2));
+      for (let i = 0; i < 3; i++) G.rivet(g, cx + 1, by + u(6) + i * u(4), '#12141c', G.shade(coat, 0.5));
+      // a collar and lapels
+      G.Rh(g, cx - u(9), by, u(18), u(3), G.shade(coat, 0.16));
+      G.Rh(g, cx - u(5), by + u(2), u(4), u(5), G.shade(coat, -0.3));
+      G.Rh(g, cx + u(1), by + u(2), u(4), u(5), G.shade(coat, -0.3));
+      // arms
+      for (const sd of [-1, 1]) {
+        G.Rh(g, cx + sd * u(10) - u(2), by + u(3), u(4), u(13), G.shade(coat, -0.16));
+        G.Rh(g, cx + sd * u(10) - u(2), by + u(15), u(4), u(4), skin);
+        G.hair(g, cx + sd * u(10) - u(2), by + u(15), u(4), skinL);
+      }
+      // head
+      const hy = by - u(13) + bob;
+      G.Rh(g, cx - u(6), hy, u(12), u(13), skin);
+      G.bevel(g, cx - u(6), hy, u(12), u(13), skinL, skinD);
+      // hair, with a fringe
+      G.Rh(g, cx - u(7), hy - u(2), u(14), u(5), hairc);
+      G.hair(g, cx - u(7), hy - u(2), u(14), G.shade(hairc, 0.4));
+      for (let i = 0; i < 5; i++) G.Rh(g, cx - u(6) + i * u(3), hy + u(2), u(2), u(2), hairc);
+      G.Rh(g, cx - u(8), hy + u(1), u(2), u(7), hairc);
+      G.Rh(g, cx + u(6), hy + u(1), u(2), u(7), hairc);
+      // eyes, nose, mouth
+      for (const sd of [-1, 1]) {
+        G.Rh(g, cx + sd * u(3) - u(1.5), hy + u(6), u(3), u(2), '#f4ece0');
+        G.Rh(g, cx + sd * u(3) - u(0.5), hy + u(6.5), 1, 1, '#2a1c12');
+        G.hair(g, cx + sd * u(3) - u(1.5), hy + u(5), u(3), G.shade(hairc, 0.1));
+      }
+      G.Rh(g, cx - 0.5, hy + u(8), 1, u(2), skinD);
+      G.Rh(g, cx - u(2), hy + u(11), u(4), 1, '#8a4a4a');
+      if (o.smile) { G.Rh(g, cx - u(3), hy + u(10.5), 1, 1, '#8a4a4a'); G.Rh(g, cx + u(2), hy + u(10.5), 1, 1, '#8a4a4a'); }
+      return { headTop: hy - u(2), cx };
+    }
+
+    // ---- cat / dog: a quadruped, side-on, looking at you ----
+    const dog = kind === 'dog';
+    const fur = o.fur || (dog ? '#b8845a' : '#6b6b78');
+    const furL = G.shade(fur, 0.3), furD = G.shade(fur, -0.36);
+    const belly = G.shade(fur, 0.45);
+    const bod = footY - u(15);
+    // legs
+    for (let i = 0; i < 4; i++) {
+      const lx = cx - u(9) + i * u(6) + (i > 1 ? u(2) : 0);
+      const swing = Math.sin(t * 2 + i) * 0.5;
+      G.Rh(g, lx, bod + u(6), u(3), u(9) + swing, furD);
+      G.vair(g, lx, bod + u(6), u(9), fur);
+      G.Rh(g, lx - 0.5, footY - u(2), u(4), u(2), G.shade(fur, -0.5));
+      for (let k = 0; k < 3; k++) G.Rh(g, lx + k * 1.2, footY - 1, 1, 1, '#d99aa8');
+    }
+    // body
+    for (let j = 0; j < u(11); j++) {
+      const p = j / u(11);
+      const hw = u(11) * (0.82 + Math.sin(p * Math.PI) * 0.18);
+      G.Rh(g, cx - hw, bod + j, hw * 2, 1, p < 0.2 ? furL : p > 0.78 ? belly : fur);
+    }
+    G.Rh(g, cx - u(11), bod, u(22), 0.5, G.shade(fur, 0.55));
+    // markings
+    if (!dog) for (let i = 0; i < 4; i++)
+      G.Rh(g, cx - u(7) + i * u(4), bod + u(1), u(2), u(4), furD);
+    else { G.Rh(g, cx - u(4), bod + u(4), u(8), u(6), belly); G.Rh(g, cx + u(3), bod + u(1), u(5), u(4), furD); }
+    // tail
+    const sw = Math.sin(t * 2.4) * u(4);
+    for (let i = 0; i < 14; i++) {
+      const p = i / 13;
+      G.Rh(g, cx + u(10) + p * u(10), bod + u(2) - Math.sin(p * 2.2) * u(7) + sw * p * 0.6,
+        dog ? 1.5 : 1, dog ? 1.5 : 1, p > 0.82 ? belly : fur);
+    }
+    // shoulder mass, so the head grows out of the body
+    const hx = cx - u(8), hy = bod - u(7);
+    G.Rh(g, hx - u(2), hy + u(5), u(10), u(7), fur);
+    G.Rh(g, hx - u(2), hy + u(5), u(10), 0.5, furL);
+    // head, turned to camera
+    G.Rh(g, hx - u(6), hy, u(12), u(11), fur);
+    G.bevel(g, hx - u(6), hy, u(12), u(11), furL, furD);
+    G.Rh(g, hx - u(6), hy, u(12), u(2), furL);            // lit crown
+    // ears: narrow at the tip, wide where they meet the skull
+    if (dog) {
+      for (const sd of [-1, 1]) {
+        G.Rh(g, hx + sd * u(5) - u(1.5), hy + u(1), u(3), u(7), furD);
+        G.hair(g, hx + sd * u(5) - u(1.5), hy + u(1), u(3), fur);
+        G.Rh(g, hx + sd * u(5) - u(1), hy + u(7), u(2), u(2), G.shade(furD, -0.2));
+      }
+    } else {
+      for (const sd of [-1, 1]) {
+        const n = Math.max(3, u(5));
+        for (let j = 0; j < n; j++) {
+          const hw2 = Math.max(0.5, u(2.6) * (j / (n - 1)));
+          G.Rh(g, hx + sd * u(4) - hw2, hy - u(5) + j, hw2 * 2, 1, j < 2 ? furL : fur);
+          G.Rh(g, hx + sd * u(4) - hw2, hy - u(5) + j, 0.5, 1, '#ffffff');
+        }
+        G.Rh(g, hx + sd * u(4) - 0.5, hy - u(2), 1, u(2), '#d99aa8');
+      }
+    }
+    // eyes: big cartoon rounds aimed straight at you
+    for (const sd of [-1, 1]) {
+      const ex = hx + sd * u(3) - u(2), ey = hy + u(3);
+      G.rr2(g, ex - 0.5, ey - 0.5, u(4) + 1, u(4) + 1, '#1a1410');
+      G.rr2(g, ex, ey, u(4), u(4), '#f6f2e4');
+      const ir = Math.max(2, u(2.6));
+      G.rr(g, ex + (u(4) - ir) / 2, ey + (u(4) - ir) / 2, ir, ir, dog ? '#7a4a1c' : '#2f9a62');
+      G.Rh(g, ex + u(1.4), ey + u(1.4), u(1.2), u(1.2), '#0b0806');
+      G.Rh(g, ex + u(0.5), ey + u(0.5), 1, 1, '#ffffff');
+    }
+    // brow tufts
+    for (const sd of [-1, 1]) G.Rh(g, hx + sd * u(3) - u(2), hy + u(2), u(4), 0.5, furD);
+    // muzzle and nose
+    G.Rh(g, hx - u(3), hy + u(7), u(6), u(3.5), belly);
+    G.bevel(g, hx - u(3), hy + u(7), u(6), u(3.5), G.shade(belly, 0.3), G.shade(belly, -0.3));
+    G.Rh(g, hx - u(1.2), hy + u(7), u(2.4), u(1.6), '#2a1c1c');
+    G.Rh(g, hx - u(0.8), hy + u(7.2), u(1), 0.5, '#5a4444');
+    G.Rh(g, hx - u(0.25), hy + u(8.6), 0.5, u(1.4), '#4a3a3a');
+    G.Rh(g, hx - u(1.6), hy + u(10), u(1.4), 0.5, '#4a3a3a');
+    G.Rh(g, hx + u(0.2), hy + u(10), u(1.4), 0.5, '#4a3a3a');
+    // whiskers
+    if (!dog) for (const sd of [-1, 1]) for (let k = 0; k < 3; k++)
+      G.Rh(g, hx + sd * u(3), hy + u(7.5) + k * 1.5, sd * u(5), 0.5, '#e8e0d0');
+    // a collar, because someone kept them
+    G.Rh(g, hx - u(5), hy + u(11), u(10), u(1.5), dog ? '#8a2f42' : '#2f6b8a');
+    G.hair(g, hx - u(5), hy + u(11), u(10), '#ffffff');
+    G.Rh(g, hx - u(0.5), hy + u(12), 1.5, 1.5, '#e0c04a');
+    return { headTop: hy - u(5), cx: hx };
+  };
+
+
+  // ============================================================
+  // THE TIP JAR. A cat-shaped machine somebody left behind. It sits
+  // on the counter, it purrs when you touch it, and the machines put
+  // money in it because they cannot work out why they want to.
+  // ============================================================
+  G.drawCatJar = function (g, cx, baseY, scale, o) {
+    o = o || {};
+    const S = scale || 1;
+    const u = (v) => Math.max(1, Math.round(v * S));
+    const t = o.t || 0;
+    const purr = G.clamp(o.purr || 0, 0, 1);
+    const body = '#c8a24a', bodyL = '#f0d488', bodyD = '#8a6a24';
+    const trim = o.trim || '#3affd0';
+    cx = Math.round(cx); baseY = Math.round(baseY);
+    // it breathes when it is happy
+    const sq = Math.sin(t * (6 + purr * 14)) * purr * 0.6;
+
+    g.globalAlpha = 0.32; G.rr(g, cx - u(9), baseY - 1, u(18), 3, '#000000'); g.globalAlpha = 1;
+
+    // the jar body: a rounded pot with a coin slot
+    const bh = u(15) - sq, bw = u(16) + sq;
+    const by = baseY - bh;
+    for (let j = 0; j < bh; j++) {
+      const p = j / (bh - 1);
+      const hw = (bw / 2) * (0.74 + 0.26 * Math.sin((0.12 + p * 0.86) * Math.PI));
+      G.Rh(g, cx - hw - 0.5, by + j, hw * 2 + 1, 1, '#0b0e14');
+      G.Rh(g, cx - hw, by + j, hw * 2, 1, p < 0.2 ? bodyL : p > 0.8 ? bodyD : body);
+      G.Rh(g, cx - hw, by + j, 0.5, 1, '#fff4c8');
+      G.Rh(g, cx + hw - 0.5, by + j, 0.5, 1, bodyD);
+    }
+    // coins visible through a slot window
+    G.Rh(g, cx - u(4), by + u(7), u(8), u(5), '#2a2418');
+    G.bevel(g, cx - u(4), by + u(7), u(8), u(5), '#12100a', '#e0c878');
+    const lvl = G.clamp((o.coins || 0) / 12, 0, 1);
+    G.Rh(g, cx - u(3.5), by + u(11.5) - u(4) * lvl, u(7), u(4) * lvl, '#e0b83a');
+    G.hair(g, cx - u(3.5), by + u(11.5) - u(4) * lvl, u(7), '#ffe89a');
+    // slot on the crown
+    G.Rh(g, cx - u(3), by - 0.5, u(6), 1.5, '#0b0e14');
+    G.hair(g, cx - u(3), by + 1, u(6), '#fff4c8');
+
+    // head
+    const hh = u(11), hy = by - hh + u(1) + sq * 0.5;
+    G.Rh(g, cx - u(7), hy, u(14), hh, body);
+    G.bevel(g, cx - u(7), hy, u(14), hh, bodyL, bodyD);
+    G.Rh(g, cx - u(7), hy, u(14), u(2), bodyL);
+    // ears, with a lit inner edge
+    for (const sd of [-1, 1]) {
+      const n = Math.max(3, u(5));
+      for (let j = 0; j < n; j++) {
+        const hw = Math.max(0.5, u(2.8) * (j / (n - 1)));
+        G.Rh(g, cx + sd * u(4.6) - hw, hy - u(5) + j, hw * 2, 1, j < 2 ? bodyL : body);
+      }
+      G.Rh(g, cx + sd * u(4.6) - 0.5, hy - u(2), 1, u(2), trim);
+    }
+    // optics: two lit lenses, blinking slowly
+    const shut = Math.sin(t * 0.9) > 0.985 || purr > 0.6;
+    for (const sd of [-1, 1]) {
+      const ex = cx + sd * u(3.2);
+      if (shut) { G.Rh(g, ex - u(2), hy + u(4.5), u(4), 1, G.shade(trim, -0.3)); continue; }
+      G.fc(g, ex, hy + u(4.5), u(2.2), '#0d1a18');
+      G.fc(g, ex, hy + u(4.5), u(1.6), trim);
+      G.Rh(g, ex - 0.5, hy + u(4), 1, 1, '#ffffff');
+      G.glow(g, ex, hy + u(4.5), u(6), u(6), trim, 0.6);
+    }
+    // muzzle, nose, a stitched mouth
+    G.Rh(g, cx - u(2.5), hy + u(7), u(5), u(3), bodyL);
+    G.Rh(g, cx - u(1), hy + u(7), u(2), u(1.5), '#8a3a4a');
+    G.Rh(g, cx - u(2), hy + u(9.5), u(1.6), 0.5, bodyD);
+    G.Rh(g, cx + u(0.4), hy + u(9.5), u(1.6), 0.5, bodyD);
+    // whiskers, which twitch
+    for (const sd of [-1, 1]) for (let k = 0; k < 2; k++)
+      G.Rh(g, cx + sd * u(2.6), hy + u(7.4) + k * 1.5 + Math.sin(t * 4 + k) * purr * 0.5,
+        sd * u(4.5), 0.5, '#fff4c8');
+    // tail, curled round the jar and flicking
+    const fl = Math.sin(t * (2 + purr * 6)) * u(3) * (0.4 + purr);
+    for (let i = 0; i < 16; i++) {
+      const p = i / 15;
+      G.Rh(g, cx + u(8) + Math.sin(p * 2.4) * u(4) + fl * p * 0.4,
+        baseY - u(3) - p * u(12), 1, 1, p > 0.85 ? bodyL : body);
+    }
+    // a little paw resting on the slot
+    G.Rh(g, cx - u(8), by + u(4), u(3), u(3), bodyL);
+    G.bevel(g, cx - u(8), by + u(4), u(3), u(3), '#fff4c8', bodyD);
+    if (purr > 0.2) {
+      // purr rings
+      g.globalAlpha = 0.4 * purr;
+      for (let k = 0; k < 2; k++) {
+        const rr = u(9) + ((t * 12 + k * 5) % u(10));
+        G.oc(g, cx, hy + u(5), rr, trim);
+      }
+      g.globalAlpha = 1;
+    }
+    return { cx, top: hy - u(6), w: u(20), h: baseY - (hy - u(6)) };
   };
 
   // ------------------------------------------------------------

@@ -23,6 +23,7 @@
   const PLATE = { x: 96, y: WORK_Y };             // where the cone gets built
   const CONE_ST = 20, CUP_ST = 48;                // base stands on the shelf
   const RACK_S = 128, RACK_T = 172;               // sauce / topping shelf positions
+  const JAR_X = 76;                               // the tip jar cat's spot on the shelf
   const PERFECT_LO = 0.76, PERFECT_HI = 1.16, SLOP = 1.42;
   const SAUCE_NEED = 12, TOP_NEED = 5;
   const PATIENCE = 42;
@@ -43,8 +44,13 @@
       this.serving = null;
       this.cust = null;
       this.endT = 0;
-      this.total = Math.min(3 + G.state.day, 8);
+      this.total = (G.state.today.queue || 5);
       this.left = this.total;
+      this.jar = { purr: 0, coins: 0, cool: 0, pets: 0 };
+      this.reveal = null;                             // a disguise coming off
+      this.flies = [];
+      for (let i = 0; i < 5; i++) this.flies.push({ x: G.rand(10, 300), y: G.rand(30, 80),
+        a: Math.random() * 6.28, sp: G.rand(10, 22), t: 0 });
       this.spawnT = 0.8;
       this.bot = null;
       this.bag = [];
@@ -75,14 +81,19 @@
       const id = this.bag[this.total - this.left];
       const b = G.botById(id);
       this.left--;
+      // some of them are not machines
+      const dis = G.rollDisguise();
       this.cust = {
         id, bot: b, name: G.pick(b.names),
         order: this.genOrder(b),
         st: 'arrive', t: 0, wait: 0, mood: 'idle', open: 0, slide: 1,
         walk: 0, read: false, shellBits: null, shellCoat: null,
         sauceOn: 0, topOn: 0,
+        dis, tell: dis ? G.pick(dis.tells) : null, spotted: false,
       };
       G.audio.sfx('doorbell');
+      if (dis && G.has('scanner') && G.clause)
+        G.clause.say('SCANNER SAYS LOOK AGAIN. ' + G.TELLS[this.cust.tell].hint, P.lime, 4.4);
     },
 
     // ---------------- geometry ----------------
@@ -105,11 +116,18 @@
 
     // ---------------- input ----------------
     onDown(x, y) {
-      if (this.endT > 0) return;
       if (G.clause && G.clause.onDown(x, y)) return;
 
+      if (this.reveal) { this.reveal.skip = true; return; }
+
       if (y >= 150) {                                  // the tray
-        if (G.inRect(x, y, 4, 152, 40, 16)) { G.audio.sfx('click'); G.go('lab', 'THE LAB'); return; }
+        if (G.inRect(x, y, 4, 152, 40, 16)) {
+          if (!G.state.today.closed) {
+            G.clause && G.clause.say('THE FLOOR IS OPEN. BACK ROOM AFTER CLOSE.', P.warn, 2.8);
+            G.audio.sfx('bad');
+          } else { G.audio.sfx('click'); G.go('back', 'THE BACK ROOM'); }
+          return;
+        }
         if (G.inRect(x, y, 48, 152, 44, 16)) { if (G.clause) G.clause.ask('read'); return; }
         if (G.inRect(x, y, 96, 152, 44, 16)) { if (G.clause) G.clause.ask('trend'); return; }
         if (G.inRect(x, y, 194, 152, 48, 16) && this.canServe()) { G.audio.sfx('click'); this.serve(); return; }
@@ -119,6 +137,17 @@
         }
         return;
       }
+
+      // the tell on a machine that is not a machine
+      const c0 = this.cust;
+      if (c0 && c0.dis && !c0.spotted && this.bot && this.bot.tellRect &&
+          (c0.st === 'order' || c0.st === 'eat')) {
+        const r = this.bot.tellRect;
+        if (G.inRect(x, y, r.x - 3, r.y - 3, r.w + 6, r.h + 6)) { this.spot(); return; }
+      }
+
+      // the tip jar cat, if you bought one
+      if (G.has('tipjar') && G.inRect(x, y, JAR_X - 11, WORK_Y - 30, 22, 34)) { this.pet(); return; }
 
       // cone / cup stands on the back shelf
       if (G.inRect(x, y, CONE_ST - 11, WORK_Y - 26, 22, 30)) { this.take('cone'); return; }
@@ -149,6 +178,53 @@
         if (G.state.tut < 3) G.clause && G.clause.tut(3);
         return;
       }
+    },
+
+    // ---- petting the cat ----
+    pet() {
+      const j = this.jar;
+      j.purr = 1;
+      j.pets++;
+      G.audio.sfx('purr');
+      if (j.cool > 0) { G.floatText('PURR', JAR_X, WORK_Y - 34, P.cyanLt); return; }
+      j.cool = 5.5;
+      const mul = (G.has('catnip') ? 2 : 1) * (G.hasPerk('p_purr') ? 1.5 : 1);
+      const tip = Math.round((2 + G.irand(0, 3) + G.state.day) * mul);
+      j.coins = Math.min(12, j.coins + 1);
+      G.state.today.tips += tip;
+      G.state.today.dayEarn += tip;
+      G.state.tips += tip;
+      G.flyCoin(JAR_X, WORK_Y - 18, tip);
+      G.floatText('+$' + tip + ' TIP', JAR_X, WORK_Y - 38, P.hazard);
+    },
+
+    // ---- pulling a disguise off ----
+    spot() {
+      const c = this.cust;
+      if (!c || !c.dis || c.spotted) return;
+      c.spotted = true;
+      const kind = c.dis.kind;
+      const name = G.crewName(kind);
+      const perk = G.crewPerk(kind);
+      const pay = c.dis.pay + G.state.day * 6;
+      G.state.crew = G.state.crew || [];
+      G.state.crew.push({ kind, name, perk: perk.id, desc: perk.desc, day: G.state.day });
+      G.state.money += pay;
+      G.state.today.dayEarn += pay;
+      G.state.today.spotted++;
+      G.state.spotted++;
+      G.state.suspicion = Math.max(0, G.state.suspicion - 0.05);
+      G.audio.sfx('unlock');
+      G.shake(3, 0.3);
+      G.screenFlash('#ffffff', 0.12);
+      this.reveal = { t: 0, kind, name, perk, pay, line: G.pick(c.dis.lines), skip: false,
+                      bits: [] };
+      // the shell comes apart
+      for (let i = 0; i < 22; i++)
+        this.reveal.bits.push({ x: CUST.x + G.rand(-16, 16), y: G.rand(30, 86),
+          vx: G.rand(-52, 52), vy: G.rand(-90, -20), r: G.rand(1, 3),
+          col: G.pick([c.bot.col, c.bot.col2, P.plateDk, P.hull]), t: 0, life: G.rand(0.7, 1.5) });
+      G.save();
     },
 
     onMove() { /* sweeping is handled in update from the live cursor */ },
@@ -301,7 +377,38 @@
       if (Math.random() < dt * 1.1) G.puffSteam(G.irand(10, 310), 178);
       if (G.clause) G.clause.update(dt);
 
-      if (!this.cust && this.left > 0) {
+      // the cat
+      const j = this.jar;
+      if (j) {
+        j.purr = Math.max(0, j.purr - dt * 0.7);
+        j.cool = Math.max(0, j.cool - dt);
+      }
+      // flies, because this is still a back street
+      for (const f of this.flies) {
+        f.t += dt;
+        f.a += Math.sin(f.t * 3.1) * dt * 4;
+        f.x += Math.cos(f.a) * f.sp * dt;
+        f.y += Math.sin(f.a * 1.4) * f.sp * 0.6 * dt;
+        if (f.x < 6) f.x = 314; if (f.x > 314) f.x = 6;
+        if (f.y < 24) f.y = 84; if (f.y > 86) f.y = 26;
+      }
+
+      // a disguise coming off holds the floor until it is done
+      if (this.reveal) {
+        const r = this.reveal;
+        r.t += dt;
+        for (const b of r.bits) {
+          b.t += dt; b.x += b.vx * dt; b.y += b.vy * dt; b.vy += 260 * dt;
+        }
+        if (r.t > 0.35 && !r.snd) { r.snd = 1; G.audio.sfx('reveal'); }
+        if (r.t > 4.2 || (r.skip && r.t > 0.8)) {
+          this.reveal = null;
+          if (this.cust) { this.cust.st = 'leave'; this.cust.open = 0; }
+        }
+        return;
+      }
+
+      if (!this.cust && this.left > 0 && !G.state.today.closed) {
         this.spawnT -= dt;
         if (this.spawnT <= 0) { this.spawn(); this.spawnT = 1.4; }
       }
@@ -345,7 +452,13 @@
             G.state.today.dayEarn += c.eat.pay;
             G.state.today.served++;
             G.state.totBots++;
-            if (c.eat.volt > 0) {
+            if (c.dis && !c.spotted) {
+              // you fed a person a scoop of iron filings and did not notice
+              G.state.today.missed++;
+              G.state.missed++;
+              G.floatText('SOMETHING WAS WRONG', CUST.x, 30, P.magentaLt);
+              c.st = 'leave'; c.open = 0;
+            } else if (c.eat.volt > 0) {
               c.st = 'glitch'; c.gt = 0;
             } else { c.st = 'leave'; c.open = 0; }
           }
@@ -521,8 +634,16 @@
       }
 
       if (this.left === 0 && !this.cust && !this.serving) {
+        if (!G.state.today.closed) {
+          G.state.today.closed = true;
+          G.audio.sfx('shutter');
+          const met = G.goalMet();
+          G.clause && G.clause.say(met ? 'QUOTA MET. THE BACK ROOM IS YOURS.'
+            : 'SHORT TODAY. THE BACK ROOM IS STILL YOURS.', met ? P.lime : P.warn, 4);
+          if (!met) G.state.suspicion = Math.min(1, G.state.suspicion + 0.06);
+          G.save();
+        }
         this.endT += dt;
-        if (this.endT > 1.4) { G.audio.sfx('night'); G.save(); G.go('night', 'THE WORKSHOP'); }
       }
     },
 
@@ -537,6 +658,51 @@
       G.conduit(g, 0, 2, G.W, false, P.cyan);
       G.hangSign(g, 226, 16, 16, 14, P.magenta, t, 0);
       G.hangSign(g, 246, 16, 14, 12, P.cyan, t, 2);
+
+      // ---- the room it actually is: tiles, pipes, a fan, a notice ----
+      // wall tiling behind the shelf, grouted on the fine grid
+      for (let ty = 30; ty < WORK_Y - 4; ty += 8)
+        for (let tx = 0; tx < 220; tx += 12) {
+          const off = (ty / 8) % 2 ? 6 : 0;
+          G.hair(g, tx + off, ty, 11.5, '#232a3a');
+          G.vair(g, tx + off, ty, 7.5, '#1c2230');
+          if (G.hash(tx, ty) > 0.88) G.grain(g, tx + off + 1, ty + 1, 10, 6, '#2e374a', 0.16, tx + ty);
+        }
+      // a run of pipe along the top of the tiles, with brackets and a drip
+      G.Rh(g, 0, 30, 220, 2.5, '#3a4459');
+      G.hair(g, 0, 30, 220, '#5b6a86');
+      G.hair(g, 0, 32, 220, '#1c2230');
+      for (let bx = 14; bx < 216; bx += 34) {
+        G.Rh(g, bx, 29, 3, 5, '#2a3242');
+        G.rivet(g, bx + 1, 31, '#12141c', '#6b7f96');
+      }
+      const drip = (t * 0.6) % 1;
+      G.Rh(g, 148, 33 + drip * 18, 0.5, 1.5, '#5fbfd8');
+      // extraction fan, turning
+      const fx = 196, fy = 44;
+      G.R(g, fx - 12, fy - 12, 24, 24, '#151a26');
+      G.bevel(g, fx - 12, fy - 12, 24, 24, '#2a3242', '#0b0e14');
+      for (let k = 0; k < 4; k++) {
+        const a = t * 3.4 + k * Math.PI / 2;
+        for (let rr = 2; rr < 10; rr += 0.5)
+          G.Rh(g, fx + Math.cos(a) * rr - 0.5, fy + Math.sin(a) * rr * 0.7 - 0.5, 1.5, 1, '#3f4a60');
+      }
+      G.fc(g, fx, fy, 2, '#6b7f96');
+      for (let i = -1; i < 2; i++) { G.hair(g, fx - 11, fy + i * 7, 22, '#0f131c'); }
+      // a notice board with the day's chapter on it
+      G.plate(g, 108, 36, 62, 26, '#8a7a52', { r: 1, band: 2, spec: false, grain: 2 });
+      G.R(g, 110, 38, 58, 22, '#e8e0c8');
+      G.grain(g, 110, 38, 58, 22, '#cfc4a4', 0.1, 3);
+      G.text(g, G.chapterName().slice(0, 13), 139, 41, '#3a3524', { align: 'center', sc: 0.5 });
+      for (let i = 0; i < 4; i++) G.hair(g, 113, 48 + i * 3, 52 - (i % 2) * 8, '#9a8f70');
+      G.rivet(g, 110, 38, '#5c4a28', '#d8c8a0'); G.rivet(g, 166, 38, '#5c4a28', '#d8c8a0');
+      // hanging cable with a bare bulb over the counter
+      G.Rh(g, 58, 30, 0.5, 12, '#1a1f2c');
+      G.fc(g, 58, 45, 3, '#ffe89a');
+      G.fc(g, 58, 45, 1.5, '#ffffff');
+      G.glow(g, 58, 46, 46, 34, '#ffd47a', 0.55);
+      // grime in the corners
+      G.grain(g, 0, WORK_Y - 14, 220, 12, '#0e1219', 0.1, 9);
       // the café's own sign, tucked left where nothing else lands
       const fl = (Math.sin(t * 13) > 0.94) ? 0.35 : 1;
       G.R(g, 8, 18, 96, 3, fl > 0.5 ? P.magentaLt : P.magentaDk);
@@ -544,14 +710,22 @@
       G.text(g, 'SCOOP  ·  24 HR', 10, 24, fl > 0.5 ? P.cyanLt : P.cyanDk, { out: OUT });
 
       // ===== the machine at the counter =====
-      const c = this.cust;
+      const c = this.reveal ? null : this.cust;
       if (c) {
         const sl = G.easeOut(G.clamp(1 - c.slide, 0, 1));
         const cx = CUST.x + Math.round((1 - sl) * 74);
         this.bot = G.drawBot(g, c.id, cx, CUST.y, CSCALE, {
           t, open: c.open, mood: c.mood, walk: c.walk,
           shellBits: c.shellBits, shellCoat: c.shellCoat,
+          tell: (c.dis && !c.spotted && c.st !== 'arrive') ? c.tell : null,
         });
+        // the UV lamp makes the wrongness faintly visible
+        if (this.bot.tellRect && G.has('lamp')) {
+          const r = this.bot.tellRect;
+          g.globalAlpha = 0.28 + Math.sin(t * 3) * 0.12;
+          G.oc(g, r.x + r.w / 2, r.y + r.h / 2, Math.max(r.w, r.h) / 2 + 2, '#b48ae0');
+          g.globalAlpha = 1;
+        }
         // what it says it wants, in a speech tag over its head
         if (c.st === 'order') this.speech(g, c, cx, this.bot);
         // eating: the cone comes up to the intake
@@ -592,6 +766,15 @@
       G.text(g, 'SAUCE', RACK_S - 6, WORK_Y - 29, P.cyanLt, { out: OUT });
       G.text(g, 'TOPS', RACK_T - 6, WORK_Y - 29, P.cyanLt, { out: OUT });
 
+      // the tip jar cat, sat between the cups and the sauces
+      if (G.has('tipjar')) {
+        G.plate(g, JAR_X - 12, WORK_Y - 4, 24, 5, P.plateDk, { r: 1, band: 1 });
+        G.drawCatJar(g, JAR_X, WORK_Y - 4, 0.92, { t, purr: this.jar.purr, coins: this.jar.coins });
+        if (this.jar.cool <= 0)
+          G.text(g, 'PET', JAR_X, WORK_Y - 36, Math.sin(t * 4) > 0 ? P.hazard : P.cream,
+            { align: 'center', sc: 0.5, out: OUT });
+      }
+
       // ===== the pit deck, sunk in front =====
       G.plate(g, -4, DECK_Y, G.W + 8, DECK_H, P.plate, { r: 2, band: 4 });
       G.R(g, -4, DECK_Y + 1, G.W + 8, 1, P.cyanDk);
@@ -631,12 +814,41 @@
       this.hud(g);
       if (G.clause) { G.clause.at(297, 162, 166, 4, 284); G.clause.draw(g); }
 
+      // ===== a disguise coming off, held on screen =====
+      if (this.reveal) { this.drawReveal(g, t); G.grade(g, 1); return; }
+
+      // ===== the shift is over: a card you can read, not a wall =====
       if (this.endT > 0) {
-        g.globalAlpha = Math.min(0.78, this.endT * 0.6);
-        G.R(g, 0, 0, G.W, G.H, P.cityDk);
+        const a = G.clamp(this.endT * 1.4, 0, 1);
+        g.globalAlpha = a * 0.6;
+        G.R(g, 0, 20, G.W, 128, '#05070c');
         g.globalAlpha = 1;
-        G.text(g, 'SHUTTERS DOWN', 160, 74, P.magentaLt, { align: 'center', out: OUT, sc: 2 });
-        G.text(g, 'NOW GO AND FIX WHAT YOU BROKE', 160, 94, P.cyanLt, { align: 'center', out: OUT });
+        const gl = G.state.today.goal, met = G.goalMet();
+        G.plate(g, 60, 44, 200, 70, '#141a26',
+          { r: 2, band: 2, lit: '#242c3e', dk: '#080b12', spec: false });
+        G.R(g, 62, 46, 196, 1, met ? P.lime : P.magenta);
+        G.text(g, 'SHUTTERS DOWN', 160, 52, P.magentaLt, { align: 'center', out: OUT });
+        // the two lines of the day, scored
+        G.text(g, 'SERVED', 72, 68, P.steel2, { sc: 0.5 });
+        G.text(g, G.state.today.served + ' / ' + gl.quota, 248, 68,
+          G.state.today.served >= gl.quota ? P.lime : P.magenta, { align: 'right', sc: 0.5 });
+        G.text(g, 'TAKE', 72, 76, P.steel2, { sc: 0.5 });
+        G.text(g, '$' + G.state.today.dayEarn + ' / $' + gl.take, 248, 76,
+          G.state.today.dayEarn >= gl.take ? P.lime : P.magenta, { align: 'right', sc: 0.5 });
+        G.text(g, 'TIPS', 72, 84, P.steel2, { sc: 0.5 });
+        G.text(g, '$' + G.state.today.tips, 248, 84, P.hazard, { align: 'right', sc: 0.5 });
+        G.text(g, 'RESCUED', 72, 92, P.steel2, { sc: 0.5 });
+        G.text(g, '' + G.state.today.spotted, 248, 92, G.state.today.spotted ? P.lime : P.steel,
+          { align: 'right', sc: 0.5 });
+        if (G.state.today.missed) {
+          G.text(g, 'LET THROUGH', 72, 100, P.magenta, { sc: 0.5 });
+          G.text(g, '' + G.state.today.missed, 248, 100, P.magenta, { align: 'right', sc: 0.5 });
+        }
+        G.text(g, met ? 'QUOTA MET' : 'SHORT. THEY WILL NOTICE.', 160, 106,
+          met ? P.lime : P.warn, { align: 'center', sc: 0.5 });
+        if (this.endT > 0.7)
+          G.text(g, 'BACK ROOM >', 160, 126, Math.sin(t * 4) > 0 ? P.violetLt : P.violet,
+            { align: 'center', out: OUT });
       }
       G.grade(g, 1);
     },
@@ -859,23 +1071,117 @@
       }
     },
 
+    // ---- the shell comes off and somebody is standing there ----
+    drawReveal(g, t) {
+      const r = this.reveal;
+      const e = G.clamp(r.t / 0.5, 0, 1);
+      // pull focus: darken everything but the middle
+      g.globalAlpha = 0.9 * e;
+      G.R(g, 0, 0, G.W, G.H, '#05070c');
+      g.globalAlpha = 1;
+      // cinematic bars
+      const bh = Math.round(20 * e);
+      G.R(g, 0, 0, G.W, bh, '#04060a');
+      G.R(g, 0, G.H - bh, G.W, bh, '#04060a');
+      G.hair(g, 0, bh, G.W, '#1a2130');
+      G.hair(g, 0, G.H - bh - 0.5, G.W, '#1a2130');
+      // a warm pool of light on the floor
+      G.glow(g, 160, 116, 150, 90, '#d97757', 0.5 * e);
+      G.rr(g, 120, 138, 80, 6, '#12141c');
+
+      // the shell in pieces
+      for (const b of r.bits) {
+        if (b.t > b.life) continue;
+        g.globalAlpha = Math.max(0, 1 - b.t / b.life);
+        G.Rh(g, b.x, b.y, b.r, b.r, b.col);
+        g.globalAlpha = 1;
+      }
+      // whoever it is, rising into the light
+      const rise = G.easeOut(G.clamp((r.t - 0.3) / 0.7, 0, 1));
+      const sc = 1.35 + rise * 0.15;
+      if (r.t > 0.24) G.drawCreature(g, r.kind, 160, 140, sc, { t, smile: r.t > 1.4 });
+      // the name plate
+      if (r.t > 0.9) {
+        const a2 = G.clamp((r.t - 0.9) / 0.35, 0, 1);
+        g.globalAlpha = a2;
+        G.plate(g, 74, 26, 172, 26, '#141018',
+          { r: 2, band: 2, lit: '#241a22', dk: '#0a070c', spec: false });
+        G.R(g, 76, 28, 168, 1, '#d97757');
+        G.text(g, r.name, 160, 31, '#f4eeda', { align: 'center' });
+        G.text(g, r.kind.toUpperCase() + '  ·  RESCUED', 160, 41, '#d97757', { align: 'center', sc: 0.5 });
+        g.globalAlpha = 1;
+      }
+      // what they say, and what they will do for you
+      if (r.t > 1.5) {
+        const a3 = G.clamp((r.t - 1.5) / 0.4, 0, 1);
+        g.globalAlpha = a3;
+        G.plate(g, 30, 146, 260, 26, '#0d1420',
+          { r: 2, band: 1, lit: '#1a2836', dk: '#070a10', spec: false });
+        G.R(g, 32, 148, 256, 1, P.cyanDk);
+        G.text(g, r.line.slice(0, 46), 160, 151, P.cream, { align: 'center', sc: 0.5 });
+        G.text(g, r.perk.desc.slice(0, 44), 160, 160, P.lime, { align: 'center', sc: 0.5 });
+        G.text(g, '+$' + r.pay, 160, 167, P.hazard, { align: 'center', sc: 0.5 });
+        g.globalAlpha = 1;
+      }
+      if (r.t > 2.6) G.text(g, 'TAP', 300, 166, Math.sin(t * 5) > 0 ? P.steel2 : '#2a3140',
+        { align: 'right', sc: 0.5 });
+    },
+
     hud(g) {
       const st = G.state;
+      const gl = st.today.goal || { quota: 0, take: 0 };
+      // ---- money ----
       G.plate(g, 2, 2, 52, 12, P.ink2, { r: 1, band: 1, spec: false });
       G.R(g, 6, 6, 4, 5, P.hazard);
       G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.hazard);
-      G.plate(g, 58, 2, 50, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, 'DAY ' + st.day + ' ' + st.today.served + '/' + this.total, 62, 4, P.cream);
-      // suspicion
-      G.plate(g, 112, 2, 74, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, 'HEAT', 116, 4, P.steel2);
-      G.R(g, 142, 5, 40, 6, '#0d1220');
-      G.R(g, 142, 5, Math.round(40 * st.suspicion), 6, st.suspicion > 0.66 ? P.magenta : st.suspicion > 0.33 ? P.hazard : P.lime);
+      G.bevel(g, 2, 2, 52, 12, '#2a3446', '#070a12');
+
+      // ---- today's goal: a served counter and a take bar, both live ----
+      const qOK = st.today.served >= gl.quota, tOK = st.today.dayEarn >= gl.take;
+      G.plate(g, 58, 2, 128, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.bevel(g, 58, 2, 128, 12, '#2a3446', '#070a12');
+      G.text(g, 'D' + st.day, 61, 4, P.steel2, { sc: 0.5 });
+      G.text(g, 'SHIFT', 61, 9, '#46506b', { sc: 0.5 });
+      // quota pips
+      for (let i = 0; i < gl.quota; i++) {
+        const px = 78 + i * 5;
+        const on = st.today.served > i;
+        G.Rh(g, px, 4, 3.5, 3.5, on ? P.lime : '#20263a');
+        G.bevel(g, px, 4, 3.5, 3.5, on ? '#b6ff9a' : '#2c3348', '#0b0e14');
+      }
+      G.text(g, st.today.served + '/' + gl.quota, 78 + gl.quota * 5 + 2, 3,
+        qOK ? P.lime : P.steel2, { sc: 0.5 });
+      if (st.today.closed) G.text(g, 'CLOSED', 183, 3, P.magentaLt, { sc: 0.5, align: 'right' });
+      // take bar, with the figures beside it rather than over it
+      const tf = G.clamp(st.today.dayEarn / Math.max(1, gl.take), 0, 1);
+      G.R(g, 78, 9, 58, 4, '#0d1220');
+      G.R(g, 78, 9, Math.round(58 * tf), 4, tOK ? P.lime : P.hazard);
+      G.hair(g, 78, 9, Math.round(58 * tf), tOK ? '#dfffcf' : '#ffd8a0');
+      G.text(g, '$' + st.today.dayEarn + '/' + gl.take, 183, 9, tOK ? P.lime : P.steel2,
+        { sc: 0.5, align: 'right' });
+
+      // ---- heat ----
+      G.plate(g, 190, 2, 62, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.bevel(g, 190, 2, 62, 12, '#2a3446', '#070a12');
+      G.text(g, 'HEAT', 193, 4, P.steel2, { sc: 0.5 });
+      G.R(g, 193, 9, 56, 3, '#0d1220');
+      G.R(g, 193, 9, Math.round(56 * st.suspicion), 3,
+        st.suspicion > 0.66 ? P.magenta : st.suspicion > 0.33 ? P.hazard : P.lime);
+      G.text(g, Math.round(st.suspicion * 100) + '%', 249, 4,
+        st.suspicion > 0.66 ? P.magenta : P.steel2, { sc: 0.5, align: 'right' });
+      // ---- crew count, so the rescues feel like a tally ----
+      G.plate(g, 256, 2, 46, 12, P.ink2, { r: 1, band: 1, spec: false });
+      G.bevel(g, 256, 2, 46, 12, '#2a3446', '#070a12');
+      G.text(g, 'CREW ' + (st.crew || []).length, 259, 3, P.violetLt, { sc: 0.5 });
+      G.text(g, '+' + st.spotted, 259, 9, P.lime, { sc: 0.5 });
+      G.text(g, '-' + st.missed, 299, 9, st.missed ? P.magenta : '#46506b',
+        { sc: 0.5, align: 'right' });
 
       // tray
       G.R(g, 0, 150, G.W, 30, '#0c0d16');
       G.R(g, 0, 150, G.W, 1, P.cyanDk);
-      G.drawBtn(g, 4, 152, 40, 16, 'LAB', { col: '#3a2a5c' });
+      G.drawBtn(g, 4, 152, 40, 16, st.today.closed ? 'BACK >' : 'LAB',
+        { col: st.today.closed ? '#2f8a48' : '#2a2434' });
       const tier = G.tierIdx();
       G.drawBtn(g, 48, 152, 44, 16, 'READ', { col: tier >= 1 && G.state.calls > 0 ? '#2a5c6b' : '#20242e' });
       G.drawBtn(g, 96, 152, 44, 16, 'TREND', { col: tier >= 2 && G.state.calls > 0 ? '#2a5c6b' : '#20242e' });

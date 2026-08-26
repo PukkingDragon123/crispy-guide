@@ -12,12 +12,14 @@
   g.imageSmoothingEnabled = false;
 
   // ---------- fit ----------
+  // The raster is 640x360; snap the upscale to whole native pixels so
+  // the fine detail tier never lands between two screen pixels.
   function fit() {
     const ww = window.innerWidth, wh = window.innerHeight - 6;
-    let s = Math.min(ww / G.W, wh / G.H);
+    let s = Math.min(ww / G.WN, wh / G.HN);
     if (s >= 1) s = Math.floor(s * 2) / 2;
-    canvas.style.width = Math.round(G.W * s) + 'px';
-    canvas.style.height = Math.round(G.H * s) + 'px';
+    canvas.style.width = Math.round(G.WN * s) + 'px';
+    canvas.style.height = Math.round(G.HN * s) + 'px';
   }
   window.addEventListener('resize', fit);
   fit();
@@ -82,8 +84,10 @@
 
   // ---------- transition ----------
   const ov = document.createElement('canvas');
-  ov.width = G.W; ov.height = G.H;
+  ov.width = G.WN; ov.height = G.HN;
   const og = ov.getContext('2d');
+  og.imageSmoothingEnabled = false;
+  og.setTransform(G.PX, 0, 0, G.PX, 0, 0);       // same logical space as the main target
   const trans = { phase: 'none', t: 0, next: null, label: null, hold: 0 };
   const MAXR = Math.hypot(G.W / 2, G.H / 2) + 10;
 
@@ -126,23 +130,32 @@
       G.fc(og, G.W / 2, G.H / 2, r, '#000');
       og.restore();
     }
-    gg.drawImage(ov, 0, 0);
+    gg.drawImage(ov, 0, 0, G.W, G.H);
     if (trans.phase === 'label' && trans.label) {
       const a = Math.min(1, trans.hold * 4);
       gg.globalAlpha = a;
       const work = /WORKSHOP|BOOKS|ARMOURY/.test(trans.label);
-      const lab = /LAB/.test(trans.label);
+      const room = /BACK ROOM|LAB/.test(trans.label);
+      const cx = G.W / 2;
       if (work) {
-        G.starburst(gg, G.W / 2, G.H / 2 - 26, 11, trans.hold * 2, { talk: 1, noGlow: 1 });
-      } else if (lab) {
-        G.plate(gg, G.W / 2 - 14, G.H / 2 - 36, 28, 22, '#2a2f42', { r: 2, band: 2 });
-        G.R(gg, G.W / 2 - 10, G.H / 2 - 32, 20, 6, P.violetLt);
+        G.starburst(gg, cx, G.H / 2 - 26, 11, trans.hold * 2, { talk: 1, noGlow: 1 });
+      } else if (room) {
+        // a door standing open, with light behind it
+        G.plate(gg, cx - 15, G.H / 2 - 42, 30, 30, '#39465c', { r: 2, band: 2, bolts: 1 });
+        G.R(gg, cx - 11, G.H / 2 - 38, 22, 22, '#0e1620');
+        gg.globalAlpha = a * 0.55;
+        G.R(gg, cx - 9, G.H / 2 - 36, 18, 18, '#ffd47a');
+        gg.globalAlpha = a;
+        G.Rh(gg, cx + 8, G.H / 2 - 30, 3, 8, P.chrome);
       } else {
         const f = G.pitFlav(0) || (G.state.flavours && G.state.flavours[0]);
-        if (f) G.gooScoop(gg, G.W / 2, G.H / 2 - 24, 10, f, {});
+        if (f) G.gooScoop(gg, cx, G.H / 2 - 24, 10, f, {});
       }
-      G.text(gg, trans.label, G.W / 2, G.H / 2 - 2,
-        work ? P.cyanLt : lab ? P.violetLt : P.hazard, { align: 'center', out: P.ink, sc: 1 });
+      G.text(gg, trans.label, cx, G.H / 2 - 2,
+        work ? P.cyanLt : room ? P.violetLt : P.hazard, { align: 'center', out: P.ink });
+      // the chapter, underneath, so the story is always visible
+      if (G.state && G.state.chapters)
+        G.text(gg, G.chapterName(), cx, G.H / 2 + 10, '#5a6480', { align: 'center', sc: 0.5 });
       gg.globalAlpha = 1;
     }
   }
@@ -314,7 +327,8 @@
     G.audio.tick();
 
     G.hideCursor = false;
-    g.setTransform(1, 0, 0, 1, 0, 0);
+    // everything downstream authors in logical units on a 2x raster
+    g.setTransform(G.PX, 0, 0, G.PX, 0, 0);
     g.fillStyle = '#050908';
     g.fillRect(0, 0, G.W, G.H);
     if (G.scene && G.scene.draw) G.scene.draw(g);
