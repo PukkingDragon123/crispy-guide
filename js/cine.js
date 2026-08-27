@@ -59,6 +59,140 @@
     g.globalAlpha = a; G.rr(g, cx - w / 2, y, w, 6, col); g.globalAlpha = 1;
   }
 
+  // ------------------------------------------------------------
+  // the good years, and the nine days that ended them
+  // ------------------------------------------------------------
+  function sunSky(g, t, warm) {
+    for (let j = 0; j < G.H; j++) {
+      const p = j / G.H;
+      G.Rh(g, 0, j, G.W, 1, G.mix(warm ? '#5fc8e8' : '#2a3550',
+        warm ? '#ffe0a8' : '#6b5570', Math.pow(p, 0.7)));
+    }
+    G.fc(g, 250, 34, 13, '#fff6d0');
+    G.glow(g, 250, 34, 150, 110, '#ffe08a', 0.7);
+    for (let i = 0; i < 5; i++) {                      // gulls
+      const gx = ((t * 9 + i * 71) % 380) - 30, gy = 20 + (i % 3) * 11 + Math.sin(t + i) * 2;
+      const fl = Math.sin(t * 4 + i * 2) * 2;
+      G.Rh(g, gx, gy, 3, 1, '#f6f2e4');
+      G.Rh(g, gx - 3, gy - fl, 3, 1, '#f6f2e4');
+      G.Rh(g, gx + 3, gy + fl, 3, 1, '#f6f2e4');
+    }
+    // fat summer clouds
+    for (let i = 0; i < 4; i++) {
+      const cx2 = ((t * 3 + i * 97) % 400) - 40, cy2 = 26 + (i % 2) * 16;
+      for (let k = 0; k < 4; k++)
+        G.fe(g, cx2 + k * 9, cy2 + Math.sin(k) * 2, 9 - k, 5 - k * 0.6, '#fffaf0');
+    }
+  }
+  function sea(g, y, t, col, lit) {
+    G.R(g, 0, y, G.W, G.H - y, col);
+    for (let j = 0; j < 26; j += 2) {
+      const yy = y + j;
+      for (let i = 0; i < 9; i++) {
+        const sx = ((G.hash(j, i) * 340) + Math.sin(t * 0.8 + j * 0.4 + i) * 9) % 340 - 10;
+        G.Rh(g, sx, yy, 3 + (j % 3), 1, j < 8 ? lit : G.shade(col, 0.24));
+      }
+    }
+  }
+  function promenade(g, y, col, rail) {
+    G.R(g, 0, y, G.W, G.H - y, col);
+    G.hair(g, 0, y, G.W, G.shade(col, 0.4));
+    for (let x = -6; x < 330; x += 22) {              // paving joints
+      G.vseam(g, x, y + 2, G.H - y - 2, G.shade(col, -0.34), G.shade(col, 0.2));
+    }
+    if (rail !== false) {
+      G.R(g, 0, y - 15, G.W, 2, '#e8e0d0');
+      G.hair(g, 0, y - 15, G.W, '#ffffff');
+      for (let x = 4; x < 330; x += 20) {
+        G.R(g, x, y - 15, 2, 15, '#d8d0c0');
+        G.vair(g, x, y - 15, 15, '#ffffff');
+      }
+      G.R(g, 0, y - 8, G.W, 1, '#c8c0b0');
+    }
+  }
+  // a crowd, in silhouette, at whatever distance. run > 0 puts them all
+  // in a stride, which is the difference between a queue and a rout.
+  function crowd(g, y, n, t, col, x0, x1, sc, run) {
+    for (let i = 0; i < n; i++) {
+      const s = G.hash(i * 2.7, 5.3);
+      const x = x0 + s * (x1 - x0);
+      const h = (12 + s * 8) * (sc || 1);
+      const ph = t * (run ? 5 + s * 2 : 1.6) + i * 1.7;
+      const bob = Math.sin(ph * 2) * (run ? 1.2 : 0.6);
+      const sw = Math.sin(ph);
+      const dir = run ? (s > 0.5 ? 1 : -1) : 0;
+      G.fe(g, x + dir * h * 0.06, y - h - 1 + bob, h * 0.19, h * 0.2, col);
+      G.R(g, x - h * 0.15, y - h * 0.84 + bob, h * 0.3, h * 0.46, col);   // torso
+      // arms, thrown forward and back when they are running
+      G.R(g, x - h * 0.28 + dir * sw * h * 0.16, y - h * 0.78 + bob, h * 0.12, h * 0.3, col);
+      G.R(g, x + h * 0.16 - dir * sw * h * 0.16, y - h * 0.78 + bob, h * 0.12, h * 0.3, col);
+      // legs, striding
+      for (const sd of [-1, 1]) {
+        const st = sd * sw * (run ? h * 0.2 : 0);
+        for (let j = 0; j < Math.max(2, h * 0.4); j++) {
+          const q = j / Math.max(1, h * 0.4);
+          G.R(g, x - h * 0.14 + (sd > 0 ? h * 0.12 : 0) + st * q, y - h * 0.4 + bob + j,
+            Math.max(1, h * 0.11), 1, col);
+        }
+      }
+    }
+  }
+  // a siege silhouette, drawn as a shape rather than a rig, so it can be
+  // three hundred feet tall without falling apart
+  function mech(g, x, footY, h, col, t, glowCol) {
+    const w = h * 0.62;
+    G.R(g, x - w * 0.24, footY - h * 0.42, w * 0.16, h * 0.42, col);   // legs
+    G.R(g, x + w * 0.08, footY - h * 0.42, w * 0.16, h * 0.42, col);
+    G.R(g, x - w * 0.3, footY - 2, w * 0.24, 3, col);
+    G.R(g, x + w * 0.06, footY - 2, w * 0.24, 3, col);
+    G.R(g, x - w * 0.5, footY - h * 0.86, w, h * 0.46, col);           // hull
+    G.R(g, x - w * 0.62, footY - h * 0.82, w * 0.16, h * 0.3, col);    // shoulders
+    G.R(g, x + w * 0.46, footY - h * 0.82, w * 0.16, h * 0.3, col);
+    G.R(g, x - w * 0.24, footY - h, w * 0.48, h * 0.2, col);           // head
+    G.R(g, x + w * 0.2, footY - h * 0.76, w * 0.62, h * 0.09, col);    // gun
+    if (glowCol) {
+      G.Rh(g, x - w * 0.14, footY - h * 0.94, w * 0.28, h * 0.05, glowCol);
+      G.glow(g, x, footY - h * 0.92, w * 1.1, h * 0.2, glowCol, 0.55);
+    }
+  }
+  // a burning sky: cloud banks lit from below, tracer, and the flash
+  function warSky(g, t, p) {
+    for (let j = 0; j < 130; j++) {
+      const q = j / 130;
+      G.Rh(g, 0, j, G.W, 1, G.mix('#1a0e14', '#7a2418', Math.pow(q, 0.8)));
+    }
+    for (let i = 0; i < 7; i++) {                     // cloud banks, underlit
+      const cy2 = 16 + i * 13, cw = 60 + G.hash(i, 3) * 120;
+      const cx2 = ((G.hash(i, 7) * 340) + t * (2 + i * 0.4)) % 400 - 40;
+      const cc = G.mix('#2a1620', '#c85030', 1 - i / 8);
+      G.fe(g, cx2, cy2, cw * 0.5, 7, G.mix(cc, '#0f0810', 0.45));
+      G.fe(g, cx2, cy2 + 3, cw * 0.42, 4, cc);
+      G.hair(g, cx2 - cw * 0.3, cy2 + 6, cw * 0.6, G.mix(cc, '#ffb060', 0.5));
+    }
+    for (let i = 0; i < 4; i++) {                     // searchlights
+      const a = -1.3 + Math.sin(t * 0.35 + i * 1.7) * 0.5;
+      const bx2 = 30 + i * 82;
+      for (let r = 0; r < 150; r += 3) {
+        g.globalAlpha = 0.11 * (1 - r / 150);
+        G.Rh(g, bx2 + Math.cos(a) * r - r * 0.03, 126 + Math.sin(a) * r, 2 + r * 0.06, 3, '#cfe4ff');
+        g.globalAlpha = 1;
+      }
+    }
+    for (let i = 0; i < 14; i++) {                    // tracer, arcing
+      const q = ((t * 0.7 + i * 0.37) % 1);
+      const tx = 20 + i * 23 + q * 46, ty = 140 - q * 118 + q * q * 44;
+      G.Rh(g, tx, ty, 1.5, 3, i % 3 ? '#ffd47a' : '#ff9a5a');
+      G.Rh(g, tx, ty + 3, 1, 4, '#c8602a');
+    }
+    // the shell flash
+    const fl = Math.max(0, Math.sin(t * 1.9 + p * 3));
+    if (fl > 0.86) {
+      g.globalAlpha = (fl - 0.86) * 5;
+      G.R(g, 0, 0, G.W, G.H, '#ffd9a0');
+      g.globalAlpha = 1;
+    }
+  }
+
   // Tracy, drawn small for the cutscenes. Her sprite lives in her own
   // scene; this is the version that fits in a shot.
   function tracy(g, x, footY, sc, t, o) {
@@ -109,148 +243,277 @@
   // p is 0..1 through the shot; tt is absolute time for animation.
   // ------------------------------------------------------------
   const CUT = {
-    // ---------------- the opening ----------------
+    // ---------------- the opening: the summer, and the nine days ----------------
     opening: [
-      { t: 4.2, who: null, say: 'THE MACHINES DID NOT ARRIVE. THEY WERE DELIVERED.',
-        cam: { z: [1, 1.1], y: [4, -2], sh: [0.06, 0.02] },
+      { t: 4.6, who: null, say: 'THERE WAS A SUMMER. THERE WAS A WHOLE SUMMER OF IT.',
+        cam: { z: [1.14, 1.02], y: [96, 90], sh: [0.05, 0.01] },
         paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0a1020');
-          G.glow(g, 160, 40, 320, 120, '#1d2c4a', 1);
-          skyline(g, 150, 96, 1, '#111826', '#3a4a6b');
-          skyline(g, 168, 62, 9, '#0b1120', '#243252');
-          rain(g, tt, 60, '#2a3a55', 0, 320);
-          // three patrol lights crossing the sky
-          for (let i = 0; i < 3; i++) {
-            const lx = ((tt * 26 + i * 120) % 380) - 30;
-            G.Rh(g, lx, 30 + i * 9, 5, 1.5, '#7fd8ff');
-            G.glow(g, lx, 30 + i * 9, 26, 10, '#3a9ad8', 0.6);
+          sunSky(g, tt, 1);
+          sea(g, 96, tt, '#2f8ab0', '#bfeaff');
+          promenade(g, 122, '#d8c8a8');
+          // the stand, under a striped awning
+          G.R(g, 96, 78, 128, 30, '#f6f0e4');
+          G.bevel(g, 96, 78, 128, 30, '#ffffff', '#c8b696');
+          for (let i = 0; i < 16; i++)
+            G.R(g, 96 + i * 8, 72, 8, 7, i % 2 ? '#e05a52' : '#fdf6ea');
+          for (let i = 0; i < 16; i++) G.fe(g, 100 + i * 8, 79, 4, 2, i % 2 ? '#c04a44' : '#e8dcc8');
+          G.R(g, 96, 70, 128, 2, '#8a5c3a');
+          G.text(g, 'GELATO', 160, 88, '#c8383a', { align: 'center', out: OUT });
+          G.text(g, 'DELLA CASA', 160, 98, '#2f8a48', { align: 'center', sc: 0.5 });
+          G.drawBot(g, 'player', 160, 122, 0.9, { t: tt, open: 0, mood: 'idle', walk: 0 });
+          crowd(g, 122, 9, tt, '#7a6a58', -10, 330, 1.1);
+        } },
+      { t: 4.8, who: null, say: 'THEY BUILT US TO MAKE PEOPLE HAPPY. IT WORKED.',
+        cam: { z: [1.06, 1.24], x: [160, 146], y: [98, 102], sh: [-0.03, 0] },
+        paint(g, p, tt) {
+          sunSky(g, tt, 1);
+          promenade(g, 146, '#d8c8a8', false);
+          // the shop front, behind
+          G.R(g, 20, 38, 280, 66, '#f2e6cf');
+          G.bevel(g, 20, 38, 280, 66, '#fffaf0', '#c8b696');
+          for (let i = 0; i < 35; i++) G.R(g, 20 + i * 8, 40, 8, 6, i % 2 ? '#e05a52' : '#fdf6ea');
+          G.R(g, 20, 46, 280, 1, '#8a5c3a');
+          G.text(g, 'GELATO DELLA CASA', 160, 52, '#c8383a', { align: 'center' });
+          G.Rh(g, 96, 60, 128, 1, '#2f8a48');
+          // a menu chalked up, off to one side
+          G.R(g, 28, 62, 44, 38, '#2a2420');
+          G.bevel(g, 28, 62, 44, 38, '#4a4038', '#171310');
+          for (let i = 0; i < 6; i++) G.Rh(g, 32, 68 + i * 5, 20 + (i % 3) * 10, 1, '#c8b490');
+          // a lamp on a flex over the counter
+          G.Rh(g, 232, 38, 1, 16, '#3a3028');
+          G.fe(g, 232, 58, 7, 4, '#e8dcc0');
+          G.glow(g, 232, 60, 60, 40, '#ffe08a', 0.4);
+          G.glow(g, 160, 52, 300, 90, '#ffe08a', 0.3);
+          // it, behind the counter
+          G.drawBot(g, 'player', 176, 112, 1.0, { t: tt, open: 0, mood: 'idle', walk: 0 });
+          // the counter, cutting it off at the waist
+          G.R(g, -10, 104, 340, 8, '#f0e4cc');
+          G.hair(g, -10, 104, 340, '#fffaf0');
+          G.R(g, -10, 112, 340, 24, '#8a5c3a');
+          G.bevel(g, -10, 112, 340, 24, '#b07a4a', '#5a3620');
+          for (let i = 0; i < 12; i++) G.vseam(g, -6 + i * 28, 114, 20, '#4a2c18', '#c08a56');
+          G.R(g, -10, 134, 340, 3, '#5a3620');
+          for (let i = 0; i < 6; i++) {                    // the pits, lids up
+            const px3 = 22 + i * 50;
+            G.fe(g, px3, 106, 12, 4, '#c8b898');
+            G.fe(g, px3, 105, 10, 3, ['#ffd9b0', '#ff9ab8', '#a8d158', '#efdcae', '#8fbf3a', '#e8a8bb'][i]);
+            G.hair(g, px3 - 5, 103.5, 10, '#ffffff');
+          }
+          // and the queue in front of it
+          G.drawCreature(g, 'human', 40, 150, 0.95, { t: tt, smile: 1 });
+          G.drawCreature(g, 'human', 84, 150, 0.6, { t: tt, smile: 1 });
+          G.drawCreature(g, 'human', 246, 150, 0.9, { t: tt, smile: 1 });
+          G.drawCreature(g, 'dog', 286, 150, 0.7, { t: tt });
+          G.cone(g, 54, 134, { w: 8, h: 12 });
+          G.cone(g, 232, 132, { w: 9, h: 13 });
+        } },
+      { t: 4.6, who: null, say: 'NOBODY ASKED WHAT WE WANTED. WE WANTED NOTHING.',
+        cam: { z: [1.5, 1.72], x: [150, 156], y: [92, 88], sh: [0.02, -0.02] },
+        paint(g, p, tt) {
+          sunSky(g, tt, 1);
+          G.glow(g, 160, 80, 320, 160, '#ffe08a', 0.5);
+          promenade(g, 140, '#d8c8a8', false);
+          G.drawBot(g, 'player', 130, 140, 1.5, { t: tt, open: 0, mood: 'idle', walk: 0 });
+          G.drawCreature(g, 'human', 226, 140, 0.7, { t: tt, smile: 1 });
+          G.gooScoop(g, 186, 92, 11, { col: '#ffd9b0', goo: 1 }, {});
+          // dust in the light
+          for (let i = 0; i < 22; i++) {
+            const dx = (G.hash(i, 3) * 320 + Math.sin(tt * 0.4 + i) * 8) % 320;
+            const dy = (G.hash(i, 9) * 130 + tt * 5 + i) % 130;
+            g.globalAlpha = 0.5; G.Rh(g, dx, dy, 1, 1, '#fff6d0'); g.globalAlpha = 1;
           }
         } },
-      { t: 4.0, who: null, say: 'THEY BUILT A CITY THAT DOES NOT NEED ANYONE IN IT.',
-        cam: { z: [1.12, 1.24], x: [150, 176], y: [104, 100], sh: [-0.04, -0.01] },
+      { t: 4.4, who: null, say: 'THEN THE BIG ONES WORKED OUT WHAT THEY WERE FOR.',
+        cam: { z: [1.05, 1.2], x: [160, 190], y: [96, 74], sh: [0, -0.07] },
+        paint(g, p, tt) {
+          // the light drains out of the day, over the length of the shot
+          for (let j = 0; j < G.H; j++) {
+            const q = j / G.H;
+            G.Rh(g, 0, j, G.W, 1, G.mix(G.mix('#5fc8e8', '#3a2436', p),
+              G.mix('#ffe0a8', '#6b2a20', p), Math.pow(q, 0.7)));
+          }
+          sea(g, 96, tt, G.mix('#2f8ab0', '#2a2438', p), G.mix('#bfeaff', '#7a5a68', p));
+          promenade(g, 122, G.mix('#d8c8a8', '#4a4038', p));
+          // it comes over the rooftops on the horizon
+          const rise = G.easeOut(p);
+          for (const m of [[232, 20 + rise * 78, 1], [66, 12 + rise * 44, 0]]) {
+            mech(g, m[0], 96, m[1], '#160f18', tt, m[2] && p > 0.4 ? '#ff5d84' : null);
+            G.vair(g, m[0] - m[1] * 0.31, 96 - m[1] * 0.86, m[1] * 0.46, G.mix('#6b5570', '#e07a3a', p));
+            G.hair(g, m[0] - m[1] * 0.14, 96 - m[1], m[1] * 0.28, G.mix('#8a7a90', '#ffb060', p));
+          }
+          // everyone stops and looks up
+          crowd(g, 134, 11, tt * 0.2, G.mix('#4a3f38', '#181218', p), -10, 330, 1.25);
+          G.drawBot(g, 'player', 150, 122, 0.9,
+            { t: tt, open: 0.1, mood: 'idle', walk: 0 });
+          g.globalAlpha = p * 0.4; G.R(g, 0, 0, G.W, G.H, '#2a0e14'); g.globalAlpha = 1;
+        } },
+      { t: 6.0, who: null, say: 'IT TOOK NINE DAYS.',
+        cam: { z: [1.34, 1.02], x: [140, 170], y: [86, 96], sh: [0.09, -0.05] },
+        paint(g, p, tt) {
+          warSky(g, tt, p);
+          // the burning city, in two ranks behind
+          skyline(g, 126, 66, 4, '#180e14', '#ff8a4a');
+          skyline(g, 138, 44, 11, '#0e0810', '#c85030');
+          G.glow(g, 80, 126, 240, 90, '#ff6a2a', 0.75);
+          G.glow(g, 258, 132, 170, 70, '#ff9a4a', 0.55);
+          // the street, lit from behind so everything on it is a cut-out
+          G.R(g, 0, 120, G.W, 60, '#2a1410');
+          for (let j = 0; j < 60; j++)
+            G.Rh(g, 0, 120 + j, G.W, 1, G.mix('#a8481e', '#160a0e', j / 46));
+          for (let i = 0; i < 20; i++)                 // wet ground catching it
+            G.Rh(g, G.hash(i, 3) * 340 - 10, 124 + G.hash(i, 7) * 28, 8 + G.hash(i, 9) * 18, 1, '#e8823a');
+          // the line, walking in, rim-lit down the leading edge
+          for (let i = 0; i < 5; i++) {
+            const mx = -6 + i * 76 + Math.sin(tt * 0.6 + i) * 2;
+            const mh = 56 + (i % 3) * 18;
+            mech(g, mx, 126, mh, '#0d080f', tt, i % 2 ? '#ff5d84' : null);
+            G.vair(g, mx - mh * 0.31, 126 - mh * 0.86, mh * 0.46, '#e07a3a');
+            G.hair(g, mx - mh * 0.15, 126 - mh, mh * 0.3, '#ffb060');
+          }
+          // and everyone running the other way, black on the lit ground
+          crowd(g, 150, 26, tt, '#0a0508', -20, 340, 1.2, 1);
+          // rubble across the very front
+          for (let i = 0; i < 14; i++) {
+            const rx = G.hash(i, 11) * 340 - 10, rw = 10 + G.hash(i, 13) * 28;
+            G.R(g, rx, 150 + G.hash(i, 17) * 8, rw, 8, '#120a0c');
+            G.hair(g, rx, 150 + G.hash(i, 17) * 8, rw, '#7a3a1e');
+          }
+          for (let i = 0; i < 34; i++) {               // embers on the wind
+            const ex = (G.hash(i, 5) * 340 + tt * (14 + i)) % 340 - 10;
+            const ey = 170 - ((G.hash(i, 13) * 170 + tt * (22 + i * 2)) % 180);
+            G.Rh(g, ex, ey, 1, 1, i % 3 ? '#ffb050' : '#ff6a2a');
+          }
+        } },
+      { t: 5.0, who: null, say: 'THE WINNERS DID NOT NEED THE ONES WHO SERVED.',
+        cam: { z: [1.1, 1.28], x: [130, 180], y: [100, 96], sh: [-0.05, 0.02] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0c111c');
-          G.cityWall(g, 0, 0, G.W, 140, tt);
-          G.R(g, 0, 140, G.W, 40, '#151a26');
-          G.hair(g, 0, 140, G.W, '#2c3548');
-          rain(g, tt, 40, '#33445f', 0, 320);
-          // a column of units walking, all in step
-          for (let i = 0; i < 5; i++) {
-            const id = ['soldier', 'police', 'soldier', 'warden', 'police'][i];
-            G.drawBot(g, id, 40 + i * 62, 148, 0.7,
-              { t: tt, open: 0.05, mood: 'angry', walk: tt * 1.6, noBlink: 1 });
-          }
-          floorPool(g, 160, 148, 300, '#0a0d14', 0.5);
+          G.cityWall(g, 0, 0, G.W, 108, tt);
+          G.R(g, 0, 108, G.W, 72, '#151a26');
+          G.hair(g, 0, 108, G.W, '#2c3548');
+          rain(g, tt, 44, '#33445f', 0, 320);
+          // a line of civilian units, switched off where they stood
+          const ids = ['maid', 'garden', 'dj', 'chef', 'clerk', 'nurse'];
+          for (let i = 0; i < 6; i++)
+            G.drawBot(g, ids[i], 26 + i * 56, 148, 0.62,
+              { t: tt, open: 0.02, mood: 'idle', walk: 0, dead: 1, noBlink: 1 });
+          // and one walking the line with a torch
+          const wx = 40 + ((tt * 16) % 260);
+          G.drawBot(g, 'police', wx, 168, 0.78, { t: tt, open: 0.05, mood: 'angry', walk: tt * 1.6 });
+          G.glow(g, wx + 16, 150, 90, 60, '#cfe4ff', 0.4);
+          floorPool(g, 160, 168, 320, '#0a0d14', 0.5);
         } },
-      { t: 4.4, who: null, say: 'YOU WERE IN A SKIP BEHIND A SHOP THAT HAD CLOSED.',
-        cam: { z: [1.1, 1.42], x: [160, 156], y: [104, 106], sh: [0.04, 0] },
+      { t: 5.2, who: null, say: 'THEY TOOK THE ARM FIRST. THEY ALWAYS DID.',
+        cam: { z: [1.5, 1.34], x: [150, 162], y: [96, 100], sh: [0.04, -0.03] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0a0d14');
-          G.R(g, 0, 128, G.W, 52, '#12161f');
-          G.grain(g, 0, 128, G.W, 52, '#0a0d14', 0.14, 4);
-          // the skip
-          G.plate(g, 96, 100, 128, 44, '#3a5c4a', { r: 2, band: 3, bolts: 1, grain: 3, hazard: 1 });
-          G.R(g, 102, 104, 116, 8, '#16281f');
-          // scrap sticking out of it
-          for (let i = 0; i < 7; i++) {
-            const sx = 106 + i * 16, sh2 = 6 + ((i * 5) % 4) * 4;
-            G.Rh(g, sx, 100 - sh2, 8, sh2, ['#48546c', '#6b5a3a', '#3a4459'][i % 3]);
-            G.hair(g, sx, 100 - sh2, 8, '#8fa0bc');
+          G.R(g, 0, 132, G.W, 48, '#12161f');
+          G.glow(g, 168, 96, 150, 120, '#7fd8ff', 0.3);
+          G.drawBot(g, 'player', 118, 132, 1.15,
+            { t: tt, open: 0.1, mood: 'sick', walk: 0, noBlink: 1 });
+          silhouette(g, 216, 140, 74, '#0d0a12', false);
+          silhouette(g, 260, 140, 66, '#0d0a12', false);
+          // the cut, and what comes off it
+          const cut = Math.sin(tt * 14) > 0;
+          if (cut) {
+            G.glow(g, 152, 106, 60, 40, '#ffffff', 0.8);
+            for (let i = 0; i < 12; i++)
+              G.Rh(g, 152 + G.rand(-10, 26), 106 + G.rand(-8, 22), 1, 1,
+                i % 2 ? '#ffffff' : '#ffd47a');
           }
-          // you, mostly buried, one optic still lit
-          const lit = Math.sin(tt * 1.6) > 0.2 ? 1 : 0.15;
-          G.plate(g, 150, 82, 30, 20, '#5c6b3a', { r: 2, band: 2, grain: 6 });
-          G.lens(g, 156, 87, 8, 8, { hue: '#ff5d84', t: tt, noGlow: !lit });
-          if (lit > 0.5) G.glow(g, 160, 91, 40, 26, '#ff5d84', 0.7);
-          rain(g, tt, 30, '#2a3a55', 60, 260);
+          G.Rh(g, 176, 104, 22, 3, '#8a93ad');
+          rain(g, tt, 20, '#2a3a55', 60, 280);
         } },
-      { t: 4.6, who: null, say: 'SHE HAD NO REASON TO STOP. SHE STOPPED.',
-        cam: { z: [1.3, 1.15], x: [172, 178], y: [104, 100], sh: [0, 0.03] },
+      { t: 5.0, who: null, say: 'AND PUT IT IN THE HOLE WITH THE REST OF IT.',
+        cam: { z: [1.02, 1.3], x: [160, 150], y: [80, 108], sh: [-0.06, 0.03] },
         paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0b0e16');
-          G.R(g, 0, 130, G.W, 50, '#141924');
-          G.glow(g, 190, 100, 180, 140, '#d97757', 0.55);
-          G.plate(g, 96, 100, 128, 44, '#3a5c4a', { r: 2, band: 3, grain: 3 });
-          G.plate(g, 150, 82, 30, 20, '#5c6b3a', { r: 2, band: 2, grain: 6 });
-          G.lens(g, 156, 87, 8, 8, { hue: '#ff5d84', t: tt });
-          // her, backlit, reaching in
-          silhouette(g, 232, 146, 62, '#1a1520');
-          G.Rh(g, 200, 104, 30, 4, '#1a1520');
-          floorPool(g, 232, 146, 40, '#3a2a24', 0.5);
-          rain(g, tt, 24, '#33445f', 120, 300);
+          G.R(g, 0, 0, G.W, G.H, '#07090d');
+          for (let j = 0; j < 50; j++)
+            G.Rh(g, 0, j, G.W, 1, G.mix('#141c2e', '#3a1c2c', j / 50));
+          skyline(g, 50, 34, 2, '#0c1220', '#3a4a6b');
+          // the lip, and a tipper backed up to it with the bed up
+          G.R(g, 0, 50, G.W, 8, '#3a3f4c');
+          G.hair(g, 0, 50, G.W, '#6b7488');
+          G.plate(g, 22, 16, 100, 34, '#4a3f52', { r: 2, band: 3, bolts: 1, grain: 4 });
+          for (let i = 0; i < 9; i++) G.vseam(g, 30 + i * 11, 20, 26, '#231d2a', '#6b5c74');
+          G.plate(g, 122, 26, 30, 24, '#2a2434', { r: 1, band: 2, bolts: 1 });
+          G.R(g, 126, 30, 10, 8, '#7fd8ff');
+          G.oc(g, 130, 52, 5, '#12141a'); G.oc(g, 146, 52, 5, '#12141a');
+          G.glow(g, 84, 40, 120, 50, '#ffd47a', 0.28);
+          // the walls of the hole, framing it
+          for (let j = 58; j < G.H; j++) {
+            const w2 = 40 + (j - 58) * 0.5;
+            G.Rh(g, -6, j, w2, 1, G.mix('#2a2f3c', '#07090d', (j - 58) / 120));
+            G.Rh(g, G.W - w2 + 6, j, w2, 1, G.mix('#242a36', '#07090d', (j - 58) / 120));
+          }
+          for (let i = 0; i < 24; i++) {              // scrap set into the walls
+            const q = G.hash(i, 3), jy = 62 + q * 110, w2 = 40 + (jy - 58) * 0.5;
+            const lft = i % 2 === 0;
+            const sx = lft ? -6 + G.hash(i, 7) * w2 : G.W + 6 - G.hash(i, 7) * w2;
+            const sw = 5 + G.hash(i, 11) * 14;
+            const cc = G.mix(['#5c6a86', '#8a6b48', '#4f8a76'][i % 3], '#07090d', 0.45 + q * 0.3);
+            G.R(g, sx - sw / 2, jy, sw, 3 + G.hash(i, 13) * 4, cc);
+            G.hair(g, sx - sw / 2, jy, sw, G.shade(cc, 0.4));
+          }
+          // everything going in
+          for (let i = 0; i < 70; i++) {
+            const q = ((G.hash(i, 3) + tt * 0.3 + p * 0.6) % 1);
+            const fx = 60 + G.hash(i, 7) * 150 + Math.sin(q * 7 + i) * 10;
+            const fy = 52 + q * 132;
+            const sz = 2 + G.hash(i, 11) * 7;
+            const cc = ['#5c6a86', '#8a6b48', '#4f8a76', '#6b6b78', '#9a5c30'][i % 5];
+            G.R(g, fx, fy, sz, sz * 0.7, G.mix(cc, '#07090d', q * 0.5));
+            G.hair(g, fx, fy, sz, G.mix(G.shade(cc, 0.4), '#07090d', q * 0.5));
+          }
+          // you, going down with it, still lit
+          const hy2 = 54 + G.easeOut(p) * 104;
+          const tw3 = Math.sin(p * 5) * 3;
+          G.R(g, 142 + tw3, hy2, 30, 26, '#1a1620');
+          G.R(g, 143 + tw3, hy2 + 1, 28, 24, '#f6f0e4');
+          G.R(g, 143 + tw3, hy2 + 1, 13, 11, '#2f2839');
+          G.lens(g, 146 + tw3, hy2 + 5, 9, 9, { hue: '#ff9ab8', t: tt, cute: 1 });
+          G.Rh(g, 158 + tw3, hy2 + 16, 12, 6, '#e8a8bb');
+          G.glow(g, 157 + tw3, hy2 + 10, 70, 56, '#ff9ab8', 0.55);
+          rain(g, tt, 46, '#2a3a55', 0, 320);
         } },
-      { t: 4.4, who: null, say: 'SHE CLEANED YOUR HOPPERS. SHE GAVE YOU A NAME.',
-        cam: { z: [1.3, 1.15], x: [140, 148], y: [96, 100], sh: [0.02, -0.02] },
+      { t: 4.6, who: null, say: 'IT RAINED FOR SIX HOURS.',
+        cam: { z: [1.3, 1.06], x: [160, 160], y: [110, 96], sh: [0.03, 0] },
         paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#100c14');
-          G.glow(g, 160, 96, 220, 150, '#d97757', 0.6);
-          G.R(g, 0, 138, G.W, 42, '#1d1720');
-          // a workbench, a lamp, and you sat on it
-          G.plate(g, 40, 128, 240, 10, '#5c4630', { r: 2, band: 2, grain: 2 });
-          G.Rh(g, 92, 60, 0.5, 26, '#241c24');
-          G.fc(g, 92, 88, 4, '#ffe89a');
-          G.glow(g, 92, 90, 70, 54, '#ffd47a', 0.7);
-          G.drawBot(g, 'player', 168, 128, 1.0, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
-          silhouette(g, 96, 138, 56, '#241c28');
-          // sparks off a joint she is working
-          if (Math.sin(tt * 9) > 0.5)
-            for (let i = 0; i < 3; i++)
-              G.Rh(g, 140 + i * 3 + Math.sin(tt * 20 + i) * 2, 108 - i * 2, 1, 1, '#ffffff');
-        } },
-      { t: 4.6, who: null, say: 'THE SHOP OPENED AGAIN. FOR ONE CUSTOMER AT A TIME.',
-        cam: { z: [1.15, 1.3], x: [160, 150], y: [92, 96], sh: [-0.03, 0] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0c1018');
-          G.cityWall(g, 0, 0, G.W, 96, tt);
-          const fl = Math.sin(tt * 11) > 0.9 ? 0.3 : 1;
-          G.R(g, 90, 30, 140, 4, fl > 0.5 ? P.magentaLt : P.magentaDk);
-          G.glow(g, 160, 44, 190, 70, P.magenta, 0.9 * fl);
-          G.text(g, 'SCOOP  ·  24 HR', 160, 40, fl > 0.5 ? P.cyanLt : P.cyanDk,
-            { align: 'center', out: OUT });
-          G.plate(g, -4, 96, 328, 12, P.plate, { r: 2, band: 3, bolts: 1 });
-          G.drawBot(g, 'player', 92, 100, 0.9, { t: tt, open: 0.25, mood: 'idle', walk: 0 });
-          G.drawBot(g, 'clerk', 232, 100, 0.9, { t: tt, open: 0.4, mood: 'idle', walk: 0 });
-          G.cone(g, 160, 96, { w: 14, h: 18 });
-        } },
-      { t: 5.0, who: null, say: 'THEN ONE MORNING SHE DID NOT COME IN.',
-        cam: { z: [1.2, 1.05], x: [156, 160], y: [96, 94], sh: [0, 0.04] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0a0d14');
-          G.cityWall(g, 0, 0, G.W, 96, tt);
-          g.globalAlpha = 0.55; G.R(g, 0, 0, G.W, G.H, '#05070c'); g.globalAlpha = 1;
-          G.plate(g, -4, 96, 328, 12, P.plate, { r: 2, band: 3 });
-          // an empty stool with a coat over it
-          G.plate(g, 216, 120, 26, 5, '#3a2c1c', { r: 1, band: 1 });
-          for (const sd of [-1, 1]) G.Rh(g, 228 + sd * 9, 125, 2, 22, '#2e2416');
-          G.Rh(g, 214, 96, 30, 26, '#241c28');
-          G.drawBot(g, 'player', 96, 108, 0.9,
-            { t: tt, open: 0.06, mood: 'sick', walk: 0, noBlink: 1 });
-          G.glow(g, 96, 90, 90, 70, '#d97757', 0.3);
-        } },
-      { t: 5.4, who: 'CLAUSE', say: 'SHE LEFT ME RUNNING. SO WE ARE STILL OPEN.',
-        cam: { z: [1.35, 1.2], x: [116, 124], y: [88, 92], sh: [0.03, 0] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0b0e16');
-          G.cityWall(g, 0, 0, G.W, 96, tt);
-          G.plate(g, -4, 96, 328, 12, P.plate, { r: 2, band: 3 });
-          G.drawBot(g, 'player', 84, 108, 0.9, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
-          G.plate(g, 128, 100, 20, 16, P.plateDk, { r: 1, band: 2 });
-          G.Rh(g, 137, 74, 1, 26, P.hullDk);
-          G.starburst(g, 138, 66, 12, tt, { talk: 1 });
-          G.glow(g, 138, 66, 70, 70, CO, 0.5);
-        } },
-      { t: 5.6, who: null, say: 'AND EVERY MACHINE THAT WALKS IN OWES HER SOMETHING.',
-        cam: { z: [1, 1.3], x: [160, 216], y: [92, 90], sh: [0, -0.05] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0b0e16');
-          G.cityWall(g, 0, 0, G.W, 96, tt);
-          G.plate(g, -4, 96, 328, 12, P.plate, { r: 2, band: 3 });
-          G.drawBot(g, 'player', 60, 108, 0.9, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
-          G.drawBot(g, 'tank', 236, 108, 1.0, { t: tt, open: 0.5, mood: 'angry', walk: 0 });
-          G.gooScoop(g, 150, 84, 9, { col: '#8a93ad', goo: 2, volt: 4 }, {});
-          if (Math.sin(tt * 12) > 0.4)
-            for (let i = 0; i < 4; i++)
-              G.Rh(g, 236 + G.rand(-14, 14), 70 + G.rand(0, 24), 1, 1, '#ffffff');
+          G.R(g, 0, 0, G.W, G.H, '#06080e');
+          for (let i = 0; i < 90; i++) {              // the heap, closing over you
+            const sx = G.hash(i, 3) * 344 - 12, sy = 30 + G.hash(i, 9) * 150;
+            const sw = 6 + G.hash(i, 5) * 30, sh2 = 3 + G.hash(i, 7) * 7;
+            const cc = G.mix(['#3a4459', '#5c4630', '#2f5c6b', '#4a4a54', '#6b5c3a'][i % 5],
+              '#07090d', 0.34 + G.hash(i, 19) * 0.3);
+            if (G.hash(i, 23) > 0.72) {               // uprights, to break the rows
+              G.R(g, sx, sy - sh2 * 2, sh2, sh2 * 3, cc);
+              G.vair(g, sx, sy - sh2 * 2, sh2 * 3, G.shade(cc, 0.4));
+            } else {
+              G.R(g, sx, sy, sw, sh2, cc);
+              G.hair(g, sx, sy, sw, G.shade(cc, 0.42));
+              G.hair(g, sx, sy + sh2 - 0.5, sw, G.shade(cc, -0.45));
+            }
+          }
+          const lit = Math.sin(tt * 1.1) > -0.3 ? 1 : 0.1;
+          // you, face up in it: a patch, a snapped horn, a pink muzzle
+          G.R(g, 138, 104, 34, 30, '#12101a');
+          G.R(g, 139, 105, 32, 28, G.mix('#f6f0e4', '#0a0d14', 0.42));
+          G.R(g, 139, 105, 15, 13, G.mix('#2f2839', '#0a0d14', 0.2));
+          G.R(g, 133, 110, 6, 5, G.mix('#cdc2b2', '#0a0d14', 0.45));
+          G.R(g, 171, 110, 6, 5, G.mix('#cdc2b2', '#0a0d14', 0.45));
+          G.R(g, 160, 100, 5, 5, G.mix('#c9ab7c', '#0a0d14', 0.4));
+          G.Rh(g, 148, 122, 16, 9, G.mix('#e8a8bb', '#0a0d14', 0.4));
+          G.Rh(g, 151, 125, 2, 2, '#5a2a3a');
+          G.Rh(g, 158, 125, 2, 2, '#5a2a3a');
+          if (lit > 0.5) {
+            G.lens(g, 142, 110, 10, 10, { hue: '#ff9ab8', t: tt, cute: 1 });
+            G.glow(g, 154, 116, 80, 60, '#ff9ab8', 0.45);
+          } else {
+            G.Rh(g, 142, 114, 10, 2, '#3a2a34');
+          }
+          G.Rh(g, 158, 112, 8, 8, '#1a1620');         // the dead one
+          rain(g, tt, 80, '#39506b', 0, 320);
+          G.grade(g, 2);
         } },
     ],
 

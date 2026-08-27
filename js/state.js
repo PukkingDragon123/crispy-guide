@@ -323,12 +323,13 @@
   // ---------- lookups ----------
   G.ingById   = (id) => ING.find((i) => i.id === id);
   // YOU. Not a customer, so not in the demand pool, but the rig needs a record.
-  // A gelato chef. Cream chassis, terracotta trim, a toque and a
-  // moustache, and Tracy's spare arm bolted on where the other one was.
-  const PLAYER = { id: 'player', name: 'GELATO UNIT', job: 'CUCINA', sys: 'clockwork',
+  // A dairy unit. Cream hide, two black patches, a pink muzzle, ears
+  // that flick when it is thinking, and Tracy's spare arm bolted on
+  // where the other one used to be. The bell was her idea.
+  const PLAYER = { id: 'player', name: 'DAIRY UNIT', job: 'GELATERIA', sys: 'clockwork',
     taste: 'sweet', hates: 'none', pay: 1, patience: 1, mood: 'idle',
-    col: '#f2e4c4', col2: '#c8783a', hue: '#ff7a9a',
-    line: 'ONE SCOOP. ALWAYS ONE MORE.', names: ['NONNO'] };
+    col: '#f6f0e4', col2: '#e2d6c2', hue: '#ff9ab8',
+    line: 'ONE SCOOP. ALWAYS ONE MORE.', names: ['BESSIE'] };
   G.botById    = (id) => (id === 'player' ? PLAYER : BOTS.find((b) => b.id === id) || BOTS[0]);
   G.sysById    = (id) => SYSTEMS[id] || SYSTEMS.servo;
   G.toolById   = (id) => TOOLS[id] || { name: id.toUpperCase(), hint: '' };
@@ -556,6 +557,9 @@
     { id: 'e_clock',  name: 'CLOSING TIME',
       hint: 'TAP THE BACK ROOM CLOCK AFTER A CLEAN SHIFT',
       note: 'IT HAS ONLY EVER SHOWN ONE TIME. THE TIME SHE LEFT.' },
+    { id: 'e_moo',    name: 'SIGNORA MUCCA',
+      hint: 'FIND YOUR OWN SIGN IN THE PIT',
+      note: 'THEY THREW THE SHOP AWAY AND THEY THREW THE SIGN IN AFTER IT.' },
     { id: 'e_dog',    name: 'GOOD DOG',
       hint: 'RESCUE A DOG',
       note: 'IT HAS NOT STOPPED WAGGING. THE WHOLE CHASSIS.' },

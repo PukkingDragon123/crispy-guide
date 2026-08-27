@@ -3,8 +3,8 @@
 **They took the world. You have gelato.**
 
 A zero-dependency pixel-art game at **640×360**. You are a scrapped gelato
-machine — an Italian chef unit with a toque, a moustache and one borrowed arm —
-in a city the machines now own.
+machine — a **dairy unit**, cream hide, two black patches, a pink muzzle, a bell
+and one borrowed arm — in a city the machines now own.
 
 A woman called Tracy dug you out of a landfill, bolted her own spare arm on, and
 taught you to make ice cream. Then a patrol came through the door at four in the
@@ -33,9 +33,34 @@ finished without noticing.
 
 ![Secrets](screenshots/secrets.png)
 
-**SECRETS** — eight of them. Nobody tells you about these; the ones you have not
+**SECRETS** — nine of them. Nobody tells you about these; the ones you have not
 found show you where to look, which is more than the game gives you anywhere
 else.
+
+---
+
+## ☀️ Before any of it
+
+![The summer](screenshots/open-summer.png)
+
+New game opens on a seafront in a summer that is already over. Machines were
+built to hand people things and it worked; there is a queue, and a dog, and a
+child who cannot see over the counter.
+
+![The turn](screenshots/open-turn.png)
+
+Then the colour drains out of the shot over four seconds, something comes up
+over the rooftops, and everybody on the promenade stops and looks at it.
+
+![Nine days](screenshots/open-war.png)
+
+**It took nine days.** Siege units walking a burning city, rim-lit down the
+leading edge, a crowd running the other way across a street lit from behind.
+
+![The hole](screenshots/open-hole.png)
+
+The winners did not need the ones who served. They took the arm first — they
+always did — and put it in the hole with the rest of it.
 
 ---
 
@@ -51,21 +76,43 @@ arm: present. Purpose: gelato.
 
 ![The pit](screenshots/pit.png)
 
-You are a head and an arm on a length of spine, at the bottom of a landfill in the
-rain. **Press a handhold and the hand reaches out and latches. Then pull** — drag
-away from the grip and you haul the rest of yourself up after it.
+**Forty kinds of rubbish**, thousands of pieces, seeded off the world row: it is
+the same landfill every time you play and a different one from every other
+game. Fridges, mattresses with the stuffing out, burst sofas trailing springs,
+oil drums, trolleys, traffic cones, radiators, keyboards, a doll, a broken
+umbrella, cans, tins, bottles, books, wheels, whole robots in pieces. Four
+things came off the tip **in one piece** — a welded bank of white goods, a
+hoarding still selling something, a bus on its side — and those you have to go
+around.
 
-![Hauling](screenshots/pit-haul.png)
+![The climb](screenshots/pit-haul.png)
+
+You are a head and an arm on a length of spine. **Press a handhold and the hand
+reaches out and latches. Then pull** — drag away from the grip in any direction
+and you haul yourself toward it.
+
+**The route is not up.** It snakes left and right across the full width of the
+pit, and twice the only way on is *down*: the way over is blocked, so you have
+to climb around and lose height doing it. The HUD says so when it happens.
 
 Every handhold has a breaking point and shows you roughly where it is: `LOOSE`,
-`FIRM`, `SOLID`. The strain gauge fills as you pull and a mark on it shows where
-*this* grip gives out. Push past it and the rebar snaps, the scrap comes down and
-you slide. Stop short and you keep every inch.
+`FIRM`, `SOLID` — until the top third, where the rain and the dark turn that
+into `? ? ?` and you have to commit. Some are `WET`, and wet costs you strain
+just to hold. A **long reach costs more than a short one and a sideways haul
+costs more than a straight one**, so the traverses are where it hurts. Push past
+the mark and the rebar snaps and you slide — unless one of the slabs catches
+you on the way down, which is the only time being blocked helps.
 
-One arm has a **reach**, so the climb is a series of real choices — which hold,
-how hard, how long. Break the wrong one and there is a second in every band. And
-if you ever run out of options entirely, the heap shifts and slides you a new
-one: you cannot get stuck in this pit, only be slow in it.
+Scattered off the route are **decoys**: they look identical, they hold for about
+a second, and they go nowhere. Every so often the heap shifts on its own and
+something above you stops holding.
+
+And if you ever genuinely run out of options, something slides down and lands
+between you and the next piece of route: **you cannot get stuck in this pit,
+only be slow in it.**
+
+Somewhere down there, face down in the mud, is a sign with a cow on it. It used
+to be over a door.
 
 ![Out](screenshots/pit-out.png)
 
@@ -419,17 +466,24 @@ is four parts — pauldron, upper arm, hinged elbow with a pin, forearm — with
 hydraulic piston alongside. Every optic has a machined bezel with a screw ring,
 radial iris spokes, a bounce catch-light and a scan line crossing the glass.
 
-![The chef](screenshots/chef.png)
+![The dairy unit](screenshots/cow.png)
 
-You are the nineteenth, and you are meant to be liked: a **puffed chef's toque**
-with a tricolour band, a curled moustache, big pink optics set wide, a raised
-brow, blush, freckles, a smile stamped into the plate with its corners turned up,
-the bow tie she put on you, and a white apron with a tricolour stripe, a name tag
-and a scoop in the pocket. A churn drum on terracotta tread. `GELATO UNIT`,
-filed under `CUCINA`, and the only thing it ever says is *one scoop, always one
-more*.
+You are the nineteenth, and you are meant to be liked. A **cow**: a broad cream
+skull with a black patch over one eye, ears that flick while it thinks, blunt
+ivory horns with a curl of hair between them, a factory tag still in one ear, a
+plump pink muzzle with nostrils that flare on the breath, and cartoon optics with
+a fat iris, a big pupil, two catch-lights and lashes. Open the mouth and there is
+a tongue in there, not a grille.
 
-Eleven of the archetypes carry the same softening — the maid, the chef, the
+Under it: a milk tank with hoop bands, three hide markings clipped to the barrel,
+a level gauge, a collar with a **bell** on it, a small apron, two soft mitten
+arms — one of them bright steel, because it is not yours — a disher held up where
+the queue can see it, and four stocky legs in black stockings on split hooves,
+with a tail that keeps time behind it whether or not anyone is watching.
+`DAIRY UNIT`, filed under `GELATERIA`, and the only thing it ever says is *one
+scoop, always one more*.
+
+Eleven of the archetypes carry a lighter version of the same softening — the maid, the chef, the
 nurse, the clerk, the courier, the horticultural unit and the rest get the blush
 and the brow. The siege unit, the enforcer, the magistrate and the warden do
 not.

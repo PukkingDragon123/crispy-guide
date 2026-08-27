@@ -37,9 +37,10 @@
     courier: { base: 'wheel',  torso: 'boxpack', head: 'wedge',   arms: 'slim',    prop: 'aerial',  w: 0.95, h: 0.96, hs: 0.84, soft: 1 },
     garden:  { base: 'tread',  torso: 'narrow',  head: 'dome',    arms: 'can',     prop: 'moss',    w: 1.0,  h: 1.0,  hs: 0.9, soft: 1 },
     warden:  { base: 'legs',   torso: 'slab',    head: 'lamp',    arms: 'heavy',   prop: 'shackle', w: 1.32, h: 1.08, hs: 0.9 },
-    // YOU. A soft-serve machine on salvaged tread, with a swirl still set in
-    // the dispenser head forty years after the shop closed.
-    player:  { base: 'tread',  torso: 'barrel',  head: 'dome',    arms: 'can',     prop: 'toque2',  w: 1.14, h: 0.98, hs: 1.06, soft: 2 },
+    // YOU. A dairy unit. Built to stand in a field of nothing and turn
+    // out gelato, and given a face soft enough that the children would
+    // come up to it. Tracy kept the face and rebuilt everything under it.
+    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.12, h: 0.9,  hs: 1.2,  soft: 2, cow: 1 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -157,8 +158,47 @@
     }
     if (o.closed) {
       const lid = Math.max(1, Math.round(h * 0.72));
+      const lc = o.lid || P.hull, lcL = o.lid ? G.shade(o.lid, 0.3) : P.hullLt;
       for (let j = lid; j < h - 1; j++) G.R(g, Math.round(cx - rows[j]), y + j, rows[j] * 2, 1, G.shade(hue, -0.4));
-      for (let j = 0; j < lid; j++) G.R(g, Math.round(cx - rows[j]), y + j, rows[j] * 2, 1, j < 1 ? P.hullLt : P.hull);
+      for (let j = 0; j < lid; j++) G.R(g, Math.round(cx - rows[j]), y + j, rows[j] * 2, 1, j < 1 ? lcL : lc);
+      return;
+    }
+    // ---- the cartoon optic: no bezel, no screws, no scan line. A domed
+    // glass, a fat iris, a big pupil and two catch-lights. It is the
+    // difference between a security camera and a face. ----
+    if (o.cute) {
+      for (let j = 0; j < h; j++) {
+        const p = j / (h - 1);
+        G.R(g, Math.round(cx - rows[j]), y + j, rows[j] * 2, 1,
+          p < 0.14 ? '#4c4258' : p > 0.86 ? '#191325' : '#2c2438');
+      }
+      const ir = Math.max(3, Math.round(Math.min(w, h) * 0.72));
+      const irows = ballRows(ir, ir);
+      const ix = cx + (o.lookX || 0) * (w / 2 - ir / 2);
+      const iy = cy + (o.lookY || 0) * (h / 2 - ir / 2) + h * 0.07;
+      const ir0 = Math.round(iy - ir / 2);
+      for (let j = 0; j < ir; j++) {
+        const p = j / (ir - 1);
+        G.R(g, Math.round(ix - irows[j]), ir0 + j, irows[j] * 2, 1,
+          p < 0.28 ? G.shade(hue, -0.42) : p > 0.72 ? G.shade(hue, 0.45) : hue);
+      }
+      const pw = Math.max(2, Math.round(ir * 0.5)), prows = ballRows(pw, pw);
+      for (let j = 0; j < pw; j++)
+        G.R(g, Math.round(ix - prows[j]), Math.round(iy - pw / 2) + j, prows[j] * 2, 1, '#150f1e');
+      const bw2 = Math.max(2, Math.round(w * 0.3)), brows = ballRows(bw2, bw2);
+      for (let j = 0; j < bw2; j++)
+        G.R(g, Math.round(cx - w * 0.2 - brows[j]), Math.round(y + h * 0.16) + j, brows[j] * 2, 1, '#ffffff');
+      G.Rh(g, cx + w * 0.14, cy + h * 0.24, 1, 1, '#ffffff');
+      // lashes off the outer corner, which is most of why a cow reads cute
+      if (o.lash) {
+        const sd = o.lash < 0 ? -1 : 1;
+        for (let k = 0; k < 2; k++) {
+          const lx = cx + sd * (w * (0.26 + k * 0.2)), ly = y - 0.5 - (1 - k) * 0.5;
+          G.Rh(g, lx, ly, 1, 1, OUT);
+          G.Rh(g, lx + sd * 0.5, ly - 1, 1, 0.5, OUT);
+        }
+      }
+      if (!o.noGlow) G.glow(g, cx, cy, w * 0.8, h * 0.8, hue, 0.4);
       return;
     }
     for (let j = 0; j < h; j++) {                        // bezel
@@ -299,6 +339,58 @@
         G.vseam(g, cx - w / 2 + 3 + i * ((w - 6) / 5), footY - h + 3, h - 4, '#0b0e14', P.steel);
       return { top: footY - h, w };
     }
+    // hoof: a dairy chassis. Two stocky cream legs in black stockings,
+    // split hooves that plant with a bit of weight, and a tail that
+    // keeps time behind it whether or not anyone is watching.
+    if (kind === 'hoof') {
+      const sw = Math.sin(walk * 5) * u(2);
+      const lw = Math.max(4, u(9)), lh = u(16), hf = Math.max(3, u(5));
+      // the tail goes down first so the body covers where it attaches
+      const tw2 = Math.sin(t * 1.15);
+      const tx0 = cx + Math.round(bw * 0.34), ty0 = footY - lh - u(4);
+      const seg = [];
+      for (let i = 0; i < 10; i++) {
+        const p = i / 9;
+        seg.push([tx0 + Math.round(Math.sin(p * 2.2 + tw2 * 0.6) * u(4) + p * u(2)),
+                  ty0 + Math.round(p * u(13)), p]);
+      }
+      for (const q of seg) G.R(g, q[0] - 1, q[1] - 1, 4, 4, OUT);
+      for (const q of seg) {
+        G.R(g, q[0], q[1], 2, 2, q[2] < 0.55 ? c : G.shade(c, -0.18));
+        G.hair(g, q[0], q[1], 2, G.shade(c, 0.32));
+      }
+      const txx = seg[9][0], tyy = seg[9][1];
+      const tuft = [];
+      for (let k = 0; k < 6; k++)
+        tuft.push([txx - 2 + (k % 3) * 2, tyy + 1 + Math.floor(k / 3) * 2, k]);
+      for (const q of tuft) G.R(g, q[0] - 1, q[1] - 1, 4, 5, OUT);
+      for (const q of tuft) {
+        G.R(g, q[0], q[1], 2, 3, q[2] % 2 ? '#2a2230' : '#3d3444');
+        G.hair(g, q[0], q[1], 2, '#57495f');
+      }
+      for (const s of [-1, 1]) {
+        const off = (s < 0 ? sw : -sw);
+        const lx = cx + s * Math.round(bw * 0.22) - lw / 2;
+        const ly = footY - lh + off;
+        plate(g, lx, ly, lw, lh - hf - u(2) - Math.abs(off), c, { r: 1, band: 2, spec: false });
+        // a knee band with a pin, so the leg has a joint and not just length
+        const kny = ly + Math.round((lh - hf) * 0.44);
+        G.R(g, lx - 1, kny, lw + 2, 2, G.shade(c, -0.36));
+        G.hair(g, lx - 1, kny, lw + 2, G.shade(c, 0.36));
+        G.rivet(g, lx + lw / 2 - 0.5, kny + 0.5, '#0b0e14', P.hullLt);
+        // the black stocking, then the hoof
+        G.R(g, lx - 1.5, footY - hf - u(3) + off, lw + 3, u(3) + 1, '#2a2230');
+        G.hair(g, lx - 1.5, footY - hf - u(3) + off, lw + 3, '#4c3f56');
+        const fy = footY - hf + off;
+        G.R(g, lx - 3, fy - 1, lw + 6, hf + 2, OUT);
+        G.R(g, lx - 2, fy, lw + 4, hf, '#332b3a');
+        G.hair(g, lx - 2, fy, lw + 4, '#5c4e66');
+        G.hair(g, lx - 2, fy + hf - 1, lw + 4, '#150f1c');
+        G.vseam(g, lx + lw / 2, fy + 1, hf - 1, '#140f1c', '#4a3e52');
+        G.R(g, lx - 1, fy + 1, 2, 1, '#9a8ca2');
+      }
+      return { top: footY - lh, w: Math.round(bw * 0.72) };
+    }
     // legs: two piston columns with a stride
     const sw = Math.sin(walk * 6) * u(2);
     const lw = Math.max(3, u(7)), lh = u(17);
@@ -413,6 +505,27 @@
         G.R(g, cx - hw - 1, y + j, hw * 2 + 2, 1, OUT);
         G.R(g, cx - hw, y + j, hw * 2, 1, j < 3 ? G.shade(c, 0.28) : p > 0.82 ? G.shade(c, -0.4) : c);
       }
+      // ---- hide markings, clipped to the barrel it is painted on ----
+      if (o && o.cow) {
+        const bp = (ox, oy, rx, ry, sd2) => {
+          for (let j = 0; j < h; j++) {
+            const dy = (j - oy) / ry;
+            if (Math.abs(dy) > 1) continue;
+            const wob = 1 + Math.sin(j * 0.8 + sd2) * 0.2 + Math.sin(j * 2.1 + sd2 * 3) * 0.11;
+            const half = Math.round(rx * Math.sqrt(1 - dy * dy) * wob);
+            const bulge = Math.sin((j / (h - 1)) * Math.PI) * 0.22 + 0.78;
+            const hw2 = Math.round((w / 2) * bulge);
+            const x0 = Math.max(cx - hw2, Math.round(cx + ox - half));
+            const x1 = Math.min(cx + hw2, Math.round(cx + ox + half));
+            if (x1 <= x0) continue;
+            G.R(g, x0, y + j, x1 - x0, 1,
+              j < oy - ry * 0.4 ? '#4c4256' : j > oy + ry * 0.55 ? '#1d1826' : '#2f2839');
+          }
+        };
+        bp(-w * 0.3, h * 0.2, w * 0.23, h * 0.17, 2.3);
+        bp(w * 0.33, h * 0.52, w * 0.19, h * 0.19, 5.1);
+        bp(-w * 0.1, h * 0.88, w * 0.17, h * 0.1, 7.7);
+      }
       // hoop bands, each with a lit crown, a shadow and riveted laps
       for (let k = 1; k < 4; k++) {
         const j = Math.round(h * k / 4), p = j / (h - 1);
@@ -425,6 +538,24 @@
       }
       // vertical weld seam down the belly
       G.vseam(g, cx + u(4), y + 2, h - 4, G.shade(c, -0.5), G.shade(c, 0.2));
+      if (o && o.cow) {
+        // a milk level in a little round bezel, low on the tank
+        const gx2 = cx - Math.round(w * 0.24), gy2 = y + Math.round(h * 0.34);
+        const gr2 = Math.max(3, Math.round(w * 0.11));
+        G.oc(g, gx2, gy2, gr2 + 1, OUT);
+        G.oc(g, gx2, gy2, gr2, '#141824');
+        const lvl = 0.44 + Math.sin(t * 0.9) * 0.12;
+        for (let j = 0; j < gr2 * 2; j++) {
+          const dy = (j - gr2) / gr2;
+          if (Math.abs(dy) > 1) continue;
+          if (j < gr2 * 2 * (1 - lvl)) continue;
+          const hw = Math.round(gr2 * Math.sqrt(1 - dy * dy));
+          G.R(g, gx2 - hw, gy2 - gr2 + j, hw * 2, 1,
+            j < gr2 * 2 * (1 - lvl) + 1.5 ? '#ffffff' : '#fff0d4');
+        }
+        G.Rh(g, gx2 - gr2 * 0.5, gy2 - gr2 * 0.55, gr2 * 0.5, 0.5, '#8a93ad');
+        return { y, w, h, top: y };
+      }
       // a full-belly gauge in a machined bezel
       const gx = cx - u(9), gy = y + Math.round(h * 0.42);
       G.R(g, gx - 1, gy - 1, u(18) + 2, u(7) + 2, G.shade(c, -0.62));
@@ -559,12 +690,52 @@
     if (kind === 'lamp')    { w = hw * 1.6; h = u(18); }
     if (kind === 'wedge')   { w = hw * 2.1; h = u(17); }
     if (kind === 'crt')     { w = hw * 2.1; h = u(20); }
+    if (kind === 'cow')     { w = hw * 2.16; h = u(19); }
+    const cow = kind === 'cow';
+    const prof = [];
     const y = neckY - h;
 
     // neck
     G.R(g, cx - u(4), neckY - 2, u(8), u(5), P.plateDk);
     G.R(g, cx - u(3), neckY - 1, u(6), u(3), P.plate);
 
+
+    // ---- ears first, so the skull tucks over where they attach ----
+    if (cow) {
+      const flick = Math.sin(t * 1.7) * 0.6 + Math.sin(t * 0.63) * 0.4;
+      for (const sd of [-1, 1]) {
+        const n = Math.max(6, u(12)), cols = [];
+        for (let i = 0; i < n; i++) {
+          const p = i / (n - 1);
+          const ex = cx + sd * Math.round(w * 0.36 + p * u(11));
+          const eyy = y + Math.round(h * 0.3 + p * u(6) + (sd > 0 ? flick : -flick) * p * u(2));
+          const th = Math.max(2, Math.round(u(8) * (1 - p * p * 0.76)));
+          cols.push([ex, eyy, th]);
+        }
+        for (const cl of cols) G.R(g, cl[0] - 1, cl[1] - 1, 3, cl[2] + 2, OUT);
+        for (let i = 0; i < cols.length; i++) {
+          const cl = cols[i], p = i / (cols.length - 1);
+          G.R(g, cl[0], cl[1], 2, cl[2], p < 0.66 ? G.shade(c, -0.06) : G.shade(c, -0.26));
+          G.hair(g, cl[0], cl[1], 2, G.shade(c, 0.3));
+          if (p > 0.1 && p < 0.84)                        // the pink inside the flap
+            G.Rh(g, cl[0], cl[1] + cl[2] * 0.3, 2, Math.max(1, cl[2] * 0.42), sd < 0 ? '#e8a0b4' : '#f2aec0');
+        }
+        // the far ear keeps the tag it was issued with. It is a serial
+        // number and it is the only name the factory ever gave you.
+        if (sd > 0) {
+          const e = cols[Math.max(0, cols.length - 3)];
+          const tw3 = Math.max(3, u(4)), th3 = Math.max(3, u(4));
+          const tx = e[0] - Math.round(tw3 * 0.3), tyy = e[1] + e[2] + 1;
+          G.R(g, tx + tw3 * 0.4 - 1, e[1] + e[2] - 1, 3, 3, OUT);
+          G.R(g, tx + tw3 * 0.4, e[1] + e[2] - 1, 1, 2, '#9a7a18');
+          G.R(g, tx - 1, tyy - 1, tw3 + 2, th3 + 2, OUT);
+          G.R(g, tx, tyy, tw3, th3, '#e8c84a');
+          G.hair(g, tx, tyy, tw3, '#fff0a0');
+          G.hair(g, tx, tyy + th3 - 1, tw3, '#9a7a18');
+          G.Rh(g, tx + 1, tyy + th3 * 0.42, tw3 - 2, 0.5, '#7a6420');
+        }
+      }
+    }
 
     if (kind === 'bell') {
       for (let j = 0; j < h; j++) {
@@ -588,6 +759,72 @@
         G.R(g, cx - hh - 1, y + j, hh * 2 + 2, 1, OUT);
         G.R(g, cx - hh, y + j, hh * 2, 1, j < 2 ? G.shade(c, 0.3) : p > 0.86 ? G.shade(c, -0.38) : c);
       }
+    } else if (cow) {
+      // a broad rounded skull that narrows a little into the jaw
+      for (let j = 0; j < h; j++) {
+        const p = j / (h - 1);
+        const cap = p < 0.4 ? Math.sqrt(Math.max(0, 1 - Math.pow(1 - p / 0.4, 2))) : 1;
+        const jaw = p > 0.72 ? 1 - Math.pow((p - 0.72) / 0.28, 2) * 0.22 : 1;
+        const hh = Math.max(1, Math.round((w / 2) * (0.52 + 0.48 * cap) * jaw));
+        prof[j] = hh;
+        G.R(g, cx - hh - 1, y + j, hh * 2 + 2, 1, OUT);
+        G.R(g, cx - hh, y + j, hh * 2, 1,
+          j < 2 ? G.shade(c, 0.34) : p > 0.9 ? G.shade(c, -0.34) : c);
+      }
+      // round it off: a catch down the near side, a turn on the far one
+      for (let j = 2; j < h - 1; j++) {
+        G.Rh(g, cx + prof[j] - 2, y + j, 2, 1, G.shade(c, -0.2));
+        G.Rh(g, cx - prof[j], y + j, 1, 1, G.shade(c, 0.18));
+      }
+      // ---- the markings. One big patch over an eye, one on the jaw ----
+      const patch = (ox, oy, rx, ry, sd2) => {
+        for (let j = 0; j < h; j++) {
+          const dy = (j - oy) / ry;
+          if (Math.abs(dy) > 1) continue;
+          const wob = 1 + Math.sin(j * 0.85 + sd2) * 0.18 + Math.sin(j * 2.4 + sd2 * 3) * 0.1;
+          const half = Math.round(rx * Math.sqrt(1 - dy * dy) * wob);
+          if (half < 1) continue;
+          const x0 = Math.max(cx - prof[j], Math.round(cx + ox - half));
+          const x1 = Math.min(cx + prof[j], Math.round(cx + ox + half));
+          if (x1 <= x0) continue;
+          G.R(g, x0, y + j, x1 - x0, 1,
+            j < oy - ry * 0.4 ? '#4c4256' : j > oy + ry * 0.55 ? '#1d1826' : '#2f2839');
+        }
+      };
+      patch(-w * 0.29, h * 0.32, w * 0.25, h * 0.3, 1.7);
+      patch(w * 0.33, h * 0.14, w * 0.14, h * 0.12, 4.2);
+      // ---- horn nubs: light, dark-tipped, small enough to stay cute ----
+      // one curl of hair between the horns. Not a crest, not a barcode.
+      // Outlines in one pass, fills in another - otherwise every row's
+      // outline paints over the row above it and the whole thing goes black.
+      {
+        const fh = Math.max(3, u(5)), fx0 = cx - u(1), rows2 = [];
+        for (let j = 0; j < fh; j++) {
+          const q = j / (fh - 1);
+          rows2.push([Math.round(fx0 + Math.sin(q * 2.6) * u(2.2)),
+                      Math.max(2, Math.round(u(2.6) * (0.5 + q * 0.5))), q]);
+        }
+        for (let j = 0; j < fh; j++) G.R(g, rows2[j][0] - 1, y - fh + j - 1, rows2[j][1] + 2, 3, OUT);
+        for (let j = 0; j < fh; j++) {
+          G.R(g, rows2[j][0], y - fh + j, rows2[j][1], 1, rows2[j][2] > 0.55 ? '#332b3a' : '#4a3e52');
+          G.hair(g, rows2[j][0], y - fh + j, rows2[j][1], '#6a5c74');
+        }
+      }
+      // horns: outboard of the curl, blunt, ivory, dark only at the cap
+      for (const sd of [-1, 1]) {
+        const hx = cx + sd * Math.round(w * 0.24), nh = Math.max(3, u(5)), hr = [];
+        for (let j = 0; j < nh; j++) {
+          const p = j / Math.max(1, nh - 1);      // p = 0 at the tip
+          const hw2 = Math.max(2, Math.round(u(4.4) * (0.44 + p * 0.56)));
+          hr.push([Math.round(hx + sd * (1 - p) * u(2.4) - hw2 / 2), hw2, p]);
+        }
+        for (let j = 0; j < nh; j++) G.R(g, hr[j][0] - 1, y - nh + j - 1, hr[j][1] + 2, 3, OUT);
+        for (let j = 0; j < nh; j++) {
+          G.R(g, hr[j][0], y - nh + j, hr[j][1], 1,
+            hr[j][2] < 0.3 ? '#c9ab7c' : hr[j][2] < 0.6 ? '#e4d3a8' : '#f4e8c6');
+          G.Rh(g, hr[j][0], y - nh + j, 1, 1, '#fff8e0');
+        }
+      }
     } else {
       plate(g, cx - w / 2, y, w, h, c, { r: kind === 'crt' ? 3 : 2, band: 3 });
     }
@@ -601,17 +838,20 @@
     const soft = o.soft || 0;
     // a friendly machine has big round optics set wide, not narrow slits
     const eg = soft ? (soft > 1 ? 0.16 : 0.08) : 0;
-    const eh = Math.max(4, Math.round(h * (single ? 0.52 : 0.42 + eg)));
-    const ew = single ? Math.round(w * 0.5) : Math.max(4, Math.round(w * (0.3 + eg * 0.6)));
-    const ey = y + Math.round(h * (kind === 'crt' ? 0.24 : 0.2));
+    const eh = cow ? Math.max(5, Math.round(h * 0.34))
+                   : Math.max(4, Math.round(h * (single ? 0.52 : 0.42 + eg)));
+    const ew = cow ? Math.max(5, Math.round(w * 0.24))
+                   : single ? Math.round(w * 0.5) : Math.max(4, Math.round(w * (0.3 + eg * 0.6)));
+    const ey = y + Math.round(h * (cow ? 0.17 : kind === 'crt' ? 0.24 : 0.2));
     const blink = !o.noBlink && Math.sin(t * 1.1 + cx * 0.3) > 0.9975;
     if (single) {
       G.lens(g, cx - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, slit: mood === 'angry',
         t, lookX: Math.sin(t * 0.6) * 0.25 });
     } else {
-      const sp = Math.round(w * 0.23);
+      const sp = Math.round(w * (cow ? 0.25 : 0.23));
       for (const s of [-1, 1]) {
         G.lens(g, cx + s * sp - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, t,
+          cute: cow && mood !== 'angry' ? 1 : 0, lash: cow ? s : 0, lid: cow ? c : null,
           slit: mood === 'angry', lookX: mood === 'angry' ? s * -0.3 : Math.sin(t * 0.6) * 0.25,
           lookY: mood === 'sick' ? 0.3 : 0 });
       }
@@ -630,17 +870,44 @@
       }
     }
 
+    // ---- the muzzle. Everything about whether this face works or
+    // does not work happens in these forty pixels ----
+    let mzT = 0, mzH = 0, mzW = 0;
+    if (cow) {
+      mzW = Math.round(w * 0.66); mzH = Math.max(6, Math.round(h * 0.42));
+      mzT = y + Math.round(h * 0.5);
+      for (let j = 0; j < mzH; j++) {
+        const q = (j / (mzH - 1) - 0.5) * 2;
+        const hh = Math.max(1, Math.round((mzW / 2) *
+          Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 3)), 1 / 2.6)));
+        G.R(g, cx - hh - 1, mzT + j, hh * 2 + 2, 1, OUT);
+        G.R(g, cx - hh, mzT + j, hh * 2, 1,
+          j < 2 ? '#ffe4ea' : j < mzH * 0.32 ? '#ffcbd6' : j > mzH - 3 ? '#d98aa2' : '#ffb8c8');
+      }
+      // the shadow it casts on the face, and a highlight across the bridge
+      G.Rh(g, cx - mzW * 0.3, mzT - 1, mzW * 0.6, 1, G.shade(c, -0.26));
+      G.hair(g, cx - mzW * 0.2, mzT + 1.5, mzW * 0.4, '#fff2f5');
+      // nostrils, flaring gently on the breath
+      const br = Math.sin(t * 1.5) * 0.5 + 0.5;
+      for (const sd of [-1, 1]) {
+        const nx = cx + sd * Math.round(mzW * 0.2), ny = mzT + Math.round(mzH * 0.28);
+        G.Rh(g, nx - 1, ny, 2, 1.5 + br * 0.5, '#b0637d');
+        G.Rh(g, nx - 1 + (sd > 0 ? 1 : -0.5), ny + 1.5, 1.5, 1, '#b0637d');
+        G.hair(g, nx - 1, ny, 2, '#8f4a63');
+      }
+    }
+
     // ---- what makes it read friendly: blush, soft brows, and a smile
     // where the intake would be when it is not open ----
     if (soft) {
       const bl = soft > 1 ? '#ff9ab0' : '#e08a9a';
-      const sp2 = Math.round(w * (0.23 + eg * 0.5));
+      const sp2 = Math.round(w * (cow ? 0.32 : 0.23 + eg * 0.5));
       for (const sd of [-1, 1]) {
         // a round blush patch, low on the cheek, one tone over the plate
         for (let j = 0; j < Math.max(2, u(3)); j++) {
           const ww = Math.max(1, u(4) - j);
           g.globalAlpha = 0.5;
-          G.Rh(g, cx + sd * (sp2 + u(3)) - ww / 2, ey + eh + u(1) + j * 0.5, ww, 0.5, bl);
+          G.Rh(g, cx + sd * (sp2 + u(cow ? 1 : 3)) - ww / 2, ey + eh + u(1) + j * 0.5, ww, 0.5, bl);
           g.globalAlpha = 1;
         }
         // a soft raised brow, which is most of the expression
@@ -649,12 +916,13 @@
           for (let i = 0; i < bw2; i++) {
             const p = i / (bw2 - 1);
             const lift = Math.sin(p * Math.PI) * (soft > 1 ? 1.5 : 1);
-            G.Rh(g, cx + sd * sp2 - bw2 / 2 + i, ey - u(2) - lift, 1, 0.5, G.shade(c, 0.42));
+            G.Rh(g, cx + sd * sp2 - bw2 / 2 + i, ey - u(2) - lift, 1, 0.5,
+              cow ? (sd < 0 ? '#d6cadd' : '#5b4f66') : G.shade(c, 0.42));
           }
         }
       }
       // a moustache, curled, sitting just above where the smile lands
-      if (soft > 1) {
+      if (soft > 1 && !cow) {
         const my2 = y + Math.round(h * 0.7);
         const mw2 = Math.round(w * 0.5);
         G.Rh(g, cx - mw2 / 2, my2 - u(3), mw2, 1.5, '#4a3524');
@@ -665,7 +933,7 @@
         }
       }
       // freckle dots on the very friendly ones
-      if (soft > 1) for (let i = 0; i < 6; i++)
+      if (soft > 1 && !cow) for (let i = 0; i < 6; i++)
         G.Rh(g, cx - u(7) + (i % 3) * u(1.6) + (i < 3 ? 0 : u(11)),
           ey + eh + u(2.5) + Math.floor(i / 3) * 1, 0.5, 0.5, G.shade(bl, -0.2));
     }
@@ -686,14 +954,25 @@
     }
 
     // ---- intake: a shuttered mouth that opens ----
-    const my = y + Math.round(h * 0.7);
-    const mw = Math.round(w * 0.62);
+    const my = cow ? mzT + Math.round(mzH * 0.58) : y + Math.round(h * 0.7);
+    const mw = Math.round(cow ? mzW * 0.62 : w * 0.62);
     const open = G.clamp(o.open || 0, 0, 1);
     // the friendliest ones hold the smile through an idle twitch
     const gape = Math.round((soft > 1 && open < 0.45 ? 0 : open) * u(11));
     if (!(soft && gape < 1))
       G.R(g, cx - mw / 2 - 1, my - 1, mw + 2, Math.max(3, gape + u(4)) + 2, OUT);
-    if (gape > 1) {
+    if (gape > 1 && cow) {
+      // a real mouth: dark palate, a tongue, and no grille teeth at all
+      G.R(g, cx - mw / 2, my, mw, gape, '#6b2038');
+      G.R(g, cx - mw / 2, my, mw, Math.max(1, u(1.5)), '#4a1226');
+      const tg = Math.max(2, Math.round(gape * 0.44));
+      for (let j = 0; j < tg; j++) {
+        const q = j / Math.max(1, tg - 1);
+        const hw = Math.max(1, Math.round((mw * 0.34) * Math.sqrt(Math.max(0, 1 - (1 - q) * (1 - q)))));
+        G.R(g, cx - hw, my + gape - tg + j, hw * 2, 1, j < 1 ? '#f294ab' : '#dd6b88');
+      }
+      G.hair(g, cx - mw * 0.3, my + gape - tg + 1, mw * 0.6, '#ffb6c6');
+    } else if (gape > 1) {
       G.R(g, cx - mw / 2, my, mw, gape, '#150f1c');
       G.R(g, cx - mw / 2, my, mw, 1, '#2a1f34');
       // grille teeth top and bottom
@@ -714,20 +993,22 @@
       // closed and friendly: a smile stamped into the plate, not a grille
       const sw2 = Math.round(mw * (soft > 1 ? 0.98 : 0.62));
       const dp = Math.max(1, u(soft > 1 ? 3 : 2));
+      const sm = cow ? '#a84a68' : '#2a1f2c';
+      const smLt = cow ? '#ffd2dc' : G.shade(c, 0.34);
       for (let i = 0; i <= sw2; i++) {
         const p = i / sw2;
         const yy = my + Math.sin(p * Math.PI) * dp;
-        G.Rh(g, cx - sw2 / 2 + i, yy, 1, 1, '#2a1f2c');
-        G.Rh(g, cx - sw2 / 2 + i, yy + 1, 1, 0.5, G.shade(c, 0.34));
+        G.Rh(g, cx - sw2 / 2 + i, yy, 1, 1, sm);
+        G.Rh(g, cx - sw2 / 2 + i, yy + 1, 1, 0.5, smLt);
       }
       // the corners turn up
       for (const sd of [-1, 1]) {
-        G.Rh(g, cx + sd * (sw2 / 2), my - 0.5, 1, 1, '#2a1f2c');
-        G.Rh(g, cx + sd * (sw2 / 2 + 1), my - 1.5, 1, 1, '#2a1f2c');
+        G.Rh(g, cx + sd * (sw2 / 2), my - 0.5, 1, 1, sm);
+        G.Rh(g, cx + sd * (sw2 / 2 + 1), my - 1.5, 1, 1, sm);
       }
       // and a little dimple either side
       for (const sd of [-1, 1])
-        G.Rh(g, cx + sd * (sw2 / 2 + u(2)), my + 0.5, 0.5, 0.5, G.shade(c, -0.4));
+        G.Rh(g, cx + sd * (sw2 / 2 + u(2)), my + 0.5, 0.5, 0.5, cow ? '#c8798f' : G.shade(c, -0.4));
     } else {
       G.R(g, cx - mw / 2, my, mw, Math.max(2, u(3)), P.plateDk2);
       for (let i = 0; i < 4; i++) G.R(g, cx - mw / 2 + 1 + i * Math.max(2, Math.round(mw / 4)), my, 1, Math.max(2, u(3)), P.hullDk);
@@ -769,7 +1050,89 @@
       }
       return { x, y: sy + len };
     }
-    if (kind === 'heavy') {
+    // a soft limb: a rounded shoulder cap sitting ON the body, one
+    // tapered tube, and a mitten. No pauldrons, no pistons. It is what
+    // separates a friendly machine from a piece of plant equipment.
+    function softLimb(s, len, wd, col) {
+      const base = col || c;
+      const x = cx + s * (tw / 2 + wd / 2 - u(3.5));
+      const top = sy - u(2), cap = Math.max(3, u(6));
+      for (let j = 0; j < cap; j++) {
+        const p = j / (cap - 1);
+        const hw = Math.max(1, Math.round((wd / 2 + u(1)) * Math.sqrt(Math.max(0, 1 - (1 - p) * (1 - p)))));
+        G.R(g, x - hw - 1, top + j, hw * 2 + 2, 1, OUT);
+        G.R(g, x - hw, top + j, hw * 2, 1, j < 1 ? G.shade(base, 0.36) : base);
+      }
+      const aTop = top + cap - 1;
+      let bend = 0;
+      for (let j = 0; j < len; j++) {
+        const p = j / Math.max(1, len - 1);
+        const hw = Math.max(1, Math.round((wd / 2) * (1 - p * 0.2)));
+        bend = Math.round(Math.sin(p * 1.7) * u(1.4)) * s;
+        G.R(g, x + bend - hw - 1, aTop + j, hw * 2 + 2, 1, OUT);
+        G.R(g, x + bend - hw, aTop + j, hw * 2, 1,
+          p < 0.06 ? G.shade(base, 0.3) : p > 0.9 ? G.shade(base, -0.3) : base);
+        G.Rh(g, x + bend - hw, aTop + j, 1, 1, G.shade(base, 0.2));
+        G.Rh(g, x + bend + hw - 1, aTop + j, 1, 1, G.shade(base, -0.26));
+      }
+      const el = aTop + Math.round(len * 0.46);
+      const eb = Math.round(Math.sin(0.46 * 1.7) * u(1.4)) * s;
+      G.R(g, x + eb - wd / 2 - 1, el, wd + 2, 2, G.shade(base, -0.34));
+      G.hair(g, x + eb - wd / 2 - 1, el, wd + 2, G.shade(base, 0.3));
+      return { x: x + bend, y: aTop + len, wd };
+    }
+    // a mitten: a rounded pad with a thumb on the inside and two creases
+    function mitten(e, s, col) {
+      const mw = Math.max(4, u(6.4)), mh = Math.max(4, u(5.6));
+      const rows = ballRows(mw, mh);
+      const tx = Math.round(e.x - s * (mw * 0.46)), ty2 = e.y + Math.round(mh * 0.16);
+      G.R(g, tx - 1, ty2 - 1, Math.max(3, u(3)) + 2, Math.max(3, u(4)) + 2, OUT);
+      G.Rh(g, tx, ty2, Math.max(3, u(3)), Math.max(3, u(4)), G.shade(col, -0.12));
+      G.hair(g, tx, ty2, Math.max(3, u(3)), G.shade(col, 0.2));
+      for (let j = 0; j < mh; j++) {
+        G.R(g, Math.round(e.x - rows[j]) - 1, e.y + j, rows[j] * 2 + 2, 1, OUT);
+        G.R(g, Math.round(e.x - rows[j]), e.y + j, rows[j] * 2, 1,
+          j < 1 ? G.shade(col, 0.36) : j > mh - 2 ? G.shade(col, -0.36) : col);
+      }
+      for (let k = 0; k < 2; k++)
+        G.Rh(g, e.x - mw * 0.18 + k * mw * 0.26, e.y + mh * 0.5, 1, 1.5, G.shade(col, -0.3));
+      return { x: e.x, y: e.y + mh };
+    }
+
+    if (kind === 'scoop') {
+      // the near arm is hers. She had it in a crate with a label on it
+      // that said SPARES and she never told you whose it had been.
+      const aw2 = Math.max(3, u(4.6));
+      const l = softLimb(-1, Math.round(th * 0.44) + sway, aw2, '#c6c0ce');
+      mitten(l, -1, '#d8d2de');
+      // two fine seams down the borrowed one so it reads as not yours
+      const r = softLimb(1, Math.round(th * 0.38) - sway, aw2, G.shade(c, -0.12));
+      const rh = mitten(r, 1, G.shade(c, -0.08));
+      // the disher, held UP, where the queue can see it. It is the only
+      // thing this machine was ever issued that it kept on purpose.
+      const dx = rh.x + u(1), dy = rh.y - u(2);
+      G.R(g, dx - 1, dy - u(9) - 1, Math.max(2, u(2)) + 2, u(9) + 2, OUT);
+      G.R(g, dx, dy - u(9), Math.max(2, u(2)), u(9), P.hull);
+      G.vair(g, dx, dy - u(9), u(9), P.chrome);
+      const bw3 = Math.max(5, u(9)), byy = dy - u(9) - Math.max(3, u(5)), bcx = dx + u(1);
+      const bhh = Math.max(3, u(5)), br2 = [];
+      for (let j = 0; j < bhh; j++) {
+        const q = j / Math.max(1, bhh - 1);     // widest at the rim, tapering down
+        br2.push(Math.max(1, Math.round((bw3 / 2) * Math.sqrt(Math.max(0, 1 - q * q * 0.9)))));
+      }
+      for (let j = 0; j < bhh; j++) G.R(g, bcx - br2[j] - 1, byy + j - 1, br2[j] * 2 + 2, 3, OUT);
+      for (let j = 0; j < bhh; j++)
+        G.R(g, bcx - br2[j], byy + j, br2[j] * 2, 1, j < 1 ? P.chrome : j > bhh - 2 ? P.hullDk : P.hull);
+      // and a scoop of it still in the bowl, because there always is
+      const gw = Math.max(3, u(7)), gh = Math.max(2, u(4)), gr = [];
+      for (let j = 0; j < gh; j++) {
+        const q = j / Math.max(1, gh - 1);
+        gr.push(Math.max(1, Math.round((gw / 2) * Math.sqrt(Math.max(0, 1 - (1 - q) * (1 - q) * 0.92)))));
+      }
+      for (let j = 0; j < gh; j++) G.R(g, bcx - gr[j] - 1, byy - gh + j - 1, gr[j] * 2 + 2, 3, OUT);
+      for (let j = 0; j < gh; j++)
+        G.R(g, bcx - gr[j], byy - gh + j, gr[j] * 2, 1, j < 1 ? '#fff6e6' : j < gh - 1 ? '#ffe6c8' : '#f0c896');
+    } else if (kind === 'heavy') {
       for (const s of [-1, 1]) {
         const e = limb(s, Math.round(th * 0.9) + sway * s, u(9));
         plate(g, e.x - u(6), e.y - u(2), u(12), u(9), P.plateDk, { r: 2, band: 2, bolts: 1 });
@@ -1082,7 +1445,7 @@
 
     const base = drawBase(g, fr.base, cx, footY, bw, u, b, t, walk);
     const torso = drawTorso(g, fr.torso, cx, base.top + 1, bw, u, b, t,
-      { emblem: fr.emblem, soft: fr.soft || 0 });
+      { emblem: fr.emblem, soft: fr.soft || 0, cow: fr.cow || 0 });
     drawArms(g, fr.arms, cx, torso.y, torso.w, torso.h, u, b, t, o);
     const hw = Math.round(u(11) * fr.hs);
     const hd = drawHead(g, fr.head, cx, torso.y + 1, hw, u, b, t,
@@ -1100,52 +1463,67 @@
     if (o.shellBits) for (const s of o.shellBits) G.R(g, s.x, s.y, 2, 2, s.col);
     if (o.shellCoat) for (const s of o.shellCoat) G.R(g, s.x, s.y, 2, 2, s.col);
 
-    // a bow tie on the collar, because she put one on you and you never
-    // took it off. Drawn after the head so nothing hides it.
+    // a collar with a bell on it. She found it in a box of things that
+    // used to belong to animals, and she said it suited you. Drawn after
+    // the head so nothing hides it.
     if ((fr.soft || 0) > 1) {
-      const bt = '#e0485c', ty2 = hd.y + hd.h - u(1);
-      for (const sd of [-1, 1]) {
-        const n = Math.max(3, u(3.4));
-        for (let j = 0; j < n; j++) {
-          const ww = Math.max(1, u(3.6) * (1 - Math.abs(j - (n - 1) / 2) / (n / 1.7)));
-          G.R(g, Math.round(cx + sd * u(1.2) + (sd > 0 ? 0 : -ww)) - 1, ty2 + j - 1,
-            Math.round(ww) + 2, 1, OUT);
-          G.Rh(g, cx + sd * u(1.2) + (sd > 0 ? 0 : -ww), ty2 + j - 1, ww, 1,
-            j < 2 ? G.shade(bt, 0.35) : bt);
-        }
+      const ty2 = hd.y + hd.h - u(2), cw = Math.round(torso.w * 0.5), ch = Math.max(3, u(4));
+      for (let j = 0; j < ch; j++) {
+        const pinch = Math.abs(j / (ch - 1) - 0.5) * 2;
+        const hw = Math.round((cw / 2) * (1 - pinch * pinch * 0.14));
+        G.R(g, cx - hw - 1, ty2 + j, hw * 2 + 2, 1, OUT);
+        G.R(g, cx - hw, ty2 + j, hw * 2, 1,
+          j < 1 ? '#c06a4a' : j > ch - 2 ? '#4a1c14' : '#8a3c2a');
       }
-      G.R(g, cx - u(1.5) - 1, ty2 - 1, u(3) + 2, u(3) + 1, OUT);
-      G.Rh(g, cx - u(1.5), ty2, u(3), u(3) - 1, G.shade(bt, -0.24));
-      G.Rh(g, cx - u(1.5), ty2, u(1.5), 0.5, G.shade(bt, 0.55));
+      for (let i = 0; i < 4; i++)
+        G.Rh(g, cx - cw / 2 + u(2) + i * (cw - u(4)) / 3, ty2 + ch * 0.45, 1, 0.5, '#d8a070');
+      // the bell, swinging a pixel either way
+      const bsw = Math.round(Math.sin(t * 2.1) * u(1));
+      const bx = cx + bsw, by = ty2 + ch;
+      G.R(g, bx - 2, by - 2, 4, 3, OUT);
+      G.R(g, bx - 1, by - 2, 2, 2, '#8a6a20');
+      const bh = Math.max(5, u(8)), bwd = Math.max(5, u(9));
+      for (let k = 0; k < bh; k++) {
+        const p = k / (bh - 1);
+        const hh = Math.max(1, Math.round((bwd / 2) * (0.4 + 0.6 * Math.pow(p, 0.62))));
+        G.R(g, bx - hh - 1, by + k, hh * 2 + 2, 1, OUT);
+        G.R(g, bx - hh, by + k, hh * 2, 1,
+          k < 2 ? '#ffeaa4' : p > 0.84 ? '#a8760e' : p > 0.52 ? '#e0a41e' : '#f7c93c');
+      }
+      G.Rh(g, bx - bwd * 0.3, by + bh - 2, bwd * 0.6, 1, '#3a2a06');
+      G.Rh(g, bx - bwd * 0.28, by + 1.5, bwd * 0.22, bh * 0.44, '#fff6cc');
+      G.Rh(g, bx - 0.5, by + bh - 1, 1, 1, '#2a1e04');
     }
 
     // an apron, tied on, with a pocket and a scalloped hem
     if ((fr.soft || 0) > 1) {
-      const aw = Math.round(torso.w * 0.6), ax = cx - aw / 2;
-      const ay = torso.y + Math.round(torso.h * 0.62), ah = Math.round(torso.h * 0.34);
-      G.R(g, ax - 1, ay - 1, aw + 2, ah + 2, OUT);
-      G.R(g, ax, ay, aw, ah, '#fdf6ea');
-      G.bevel(g, ax, ay, aw, ah, '#ffffff', '#cfc2ae');
+      const aw = Math.round(torso.w * 0.5), ax = cx - aw / 2;
+      const ay = torso.y + Math.round(torso.h * 0.66), ah = Math.round(torso.h * 0.3);
+      const arow = [];
+      for (let j = 0; j < ah; j++)
+        arow.push(Math.round((aw / 2) * (0.9 + 0.1 * (j / Math.max(1, ah - 1)))));
+      for (let j = 0; j < ah; j++) G.R(g, cx - arow[j] - 1, ay + j - 1, arow[j] * 2 + 2, 3, OUT);
+      for (let j = 0; j < ah; j++)
+        G.R(g, cx - arow[j], ay + j, arow[j] * 2, 1,
+          j < 1 ? '#fff8ea' : j > ah - 2 ? '#c8b696' : '#f3e6cf');
+      G.vair(g, cx + aw * 0.18, ay + 2, ah - 3, '#e0d0b2');
       // the waist tie, running off both sides
-      G.Rh(g, ax - u(3), ay + 1, aw + u(6), 1.5, '#e8dcc8');
-      G.hair(g, ax - u(3), ay + 1, aw + u(6), '#ffffff');
+      G.Rh(g, ax - u(4), ay + 1, aw + u(8), 1.5, '#e2d2b4');
+      G.hair(g, ax - u(4), ay + 1, aw + u(8), '#fff8ea');
       // a pocket with a scoop tucked in it
       const pw = Math.round(aw * 0.44);
-      G.Rh(g, cx - pw / 2, ay + ah * 0.34, pw, ah * 0.42, '#eee2d0');
-      G.hair(g, cx - pw / 2, ay + ah * 0.34, pw, '#ffffff');
+      G.Rh(g, cx - pw / 2, ay + ah * 0.34, pw, ah * 0.42, '#e7d7ba');
+      G.hair(g, cx - pw / 2, ay + ah * 0.34, pw, '#fff8ea');
       G.Rh(g, cx - 1, ay + ah * 0.24, 1.5, ah * 0.2, P.steel);
       // scalloped hem
       for (let i = 0; i * 3 < aw; i++) {
-        G.Rh(g, ax + i * 3, ay + ah, 2, 1, '#e8dcc8');
-        G.Rh(g, ax + i * 3 + 0.5, ay + ah + 1, 1, 0.5, '#cfc2ae');
+        G.Rh(g, ax + i * 3, ay + ah, 2, 1, '#e2d2b4');
+        G.Rh(g, ax + i * 3 + 0.5, ay + ah + 1, 1, 0.5, '#bfa985');
       }
       // a tricolour stripe up one side and a name tag on the bib
-      G.Rh(g, ax + 1, ay + 3, 1.5, ah - 5, '#2f8a48');
-      G.Rh(g, ax + 2.5, ay + 3, 1.5, ah - 5, '#f2e4d0');
-      G.Rh(g, ax + 4, ay + 3, 1.5, ah - 5, '#c8383a');
-      G.Rh(g, ax + aw - u(9), ay + 3, u(7), u(3), '#d8cfae');
-      G.hair(g, ax + aw - u(9), ay + 3, u(7), '#ffffff');
-      for (let i = 0; i < 3; i++) G.Rh(g, ax + aw - u(8) + i * 1.6, ay + 4.5, 1, 0.5, '#6b5a3a');
+      G.Rh(g, ax + 1, ay + 2.5, 1, ah - 4, '#2f8a48');
+      G.Rh(g, ax + 2, ay + 2.5, 1, ah - 4, '#f2e4d0');
+      G.Rh(g, ax + 3, ay + 2.5, 1, ah - 4, '#c8383a');
     }
 
     // the tell, if this one is not really a machine. Drawn last so it
