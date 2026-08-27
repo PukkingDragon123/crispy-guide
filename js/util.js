@@ -7,20 +7,22 @@
 (function () {
   const G = (window.GAME = {});
   // ------------------------------------------------------------
-  // TWO GRIDS.
-  // The canvas raster is 640x360. Everything is authored in a
-  // 320x180 LOGICAL space and drawn through a 2x canvas transform,
-  // so a logical 1 is two hard pixels. That keeps every layout
-  // honest while giving the art a finer grid to work on: pass
-  // half-units (x.5) to the Rh/hair/bevel family below and you land
-  // on a single native pixel. Big flat forms, 1px detailing.
+  // THREE GRIDS.
+  // The canvas raster is 1280x720. Everything is authored in a
+  // 320x180 LOGICAL space and drawn through a 4x canvas transform,
+  // so a logical 1 is four hard pixels. That keeps every layout
+  // honest while giving the art two finer grids to work on:
+  //   half-units (x.5) -> the Rh/hair/bevel family, 2 native px
+  //   quarter-units    -> the Rq/hairq family below, 1 native px
+  // Big flat forms, 2px structural detailing, 1px polish.
   // ------------------------------------------------------------
   G.W = 320;                     // logical width  (author in these)
   G.H = 180;                     // logical height
-  G.PX = 2;                      // native pixels per logical unit
-  G.WN = 640;                    // native raster width
-  G.HN = 360;                    // native raster height
-  G.HALF = 0.5;                  // one native pixel, in logical units
+  G.PX = 4;                      // native pixels per logical unit
+  G.WN = 1280;                   // native raster width
+  G.HN = 720;                    // native raster height
+  G.HALF = 0.5;                  // the structural detail step (2 native px)
+  G.Q = 0.25;                    // one native pixel, in logical units
 
   // ---------- math ----------
   G.clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -250,6 +252,58 @@
     g.fillStyle = col;
     for (let i = 0; i < s * 2; i++) g.fillRect(x + i * 0.5, y + i * 0.5, 0.5, 0.5);
   };
+  // ------------------------------------------------------------
+  // THE QUARTER TIER. One native pixel at 4x. This is the polish
+  // grid: rim lights, specular pips, real dithering, hairline text
+  // underlines - everything that used to be too fine to draw.
+  // ------------------------------------------------------------
+  G.Rq = function (g, x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  G.hairq = function (g, x, y, w, c) { g.fillStyle = c; g.fillRect(x, y, w, 0.25); };
+  G.vairq = function (g, x, y, h, c) { g.fillStyle = c; g.fillRect(x, y, 0.25, h); };
+  G.pip = function (g, x, y, c) { g.fillStyle = c; g.fillRect(x, y, 0.25, 0.25); };
+  // a one-native-pixel bevel: the finest edge the raster can hold
+  G.bevelq = function (g, x, y, w, h, lit, dk) {
+    g.fillStyle = lit; g.fillRect(x, y, w, 0.25); g.fillRect(x, y, 0.25, h);
+    g.fillStyle = dk;  g.fillRect(x, y + h - 0.25, w, 0.25); g.fillRect(x + w - 0.25, y, 0.25, h);
+  };
+  // a rim light down one side of a form, one pixel wide, fading off
+  G.rim = function (g, x, y, h, col, side) {
+    g.fillStyle = col;
+    for (let j = 0; j < h * 4; j++) {
+      const p = j / (h * 4);
+      if (G.hash(j * 3.1, side || 0) > 0.15 + p * 0.5) continue;
+      g.fillRect(x, y + j * 0.25, 0.25, 0.25);
+    }
+  };
+  // an honest ordered dither between two tones, on the native grid
+  G.dither = function (g, x, y, w, h, a, b, bias) {
+    const n = 4;                                    // 4 native px per logical unit
+    for (let j = 0; j < h * n; j++)
+      for (let i = 0; i < w * n; i++) {
+        const c = ((i + j) % 2 === 0) === ((bias || 0) < 0.5) ? a : b;
+        g.fillStyle = c;
+        g.fillRect(x + i / n, y + j / n, 1 / n, 1 / n);
+      }
+  };
+  // fine speckle at native resolution
+  G.grainq = function (g, x, y, w, h, col, density, seed) {
+    g.fillStyle = col;
+    seed = seed || 0;
+    for (let j = 0; j < h * 4; j++)
+      for (let i = 0; i < w * 4; i++)
+        if (G.hash(i + seed * 13.1, j + seed * 7.7) > 1 - density)
+          g.fillRect(x + i * 0.25, y + j * 0.25, 0.25, 0.25);
+  };
+  // a soft gradient band, dithered, for skies and glass
+  G.ramp = function (g, x, y, w, h, top, bot, steps) {
+    const n = steps || Math.max(2, Math.round(h * 2));
+    for (let k = 0; k < n; k++) {
+      const p = k / (n - 1);
+      g.fillStyle = G.mix(top, bot, p);
+      g.fillRect(x, y + (h * k) / n, w, h / n + 0.25);
+    }
+  };
+
   // wear: chipped paint along an edge
   G.wear = function (g, x, y, w, col, seed, density) {
     g.fillStyle = col;

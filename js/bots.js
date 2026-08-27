@@ -40,7 +40,7 @@
     // YOU. A dairy unit. Built to stand in a field of nothing and turn
     // out gelato, and given a face soft enough that the children would
     // come up to it. Tracy kept the face and rebuilt everything under it.
-    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.12, h: 0.9,  hs: 1.2,  soft: 2, cow: 1 },
+    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.16, h: 0.9,  hs: 1.24, soft: 2, cow: 1, shades: 1 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -388,6 +388,8 @@
         G.hair(g, lx - 2, fy + hf - 1, lw + 4, '#150f1c');
         G.vseam(g, lx + lw / 2, fy + 1, hf - 1, '#140f1c', '#4a3e52');
         G.R(g, lx - 1, fy + 1, 2, 1, '#9a8ca2');
+        // a hairline of light down the outer edge of the leg
+        G.vairq(g, lx + (s > 0 ? lw - 0.25 : 0), ly + 1, lh - hf - u(3), G.shade(c, s > 0 ? -0.3 : 0.34));
       }
       return { top: footY - lh, w: Math.round(bw * 0.72) };
     }
@@ -526,8 +528,11 @@
         bp(w * 0.33, h * 0.52, w * 0.19, h * 0.19, 5.1);
         bp(-w * 0.1, h * 0.88, w * 0.17, h * 0.1, 7.7);
       }
-      // hoop bands, each with a lit crown, a shadow and riveted laps
-      for (let k = 1; k < 4; k++) {
+      // hoop bands, each with a lit crown, a shadow and riveted laps.
+      // The mascot gets one broad belt instead of three hoops - fewer
+      // lines, bigger shapes, which is the whole difference.
+      const bands = (o && o.cow) ? [2] : [1, 2, 3];
+      for (const k of bands) {
         const j = Math.round(h * k / 4), p = j / (h - 1);
         const hw = Math.round((w / 2) * (Math.sin(p * Math.PI) * 0.22 + 0.78));
         G.R(g, cx - hw, y + j, hw * 2, 2, G.shade(c, -0.3));
@@ -539,21 +544,36 @@
       // vertical weld seam down the belly
       G.vseam(g, cx + u(4), y + 2, h - 4, G.shade(c, -0.5), G.shade(c, 0.2));
       if (o && o.cow) {
-        // a milk level in a little round bezel, low on the tank
-        const gx2 = cx - Math.round(w * 0.24), gy2 = y + Math.round(h * 0.34);
-        const gr2 = Math.max(3, Math.round(w * 0.11));
-        G.oc(g, gx2, gy2, gr2 + 1, OUT);
-        G.oc(g, gx2, gy2, gr2, '#141824');
-        const lvl = 0.44 + Math.sin(t * 0.9) * 0.12;
-        for (let j = 0; j < gr2 * 2; j++) {
-          const dy = (j - gr2) / gr2;
-          if (Math.abs(dy) > 1) continue;
-          if (j < gr2 * 2 * (1 - lvl)) continue;
-          const hw = Math.round(gr2 * Math.sqrt(1 - dy * dy));
-          G.R(g, gx2 - hw, gy2 - gr2 + j, hw * 2, 1,
-            j < gr2 * 2 * (1 - lvl) + 1.5 ? '#ffffff' : '#fff0d4');
+        // ---- THE BADGE. A brand roundel stamped on the tank: a red
+        // ring, a cream field, a cow's head in silhouette and a cone.
+        // Every mascot has one and it is always on the chest. ----
+        const bx2 = cx, by2 = y + Math.round(h * 0.5);
+        const br3 = Math.max(6, Math.round(w * 0.21));
+        const ring = (r, col) => {
+          for (let j = -r; j <= r; j++) {
+            const hw = Math.round(Math.sqrt(Math.max(0, r * r - j * j)));
+            G.R(g, bx2 - hw, by2 + j, hw * 2 + 1, 1, col);
+          }
+        };
+        ring(br3 + 1, OUT);
+        ring(br3, '#c8383a');
+        ring(Math.round(br3 * 0.82), '#f4ead2');
+        // the icon: its own head, in black, wearing its own shades.
+        // A mascot's badge is always the mascot.
+        const hr = Math.round(br3 * 0.46);
+        G.Rh(g, bx2 - hr * 0.8, by2 - hr * 1.4, hr * 0.4, hr * 0.6, '#241d2a');   // horns
+        G.Rh(g, bx2 + hr * 0.4, by2 - hr * 1.4, hr * 0.4, hr * 0.6, '#241d2a');
+        G.Rh(g, bx2 - hr, by2 - hr * 0.9, hr * 2, hr * 1.7, '#241d2a');           // skull
+        G.Rq(g, bx2 - hr * 1.1, by2 - hr * 0.4, hr * 2.2, hr * 0.5, '#f4ead2');   // the shades
+        G.Rq(g, bx2 - hr * 0.15, by2 - hr * 0.4, hr * 0.3, hr * 0.5, '#241d2a');
+        G.Rq(g, bx2 - hr * 0.5, by2 + hr * 0.55, hr, hr * 0.35, '#f4ead2');       // the grin
+        // the ring highlight and a machined bevel, on the quarter grid
+        G.hairq(g, bx2 - br3 * 0.5, by2 - br3 + 0.25, br3, '#ff8a8c');
+        G.hairq(g, bx2 - br3 * 0.4, by2 + br3 - 0.5, br3 * 0.8, '#7a1c1e');
+        for (let k = 0; k < 4; k++) {
+          const a2 = Math.PI * 0.25 + k * Math.PI * 0.5;
+          G.pip(g, bx2 + Math.cos(a2) * br3 * 0.92, by2 + Math.sin(a2) * br3 * 0.92, '#f0b0b0');
         }
-        G.Rh(g, gx2 - gr2 * 0.5, gy2 - gr2 * 0.55, gr2 * 0.5, 0.5, '#8a93ad');
         return { y, w, h, top: y };
       }
       // a full-belly gauge in a machined bezel
@@ -847,6 +867,49 @@
     if (single) {
       G.lens(g, cx - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, slit: mood === 'angry',
         t, lookX: Math.sin(t * 0.6) * 0.25 });
+    } else if (o.shades) {
+      // ---- THE SHADES. One wraparound band across the whole face, a
+      // hot specular streak across the glass, and the optics burning
+      // behind it. This is the single thing that makes it a mascot and
+      // not a farm animal. ----
+      const gw = Math.round(w * 0.94), gh = Math.max(5, Math.round(h * 0.3));
+      const gx = cx - gw / 2, gy = ey - Math.max(1, u(1));
+      // the arms, going back past the cheeks to the ears
+      for (const sd of [-1, 1]) {
+        G.R(g, cx + sd * (gw / 2) - (sd > 0 ? 0 : u(3)), gy + gh * 0.24 - 1, u(4) + 1, u(3) + 2, OUT);
+        G.Rh(g, cx + sd * (gw / 2) - (sd > 0 ? -0.5 : u(3)), gy + gh * 0.28, u(4), u(2), '#2a2434');
+        G.hairq(g, cx + sd * (gw / 2) - (sd > 0 ? -0.5 : u(3)), gy + gh * 0.28, u(4), '#6b5f7a');
+      }
+      // the frame
+      G.R(g, gx - 1, gy - 1, gw + 2, gh + 2, OUT);
+      // the glass: two lozenges over a bridge, one dark mass
+      for (let j = 0; j < gh; j++) {
+        const q = j / Math.max(1, gh - 1);
+        const inset = Math.round(Math.pow(Math.abs(q - 0.42) * 2.1, 2.4) * gw * 0.06);
+        const yy = gy + j;
+        G.R(g, gx + inset, yy, gw - inset * 2, 1,
+          j === 0 ? '#5c5270' : q > 0.86 ? '#0e0a14' : q > 0.6 ? '#161022' : '#1f1730');
+      }
+      // the bridge notch over the muzzle
+      G.R(g, cx - u(1.5), gy + gh * 0.34, u(3), gh * 0.66, c);
+      G.hairq(g, cx - u(1.5), gy + gh * 0.34, u(3), G.shade(c, 0.4));
+      // the optics behind the glass, two hot coals
+      for (const sd of [-1, 1]) {
+        const lx = cx + sd * Math.round(w * 0.26);
+        const look = Math.sin(t * 0.6) * u(1);
+        if (!blink && !o.dead) {
+          G.Rh(g, lx - u(1.5) + look, gy + gh * 0.4, u(3), Math.max(1, gh * 0.3), G.shade(hue, -0.3));
+          G.Rq(g, lx - u(0.75) + look, gy + gh * 0.44, u(1.5), Math.max(0.5, gh * 0.2), hue);
+          G.glow(g, lx + look, gy + gh * 0.52, u(9), gh, hue, 0.4);
+        }
+      }
+      // the specular: one long streak low-left, one short pip high-right
+      G.Rq(g, gx + gw * 0.08, gy + gh * 0.62, gw * 0.3, 0.25, '#8a94b8');
+      G.Rq(g, gx + gw * 0.1, gy + gh * 0.7, gw * 0.2, 0.25, '#5c6480');
+      for (let k = 0; k < 3; k++)
+        G.Rq(g, gx + gw * 0.7 + k * 0.5, gy + gh * 0.2 + k * 0.25, gw * (0.1 - k * 0.02), 0.25, '#cfd8f0');
+      // and a hairline of sky along the top of the frame
+      G.hairq(g, gx, gy - 0.25, gw, '#6b7f96');
     } else {
       const sp = Math.round(w * (cow ? 0.25 : 0.23));
       for (const s of [-1, 1]) {
@@ -874,8 +937,8 @@
     // does not work happens in these forty pixels ----
     let mzT = 0, mzH = 0, mzW = 0;
     if (cow) {
-      mzW = Math.round(w * 0.66); mzH = Math.max(6, Math.round(h * 0.42));
-      mzT = y + Math.round(h * 0.5);
+      mzW = Math.round(w * (o.shades ? 0.6 : 0.66)); mzH = Math.max(6, Math.round(h * (o.shades ? 0.36 : 0.42)));
+      mzT = y + Math.round(h * (o.shades ? 0.54 : 0.5));
       for (let j = 0; j < mzH; j++) {
         const q = (j / (mzH - 1) - 0.5) * 2;
         const hh = Math.max(1, Math.round((mzW / 2) *
@@ -899,7 +962,7 @@
 
     // ---- what makes it read friendly: blush, soft brows, and a smile
     // where the intake would be when it is not open ----
-    if (soft) {
+    if (soft && !o.shades) {
       const bl = soft > 1 ? '#ff9ab0' : '#e08a9a';
       const sp2 = Math.round(w * (cow ? 0.32 : 0.23 + eg * 0.5));
       for (const sd of [-1, 1]) {
@@ -995,6 +1058,39 @@
       const dp = Math.max(1, u(soft > 1 ? 3 : 2));
       const sm = cow ? '#a84a68' : '#2a1f2c';
       const smLt = cow ? '#ffd2dc' : G.shade(c, 0.34);
+      if (o.shades) {
+        // an open grin: a dark mouth with a tooth in it and a lip line
+        const gwid = Math.round(sw2 * 1.06), gdep = Math.max(3, u(4));
+        const rows = [];
+        for (let i = 0; i <= gwid; i++) {
+          const p = i / gwid;
+          const lift = Math.sin(p * Math.PI);
+          rows.push([my - lift * dp * 0.5, my + lift * gdep]);
+        }
+        for (let i = 0; i <= gwid; i++)
+          G.R(g, cx - gwid / 2 + i - 1, rows[i][0] - 1, 3, rows[i][1] - rows[i][0] + 3, OUT);
+        for (let i = 0; i <= gwid; i++) {
+          const top = rows[i][0], bot = rows[i][1];
+          if (bot - top < 1) continue;
+          G.Rh(g, cx - gwid / 2 + i, top, 1, bot - top, '#5c1830');
+          G.hairq(g, cx - gwid / 2 + i, bot - 0.25, 1, '#8a2a48');
+        }
+        // one square tooth, off-centre, because symmetry reads as a logo
+        const tw4 = Math.max(2, u(3)), ti = Math.round(gwid * 0.3);
+        const tTop = rows[ti][0];
+        G.R(g, cx - gwid / 2 + ti - 1, tTop - 1, tw4 + 2, u(2.5) + 2, OUT);
+        G.Rh(g, cx - gwid / 2 + ti, tTop, tw4, u(2.5), '#fffaf0');
+        G.hairq(g, cx - gwid / 2 + ti, tTop, tw4, '#ffffff');
+        G.hairq(g, cx - gwid / 2 + ti, tTop + u(2.5) - 0.25, tw4, '#cfc2ae');
+        // a tongue in the corner
+        G.Rh(g, cx + tw4 * 0.6, my + gdep * 0.44, tw4 * 1.4, u(2), '#dd6b88');
+        G.hairq(g, cx + tw4 * 0.6, my + gdep * 0.44, tw4 * 1.4, '#f294ab');
+        // and the crease each side, which is what sells a grin
+        for (const sd of [-1, 1]) {
+          G.Rh(g, cx + sd * (gwid / 2 + u(1)), my - u(1.5), 1, u(2), sm);
+          G.pip(g, cx + sd * (gwid / 2 + u(2)), my - u(2.5), sm);
+        }
+      } else {
       for (let i = 0; i <= sw2; i++) {
         const p = i / sw2;
         const yy = my + Math.sin(p * Math.PI) * dp;
@@ -1009,6 +1105,7 @@
       // and a little dimple either side
       for (const sd of [-1, 1])
         G.Rh(g, cx + sd * (sw2 / 2 + u(2)), my + 0.5, 0.5, 0.5, cow ? '#c8798f' : G.shade(c, -0.4));
+      }
     } else {
       G.R(g, cx - mw / 2, my, mw, Math.max(2, u(3)), P.plateDk2);
       for (let i = 0; i < 4; i++) G.R(g, cx - mw / 2 + 1 + i * Math.max(2, Math.round(mw / 4)), my, 1, Math.max(2, u(3)), P.hullDk);
@@ -1103,8 +1200,8 @@
       // the near arm is hers. She had it in a crate with a label on it
       // that said SPARES and she never told you whose it had been.
       const aw2 = Math.max(3, u(4.6));
-      const l = softLimb(-1, Math.round(th * 0.44) + sway, aw2, '#c6c0ce');
-      mitten(l, -1, '#d8d2de');
+      const l = softLimb(-1, Math.round(th * 0.44) + sway, aw2, '#bcc0c6');
+      mitten(l, -1, '#d2d6dc');
       // two fine seams down the borrowed one so it reads as not yours
       const r = softLimb(1, Math.round(th * 0.38) - sway, aw2, G.shade(c, -0.12));
       const rh = mitten(r, 1, G.shade(c, -0.08));
@@ -1449,7 +1546,7 @@
     drawArms(g, fr.arms, cx, torso.y, torso.w, torso.h, u, b, t, o);
     const hw = Math.round(u(11) * fr.hs);
     const hd = drawHead(g, fr.head, cx, torso.y + 1, hw, u, b, t,
-      Object.assign({}, o, { soft: fr.soft || 0 }));
+      Object.assign({}, o, { soft: fr.soft || 0, shades: o.shades === undefined ? (fr.shades || 0) : o.shades }));
     drawProp(g, fr.prop, cx, hd, u, b, t);
     if (fr.head === 'helmet') {
       // a real helmet shell over the boxy head
@@ -1482,7 +1579,7 @@
       const bx = cx + bsw, by = ty2 + ch;
       G.R(g, bx - 2, by - 2, 4, 3, OUT);
       G.R(g, bx - 1, by - 2, 2, 2, '#8a6a20');
-      const bh = Math.max(5, u(8)), bwd = Math.max(5, u(9));
+      const bh = Math.max(4, u(5)), bwd = Math.max(4, u(6));
       for (let k = 0; k < bh; k++) {
         const p = k / (bh - 1);
         const hh = Math.max(1, Math.round((bwd / 2) * (0.4 + 0.6 * Math.pow(p, 0.62))));
@@ -1498,7 +1595,7 @@
     // an apron, tied on, with a pocket and a scalloped hem
     if ((fr.soft || 0) > 1) {
       const aw = Math.round(torso.w * 0.5), ax = cx - aw / 2;
-      const ay = torso.y + Math.round(torso.h * 0.66), ah = Math.round(torso.h * 0.3);
+      const ay = torso.y + Math.round(torso.h * 0.74), ah = Math.round(torso.h * 0.26);
       const arow = [];
       for (let j = 0; j < ah; j++)
         arow.push(Math.round((aw / 2) * (0.9 + 0.1 * (j / Math.max(1, ah - 1)))));
@@ -1521,9 +1618,13 @@
         G.Rh(g, ax + i * 3 + 0.5, ay + ah + 1, 1, 0.5, '#bfa985');
       }
       // a tricolour stripe up one side and a name tag on the bib
-      G.Rh(g, ax + 1, ay + 2.5, 1, ah - 4, '#2f8a48');
-      G.Rh(g, ax + 2, ay + 2.5, 1, ah - 4, '#f2e4d0');
-      G.Rh(g, ax + 3, ay + 2.5, 1, ah - 4, '#c8383a');
+      // a brand band across the hem, with a stripe pair on the edge
+      G.Rh(g, cx - arow[ah - 3] * 0.9, ay + ah * 0.6, arow[ah - 3] * 1.8, u(3), '#c8383a');
+      G.hairq(g, cx - arow[ah - 3] * 0.9, ay + ah * 0.6, arow[ah - 3] * 1.8, '#ff8a8c');
+      for (let k = 0; k < 5; k++)
+        G.Rq(g, cx - arow[ah - 3] * 0.6 + k * (arow[ah - 3] * 0.3), ay + ah * 0.6 + u(1), u(1.4), u(1), '#fff0d4');
+      G.Rh(g, ax + 1.5, ay + 2.5, 0.5, ah - 4, '#2f8a48');
+      G.Rh(g, ax + 2.5, ay + 2.5, 0.5, ah - 4, '#c8383a');
     }
 
     // the tell, if this one is not really a machine. Drawn last so it

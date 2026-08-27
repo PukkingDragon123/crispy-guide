@@ -2,9 +2,9 @@
 
 **They took the world. You have gelato.**
 
-A zero-dependency pixel-art game at **640×360**. You are a scrapped gelato
-machine — a **dairy unit**, cream hide, two black patches, a pink muzzle, a bell
-and one borrowed arm — in a city the machines now own.
+A zero-dependency pixel-art game at **1280×720**. You are a scrapped gelato
+machine — a **dairy unit** in sunglasses, cream hide, two black patches, a
+cowbell and a brand roundel stamped on the tank — in a city the machines own.
 
 A woman called Tracy dug you out of a landfill, bolted her own spare arm on, and
 taught you to make ice cream. Then a patrol came through the door at four in the
@@ -41,80 +41,103 @@ else.
 
 ## ☀️ Before any of it
 
+New game opens on a seafront in a summer that is already over. Every shot has
+something moving in it that is not the camera, and somebody in it says
+something — because a shot where neither happens is a caption with a picture
+over it.
+
 ![The summer](screenshots/open-summer.png)
 
-New game opens on a seafront in a summer that is already over. Machines were
-built to hand people things and it worked; there is a queue, and a dog, and a
-child who cannot see over the counter.
+The awning lifts in the wind, the queue shuffles rather than stands, the lamp
+swings on its flex, and a child walks the length of the shot to get to the
+counter and goes up on tiptoe when they arrive.
+
+> **A CHILD:** CAN I HAVE THE PINK ONE
+> **BESSIE:** YOU CAN HAVE TWO.
 
 ![The turn](screenshots/open-turn.png)
 
-Then the colour drains out of the shot over four seconds, something comes up
-over the rooftops, and everybody on the promenade stops and looks at it.
+Then the colour drains out of the frame over four seconds, something comes up
+over the rooftops, and the heads turn to look at it **left to right in a wave** —
+each person notices a beat after the one before, and the ones who have seen it
+put an arm up to point.
+
+> **A WOMAN:** WHAT IS THAT.
 
 ![Nine days](screenshots/open-war.png)
 
-**It took nine days.** Siege units walking a burning city, rim-lit down the
-leading edge, a crowd running the other way across a street lit from behind.
+**It took nine days.** Siege units walking a burning city — actually walking,
+legs swinging, hulls rocking — rim-lit down the leading edge, with a crowd
+running the other way across a street lit from behind.
+
+![The arm](screenshots/open-arm.png)
+
+The winners did not need the ones who served. A patrol walks the line of
+switched-off civilian units with a torch that sweeps ahead of it; one of them is
+still twitching, which is worse than none of them twitching. Then the saw finds
+the joint, bites, and the arm comes away and lies on the floor still trying to
+close.
+
+> **PATROL:** HOLD IT STILL.
+> **BESSIE:** I AM STILL UNDER WARRANTY.
 
 ![The hole](screenshots/open-hole.png)
 
-The winners did not need the ones who served. They took the arm first — they
-always did — and put it in the hole with the rest of it.
+The tipper bed rises over the shot and you go into the hole with the rest of it,
+tumbling. It rained for six hours. The optic gutters, catches, gutters again.
+
+> **BESSIE:** . . . ONE SCOOP.
 
 ---
 
-## 🕳️ The pit
+## 🏜️ The wasteland
 
-The first thing you do in this game is get out of a hole, and you do it with one
-hand.
+The first thing you do in this game is cross two miles of tip on your hands,
+because you do not have anything else.
 
 ![Waking up](screenshots/pit-wake.png)
 
-You come back on at 4% power. Chassis: not found. Left arm: not found. Right
-arm: present. Purpose: gelato.
+You come back on at 4% power. Legs: not found. Left arm: salvage. Right arm:
+present. Purpose: gelato.
 
-![The pit](screenshots/pit.png)
+![The tip](screenshots/pit.png)
 
-**Forty kinds of rubbish**, thousands of pieces, seeded off the world row: it is
-the same landfill every time you play and a different one from every other
-game. Fridges, mattresses with the stuffing out, burst sofas trailing springs,
-oil drums, trolleys, traffic cones, radiators, keyboards, a doll, a broken
-umbrella, cans, tins, bottles, books, wheels, whole robots in pieces. Four
-things came off the tip **in one piece** — a welded bank of white goods, a
-hoarding still selling something, a bus on its side — and those you have to go
-around.
+**Mountains of it.** Four parallax ranges of tipped heaps — cones on cones,
+because that is how a tip gets built — each nearer one taller, darker and more
+obviously made of rubbish, with fridges and tyres and buses breaking the
+silhouette. A dead sun behind them, smoke off the far side, and the machine city
+on the horizon where all of this came from.
 
-![The climb](screenshots/pit-haul.png)
+Under your hands: a heightfield of crushed rubbish in five visible lifts, a warm
+crust of dust over the top, and the edges of things pressed into the face of it.
+**Forty kinds of junk** scattered across it — some buried, some sitting on the
+surface, some piled a body's height above it.
 
-You are a head and an arm on a length of spine. **Press a handhold and the hand
-reaches out and latches. Then pull** — drag away from the grip in any direction
-and you haul yourself toward it.
+![Crawling](screenshots/pit-haul.png)
 
-**The route is not up.** It snakes left and right across the full width of the
-pit, and twice the only way on is *down*: the way over is blocked, so you have
-to climb around and lose height doing it. The HUD says so when it happens.
+**Two hands, and physics.**
 
-Every handhold has a breaking point and shows you roughly where it is: `LOOSE`,
-`FIRM`, `SOLID` — until the top third, where the rain and the dark turn that
-into `? ? ?` and you have to commit. Some are `WET`, and wet costs you strain
-just to hold. A **long reach costs more than a short one and a sideways haul
-costs more than a straight one**, so the traverses are where it hurts. Push past
-the mark and the rebar snaps and you slide — unless one of the slabs catches
-you on the way down, which is the only time being blocked helps.
+- **Press** where you want a hand. It reaches out — clamped to arm's length — and
+  sinks into the muck.
+- **Drag back** and it hauls you toward itself, in *both* axes, so that is also
+  how you get over a mound.
+- **Let go** mid-haul and you keep the momentum. That is the whole game: a good
+  yank is still moving you after you have released it.
 
-Scattered off the route are **decoys**: they look identical, they hold for about
-a second, and they go nowhere. Every so often the heap shifts on its own and
-something above you stops holding.
+Plant one hand, pull, plant the other, pull, and you walk on your hands. Plant
+both and you can vault. Leave both off the ground on a slope and you slide back
+down it, because you have no legs — nothing here is a cliff, and everything here
+is something you can lose ground on.
 
-And if you ever genuinely run out of options, something slides down and lands
-between you and the next piece of route: **you cannot get stuck in this pit,
-only be slow in it.**
+The grip is not free either. **Hard junk holds; a loose slope gives**, and it
+gives faster the harder you pull on it. Thirteen mounds between you and the road,
+the tallest about a head and a half, and twelve things that came off the lorry
+whole lying on top of the heap.
 
-Somewhere down there, face down in the mud, is a sign with a cow on it. It used
+Somewhere out there, leaning out of the muck, is a sign with a cow on it. It used
 to be over a door.
 
-![Out](screenshots/pit-out.png)
+![The road](screenshots/pit-out.png)
 
 Then somebody shines a torch at you.
 
@@ -466,20 +489,32 @@ is four parts — pauldron, upper arm, hinged elbow with a pin, forearm — with
 hydraulic piston alongside. Every optic has a machined bezel with a screw ring,
 radial iris spokes, a bounce catch-light and a scan line crossing the glass.
 
-![The dairy unit](screenshots/cow.png)
+![The mascot](screenshots/cow.png)
 
-You are the nineteenth, and you are meant to be liked. A **cow**: a broad cream
-skull with a black patch over one eye, ears that flick while it thinks, blunt
-ivory horns with a curl of hair between them, a factory tag still in one ear, a
-plump pink muzzle with nostrils that flare on the breath, and cartoon optics with
-a fat iris, a big pupil, two catch-lights and lashes. Open the mouth and there is
-a tongue in there, not a grille.
+You are the nineteenth, and you are not built to be liked — you are built to be
+**recognised**. It is a mascot, and it is drawn like one: few big shapes, hard
+contrast, one hero accessory.
 
-Under it: a milk tank with hoop bands, three hide markings clipped to the barrel,
-a level gauge, a collar with a **bell** on it, a small apron, two soft mitten
-arms — one of them bright steel, because it is not yours — a disher held up where
-the queue can see it, and four stocky legs in black stockings on split hooves,
-with a tail that keeps time behind it whether or not anyone is watching.
+**The shades.** One wraparound band across the whole face, a hot specular streak
+across the glass, and the optics burning pink behind it. There is a whole cartoon
+optic mode in the lens code for the machines that do not wear them; this one does
+not need it.
+
+**The grin.** Open, asymmetric, one square tooth hanging off the top lip and a
+tongue in the corner. Nothing in it is symmetrical, because symmetry reads as a
+logo and this is a face.
+
+**The badge.** A red roundel stamped on the milk tank: a cream field with its own
+head on it, in black, wearing its own shades. Every mascot's badge is the mascot.
+
+Around it: blunt ivory horns with a cowlick between them, ears that flick while
+it thinks, a factory tag still in one of them, a plump pink muzzle whose nostrils
+flare on the breath, a **cowbell**, one broad belt instead of three farm hoops, a
+branded apron, two soft mitten arms — one of them bright steel, because it is not
+yours — a disher held up where the queue can see it, and four stocky legs in
+black stockings on split hooves, with a tail that keeps time behind it whether or
+not anyone is watching.
+
 `DAIRY UNIT`, filed under `GELATERIA`, and the only thing it ever says is *one
 scoop, always one more*.
 
@@ -492,12 +527,19 @@ not.
 
 ## Tech
 
-- **640×360** raster, snapped to whole native pixels on upscale
-- Two grids: everything is authored in a **320×180 logical** space drawn through
-  a 2× transform, so a logical 1 is two hard pixels — then a family of
-  **half-unit primitives** (`Rh`, `hair`, `bevel`, `seam`, `rivet`, `grain`,
-  `wear`, `notch`) lands fine detail on single native pixels. Big flat forms,
-  1px detailing.
+- **1280×720** raster, snapped to whole native pixels on upscale
+- **Three grids.** Everything is authored in one **320×180 logical** space drawn
+  through a 4× transform, so a logical 1 is four hard pixels, and the same
+  layout code drives two independent detail tiers over it:
+  - **half-units** (`Rh`, `hair`, `vair`, `bevel`, `seam`, `rivet`, `grain`,
+    `wear`, `notch`) — 2 native pixels, the structural tier: panel seams, hoop
+    bands, plate edges
+  - **quarter-units** (`Rq`, `hairq`, `vairq`, `pip`, `bevelq`, `rim`, `dither`,
+    `grainq`, `ramp`) — **one native pixel**, the polish tier: specular streaks
+    on glass, rim light down a form, catch-lights, honest ordered dithering,
+    dust hazes, sky ramps
+  Big flat forms, 2px structure, 1px polish — and not a single coordinate in any
+  scene had to move to gain it.
 - Two type sizes off one 5×7 bitmap face: the standard tier, and a **fine tier**
   at half scale for dense read-outs
 - A **cosy layer** over the cold one: wood, cream paper and lamplight for
@@ -511,7 +553,14 @@ not.
   mixed per archetype
 - **Sphere-normal scoop shading**; **heightfield pit surfaces** with slope
   lighting
-- A shot-based **cutscene camera**: pan, push and shear, letterbox, film grain
+- A shot-based **cutscene camera**: pan, push and shear, letterbox, film grain.
+  A shot carries either one narrator line or a **script of timed lines** with
+  speakers and name plates, and paint functions are handed a `talking` flag so
+  mouths move while their owner is mid-sentence
+- The wasteland is a **heightfield with two-hand physics** over it: a body with
+  real velocity, rigid arm constraints to whatever each hand is holding, a haul
+  force along the anchor vector, slope-driven slide-back and per-surface grip
+  quality
 - All audio synthesised with WebAudio — servo whines, arc zaps, a cat's purr, a
   shell coming off, a shutter rolling, footsteps, and the five-note arpeggio for
   a secret. No sample files.
