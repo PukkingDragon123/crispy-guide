@@ -524,9 +524,11 @@
               j < oy - ry * 0.4 ? '#4c4256' : j > oy + ry * 0.55 ? '#1d1826' : '#2f2839');
           }
         };
-        bp(-w * 0.3, h * 0.2, w * 0.23, h * 0.17, 2.3);
-        bp(w * 0.33, h * 0.52, w * 0.19, h * 0.19, 5.1);
-        bp(-w * 0.1, h * 0.88, w * 0.17, h * 0.1, 7.7);
+        // two markings, both low and off to the sides, so the badge is
+        // the only thing in the middle of the chest. Three blobs across
+        // the shoulders read as damage, not as a hide.
+        bp(-w * 0.34, h * 0.72, w * 0.2, h * 0.16, 2.3);
+        bp(w * 0.36, h * 0.44, w * 0.17, h * 0.14, 5.1);
       }
       // hoop bands, each with a lit crown, a shadow and riveted laps.
       // The mascot gets one broad belt instead of three hoops - fewer
@@ -720,39 +722,37 @@
     G.R(g, cx - u(3), neckY - 1, u(6), u(3), P.plate);
 
 
-    // ---- ears first, so the skull tucks over where they attach ----
+    // ---- ears first, so the skull tucks over where they attach.
+    // A rounded flap that hangs DOWN and out, with a pink inside. The
+    // version before this was a two-pixel taper sticking straight out
+    // sideways at eye level, which reads as a fin. ----
     if (cow) {
-      const flick = Math.sin(t * 1.7) * 0.6 + Math.sin(t * 0.63) * 0.4;
+      const flick = Math.sin(t * 1.7) * 0.5 + Math.sin(t * 0.63) * 0.5;
       for (const sd of [-1, 1]) {
-        const n = Math.max(6, u(12)), cols = [];
-        for (let i = 0; i < n; i++) {
-          const p = i / (n - 1);
-          const ex = cx + sd * Math.round(w * 0.36 + p * u(11));
-          const eyy = y + Math.round(h * 0.3 + p * u(6) + (sd > 0 ? flick : -flick) * p * u(2));
-          const th = Math.max(2, Math.round(u(8) * (1 - p * p * 0.76)));
-          cols.push([ex, eyy, th]);
+        const ew2 = Math.max(5, Math.round(w * 0.4));      // how far it reaches out
+        const eh2 = Math.max(5, Math.round(h * 0.4));      // how far it hangs
+        const ax = cx + sd * Math.round(w * 0.54);
+        const ay = y + Math.round(h * 0.26);
+        const drop = (sd > 0 ? flick : -flick) * Math.max(1, u(1.5));
+        // an ellipse, tilted down and out, drawn row by row
+        const rows = [];
+        for (let j2 = 0; j2 < eh2; j2++) {
+          const q = (j2 / Math.max(1, eh2 - 1) - 0.42) * 2;
+          const hw = Math.max(0, (ew2 / 2) * Math.sqrt(Math.max(0, 1 - q * q * 0.92)));
+          const off = sd * (j2 / eh2) * ew2 * 0.4;
+          rows.push([ax + off - hw, hw * 2, ay + j2 + drop * (j2 / eh2)]);
         }
-        for (const cl of cols) G.R(g, cl[0] - 1, cl[1] - 1, 3, cl[2] + 2, OUT);
-        for (let i = 0; i < cols.length; i++) {
-          const cl = cols[i], p = i / (cols.length - 1);
-          G.R(g, cl[0], cl[1], 2, cl[2], p < 0.66 ? G.shade(c, -0.06) : G.shade(c, -0.26));
-          G.hair(g, cl[0], cl[1], 2, G.shade(c, 0.3));
-          if (p > 0.1 && p < 0.84)                        // the pink inside the flap
-            G.Rh(g, cl[0], cl[1] + cl[2] * 0.3, 2, Math.max(1, cl[2] * 0.42), sd < 0 ? '#e8a0b4' : '#f2aec0');
-        }
-        // the far ear keeps the tag it was issued with. It is a serial
-        // number and it is the only name the factory ever gave you.
-        if (sd > 0) {
-          const e = cols[Math.max(0, cols.length - 3)];
-          const tw3 = Math.max(3, u(4)), th3 = Math.max(3, u(4));
-          const tx = e[0] - Math.round(tw3 * 0.3), tyy = e[1] + e[2] + 1;
-          G.R(g, tx + tw3 * 0.4 - 1, e[1] + e[2] - 1, 3, 3, OUT);
-          G.R(g, tx + tw3 * 0.4, e[1] + e[2] - 1, 1, 2, '#9a7a18');
-          G.R(g, tx - 1, tyy - 1, tw3 + 2, th3 + 2, OUT);
-          G.R(g, tx, tyy, tw3, th3, '#e8c84a');
-          G.hair(g, tx, tyy, tw3, '#fff0a0');
-          G.hair(g, tx, tyy + th3 - 1, tw3, '#9a7a18');
-          G.Rh(g, tx + 1, tyy + th3 * 0.42, tw3 - 2, 0.5, '#7a6420');
+        for (const r of rows) if (r[1] >= 1)
+          G.R(g, Math.round(r[0]) - 1, Math.round(r[2]) - 1, Math.round(r[1]) + 2, 3, OUT);
+        for (let j2 = 0; j2 < rows.length; j2++) {
+          const r = rows[j2], q = j2 / Math.max(1, rows.length - 1);
+          if (r[1] < 1) continue;
+          G.R(g, Math.round(r[0]), Math.round(r[2]), Math.round(r[1]), 1,
+            q < 0.2 ? G.shade(c, 0.2) : q > 0.82 ? G.shade(c, -0.3) : G.shade(c, -0.06));
+          // the pink inside, inset so the rim of the ear stays cream
+          if (q > 0.22 && q < 0.86 && r[1] > 3)
+            G.Rq(g, Math.round(r[0]) + r[1] * 0.24, Math.round(r[2]), r[1] * 0.52, 1,
+              sd < 0 ? '#e8a0b4' : '#f2aec0');
         }
       }
     }
@@ -811,39 +811,30 @@
             j < oy - ry * 0.4 ? '#4c4256' : j > oy + ry * 0.55 ? '#1d1826' : '#2f2839');
         }
       };
-      patch(-w * 0.29, h * 0.32, w * 0.25, h * 0.3, 1.7);
-      patch(w * 0.33, h * 0.14, w * 0.14, h * 0.12, 4.2);
+      // The patches go on the TEMPLE and the JAW, not over an eye. A
+      // black patch ringing a black dot merges into one dark mass at
+      // game scale, and then the cow has no eyes.
+      patch(-w * 0.36, h * 0.46, w * 0.2, h * 0.28, 1.7);
       // ---- horn nubs: light, dark-tipped, small enough to stay cute ----
-      // one curl of hair between the horns. Not a crest, not a barcode.
-      // Outlines in one pass, fills in another - otherwise every row's
-      // outline paints over the row above it and the whole thing goes black.
-      {
-        const fh = Math.max(3, u(5)), fx0 = cx - u(1), rows2 = [];
-        for (let j = 0; j < fh; j++) {
-          const q = j / (fh - 1);
-          rows2.push([Math.round(fx0 + Math.sin(q * 2.6) * u(2.2)),
-                      Math.max(2, Math.round(u(2.6) * (0.5 + q * 0.5))), q]);
-        }
-        for (let j = 0; j < fh; j++) G.R(g, rows2[j][0] - 1, y - fh + j - 1, rows2[j][1] + 2, 3, OUT);
-        for (let j = 0; j < fh; j++) {
-          G.R(g, rows2[j][0], y - fh + j, rows2[j][1], 1, rows2[j][2] > 0.55 ? '#332b3a' : '#4a3e52');
-          G.hair(g, rows2[j][0], y - fh + j, rows2[j][1], '#6a5c74');
-        }
-      }
-      // horns: outboard of the curl, blunt, ivory, dark only at the cap
+      // ---- HORNS: two rounded NUBS on top of the skull. The version
+      // before this had tapered spikes leaning outward with a stepped
+      // dark curl between them - which is a goat with a mohawk, not a
+      // cow. A nub is a dome two or three pixels high and that is all. ----
       for (const sd of [-1, 1]) {
-        const hx = cx + sd * Math.round(w * 0.24), nh = Math.max(3, u(5)), hr = [];
-        for (let j = 0; j < nh; j++) {
-          const p = j / Math.max(1, nh - 1);      // p = 0 at the tip
-          const hw2 = Math.max(2, Math.round(u(4.4) * (0.44 + p * 0.56)));
-          hr.push([Math.round(hx + sd * (1 - p) * u(2.4) - hw2 / 2), hw2, p]);
+        const nb = Math.max(2, Math.round(h * 0.13));       // radius
+        const nx = cx + sd * Math.round(w * 0.26);
+        const ny = y + 1;
+        const rows2 = [];
+        for (let j2 = 0; j2 < nb + 1; j2++) {
+          const q = (nb - j2) / nb;
+          rows2.push(Math.max(1, Math.round(nb * Math.sqrt(Math.max(0, 1 - q * q * 0.86)))));
         }
-        for (let j = 0; j < nh; j++) G.R(g, hr[j][0] - 1, y - nh + j - 1, hr[j][1] + 2, 3, OUT);
-        for (let j = 0; j < nh; j++) {
-          G.R(g, hr[j][0], y - nh + j, hr[j][1], 1,
-            hr[j][2] < 0.3 ? '#c9ab7c' : hr[j][2] < 0.6 ? '#e4d3a8' : '#f4e8c6');
-          G.Rh(g, hr[j][0], y - nh + j, 1, 1, '#fff8e0');
-        }
+        for (let j2 = 0; j2 < rows2.length; j2++)
+          G.R(g, nx - rows2[j2] - 1, ny - nb + j2 - 1, rows2[j2] * 2 + 2, 3, OUT);
+        for (let j2 = 0; j2 < rows2.length; j2++)
+          G.R(g, nx - rows2[j2], ny - nb + j2, rows2[j2] * 2, 1,
+            j2 < 1 ? '#f6ead0' : j2 < rows2.length * 0.5 ? '#e6d5ae' : '#c9ab7c');
+        G.pip(g, nx - rows2[1] * 0.5, ny - nb + 1, '#fffbe8');
       }
     } else {
       plate(g, cx - w / 2, y, w, h, c, { r: kind === 'crt' ? 3 : 2, band: 3 });
@@ -868,63 +859,29 @@
       G.lens(g, cx - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, slit: mood === 'angry',
         t, lookX: Math.sin(t * 0.6) * 0.25 });
     } else if (o.dots) {
-      // ---- DOT EYES. Two small near-black rounds set wide, one white
-      // pip in each, and a brow over the top. There is nothing else to
-      // it, and that is the point: a dot eye is cute because it is not
-      // trying to be an instrument. ----
-      const dsp = Math.round(w * 0.24);
-      const dd = Math.max(3, Math.round(Math.min(w * 0.135, h * 0.19)));
-      // the whole stack - brow, eye field, eye, blush, muzzle - has to
-      // fit a head that is only fifteen units tall at half scale.
-      const dy = y + Math.round(h * (kind === 'cow' ? 0.2 : 0.18));
-      // level of detail: under about fifteen units of head there is no
-      // room for a brow AND an eye field AND a muzzle, so the small
-      // sizes drop straight to the dot, which is all they can hold.
-      const lod = h >= 15;
-      const look = Math.sin(t * 0.53) * 0.7 + Math.sin(t * 0.31 + 1.9) * 0.3;
-      const lx2 = Math.round(look * Math.max(1, dd * 0.16));
+      // ---- TWO DOTS. That is the whole eye.
+      // The version before this one had a pale field, a brow AND a blush
+      // stacked around each dot, in a head nineteen pixels tall. Four
+      // value blocks fighting over the same nine pixels is mud, not a
+      // face. So: one dark round, one white pip, and a single native
+      // pixel of light around the edge - invisible on a white face, just
+      // enough to keep the eye from vanishing into the black patch. ----
+      const dsp = Math.round(w * 0.23);
+      const dd = Math.max(3, Math.round(Math.min(w * 0.17, h * 0.24)));
+      const dy = y + Math.round(h * 0.27);
+      const look = Math.sin(t * 0.47) * 0.7 + Math.sin(t * 0.29 + 1.9) * 0.3;
+      const lx2 = Math.round(look * Math.max(1, dd * 0.14));
       for (const sd of [-1, 1]) {
         const ex = cx + sd * dsp - dd / 2 + lx2;
         if (blink) {
-          // shut: one short lash line where the eye was
-          G.R(g, ex - 1, dy + dd * 0.5 - 1, dd + 2, 2.5, OUT);
-          G.Rh(g, ex, dy + dd * 0.5, dd, 1, G.shade(c, -0.5));
-          G.hairq(g, ex, dy + dd * 0.5, dd, G.shade(c, -0.2));
-        } else {
-          // a pale field behind the dot. On a white face you never see it;
-          // over the black patch it becomes the eye white, and the eye
-          // stops disappearing into the marking.
-          if (lod) {
-            const fw = Math.max(dd + 1.5, Math.round(dd * 1.6));
-            G.rr2(g, ex - (fw - dd) / 2 - 1, dy - (fw - dd) / 2 - 1, fw + 2, fw + 2, OUT);
-            G.rr2(g, ex - (fw - dd) / 2, dy - (fw - dd) / 2, fw, fw, '#fdf8ee');
-          }
-          G.rr2(g, ex - 1, dy - 1, dd + 2, dd + 2, OUT);
-          G.rr2(g, ex, dy, dd, dd, mood === 'sick' ? '#3a3448' : '#241d2a');
-          // the pip. One native pixel of it at small scale, more when big.
-          const pw = Math.max(0.25, Math.round(dd * 0.3 * 4) / 4);
-          G.Rq(g, ex + dd * 0.16, dy + dd * 0.16, pw, pw, '#ffffff');
-          G.pip(g, ex + dd * 0.62, dy + dd * 0.66, '#8a8098');
+          G.rr2(g, ex - 0.25, dy + dd * 0.42 - 0.25, dd + 0.5, 1.5, '#fdf8ee');
+          G.Rh(g, ex, dy + dd * 0.42, dd, 1, '#241d2a');
+          continue;
         }
-        // the brow: this is where the whole expression lives
-        if (!lod) continue;
-        const bw3 = Math.max(3, Math.round(dd * 1.5));
-        const lift = mood === 'angry' ? -sd * 0.6 : mood === 'sick' ? sd * 0.5 : 0;
-        const bl = mood === 'angry' ? -1 : mood === 'sick' ? 0.5 : -0.5;
-        for (let i2 = 0; i2 < bw3; i2++) {
-          const pr = i2 / (bw3 - 1) - 0.5;
-          const yy = dy - Math.max(1.75, dd * 0.8) + bl + pr * lift * dd * 0.5
-            - Math.sin((pr + 0.5) * Math.PI) * (mood === 'idle' ? dd * 0.16 : 0);
-          G.Rq(g, cx + sd * dsp - bw3 / 2 + i2 + lx2 * 0.5, yy, 1, 0.75, '#3a3040');
-        }
-      }
-      // a blush patch under each eye, which is free cuteness
-      if (lod) for (const sd of [-1, 1]) {
-        g.globalAlpha = 0.42;
-        for (let j2 = 0; j2 < 2; j2++)
-          G.Rq(g, cx + sd * (dsp + dd * 0.5) - dd * 0.5, dy + dd * 1.5 + 1 + j2 * 0.5,
-            Math.max(1, dd - j2), 0.5, '#ff9ab0');
-        g.globalAlpha = 1;
+        G.rr2(g, ex - 0.25, dy - 0.25, dd + 0.5, dd + 0.5, '#fdf8ee');
+        G.rr2(g, ex, dy, dd, dd, mood === 'sick' ? '#4a4458' : '#241d2a');
+        const pw = Math.max(0.5, Math.round(dd * 0.3 * 4) / 4);
+        G.Rq(g, ex + dd * 0.18, dy + dd * 0.16, pw, pw, '#ffffff');
       }
     } else if (o.shades) {
       // ---- THE SHADES. One wraparound band across the whole face, a
@@ -992,32 +949,43 @@
       }
     }
 
-    // ---- the muzzle. Everything about whether this face works or
-    // does not work happens in these forty pixels ----
+    // ---- the muzzle. A soft snout that is barely darker than the face,
+    // with no outline on it at all: it is a TONE, so the mouth drawn on
+    // top of it is the only mark down here. The pink donut it used to be
+    // was competing with the mouth for the same real estate. ----
     let mzT = 0, mzH = 0, mzW = 0;
     if (cow) {
       const tight = o.shades || o.dots;
-      mzW = Math.round(w * (tight ? 0.58 : 0.66));
-      mzH = Math.max(4, Math.round(h * (tight ? 0.33 : 0.42)));
+      mzW = Math.round(w * (tight ? 0.46 : 0.66));
+      mzH = Math.max(4, Math.round(h * (tight ? 0.26 : 0.42)));
       mzT = y + Math.round(h * (tight ? 0.6 : 0.5));
-      for (let j = 0; j < mzH; j++) {
-        const q = (j / (mzH - 1) - 0.5) * 2;
-        const hh = Math.max(1, Math.round((mzW / 2) *
-          Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 3)), 1 / 2.6)));
-        G.R(g, cx - hh - 1, mzT + j, hh * 2 + 2, 1, OUT);
-        G.R(g, cx - hh, mzT + j, hh * 2, 1,
-          j < 2 ? '#ffe4ea' : j < mzH * 0.32 ? '#ffcbd6' : j > mzH - 3 ? '#d98aa2' : '#ffb8c8');
-      }
-      // the shadow it casts on the face, and a highlight across the bridge
-      G.Rh(g, cx - mzW * 0.3, mzT - 1, mzW * 0.6, 1, G.shade(c, -0.26));
-      G.hair(g, cx - mzW * 0.2, mzT + 1.5, mzW * 0.4, '#fff2f5');
-      // nostrils, flaring gently on the breath
-      const br = Math.sin(t * 1.5) * 0.5 + 0.5;
-      for (const sd of [-1, 1]) {
-        const nx = cx + sd * Math.round(mzW * 0.2), ny = mzT + Math.round(mzH * 0.28);
-        G.Rh(g, nx - 1, ny, 2, 1.5 + br * 0.5, '#b0637d');
-        G.Rh(g, nx - 1 + (sd > 0 ? 1 : -0.5), ny + 1.5, 1.5, 1, '#b0637d');
-        G.hair(g, nx - 1, ny, 2, '#8f4a63');
+      if (tight) {
+        for (let j2 = 0; j2 < mzH; j2++) {
+          const q = (j2 / (mzH - 1) - 0.5) * 2;
+          const hh = Math.max(1, Math.round((mzW / 2) *
+            Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.6)), 1 / 2.4)));
+          G.R(g, cx - hh, mzT + j2, hh * 2, 1, j2 < 1 ? '#ffe0e6' : '#f6c6d0');
+        }
+        // nostrils: two pixels each, and that is all a nostril needs
+        const br = Math.sin(t * 1.5) > 0 ? 0.25 : 0;
+        for (const sd of [-1, 1])
+          G.Rq(g, cx + sd * Math.round(mzW * 0.26) - 0.5, mzT + Math.max(1, Math.round(mzH * 0.16)),
+            1, 1 + br, '#d489a0');
+      } else {
+        for (let j2 = 0; j2 < mzH; j2++) {
+          const q = (j2 / (mzH - 1) - 0.5) * 2;
+          const hh = Math.max(1, Math.round((mzW / 2) *
+            Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 3)), 1 / 2.6)));
+          G.R(g, cx - hh - 1, mzT + j2, hh * 2 + 2, 1, OUT);
+          G.R(g, cx - hh, mzT + j2, hh * 2, 1,
+            j2 < 2 ? '#ffe4ea' : j2 < mzH * 0.32 ? '#ffcbd6' : j2 > mzH - 3 ? '#d98aa2' : '#ffb8c8');
+        }
+        const br = Math.sin(t * 1.5) * 0.5 + 0.5;
+        for (const sd of [-1, 1]) {
+          const nx = cx + sd * Math.round(mzW * 0.2), ny = mzT + Math.round(mzH * 0.28);
+          G.Rh(g, nx - 1, ny, 2, 1.5 + br * 0.5, '#b0637d');
+          G.hair(g, nx - 1, ny, 2, '#8f4a63');
+        }
       }
     }
 
@@ -1078,24 +1046,28 @@
     }
 
     // ---- intake: a shuttered mouth that opens ----
-    const my = cow ? mzT + Math.round(mzH * 0.58) : y + Math.round(h * 0.7);
+    const my = cow ? mzT + Math.round(mzH * 0.6) : y + Math.round(h * 0.7);
     const mw = Math.round(cow ? mzW * 0.62 : w * 0.62);
     const open = G.clamp(o.open || 0, 0, 1);
     // the friendliest ones hold the smile through an idle twitch
     const gape = Math.round((soft > 1 && open < 0.45 ? 0 : open) * u(11));
-    if (!(soft && gape < 1))
+    if (!(soft && gape < 1) && !((o.shades || o.dots) && gape < 1))
       G.R(g, cx - mw / 2 - 1, my - 1, mw + 2, Math.max(3, gape + u(4)) + 2, OUT);
     if (gape > 1 && cow) {
-      // a real mouth: dark palate, a tongue, and no grille teeth at all
-      G.R(g, cx - mw / 2, my, mw, gape, '#6b2038');
-      G.R(g, cx - mw / 2, my, mw, Math.max(1, u(1.5)), '#4a1226');
-      const tg = Math.max(2, Math.round(gape * 0.44));
-      for (let j = 0; j < tg; j++) {
-        const q = j / Math.max(1, tg - 1);
-        const hw = Math.max(1, Math.round((mw * 0.34) * Math.sqrt(Math.max(0, 1 - (1 - q) * (1 - q)))));
-        G.R(g, cx - hw, my + gape - tg + j, hw * 2, 1, j < 1 ? '#f294ab' : '#dd6b88');
+      // open: one small rounded dark oval. No teeth, no tongue, no
+      // palate. A mouth that size cannot hold furniture.
+      const ow = Math.round(mw * 0.5), oh = Math.max(2, Math.round(gape * 0.55));
+      const oy = my - Math.round(oh * 0.3);
+      for (let j = 0; j < oh; j++) {
+        const q = (j / Math.max(1, oh - 1) - 0.5) * 2;
+        const hw = Math.max(1, Math.round((ow / 2) * Math.sqrt(Math.max(0, 1 - q * q * 0.7))));
+        G.R(g, cx - hw, oy + j, hw * 2, 1, '#6b2440');
+        if (j === 0) G.hairq(g, cx - hw, oy, hw * 2, '#a04a62');
       }
-      G.hair(g, cx - mw * 0.3, my + gape - tg + 1, mw * 0.6, '#ffb6c6');
+      // and the corners of the smile stay put, so it reads as an open
+      // smile and not a puncture
+      for (const sd of [-1, 1])
+        G.Rq(g, cx + sd * (ow / 2 + 0.75), oy + oh - 1.25, 1, 1, '#a04a62');
     } else if (gape > 1) {
       G.R(g, cx - mw / 2, my, mw, gape, '#150f1c');
       G.R(g, cx - mw / 2, my, mw, 1, '#2a1f34');
@@ -1120,37 +1092,22 @@
       const sm = cow ? '#a84a68' : '#2a1f2c';
       const smLt = cow ? '#ffd2dc' : G.shade(c, 0.34);
       if (o.shades || o.dots) {
-        // an open grin: a dark mouth with a tooth in it and a lip line
-        const gwid = Math.round(sw2 * 1.06), gdep = Math.max(3, u(4));
-        const rows = [];
-        for (let i = 0; i <= gwid; i++) {
-          const p = i / gwid;
-          const lift = Math.sin(p * Math.PI);
-          rows.push([my - lift * dp * 0.5, my + lift * gdep]);
+        // ---- closed: ONE curve. A soft upward arc a few pixels wide,
+        // one unit thick, with a single lighter pixel under it so it sits
+        // in the muzzle rather than on it. There was a cavity with a
+        // square tooth and a tongue in here; none of it survived the
+        // fact that the mouth is six pixels across. ----
+        const aw2 = Math.max(4, Math.round(mw * 0.62));
+        const dep = Math.max(1, Math.round(mw * 0.17));
+        for (let i2 = 0; i2 <= aw2; i2++) {
+          const pr = i2 / aw2;
+          const yy = my + Math.sin(pr * Math.PI) * dep;
+          G.Rq(g, cx - aw2 / 2 + i2, yy, 1, 1, '#a04a62');
+          G.Rq(g, cx - aw2 / 2 + i2, yy + 1, 1, 0.5, '#ffd8e0');
         }
-        for (let i = 0; i <= gwid; i++)
-          G.R(g, cx - gwid / 2 + i - 1, rows[i][0] - 1, 3, rows[i][1] - rows[i][0] + 3, OUT);
-        for (let i = 0; i <= gwid; i++) {
-          const top = rows[i][0], bot = rows[i][1];
-          if (bot - top < 1) continue;
-          G.Rh(g, cx - gwid / 2 + i, top, 1, bot - top, '#5c1830');
-          G.hairq(g, cx - gwid / 2 + i, bot - 0.25, 1, '#8a2a48');
-        }
-        // one square tooth, off-centre, because symmetry reads as a logo
-        const tw4 = Math.max(2, u(3)), ti = Math.round(gwid * 0.3);
-        const tTop = rows[ti][0];
-        G.R(g, cx - gwid / 2 + ti - 1, tTop - 1, tw4 + 2, u(2.5) + 2, OUT);
-        G.Rh(g, cx - gwid / 2 + ti, tTop, tw4, u(2.5), '#fffaf0');
-        G.hairq(g, cx - gwid / 2 + ti, tTop, tw4, '#ffffff');
-        G.hairq(g, cx - gwid / 2 + ti, tTop + u(2.5) - 0.25, tw4, '#cfc2ae');
-        // a tongue in the corner
-        G.Rh(g, cx + tw4 * 0.6, my + gdep * 0.44, tw4 * 1.4, u(2), '#dd6b88');
-        G.hairq(g, cx + tw4 * 0.6, my + gdep * 0.44, tw4 * 1.4, '#f294ab');
-        // and the crease each side, which is what sells a grin
-        for (const sd of [-1, 1]) {
-          G.Rh(g, cx + sd * (gwid / 2 + u(1)), my - u(1.5), 1, u(2), sm);
-          G.pip(g, cx + sd * (gwid / 2 + u(2)), my - u(2.5), sm);
-        }
+        // the two ends turn up, which is the entire expression
+        for (const sd of [-1, 1])
+          G.Rq(g, cx + sd * (aw2 / 2 + 0.5), my - 0.5, 1, 1, '#a04a62');
       } else {
       for (let i = 0; i <= sw2; i++) {
         const p = i / sw2;
@@ -1639,7 +1596,7 @@
     // used to belong to animals, and she said it suited you. Drawn after
     // the head so nothing hides it.
     if ((fr.soft || 0) > 1) {
-      const ty2 = hd.y + hd.h - u(2), cw = Math.round(torso.w * 0.5), ch = Math.max(3, u(4));
+      const ty2 = hd.y + hd.h - u(2), cw = Math.round(torso.w * 0.38), ch = Math.max(2, u(3));
       for (let j = 0; j < ch; j++) {
         const pinch = Math.abs(j / (ch - 1) - 0.5) * 2;
         const hw = Math.round((cw / 2) * (1 - pinch * pinch * 0.14));

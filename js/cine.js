@@ -628,9 +628,9 @@
           G.R(g, 143 + tw3, hy2 + 1 + roll, 13, 11, '#2f2839');
           for (const sd of [-1, 1]) {
             const ex = 157 + tw3 + sd * 6;
-            G.rr2(g, ex - 4, hy2 + 3 + roll, 8, 8, '#fdf8ee');
+            G.rr2(g, ex - 3, hy2 + 4 + roll, 6, 6, '#fdf8ee');
             G.rr2(g, ex - 2.5, hy2 + 4.5 + roll, 5, 5, '#241d2a');
-            G.Rq(g, ex - 1.5, hy2 + 5.5 + roll, 1.5, 1.5, '#ffffff');
+            G.Rq(g, ex - 1.5, hy2 + 5.25 + roll, 1.5, 1.5, '#ffffff');
           }
           G.Rh(g, 158 + tw3, hy2 + 16 + roll, 12, 6, '#e8a8bb');
           G.glow(g, 157 + tw3, hy2 + 10 + roll, 70, 56, '#ff9ab8', 0.55);
@@ -668,19 +668,32 @@
           G.R(g, 133, 110, 6, 5, G.mix('#cdc2b2', '#0a0d14', 0.45));
           G.R(g, 171, 110, 6, 5, G.mix('#cdc2b2', '#0a0d14', 0.45));
           G.R(g, 160, 100, 5, 5, G.mix('#c9ab7c', '#0a0d14', 0.4));
-          // the eyes: one dot lit, one cracked
+          // the eyes: one dot lit, one cracked. Two marks, no furniture.
           for (const sd of [-1, 1]) {
-            const ex = 155 + sd * 9;
-            G.rr2(g, ex - 5.5, 108, 11, 11, sd > 0 ? '#c4b8ae' : '#fdf8ee');
-            G.rr2(g, ex - 3.5, 110, 7, 7, sd > 0 ? '#4a4450' : '#241d2a');
-            if (sd < 0 && lit > 0.5) G.Rq(g, ex - 2.5, 111, 2, 2, '#ffffff');
+            const ex = 155 + sd * 8;
+            G.rr2(g, ex - 4, 109.5, 8, 8, sd > 0 ? '#cfc4ba' : '#fdf8ee');
+            G.rr2(g, ex - 3.5, 110, 7, 7, sd > 0 ? '#5a5462' : '#241d2a');
+            if (sd < 0 && lit > 0.5) G.Rq(g, ex - 2.25, 111, 2, 2, '#ffffff');
             if (sd > 0) for (let i2 = 0; i2 < 9; i2++)
               G.Rq(g, ex - 5 + i2, 112 + Math.sin(i2 * 1.7) * 2, 1, 0.5, '#12151d');
           }
           const mo = talk ? 1 + Math.sin(tt * 16) * 1.2 : 0;
-          G.Rh(g, 148, 122 + mo * 0.4, 16, 9 + mo, G.mix('#e8a8bb', '#0a0d14', 0.4));
-          G.Rq(g, 151, 125, 2, 2, '#5a2a3a');
-          G.Rq(g, 158, 125, 2, 2, '#5a2a3a');
+          // the snout: a tone, and two nostril pixels
+          for (let j = 0; j < 8; j++) {
+            const q = (j / 7 - 0.5) * 2;
+            const hw = Math.max(1, Math.round(7 * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.6)), 1 / 2.4)));
+            G.R(g, 155 - hw, 121 + j, hw * 2, 1, G.mix(j < 1 ? '#ffe0e6' : '#f6c6d0', '#0a0d14', 0.4));
+          }
+          G.Rq(g, 152, 123, 1, 1, G.mix('#d489a0', '#0a0d14', 0.3));
+          G.Rq(g, 157.5, 123, 1, 1, G.mix('#d489a0', '#0a0d14', 0.3));
+          // and one arc, opening a little when it speaks
+          if (mo > 0.4) {
+            G.Rh(g, 152, 126, 6, 1 + mo * 0.8, G.mix('#6b2440', '#0a0d14', 0.2));
+          } else {
+            for (let i2 = 0; i2 <= 6; i2++)
+              G.Rq(g, 152 + i2, 126 + Math.sin((i2 / 6) * Math.PI) * 1.25, 1, 1,
+                G.mix('#a04a62', '#0a0d14', 0.2));
+          }
           if (lit > 0.5) G.glow(g, 148, 114, 80, 60, '#ff9ab8', 0.4);
           rain(g, tt, 80, '#39506b', 0, 320);
           G.grade(g, 2);

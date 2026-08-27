@@ -3,8 +3,8 @@
 **They took the world. You have gelato.**
 
 A zero-dependency pixel-art game at **1280×720**. You are a scrapped gelato
-machine — a **dairy unit** with two dot eyes, a cream hide, two black patches, a
-cowbell and a brand roundel stamped on the tank — in a city the machines own.
+machine — a **dairy unit**: two dot eyes, one smile, a cream hide, two black
+patches, a cowbell and a brand roundel on the tank — in a city the machines own.
 
 A woman called Tracy dug you out of a landfill, bolted her own spare arm on, and
 taught you to make ice cream. Then a patrol came through the door at four in the
@@ -537,25 +537,45 @@ You are the nineteenth, and you are not built to be liked — you are built to b
 **recognised**. It is a mascot, and it is drawn like one: few big shapes, hard
 contrast, nothing on the face that is trying to be an instrument.
 
-**The eyes.** Two small near-black dots set wide, each in a pale field with one
-white pip in it, and a brow over the top. That is the whole thing. The field is
-invisible against a white face and becomes the eye white where the eye sits on
-the black patch, which is the only reason a dot eye works on a spotted animal.
-Under about fifteen units of head there is no room for a brow *and* a field *and*
-a muzzle, so the small sizes drop straight to the dot — pixel-art level of
-detail, decided by how much head there is.
+**The eyes.** Two dots. That is the whole eye.
 
-**The grin.** Open, asymmetric, one square tooth hanging off the top lip and a
-tongue in the corner. Nothing in it is symmetrical, because symmetry reads as a
-logo and this is a face.
+The version before this one had a pale field, a brow *and* a blush stacked around
+each dot, in a head nineteen pixels tall — four value blocks fighting over the
+same nine pixels, which is mud, not a face. So it is one dark round, one white
+pip, and a single native pixel of light around the edge: invisible on a white
+face, just enough to keep the eye from vanishing into a marking.
+
+**The mouth.** One curve. A soft upward arc a few pixels wide, one unit thick,
+with a single lighter pixel under it so it sits *in* the snout rather than on it,
+and two pixels at the ends that turn up — which is the entire expression. Open,
+it becomes one small rounded shape with the corners left in place, so it reads as
+an open smile and not a puncture. There used to be a cavity in here with a square
+tooth and a tongue in it; none of that survives the fact that the mouth is six
+pixels across.
+
+**The snout** is a tone, not a sticker: barely pinker than the face, with no
+outline on it at all, and two single pixels for nostrils. Whatever is drawn on
+top of it is the only mark down there.
+
+**The patch.** One, on the cheek, never over an eye. A black patch ringing a
+black dot merges into one dark mass at game scale, and then the cow has no eyes.
+A second patch was tried and dropped: wherever it went it landed on a horn or an
+eye, and one marking reads as a hide anyway.
+
+**The horns are nubs** — two rounded ivory domes three pixels high, sitting on
+top of the skull. They were tapered spikes leaning outward with a stepped dark
+curl between them, which is a goat with a mohawk.
+
+**The ears hang.** A rounded flap that droops down and out with a pink inside and
+a cream rim, attached past the edge of the skull so it actually clears it. Before
+that they were two-pixel tapers pointing straight out at eye level, which reads
+as a fin.
 
 **The badge.** A red roundel stamped on the milk tank: a cream field with its own
 head on it, in black. Every mascot's badge is the mascot.
 
-Around it: blunt ivory horns with a cowlick between them, ears that flick while
-it thinks, a factory tag still in one of them, a plump pink muzzle whose nostrils
-flare on the breath, a **cowbell**, one broad belt instead of three farm hoops, a
-branded apron, two soft mitten arms — one of them bright steel, because it is not
+Around it: a **cowbell** on a narrow collar, one broad belt instead of three farm
+hoops, a branded apron, two soft mitten arms — one of them bright steel, because it is not
 yours — a disher held up where the queue can see it, and four stocky legs in
 black stockings on split hooves, with a tail that keeps time behind it whether or
 not anyone is watching.

@@ -1212,12 +1212,12 @@
         G.R(g, hxx - hw, hy2 - 1 + j, hw * 2, 1, j < 2 ? '#fffaf0' : p > 0.9 ? '#bdb2a2' : '#f6f0e4');
       }
       // the patch over the left side
-      for (let j = 0; j < 16; j++) {
-        const dy = (j - 7) / 8;
+      for (let j = 0; j < 10; j++) {
+        const dy = (j - 4) / 5;
         if (Math.abs(dy) > 1) continue;
-        const half = Math.round(6 * Math.sqrt(1 - dy * dy) * (1 + Math.sin(j * 0.8 + 1.7) * 0.18));
+        const half = Math.round(7 * Math.sqrt(1 - dy * dy) * (1 + Math.sin(j * 0.8 + 1.7) * 0.18));
         const x0 = Math.max(hxx - 12, hxx - 7 - half), x1 = Math.min(hxx + 12, hxx - 7 + half);
-        if (x1 > x0) G.R(g, x0, hy2 + j, x1 - x0, 1, j < 4 ? '#4c4256' : j > 11 ? '#1d1826' : '#2f2839');
+        if (x1 > x0) G.R(g, x0, hy2 - 1 + j, x1 - x0, 1, j < 3 ? '#4c4256' : j > 7 ? '#1d1826' : '#2f2839');
       }
       // one horn, bent. The other snapped off level with the plate.
       for (let j = 0; j < 6; j++) {
@@ -1231,42 +1231,27 @@
       }
       G.R(g, hxx - 9, hy2 - 3, 6, 3, OUT);
       G.R(g, hxx - 8, hy2 - 2, 4, 2, '#8a7458');
-      // ---- THE EYES. Two dots, and one of them has a crack across it
-      // and does not come back on. ----
-      const dd2 = 7, dsp2 = 7, dy2 = hy2 + 5;
+      // ---- THE EYES. Two dots. One of them has a crack across it and
+      // does not come back on. Same three marks as the clean face. ----
+      const dd2 = 7, dsp2 = 7, dy2 = hy2 + 4;
       const blink = Math.sin(t * 1.3) > 0.985;
       for (const sd of [-1, 1]) {
         const ex = hxx + sd * dsp2 - dd2 / 2;
         const dead = sd > 0;
-        const fw = 11;
-        G.rr2(g, ex - (fw - dd2) / 2 - 1, dy2 - (fw - dd2) / 2 - 1, fw + 2, fw + 2, OUT);
-        G.rr2(g, ex - (fw - dd2) / 2, dy2 - (fw - dd2) / 2, fw, fw, dead ? '#c4b8ae' : '#fdf8ee');
+        G.rr2(g, ex - 0.5, dy2 - 0.5, dd2 + 1, dd2 + 1, dead ? '#cfc4ba' : '#fdf8ee');
         if (blink && !dead) {
-          G.rr2(g, ex - 1, dy2 + 2, dd2 + 2, 2.5, OUT);
-          G.Rh(g, ex, dy2 + 2.5, dd2, 1, '#8a7c72');
+          G.Rh(g, ex, dy2 + dd2 * 0.42, dd2, 1, '#241d2a');
         } else {
-          G.rr2(g, ex - 1, dy2 - 1, dd2 + 2, dd2 + 2, OUT);
-          G.rr2(g, ex, dy2, dd2, dd2, dead ? '#4a4450' : '#241d2a');
+          G.rr2(g, ex, dy2, dd2, dd2, dead ? '#5a5462' : '#241d2a');
           if (!dead) {
-            G.Rq(g, ex + 1, dy2 + 1, 2, 2, '#ffffff');
-            G.pip(g, ex + 4.5, dy2 + 4.5, '#8a8098');
-            G.glow(g, ex + dd2 / 2, dy2 + dd2 / 2, 22, 18, '#ff9ab8', 0.28);
+            G.Rq(g, ex + 1.25, dy2 + 1, 2, 2, '#ffffff');
+            G.glow(g, ex + dd2 / 2, dy2 + dd2 / 2, 20, 16, '#ff9ab8', 0.24);
           } else {
-            // the crack, straight across the socket
             for (let i2 = 0; i2 < 9; i2++)
-              G.Rq(g, ex - 2 + i2, dy2 + 1 + Math.sin(i2 * 1.7) * 2, 1, 0.5, '#12151d');
+              G.Rq(g, ex - 1 + i2, dy2 + 1.5 + Math.sin(i2 * 1.7) * 2, 1, 0.5, '#12151d');
           }
         }
-        // the brow
-        for (let i2 = 0; i2 < 9; i2++) {
-          const pr = i2 / 8 - 0.5;
-          G.Rq(g, hxx + sd * dsp2 - 4.5 + i2, dy2 - 6 - Math.sin((pr + 0.5) * Math.PI) * 1.2, 1, 0.75, '#3a3040');
-        }
       }
-      // mud dried across one of them
-      g.globalAlpha = 0.4;
-      G.Rh(g, hxx + 2, dy2 - 1, 9, 4, '#4a3a28');
-      g.globalAlpha = 1;
       // the muzzle, scuffed, and a mouth set hard
       for (let j = 0; j < 9; j++) {
         const q = (j / 8 - 0.5) * 2;
@@ -1278,9 +1263,13 @@
       G.Rq(g, hxx - 4, hy2 + 14, 2, 2, '#8f4a63');
       G.Rq(g, hxx + 2.5, hy2 + 14, 2, 2, '#4a3a28');
       g.globalAlpha = 0.5; G.Rh(g, hxx + 1, hy2 + 16, 6, 3, '#4a3a28'); g.globalAlpha = 1;
+      // one small arc, and it goes flat when you are straining
       const set = this.strain > 0.5;
-      G.Rh(g, hxx - 5, hy2 + 17, 10, set ? 2.5 : 1.5, '#8a3a52');
-      if (set) for (let i = 0; i < 3; i++) G.Rq(g, hxx - 3 + i * 3, hy2 + 17, 1.5, 2.5, '#fffaf0');
+      const aw3 = 8, dep3 = set ? 0 : 1.5;
+      for (let i2 = 0; i2 <= aw3; i2++) {
+        const pr = i2 / aw3;
+        G.Rq(g, hxx - aw3 / 2 + i2, hy2 + 17 + Math.sin(pr * Math.PI) * dep3, 1, 1, '#8a3a52');
+      }
       // mud on it, because you have been dragging your face through this
       g.globalAlpha = 0.34;
       G.Rh(g, hxx - 11, hy2 + 8, 9, 4, '#4a3a28');
