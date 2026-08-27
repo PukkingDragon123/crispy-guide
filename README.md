@@ -3,7 +3,7 @@
 **They took the world. You have gelato.**
 
 A zero-dependency pixel-art game at **1280×720**. You are a scrapped gelato
-machine — a **dairy unit** in sunglasses, cream hide, two black patches, a
+machine — a **dairy unit** with two dot eyes, a cream hide, two black patches, a
 cowbell and a brand roundel stamped on the tank — in a city the machines own.
 
 A woman called Tracy dug you out of a landfill, bolted her own spare arm on, and
@@ -49,8 +49,9 @@ over it.
 ![The summer](screenshots/open-summer.png)
 
 The awning lifts in the wind, the queue shuffles rather than stands, the lamp
-swings on its flex, and a child walks the length of the shot to get to the
-counter and goes up on tiptoe when they arrive.
+swings on its flex, and a child **walks the length of the shot** — a real stride,
+knees and all — asks for the pink one, and then takes it and holds it up to look
+at it.
 
 > **A CHILD:** CAN I HAVE THE PINK ONE
 > **BESSIE:** YOU CAN HAVE TWO.
@@ -60,7 +61,8 @@ counter and goes up on tiptoe when they arrive.
 Then the colour drains out of the frame over four seconds, something comes up
 over the rooftops, and the heads turn to look at it **left to right in a wave** —
 each person notices a beat after the one before, and the ones who have seen it
-put an arm up to point.
+put an arm up to point. One of them is close enough to see it happen to: she
+recoils, and then she just stares.
 
 > **A WOMAN:** WHAT IS THAT.
 
@@ -73,8 +75,9 @@ running the other way across a street lit from behind.
 ![The arm](screenshots/open-arm.png)
 
 The winners did not need the ones who served. A patrol walks the line of
-switched-off civilian units with a torch that sweeps ahead of it; one of them is
-still twitching, which is worse than none of them twitching. Then the saw finds
+switched-off civilian units — **slumped**, heads down — with a torch that sweeps
+ahead of it. One of them is still twitching, which is worse than none of them
+twitching. Then the saw finds
 the joint, bites, and the arm comes away and lies on the floor still trying to
 close.
 
@@ -474,6 +477,45 @@ come true plays before the doors open.
 
 ---
 
+## 🎬 The performance
+
+![Clips](screenshots/clips.png)
+
+Everything in this game used to stand still and wait for the text to finish
+typing. `anim.js` is the layer that fixes that.
+
+A **clip** is a named piece of acting. Ask for one and you get back a **pose**: a
+bag of offsets that the draw code applies to the parts it was already drawing.
+Nothing in the animation layer draws anything itself, so any character — a
+nineteen-part machine, a human, a dog — can be given a walk, a gesture or a
+reaction without touching its sprite code.
+
+`idle` · `walk` · `run` · `talk` · `reach` · `take` · `point` · `startle` ·
+`slump` · `wave`
+
+![One stride](screenshots/stride.png)
+
+The rules the whole thing obeys:
+
+- **legs and arms are always in opposition** — contralateral gait, the thing that
+  separates walking from waddling
+- **the body bobs at twice the stride**, because you rise on each step
+- **weight leads**: the torso leans into the direction of travel
+- **nothing is ever perfectly still** — idle still breathes and blinks
+- a blink is a tenth of a second, on a schedule you cannot predict
+
+Humans got rebuilt around it: hips, two legs with a knee that bends on the back
+leg, a torso that leans and squashes on the breath, two arms with elbows whose
+*hands* go where the clip says — which is the only way a reach or a point reads
+at all — and a head that turns, tilts, blinks and talks. The dogs and cats got a
+diagonal gait, so the near fore and the far hind swing together. The machines got
+bob, lean, sway and arm swing, plus a mouth that opens on the beat.
+
+And a clip can cross-fade into another one, so a shot can hand a character from
+`walk` to `take` without a cut.
+
+---
+
 ## The cast
 
 Eighteen archetypes plus you, and the **silhouette comes from the job**. The
@@ -493,19 +535,22 @@ radial iris spokes, a bounce catch-light and a scan line crossing the glass.
 
 You are the nineteenth, and you are not built to be liked — you are built to be
 **recognised**. It is a mascot, and it is drawn like one: few big shapes, hard
-contrast, one hero accessory.
+contrast, nothing on the face that is trying to be an instrument.
 
-**The shades.** One wraparound band across the whole face, a hot specular streak
-across the glass, and the optics burning pink behind it. There is a whole cartoon
-optic mode in the lens code for the machines that do not wear them; this one does
-not need it.
+**The eyes.** Two small near-black dots set wide, each in a pale field with one
+white pip in it, and a brow over the top. That is the whole thing. The field is
+invisible against a white face and becomes the eye white where the eye sits on
+the black patch, which is the only reason a dot eye works on a spotted animal.
+Under about fifteen units of head there is no room for a brow *and* a field *and*
+a muzzle, so the small sizes drop straight to the dot — pixel-art level of
+detail, decided by how much head there is.
 
 **The grin.** Open, asymmetric, one square tooth hanging off the top lip and a
 tongue in the corner. Nothing in it is symmetrical, because symmetry reads as a
 logo and this is a face.
 
 **The badge.** A red roundel stamped on the milk tank: a cream field with its own
-head on it, in black, wearing its own shades. Every mascot's badge is the mascot.
+head on it, in black. Every mascot's badge is the mascot.
 
 Around it: blunt ivory horns with a cowlick between them, ears that flick while
 it thinks, a factory tag still in one of them, a plump pink muzzle whose nostrils
@@ -557,6 +602,10 @@ not.
   A shot carries either one narrator line or a **script of timed lines** with
   speakers and name plates, and paint functions are handed a `talking` flag so
   mouths move while their owner is mid-sentence
+- A **clip/pose animation layer** (`anim.js`) that no sprite code has to know
+  about: ten named clips return pose offsets, and `drawBot`, `drawCreature` and
+  Tracy all read the same fields. Contralateral gait, double-frequency bob,
+  weight-leading lean, unpredictable blinks, and cross-fades between clips
 - The wasteland is a **heightfield with two-hand physics** over it: a body with
   real velocity, rigid arm constraints to whatever each hand is holding, a haul
   force along the anchor vector, slope-driven slide-back and per-surface grip
@@ -572,18 +621,19 @@ not.
 
 ```
 index.html          canvas + boot
-js/util.js          maths, primitives, the half-unit detail tier, particles
+js/util.js          maths, primitives, the half and quarter detail tiers, juice
+js/anim.js          the clip/pose animation layer: ten clips, one pose bag
 js/font.js          5×7 bitmap font, standard and fine tiers
 js/audio.js         WebAudio synthesis
 js/state.js         ingredients, systems, 19 frames, disguises, crew, chapters
 js/sprites.js       shared props, cones, cups, city furniture
 js/art3.js          walls, conduit, neon, steam
 js/robots.js        legacy chassis helpers still used by the city art
-js/bots.js          the rig: frames, plate detail, optics, creatures, tells,
-                    the tip jar cat, goo scoops
+js/bots.js          the rig: frames, plate detail, optics and dot eyes,
+                    posed creatures, tells, the tip jar cat, goo scoops
 js/clause.js        clause.ai — flight, chatter, asks, the books
 js/cine.js          the cutscene camera and every story beat
-js/dump.js          the pit you drag yourself out of
+js/dump.js          the wasteland you cross on your hands
 js/tracy.js         her kitchen, and the lesson
 js/day.js           the floor: pits, sweeping, tips, spotting, closing
 js/lab.js           the station panels: order, mixer, the line

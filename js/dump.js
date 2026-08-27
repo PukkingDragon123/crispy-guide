@@ -1231,30 +1231,42 @@
       }
       G.R(g, hxx - 9, hy2 - 3, 6, 3, OUT);
       G.R(g, hxx - 8, hy2 - 2, 4, 2, '#8a7458');
-      // ---- THE SHADES, cracked across one lens ----
-      const gwid = 24, ghh = 7, gxx = hxx - gwid / 2, gyy = hy2 + 4;
-      for (const sd of [-1, 1]) {
-        G.R(g, hxx + sd * (gwid / 2) - (sd > 0 ? 0 : 3), gyy + 1, 4, 3, OUT);
-        G.Rh(g, hxx + sd * (gwid / 2) - (sd > 0 ? -0.5 : 3), gyy + 1.5, 3.5, 1.5, '#2a2434');
-      }
-      G.R(g, gxx - 1, gyy - 1, gwid + 2, ghh + 2, OUT);
-      for (let j = 0; j < ghh; j++) {
-        const q = j / (ghh - 1);
-        const inset = Math.round(Math.pow(Math.abs(q - 0.42) * 2.1, 2.4) * gwid * 0.06);
-        G.R(g, gxx + inset, gyy + j, gwid - inset * 2, 1,
-          j === 0 ? '#5c5270' : q > 0.86 ? '#0e0a14' : q > 0.6 ? '#161022' : '#1f1730');
-      }
-      G.R(g, hxx - 1.5, gyy + 2.5, 3, 4.5, '#f6f0e4');
-      // the working optic burns through; the dead side is cracked glass
+      // ---- THE EYES. Two dots, and one of them has a crack across it
+      // and does not come back on. ----
+      const dd2 = 7, dsp2 = 7, dy2 = hy2 + 5;
       const blink = Math.sin(t * 1.3) > 0.985;
-      if (!blink) {
-        G.Rh(g, hxx - 8, gyy + 2.5, 3, 2, '#c8486a');
-        G.Rq(g, hxx - 7.25, gyy + 3, 1.5, 1.25, '#ff9ab8');
-        G.glow(g, hxx - 6.5, gyy + 3.5, 16, 8, '#ff9ab8', 0.5);
+      for (const sd of [-1, 1]) {
+        const ex = hxx + sd * dsp2 - dd2 / 2;
+        const dead = sd > 0;
+        const fw = 11;
+        G.rr2(g, ex - (fw - dd2) / 2 - 1, dy2 - (fw - dd2) / 2 - 1, fw + 2, fw + 2, OUT);
+        G.rr2(g, ex - (fw - dd2) / 2, dy2 - (fw - dd2) / 2, fw, fw, dead ? '#c4b8ae' : '#fdf8ee');
+        if (blink && !dead) {
+          G.rr2(g, ex - 1, dy2 + 2, dd2 + 2, 2.5, OUT);
+          G.Rh(g, ex, dy2 + 2.5, dd2, 1, '#8a7c72');
+        } else {
+          G.rr2(g, ex - 1, dy2 - 1, dd2 + 2, dd2 + 2, OUT);
+          G.rr2(g, ex, dy2, dd2, dd2, dead ? '#4a4450' : '#241d2a');
+          if (!dead) {
+            G.Rq(g, ex + 1, dy2 + 1, 2, 2, '#ffffff');
+            G.pip(g, ex + 4.5, dy2 + 4.5, '#8a8098');
+            G.glow(g, ex + dd2 / 2, dy2 + dd2 / 2, 22, 18, '#ff9ab8', 0.28);
+          } else {
+            // the crack, straight across the socket
+            for (let i2 = 0; i2 < 9; i2++)
+              G.Rq(g, ex - 2 + i2, dy2 + 1 + Math.sin(i2 * 1.7) * 2, 1, 0.5, '#12151d');
+          }
+        }
+        // the brow
+        for (let i2 = 0; i2 < 9; i2++) {
+          const pr = i2 / 8 - 0.5;
+          G.Rq(g, hxx + sd * dsp2 - 4.5 + i2, dy2 - 6 - Math.sin((pr + 0.5) * Math.PI) * 1.2, 1, 0.75, '#3a3040');
+        }
       }
-      for (let i = 0; i < 6; i++)
-        G.Rq(g, hxx + 4 + i * 0.75, gyy + 1 + Math.sin(i * 1.7) * 2, 1, 0.25, '#6b6480');
-      G.Rq(g, gxx + gwid * 0.1, gyy + ghh * 0.66, gwid * 0.26, 0.25, '#8a94b8');
+      // mud dried across one of them
+      g.globalAlpha = 0.4;
+      G.Rh(g, hxx + 2, dy2 - 1, 9, 4, '#4a3a28');
+      g.globalAlpha = 1;
       // the muzzle, scuffed, and a mouth set hard
       for (let j = 0; j < 9; j++) {
         const q = (j / 8 - 0.5) * 2;
