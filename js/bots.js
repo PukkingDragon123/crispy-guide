@@ -505,30 +505,8 @@
         const bulge = Math.sin(p * Math.PI) * 0.22 + 0.78;
         const hw = Math.round((w / 2) * bulge);
         G.R(g, cx - hw - 1, y + j, hw * 2 + 2, 1, OUT);
-        G.R(g, cx - hw, y + j, hw * 2, 1, j < 3 ? G.shade(c, 0.28) : p > 0.82 ? G.shade(c, -0.4) : c);
-      }
-      // ---- hide markings, clipped to the barrel it is painted on ----
-      if (o && o.cow) {
-        const bp = (ox, oy, rx, ry, sd2) => {
-          for (let j = 0; j < h; j++) {
-            const dy = (j - oy) / ry;
-            if (Math.abs(dy) > 1) continue;
-            const wob = 1 + Math.sin(j * 0.8 + sd2) * 0.2 + Math.sin(j * 2.1 + sd2 * 3) * 0.11;
-            const half = Math.round(rx * Math.sqrt(1 - dy * dy) * wob);
-            const bulge = Math.sin((j / (h - 1)) * Math.PI) * 0.22 + 0.78;
-            const hw2 = Math.round((w / 2) * bulge);
-            const x0 = Math.max(cx - hw2, Math.round(cx + ox - half));
-            const x1 = Math.min(cx + hw2, Math.round(cx + ox + half));
-            if (x1 <= x0) continue;
-            G.R(g, x0, y + j, x1 - x0, 1,
-              j < oy - ry * 0.4 ? '#4c4256' : j > oy + ry * 0.55 ? '#1d1826' : '#2f2839');
-          }
-        };
-        // two markings, both low and off to the sides, so the badge is
-        // the only thing in the middle of the chest. Three blobs across
-        // the shoulders read as damage, not as a hide.
-        bp(-w * 0.34, h * 0.72, w * 0.2, h * 0.16, 2.3);
-        bp(w * 0.36, h * 0.44, w * 0.17, h * 0.14, 5.1);
+        G.R(g, cx - hw, y + j, hw * 2, 1,
+          j < 3 ? G.shade(c, 0.28) : p > (o && o.cow ? 0.93 : 0.82) ? G.shade(c, o && o.cow ? -0.2 : -0.4) : c);
       }
       // hoop bands, each with a lit crown, a shadow and riveted laps.
       // The mascot gets one broad belt instead of three hoops - fewer
@@ -1196,6 +1174,21 @@
       G.hair(g, x + eb - wd / 2 - 1, el, wd + 2, G.shade(base, 0.3));
       return { x: x + bend, y: aTop + len, wd };
     }
+    // a straight run of limb between two points, outlined then filled
+    function reachRun(g2, x0, y0, x1, y1, w0, w1, col) {
+      const d = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0)));
+      const pts = [];
+      for (let i2 = 0; i2 <= d; i2++) {
+        const p2 = i2 / d;
+        pts.push([G.lerp(x0, x1, p2), G.lerp(y0, y1, p2), Math.max(2, G.lerp(w0, w1, p2))]);
+      }
+      for (const q of pts) G.R(g2, q[0] - q[2] / 2 - 1, q[1] - q[2] / 2 - 1, q[2] + 2, q[2] + 2, OUT);
+      for (const q of pts) {
+        G.Rh(g2, q[0] - q[2] / 2, q[1] - q[2] / 2, q[2], q[2], col);
+        G.hairq(g2, q[0] - q[2] / 2, q[1] - q[2] / 2, q[2], G.shade(col, 0.3));
+      }
+    }
+
     // a mitten: a rounded pad with a thumb on the inside and two creases
     function mitten(e, s, col) {
       const mw = Math.max(4, u(6.4)), mh = Math.max(4, u(5.6));
@@ -1218,36 +1211,27 @@
       // the near arm is hers. She had it in a crate with a label on it
       // that said SPARES and she never told you whose it had been.
       const aw2 = Math.max(3, u(4.6));
+      if (o.hands) {
+        // reaching: the arm runs from the shoulder to wherever the hand
+        // has been put, bending once in the middle
+        for (let hi = 0; hi < 2; hi++) {
+          const sd = hi ? 1 : -1, H = o.hands[hi];
+          if (!H) continue;
+          const col = hi ? G.shade(c, -0.06) : '#c8ccd2';
+          const shx = cx + sd * (tw / 2 - u(1)), shy = ty + Math.round(th * 0.24);
+          const mx = (shx + H.x) / 2 + sd * u(1.5), my2 = (shy + H.y) / 2 + u(2);
+          reachRun(g, shx, shy, mx, my2, aw2 + u(1), aw2, col);
+          reachRun(g, mx, my2, H.x, H.y, aw2, aw2 - u(0.5), col);
+          mitten({ x: H.x, y: H.y - u(3) }, sd, hi ? G.shade(c, -0.02) : '#dde1e6');
+        }
+      } else {
       const swL = (o.swingL || 0) * u(4), swR = (o.swingR || 0) * u(4);
       const l = softLimb(-1, Math.round(th * 0.44) + sway + swL, aw2, '#bcc0c6');
       mitten(l, -1, '#d2d6dc');
       // two fine seams down the borrowed one so it reads as not yours
       const r = softLimb(1, Math.round(th * 0.38) - sway + swR, aw2, G.shade(c, -0.12));
-      const rh = mitten(r, 1, G.shade(c, -0.08));
-      // the disher, held UP, where the queue can see it. It is the only
-      // thing this machine was ever issued that it kept on purpose.
-      const dx = rh.x + u(1), dy = rh.y - u(2);
-      G.R(g, dx - 1, dy - u(9) - 1, Math.max(2, u(2)) + 2, u(9) + 2, OUT);
-      G.R(g, dx, dy - u(9), Math.max(2, u(2)), u(9), P.hull);
-      G.vair(g, dx, dy - u(9), u(9), P.chrome);
-      const bw3 = Math.max(5, u(9)), byy = dy - u(9) - Math.max(3, u(5)), bcx = dx + u(1);
-      const bhh = Math.max(3, u(5)), br2 = [];
-      for (let j = 0; j < bhh; j++) {
-        const q = j / Math.max(1, bhh - 1);     // widest at the rim, tapering down
-        br2.push(Math.max(1, Math.round((bw3 / 2) * Math.sqrt(Math.max(0, 1 - q * q * 0.9)))));
+      mitten(r, 1, G.shade(c, -0.08));
       }
-      for (let j = 0; j < bhh; j++) G.R(g, bcx - br2[j] - 1, byy + j - 1, br2[j] * 2 + 2, 3, OUT);
-      for (let j = 0; j < bhh; j++)
-        G.R(g, bcx - br2[j], byy + j, br2[j] * 2, 1, j < 1 ? P.chrome : j > bhh - 2 ? P.hullDk : P.hull);
-      // and a scoop of it still in the bowl, because there always is
-      const gw = Math.max(3, u(7)), gh = Math.max(2, u(4)), gr = [];
-      for (let j = 0; j < gh; j++) {
-        const q = j / Math.max(1, gh - 1);
-        gr.push(Math.max(1, Math.round((gw / 2) * Math.sqrt(Math.max(0, 1 - (1 - q) * (1 - q) * 0.92)))));
-      }
-      for (let j = 0; j < gh; j++) G.R(g, bcx - gr[j] - 1, byy - gh + j - 1, gr[j] * 2 + 2, 3, OUT);
-      for (let j = 0; j < gh; j++)
-        G.R(g, bcx - gr[j], byy - gh + j, gr[j] * 2, 1, j < 1 ? '#fff6e6' : j < gh - 1 ? '#ffe6c8' : '#f0c896');
     } else if (kind === 'heavy') {
       for (const s of [-1, 1]) {
         const e = limb(s, Math.round(th * 0.9) + sway * s, u(9));
@@ -1566,11 +1550,36 @@
       { speed: o.speed, dir: o.dir, seed: cx * 0.011, p: o.p, emph: o.emph }) : null);
     const bob = A ? Math.round(A.bob + A.breathe * 0.4) : 0;
     const lean = A ? Math.round(A.lean * u(2.5) + A.sway * 0.5) : 0;
-    const base = drawBase(g, fr.base, cx, footY, bw, u, b, t, walk);
-    const torso = drawTorso(g, fr.torso, cx + lean, base.top + 1 + bob, bw, u, b, t,
-      { emblem: fr.emblem, soft: fr.soft || 0, cow: fr.cow || 0 });
-    drawArms(g, fr.arms, cx + lean, torso.y, torso.w, torso.h, u, b, t,
-      Object.assign({}, o, { swingL: A ? A.armL : 0, swingR: A ? A.armR : 0 }));
+    // ---- CRAWL MODE. Legless, dragging itself, with both hands placed
+    // by the caller. Same rig, same head, same badge - so the wasteland
+    // is not a second cow drawn by a second piece of code. ----
+    const base = o.crawl
+      ? { top: footY - u(6), w: Math.round(bw * 0.7) }
+      : drawBase(g, fr.base, cx, footY, bw, u, b, t, walk);
+    if (o.crawl) {
+      // the torn hip, where the rest of it used to be
+      G.R(g, cx - u(11), footY - u(7), u(22), u(5), '#2a3040');
+      for (let i2 = 0; i2 < 9; i2++)
+        G.Rh(g, cx - u(10) + i2 * u(2.4), footY - u(5) + (i2 % 2), u(1.5), u(4),
+          i2 % 2 ? '#48546c' : '#6b3f22');
+      if (Math.random() < 0.2) {
+        const spx = cx + G.rand(-u(7), u(7));
+        G.pip(g, spx, footY - u(3), '#ffffff');
+        G.glow(g, spx, footY - u(3), u(12), u(8), '#7fd8ff', 0.5);
+      }
+    }
+    const tOpt = { emblem: fr.emblem, soft: fr.soft || 0, cow: fr.cow || 0 };
+    const aOpt = Object.assign({}, o, { swingL: A ? A.armL : 0, swingR: A ? A.armR : 0 });
+    // reaching arms come out from BEHIND the body, or they cross the badge
+    const torso = o.crawl
+      ? (function () {
+          const probe = { y: base.top + 1 + bob - Math.round(u(30) * 1.12),
+                          w: Math.round(u(30) * fr.w * 1.12), h: Math.round(u(30) * 1.12) };
+          drawArms(g, fr.arms, cx + lean, probe.y, probe.w, probe.h, u, b, t, aOpt);
+          return drawTorso(g, fr.torso, cx + lean, base.top + 1 + bob, bw, u, b, t, tOpt);
+        })()
+      : drawTorso(g, fr.torso, cx + lean, base.top + 1 + bob, bw, u, b, t, tOpt);
+    if (!o.crawl) drawArms(g, fr.arms, cx + lean, torso.y, torso.w, torso.h, u, b, t, aOpt);
     const hw = Math.round(u(11) * fr.hs);
     const hd = drawHead(g, fr.head, cx + lean + (A ? Math.round(A.headTurn * u(2)) : 0),
       torso.y + 1 + (A ? Math.round(A.headTilt * u(1)) : 0), hw, u, b, t,
@@ -1622,41 +1631,6 @@
       G.Rh(g, bx - bwd * 0.3, by + bh - 2, bwd * 0.6, 1, '#3a2a06');
       G.Rh(g, bx - bwd * 0.28, by + 1.5, bwd * 0.22, bh * 0.44, '#fff6cc');
       G.Rh(g, bx - 0.5, by + bh - 1, 1, 1, '#2a1e04');
-    }
-
-    // an apron, tied on, with a pocket and a scalloped hem
-    if ((fr.soft || 0) > 1) {
-      const aw = Math.round(torso.w * 0.5), ax = cxl - aw / 2;
-      const ay = torso.y + Math.round(torso.h * 0.74), ah = Math.round(torso.h * 0.26);
-      const arow = [];
-      for (let j = 0; j < ah; j++)
-        arow.push(Math.round((aw / 2) * (0.9 + 0.1 * (j / Math.max(1, ah - 1)))));
-      for (let j = 0; j < ah; j++) G.R(g, cxl - arow[j] - 1, ay + j - 1, arow[j] * 2 + 2, 3, OUT);
-      for (let j = 0; j < ah; j++)
-        G.R(g, cxl - arow[j], ay + j, arow[j] * 2, 1,
-          j < 1 ? '#fff8ea' : j > ah - 2 ? '#c8b696' : '#f3e6cf');
-      G.vair(g, cxl + aw * 0.18, ay + 2, ah - 3, '#e0d0b2');
-      // the waist tie, running off both sides
-      G.Rh(g, ax - u(4), ay + 1, aw + u(8), 1.5, '#e2d2b4');
-      G.hair(g, ax - u(4), ay + 1, aw + u(8), '#fff8ea');
-      // a pocket with a scoop tucked in it
-      const pw = Math.round(aw * 0.44);
-      G.Rh(g, cxl - pw / 2, ay + ah * 0.34, pw, ah * 0.42, '#e7d7ba');
-      G.hair(g, cxl - pw / 2, ay + ah * 0.34, pw, '#fff8ea');
-      G.Rh(g, cxl - 1, ay + ah * 0.24, 1.5, ah * 0.2, P.steel);
-      // scalloped hem
-      for (let i = 0; i * 3 < aw; i++) {
-        G.Rh(g, ax + i * 3, ay + ah, 2, 1, '#e2d2b4');
-        G.Rh(g, ax + i * 3 + 0.5, ay + ah + 1, 1, 0.5, '#bfa985');
-      }
-      // a tricolour stripe up one side and a name tag on the bib
-      // a brand band across the hem, with a stripe pair on the edge
-      G.Rh(g, cxl - arow[ah - 3] * 0.9, ay + ah * 0.6, arow[ah - 3] * 1.8, u(3), '#c8383a');
-      G.hairq(g, cxl - arow[ah - 3] * 0.9, ay + ah * 0.6, arow[ah - 3] * 1.8, '#ff8a8c');
-      for (let k = 0; k < 5; k++)
-        G.Rq(g, cxl - arow[ah - 3] * 0.6 + k * (arow[ah - 3] * 0.3), ay + ah * 0.6 + u(1), u(1.4), u(1), '#fff0d4');
-      G.Rh(g, ax + 1.5, ay + 2.5, 0.5, ah - 4, '#2f8a48');
-      G.Rh(g, ax + 2.5, ay + 2.5, 0.5, ah - 4, '#c8383a');
     }
 
     // the tell, if this one is not really a machine. Drawn last so it

@@ -592,24 +592,35 @@
     const a = Math.min(1, E.t * 3) * Math.min(1, (4.6 - E.t) * 2);
     if (a <= 0) return;
     g.globalAlpha = a;
+    // the note wraps, so a card is never a sentence with the end sawn off
+    const words = String(E.e.note || '').split(' ');
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      const test = cur ? cur + ' ' + w : w;
+      if (G.tw(test, 0.5) > 188 && cur) { lines.push(cur); cur = w; } else cur = test;
+    }
+    if (cur) lines.push(cur);
+    const ch = 40 + Math.max(0, lines.length - 1) * 7;
     const y = 40 - (1 - Math.min(1, E.t * 3)) * 10;
-    G.R(g, 40, y, 240, 46, '#0d0a06');
-    G.bevel(g, 40, y, 240, 46, '#5c4a20', '#050403');
+    G.R(g, 40, y, 240, ch, '#0d0a06');
+    G.bevel(g, 40, y, 240, ch, '#5c4a20', '#050403');
     G.R(g, 42, y + 2, 236, 1, '#e0b83a');
     // a little star, because it is a secret
     for (let i = 0; i < 8; i++) {
       const ang = i * Math.PI / 4 + E.t;
       const ln = i % 2 ? 4 : 7;
       for (let k = 0; k < ln; k++)
-        G.Rh(g, 58 + Math.cos(ang) * k - 0.5, y + 24 + Math.sin(ang) * k - 0.5, 1, 1,
+        G.Rh(g, 58 + Math.cos(ang) * k - 0.5, y + ch / 2 + Math.sin(ang) * k - 0.5, 1, 1,
           k < 2 ? '#fff4c8' : '#e0b83a');
     }
     G.text(g, 'YOU FOUND SOMETHING', 78, y + 8, '#8a7440', { sc: 0.5 });
     G.text(g, E.e.name, 78, y + 15, '#ffe89a');
-    G.text(g, E.e.note.slice(0, 44), 78, y + 27, '#c8b490', { sc: 0.5 });
-    G.text(g, '+$50', 272, y + 36, '#b6ff3a', { align: 'right', sc: 0.5 });
+    for (let i = 0; i < lines.length; i++)
+      G.text(g, lines[i], 78, y + 25 + i * 7, '#c8b490', { sc: 0.5 });
+    G.text(g, '+$50', 272, y + ch - 10, '#b6ff3a', { align: 'right', sc: 0.5 });
     G.text(g, (G.state && G.state.eggs ? G.state.eggs.length : 0) + '/' + (G.EGGS ? G.EGGS.length : 8),
-      78, y + 36, '#8a7440', { sc: 0.5 });
+      78, y + ch - 10, '#8a7440', { sc: 0.5 });
     g.globalAlpha = 1;
   };
 

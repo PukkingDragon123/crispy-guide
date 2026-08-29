@@ -39,12 +39,19 @@ else.
 
 ---
 
-## ☀️ Before any of it
+## 📺 Before any of it
 
-New game opens on a seafront in a summer that is already over. Every shot has
-something moving in it that is not the camera, and somebody in it says
-something — because a shot where neither happens is a caption with a picture
-over it.
+The story is not a film. It is **Channel 4, Municipal**, and you are watching it
+on a set: a channel ident with a live dot in the corner, a clock running in the
+other one, scanlines, and a roll bar drifting down the picture.
+
+There is no letterbox, no film grain, no vignette and no camera shear — all of
+that came off. The picture fills the frame, the cuts are hard, and the only
+camera move left is a pan and a push.
+
+Dialogue arrives the way a broadcast does it: a **lower third** slides up from
+the bottom with a coloured tab carrying the speaker's name, and the line types
+itself into the bar beside it.
 
 ![The summer](screenshots/open-summer.png)
 
@@ -123,7 +130,7 @@ surface, some piled a body's height above it.
 - **Press** where you want a hand. It reaches out — clamped to arm's length — and
   sinks into the muck.
 - **Drag back** and it hauls you toward itself, in *both* axes, so that is also
-  how you get over a mound.
+  how you get over a mound. It pulls hard.
 - **Let go** mid-haul and you keep the momentum. That is the whole game: a good
   yank is still moving you after you have released it.
 
@@ -132,10 +139,12 @@ both and you can vault. Leave both off the ground on a slope and you slide back
 down it, because you have no legs — nothing here is a cliff, and everything here
 is something you can lose ground on.
 
-The grip is not free either. **Hard junk holds; a loose slope gives**, and it
-gives faster the harder you pull on it. Thirteen mounds between you and the road,
-the tallest about a head and a half, and twelve things that came off the lorry
-whole lying on top of the heap.
+It is meant to be a crossing, not a trial. The hand goes for the **ground under
+where you pressed** rather than the exact point, so you cannot miss by being a
+few pixels high; the grip holds unless you lean on one spot for a very long
+time; and you only slide back on genuinely steep ground. Seven low mounds between
+you and the road — the tallest is about a head — and seven things that came off
+the lorry whole lying on top of the heap. A run is about forty-five pulls.
 
 Somewhere out there, leaning out of the muck, is a sign with a cow on it. It used
 to be over a door.
@@ -477,6 +486,21 @@ come true plays before the doors open.
 
 ---
 
+## 🧬 One model
+
+There used to be three cows. The rig drew one, the wasteland hand-drew its own
+head and torso because the player is legless out there, and two cutscene
+close-ups drew a third. Every time the face changed, two of them silently
+stopped matching.
+
+Now there is one. `drawBot` took a **crawl mode**: no legs, a torn hip that
+sparks, and both hands placed by the caller — so the wasteland passes in the
+positions its physics produced and gets back the same cow the shop sells gelato
+with, same head, same badge, same bell. The cutscenes pass nothing special at
+all.
+
+---
+
 ## 🎬 The performance
 
 ![Clips](screenshots/clips.png)
@@ -574,11 +598,15 @@ as a fin.
 **The badge.** A red roundel stamped on the milk tank: a cream field with its own
 head on it, in black. Every mascot's badge is the mascot.
 
-Around it: a **cowbell** on a narrow collar, one broad belt instead of three farm
-hoops, a branded apron, two soft mitten arms — one of them bright steel, because it is not
-yours — a disher held up where the queue can see it, and four stocky legs in
-black stockings on split hooves, with a tail that keeps time behind it whether or
-not anyone is watching.
+Around it: a **cowbell** on a narrow strap, one broad belt instead of three farm
+hoops, two soft mitten arms — one of them bright steel, because it is not yours —
+and four stocky legs in black stockings on split hooves, with a tail that keeps
+time behind it whether or not anyone is watching.
+
+And that is the lot. The apron, the held disher and the hide blobs across the
+shoulders were all cut: at this size every extra shape is one the eye has to
+resolve before it gets to the face, and the badge is the only thing the chest
+needs on it.
 
 `DAIRY UNIT`, filed under `GELATERIA`, and the only thing it ever says is *one
 scoop, always one more*.
@@ -618,7 +646,8 @@ not.
   mixed per archetype
 - **Sphere-normal scoop shading**; **heightfield pit surfaces** with slope
   lighting
-- A shot-based **cutscene camera**: pan, push and shear, letterbox, film grain.
+- A shot-based **cutscene camera**: pan and push only, presented as a television
+  broadcast — ident, clock, scanlines, roll bar, lower-third captions.
   A shot carries either one narrator line or a **script of timed lines** with
   speakers and name plates, and paint functions are handed a `talking` flag so
   mouths move while their owner is mid-sentence

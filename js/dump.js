@@ -433,34 +433,29 @@
   // THE WASTELAND. A horizontal world: two thousand six hundred units
   // of tip, mountains of it on the horizon, and you on your hands.
   // ------------------------------------------------------------
-  const W1 = 2640;                    // world x of the road out
+  const W1 = 1420;                    // world x of the road out
   const HOR = 76;                     // the horizon
-  const ARM = 46;                     // how far a hand gets from the body
+  const ARM = 54;                     // how far a hand gets from the body
   const BR = 11;                      // body radius
 
   // The mounds you have to get over. None of them is a cliff: the tallest
   // is about a head and a half, which is the whole point - you are meant
   // to be on the ground, hauling, not climbing.
   const MOUNDS = [
-    { x: 210,  w: 78,  h: 15 }, { x: 400,  w: 92,  h: 21 },
-    { x: 610,  w: 70,  h: 17 }, { x: 790,  w: 110, h: 27 },
-    { x: 1010, w: 84,  h: 19 }, { x: 1190, w: 96,  h: 25 },
-    { x: 1390, w: 72,  h: 16 }, { x: 1580, w: 116, h: 30 },
-    { x: 1800, w: 88,  h: 22 }, { x: 1990, w: 76,  h: 18 },
-    { x: 2170, w: 104, h: 26 }, { x: 2360, w: 90,  h: 23 },
-    { x: 2530, w: 120, h: 29 },
+    { x: 190,  w: 92,  h: 11 }, { x: 360,  w: 104, h: 14 },
+    { x: 540,  w: 88,  h: 12 }, { x: 720,  w: 116, h: 17 },
+    { x: 900,  w: 96,  h: 13 }, { x: 1080, w: 108, h: 16 },
+    { x: 1260, w: 100, h: 14 },
   ];
   // Things that came off the tip whole and are lying on the surface. You
   // haul over them, and their tops are the best grip in the game.
   const WRECKS = [
-    { x: 300,  kind: 'fridge' }, { x: 520,  kind: 'car' },
-    { x: 700,  kind: 'pipes' },  { x: 900,  kind: 'bus' },
-    { x: 1110, kind: 'fridge' }, { x: 1300, kind: 'pipes' },
-    { x: 1480, kind: 'car' },    { x: 1700, kind: 'bus' },
-    { x: 1900, kind: 'fridge' }, { x: 2080, kind: 'pipes' },
-    { x: 2270, kind: 'car' },    { x: 2450, kind: 'bus' },
+    { x: 260,  kind: 'fridge' }, { x: 440,  kind: 'car' },
+    { x: 620,  kind: 'pipes' },  { x: 810,  kind: 'bus' },
+    { x: 990,  kind: 'fridge' }, { x: 1170, kind: 'pipes' },
+    { x: 1340, kind: 'car' },
   ];
-  const SIGN = { x: 1246 };
+  const SIGN = { x: 700 };
 
   function ground(x) {
     let h = 130;
@@ -480,7 +475,7 @@
     const w = WRECKS.find((k) => Math.abs(k.x - x) < 22);
     if (w) return 1.35;
     const sl = Math.abs(slope(x));
-    return G.clamp(1.05 - sl * 0.55, 0.42, 1.15) + (G.hash(Math.round(x / 7), 3) - 0.5) * 0.2;
+    return G.clamp(1.2 - sl * 0.3, 0.85, 1.3);
   }
 
   // ------------------------------------------------------------
@@ -495,8 +490,8 @@
       this.vx = 0; this.vy = 0;
       this.best = this.bx;
       this.hands = [
-        { x: this.bx - 14, y: this.by + 10, grip: null, side: -1, reach: 0, tone: '#d2d6dc', slip: 0 },
-        { x: this.bx + 14, y: this.by + 10, grip: null, side: 1, reach: 0, tone: '#f6f0e4', slip: 0 },
+        { x: this.bx - 20, y: this.by + 12, grip: null, side: -1, reach: 0, tone: '#d2d6dc', slip: 0 },
+        { x: this.bx + 20, y: this.by + 12, grip: null, side: 1, reach: 0, tone: '#f6f0e4', slip: 0 },
       ];
       this.active = null;             // the hand the pointer is driving
       this.strain = 0;
@@ -650,17 +645,21 @@
       if (a && a.want) {
         a.reach = Math.min(1, a.reach + dt * 6);
         if (!a.grip) {
-          // it extends toward where you pointed, clamped to arm length
+          // It goes for the GROUND under where you pressed, not for the
+          // exact point: press anywhere near the muck and the hand finds
+          // something. Missing was the least interesting way to lose.
           const sx = this.bx + a.side * 6, sy = this.by + 4;
-          let dx = a.want.x - sx, dy = a.want.y - sy;
+          const wantX = G.clamp(a.want.x, this.bx - ARM * 0.95, this.bx + ARM * 0.95);
+          const wantY = Math.max(a.want.y, ground(wantX) - 1);
+          let dx = wantX - sx, dy = wantY - sy;
           const d = Math.hypot(dx, dy) || 1;
           const r = Math.min(d, ARM);
           const tx = sx + (dx / d) * r, ty = sy + (dy / d) * r;
-          a.x = G.lerp(a.x, tx, Math.min(1, dt * 14));
-          a.y = G.lerp(a.y, ty, Math.min(1, dt * 14));
-          // it latches when the palm is in the surface
+          a.x = G.lerp(a.x, tx, Math.min(1, dt * 16));
+          a.y = G.lerp(a.y, ty, Math.min(1, dt * 16));
+          // it latches when the palm is anywhere near the surface
           const gy = ground(a.x);
-          if (a.y >= gy - 2.5) {
+          if (a.y >= gy - 7) {
             a.y = gy - 1;
             a.grip = { x: a.x, y: a.y, hold: gripAt(a.x, a.y) };
             a.slip = 0;
@@ -687,18 +686,18 @@
             // toward the anchor, in both axes: this is how you go up a mound
             const dx = h.grip.x - this.bx, dy = h.grip.y - 6 - this.by;
             const d = Math.hypot(dx, dy) || 1;
-            const F = 520 * eff;
+            const F = 760 * eff;
             this.vx += (dx / d) * F * dt;
             this.vy += (dy / d) * F * dt;
-            this.strain = Math.min(1.4, this.strain + dt * (0.16 + eff * 0.5 / Math.max(0.5, h.grip.hold)));
+            this.strain = Math.min(1.4, this.strain + dt * (0.08 + eff * 0.22 / Math.max(0.5, h.grip.hold)));
             this.grunt -= dt;
             if (this.grunt <= 0) { this.grunt = 0.5; G.audio.sfx('strain'); }
             if (Math.random() < dt * 26)
               this.grit.push({ x: h.grip.x + G.rand(-7, 7), y: h.grip.y + G.rand(-3, 4),
                 vx: G.rand(-20, 20), vy: G.rand(-30, 6), t: 0, life: G.rand(0.3, 1) });
             // loose ground gives way under a hard pull
-            h.slip += dt * eff * (1.1 - h.grip.hold);
-            if (h.slip > 0.7) {
+            h.slip += dt * eff * Math.max(0, 1.1 - h.grip.hold);
+            if (h.slip > 2.2) {
               h.grip = null; h.slip = 0;
               G.audio.sfx('snap'); G.shake(3, 0.25);
               this.say('IT GIVES');
@@ -751,7 +750,7 @@
         if (this.vy > 0) this.vy = 0;
         const sl = slope(this.bx);
         // you slide back down anything steep, because you have no legs
-        if (!held && Math.abs(sl) > 0.3) this.vx -= sl * 280 * dt;
+        if (!held && Math.abs(sl) > 0.6) this.vx -= sl * 110 * dt;
         this.vx *= Math.pow(held ? 0.45 : 0.78, dt);
         if (!held && Math.abs(this.vx) < 4 && Math.abs(sl) < 0.3) this.vx *= 0.2;
       }
@@ -761,8 +760,8 @@
       // free hands trail beside the body
       for (const h of this.hands) {
         if (h.grip || h === a) continue;
-        h.x = G.lerp(h.x, this.bx + h.side * 12, Math.min(1, dt * 7));
-        h.y = G.lerp(h.y, Math.min(ground(this.bx + h.side * 12) - 2, this.by + 11), Math.min(1, dt * 7));
+        h.x = G.lerp(h.x, this.bx + h.side * 20, Math.min(1, dt * 7));
+        h.y = G.lerp(h.y, Math.min(ground(this.bx + h.side * 20) - 2, this.by + 12), Math.min(1, dt * 7));
       }
 
       // ---- the camera ----
@@ -1086,195 +1085,42 @@
       if (found) G.glow(g, sx, gy - 11, 54, 30, '#ffd47a', 0.3);
     },
 
-    // ---- you: a head, a torso and two arms, and no legs at all ----
+    // ---- you. ONE model: the same drawBot rig every other scene uses,
+    // in crawl mode - legless, with both hands placed where the physics
+    // put them. There used to be a second cow hand-drawn in this file,
+    // which is why it never quite matched the one in the shop. ----
     drawSelf(g, t) {
       const sx = Math.round(this.onScreenX(this.bx));
       const sy = Math.round(this.onScreenY(this.by));
-      const lean = G.clamp(this.vx * 0.05, -3, 3);
 
-      // A tip is forty kinds of rubbish and you are one pale thing in it.
-      // Sink a pool of shadow behind yourself or you vanish into it.
+      // a tip is forty kinds of rubbish and you are one pale thing in it
       g.globalAlpha = 0.16;
       for (let r = 0; r < 8; r++) G.fe(g, sx, sy + 4, 46 - r * 5, 38 - r * 4.2, '#171320');
       g.globalAlpha = 1;
-      // the shadow you cast on the muck
       const gy = ground(this.bx) - this.camY;
       g.globalAlpha = G.clamp(0.55 - (gy - sy - BR) / 60, 0.1, 0.55);
       for (let r = 0; r < 4; r++) G.fe(g, sx, gy + 1, 20 - r * 3, 4 - r * 0.7, '#120f18');
       g.globalAlpha = 1;
 
-      // ---- the torso: a milk tank with the badge on it, torn off below ----
-      const tw2 = 22, th2 = 20;
-      const ty2 = sy + 2;
-      G.R(g, sx - tw2 / 2 - 1 + lean * 0.3, ty2 - 1, tw2 + 2, th2 + 2, OUT);
-      for (let j = 0; j < th2; j++) {
-        const p = j / (th2 - 1);
-        const hw = Math.round((tw2 / 2) * (Math.sin(p * Math.PI) * 0.16 + 0.84));
-        G.R(g, sx - hw + lean * 0.3, ty2 + j, hw * 2, 1,
-          j < 2 ? '#fffaf0' : p > 0.86 ? '#bdb2a2' : '#f6f0e4');
-      }
-      // the black patch, and the badge, scuffed
-      G.Rh(g, sx - tw2 / 2 + 2 + lean * 0.3, ty2 + 4, 7, 6, '#2f2839');
-      const br2 = 6;
-      for (let j = -br2; j <= br2; j++) {
-        const hw = Math.round(Math.sqrt(Math.max(0, br2 * br2 - j * j)));
-        G.R(g, sx + 3 - hw + lean * 0.3, ty2 + 9 + j, hw * 2 + 1, 1,
-          Math.abs(j) > br2 - 2 ? '#8a2426' : '#c8383a');
-      }
-      for (let j = -4; j <= 4; j++) {
-        const hw = Math.round(Math.sqrt(Math.max(0, 16 - j * j)));
-        G.R(g, sx + 3 - hw + lean * 0.3, ty2 + 9 + j, hw * 2 + 1, 1, '#e8dcc0');
-      }
-      G.Rh(g, sx + 0.5 + lean * 0.3, ty2 + 7, 5, 4, '#241d2a');
-      G.Rq(g, sx + 0.5 + lean * 0.3, ty2 + 8.5, 5, 1, '#e8dcc0');
-      // the tear, where the rest of you used to be
-      G.R(g, sx - tw2 / 2 + lean * 0.3, ty2 + th2 - 1, tw2, 3, '#2a3040');
-      for (let i = 0; i < 9; i++)
-        G.Rh(g, sx - tw2 / 2 + 1 + i * 2.4 + lean * 0.3, ty2 + th2 + (i % 2), 1.5, 3,
-          i % 2 ? '#48546c' : '#6b3f22');
-      if (Math.random() < 0.22) {
-        const spx = sx + G.rand(-8, 8);
-        G.pip(g, spx, ty2 + th2 + 2, '#ffffff');
-        G.glow(g, spx, ty2 + th2 + 2, 14, 9, '#7fd8ff', 0.55);
-      }
+      G.drawBot(g, 'player', sx, sy + 20, 0.9, {
+        t, walk: 0, mood: this.strain > 0.6 ? 'sick' : 'idle',
+        crawl: 1,
+        clip: this.strain > 0.1 ? 'startle' : 'idle',
+        ct: t, p: G.clamp(this.strain, 0, 1),
+        hands: this.hands.map((h) => ({
+          x: this.onScreenX(h.x), y: this.onScreenY(h.y),
+        })),
+      });
 
-      // ---- the arms, over the tank so the shoulders never vanish ----
+      // dust under whichever hand is holding
       for (const h of this.hands) {
+        if (!h.grip) continue;
         const hx = this.onScreenX(h.x), hy = this.onScreenY(h.y);
-        const shx = sx + h.side * 6, shy = sy + 5;
-        const steel = h.side < 0;
-        const n = 9;
-        const pts = [];
-        for (let i = 0; i <= n; i++) {
-          const p = i / n;
-          const sag = h.grip ? 0 : Math.sin(p * Math.PI) * 4;
-          pts.push([G.lerp(shx, hx, p), G.lerp(shy, hy, p) + sag]);
-        }
-        for (let i = 0; i < n; i++) {
-          const th = Math.max(3, Math.round(7 - i * 0.3));
-          G.R(g, pts[i][0] - th / 2 - 1, pts[i][1] - th / 2 - 1, th + 2, th + 2, OUT);
-        }
-        for (let i = 0; i < n; i++) {
-          const th = Math.max(3, Math.round(7 - i * 0.3));
-          const col = steel ? '#c8ccd2' : '#f8f2e8';
-          G.Rh(g, pts[i][0] - th / 2, pts[i][1] - th / 2, th, th, i % 3 === 2 ? G.shade(col, -0.2) : col);
-          G.hairq(g, pts[i][0] - th / 2, pts[i][1] - th / 2, th, '#ffffff');
-          G.hairq(g, pts[i][0] - th / 2, pts[i][1] + th / 2 - 0.25, th, G.shade(col, -0.34));
-        }
-        // the mitten
-        const mw = 10, mh = 9;
-        const rows = [];
-        for (let j = 0; j < mh; j++) {
-          const dy = (j + 0.5 - mh / 2) / (mh / 2);
-          rows.push(Math.max(1, Math.round((mw / 2) * Math.sqrt(Math.max(0, 1 - dy * dy)))));
-        }
-        const mc = steel ? '#dde1e6' : '#f8f2e8';
-        for (let j = 0; j < mh; j++)
-          G.R(g, hx - rows[j] - 1, hy - mh / 2 + j, rows[j] * 2 + 2, 1, OUT);
-        for (let j = 0; j < mh; j++)
-          G.R(g, hx - rows[j], hy - mh / 2 + j, rows[j] * 2, 1,
-            j < 1 ? G.shade(mc, 0.34) : j > mh - 2 ? G.shade(mc, -0.34) : mc);
-        // knuckle creases, and a white pip on the top of the fist
-        for (let k = 0; k < 2; k++)
-          G.Rq(g, hx - 2 + k * 2.4, hy - 0.5, 1, 1.5, G.shade(mc, -0.3));
-        G.pip(g, hx - 2, hy - mh / 2 + 0.5, '#ffffff');
-        if (h.grip) {
-          // it is holding: dust under it and a tension pip
-          g.globalAlpha = 0.5;
-          for (let i = 0; i < 3; i++) G.Rq(g, hx + G.rand(-6, 6), hy + 3 + i, 1, 1, '#8a7c64');
-          g.globalAlpha = 1;
-          if (h.slip > 0.3) G.pip(g, hx, hy - mh / 2 - 1.5, Math.sin(t * 20) > 0 ? '#ff7a8a' : '#8a3a44');
-        }
+        g.globalAlpha = 0.5;
+        for (let i = 0; i < 3; i++) G.Rq(g, hx + G.rand(-6, 6), hy + 2 + i, 1, 1, '#8a7c64');
+        g.globalAlpha = 1;
+        if (h.slip > 0.3) G.pip(g, hx, hy - 6, Math.sin(t * 20) > 0 ? '#ff7a8a' : '#8a3a44');
       }
-
-      // ---- the head ----
-      const hxx = sx + lean, hy2 = sy - 12;
-      G.glow(g, hxx, hy2 + 6, 64, 50, '#ffd47a', 0.22);
-      // the one ear left, and the stub of the other
-      for (let i = 0; i < 8; i++) {
-        const p = i / 7;
-        const ex = hxx + 11 + Math.round(p * 9), ey = hy2 + 3 + Math.round(p * 4 + this.strain * 2);
-        const th3 = Math.max(2, Math.round(7 * (1 - p * p * 0.76)));
-        G.R(g, ex - 1, ey - 1, 3, th3 + 2, OUT);
-        G.R(g, ex, ey, 2, th3, p < 0.66 ? '#cdc2b2' : '#b0a494');
-        if (p > 0.1 && p < 0.84) G.Rq(g, ex, ey + th3 * 0.3, 2, Math.max(1, th3 * 0.4), '#c08a98');
-      }
-      for (let i = 0; i < 3; i++) {
-        G.R(g, hxx - 12 - i * 2, hy2 + 3 + i - 1, 4, 5 - i, OUT);
-        G.R(g, hxx - 11 - i * 2, hy2 + 3 + i, 2, Math.max(1, 3 - i), '#cdc2b2');
-      }
-      // the skull
-      G.R(g, hxx - 13, hy2 - 2, 26, 24, OUT);
-      for (let j = 0; j < 22; j++) {
-        const p = j / 21;
-        const cap = p < 0.34 ? Math.sqrt(Math.max(0, 1 - Math.pow(1 - p / 0.34, 2))) : 1;
-        const hw = Math.max(2, Math.round(12 * (0.6 + 0.4 * cap)));
-        G.R(g, hxx - hw, hy2 - 1 + j, hw * 2, 1, j < 2 ? '#fffaf0' : p > 0.9 ? '#bdb2a2' : '#f6f0e4');
-      }
-      // the patch over the left side
-      for (let j = 0; j < 10; j++) {
-        const dy = (j - 4) / 5;
-        if (Math.abs(dy) > 1) continue;
-        const half = Math.round(7 * Math.sqrt(1 - dy * dy) * (1 + Math.sin(j * 0.8 + 1.7) * 0.18));
-        const x0 = Math.max(hxx - 12, hxx - 7 - half), x1 = Math.min(hxx + 12, hxx - 7 + half);
-        if (x1 > x0) G.R(g, x0, hy2 - 1 + j, x1 - x0, 1, j < 3 ? '#4c4256' : j > 7 ? '#1d1826' : '#2f2839');
-      }
-      // one horn, bent. The other snapped off level with the plate.
-      for (let j = 0; j < 6; j++) {
-        const p = j / 5, hw = Math.max(2, Math.round(4 * (0.44 + p * 0.56)));
-        G.R(g, hxx + 4 + Math.round((1 - p) * 3) - 1, hy2 - 7 + j - 1, hw + 2, 3, OUT);
-      }
-      for (let j = 0; j < 6; j++) {
-        const p = j / 5, hw = Math.max(2, Math.round(4 * (0.44 + p * 0.56)));
-        G.R(g, hxx + 4 + Math.round((1 - p) * 3), hy2 - 7 + j, hw, 1, p < 0.3 ? '#c9ab7c' : '#e4d3a8');
-        G.pip(g, hxx + 4 + Math.round((1 - p) * 3), hy2 - 7 + j, '#fff8e0');
-      }
-      G.R(g, hxx - 9, hy2 - 3, 6, 3, OUT);
-      G.R(g, hxx - 8, hy2 - 2, 4, 2, '#8a7458');
-      // ---- THE EYES. Two dots. One of them has a crack across it and
-      // does not come back on. Same three marks as the clean face. ----
-      const dd2 = 7, dsp2 = 7, dy2 = hy2 + 4;
-      const blink = Math.sin(t * 1.3) > 0.985;
-      for (const sd of [-1, 1]) {
-        const ex = hxx + sd * dsp2 - dd2 / 2;
-        const dead = sd > 0;
-        G.rr2(g, ex - 0.5, dy2 - 0.5, dd2 + 1, dd2 + 1, dead ? '#cfc4ba' : '#fdf8ee');
-        if (blink && !dead) {
-          G.Rh(g, ex, dy2 + dd2 * 0.42, dd2, 1, '#241d2a');
-        } else {
-          G.rr2(g, ex, dy2, dd2, dd2, dead ? '#5a5462' : '#241d2a');
-          if (!dead) {
-            G.Rq(g, ex + 1.25, dy2 + 1, 2, 2, '#ffffff');
-            G.glow(g, ex + dd2 / 2, dy2 + dd2 / 2, 20, 16, '#ff9ab8', 0.24);
-          } else {
-            for (let i2 = 0; i2 < 9; i2++)
-              G.Rq(g, ex - 1 + i2, dy2 + 1.5 + Math.sin(i2 * 1.7) * 2, 1, 0.5, '#12151d');
-          }
-        }
-      }
-      // the muzzle, scuffed, and a mouth set hard
-      for (let j = 0; j < 9; j++) {
-        const q = (j / 8 - 0.5) * 2;
-        const hw = Math.max(1, Math.round(9 * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 3)), 1 / 2.6)));
-        G.R(g, hxx - hw - 1, hy2 + 12 + j, hw * 2 + 2, 1, OUT);
-        G.R(g, hxx - hw, hy2 + 12 + j, hw * 2, 1,
-          j < 2 ? '#f4c4cf' : j > 6 ? '#b8788e' : '#e8a8bb');
-      }
-      G.Rq(g, hxx - 4, hy2 + 14, 2, 2, '#8f4a63');
-      G.Rq(g, hxx + 2.5, hy2 + 14, 2, 2, '#4a3a28');
-      g.globalAlpha = 0.5; G.Rh(g, hxx + 1, hy2 + 16, 6, 3, '#4a3a28'); g.globalAlpha = 1;
-      // one small arc, and it goes flat when you are straining
-      const set = this.strain > 0.5;
-      const aw3 = 8, dep3 = set ? 0 : 1.5;
-      for (let i2 = 0; i2 <= aw3; i2++) {
-        const pr = i2 / aw3;
-        G.Rq(g, hxx - aw3 / 2 + i2, hy2 + 17 + Math.sin(pr * Math.PI) * dep3, 1, 1, '#8a3a52');
-      }
-      // mud on it, because you have been dragging your face through this
-      g.globalAlpha = 0.34;
-      G.Rh(g, hxx - 11, hy2 + 8, 9, 4, '#4a3a28');
-      G.Rh(g, hxx + 3, hy2 + 19, 8, 3, '#4a3a28');
-      g.globalAlpha = 1;
     },
 
     // ---- the boot sequence ----

@@ -559,7 +559,7 @@
       note: 'IT HAS ONLY EVER SHOWN ONE TIME. THE TIME SHE LEFT.' },
     { id: 'e_moo',    name: 'SIGNORA MUCCA',
       hint: 'FIND YOUR OWN SIGN IN THE PIT',
-      note: 'THEY THREW THE SHOP AWAY AND THEY THREW THE SIGN IN AFTER IT.' },
+      note: 'THE SHOP WENT OUT. THE SIGN WENT AFTER IT.' },
     { id: 'e_dog',    name: 'GOOD DOG',
       hint: 'RESCUE A DOG',
       note: 'IT HAS NOT STOPPED WAGGING. THE WHOLE CHASSIS.' },

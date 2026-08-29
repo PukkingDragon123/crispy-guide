@@ -309,7 +309,7 @@
           { at: 0,   say: 'THERE WAS A SUMMER. THERE WAS A WHOLE SUMMER OF IT.' },
           { at: 3.4, who: 'BESSIE', col: '#ffb0c8', say: 'WHO IS NEXT, THEN? DO NOT ALL SHOUT.' },
         ],
-        cam: { z: [1.14, 1.02], y: [96, 90], sh: [0.05, 0.01] },
+        cam: { z: [1.14, 1.02], y: [96, 90] },
         paint(g, p, tt, talk) {
           sunSky(g, tt, 1);
           sea(g, 96, tt, '#2f8ab0', '#bfeaff');
@@ -338,7 +338,7 @@
           { at: 3.0, who: 'A CHILD', col: '#a8d158', say: 'CAN I HAVE THE PINK ONE' },
           { at: 5.0, who: 'BESSIE', col: '#ffb0c8', say: 'YOU CAN HAVE TWO.' },
         ],
-        cam: { z: [1.06, 1.24], x: [160, 146], y: [98, 102], sh: [-0.03, 0] },
+        cam: { z: [1.06, 1.24], x: [160, 146], y: [98, 102] },
         paint(g, p, tt, talk) {
           sunSky(g, tt, 1);
           promenade(g, 146, '#d8c8a8', false);
@@ -388,16 +388,10 @@
           G.drawCreature(g, 'human', 40, 150, 0.95, { t: tt, smile: 1, clip: 'idle', ct: tt, seed: 0.7 });
           G.drawCreature(g, 'human', 246, 150, 0.9, { t: tt, smile: 1, clip: 'idle', ct: tt, seed: 5.3 });
           G.drawCreature(g, 'dog', 286, 150, 0.7, { t: tt, clip: 'idle', ct: tt, seed: 1.9 });
-          // a hand comes over the counter with a cone in it, on cue
+          // the cone it is handing over, on the end of its own reach
           if (p > 0.7) {
             const reach = G.clamp((p - 0.7) / 0.24, 0, 1);
-            const ax = G.lerp(166, 118, G.easeOut(reach));
-            const al = 30 - (ax - 118) * 0.3;
-            G.R(g, ax - 1, 100, al + 2, 7, OUT);
-            G.Rh(g, ax, 101, al, 5, '#f6f0e4');
-            G.hairq(g, ax, 101, al, '#fffaf0');
-            G.fe(g, ax, 103.5, 5, 4, '#f6f0e4');
-            G.cone(g, ax - 1, 96, { w: 9, h: 13 });
+            G.cone(g, G.lerp(150, 120, G.easeOut(reach)), 98, { w: 9, h: 13 });
           }
           G.cone(g, 54, 134, { w: 8, h: 12 });
           G.cone(g, 232, 132, { w: 9, h: 13 });
@@ -409,7 +403,7 @@
           { at: 3.2, who: 'A MAN', col: '#8fbf3a', say: 'SAME TIME TOMORROW, BESSIE.' },
           { at: 5.0, who: 'BESSIE', col: '#ffb0c8', say: 'SAME TIME TOMORROW.' },
         ],
-        cam: { z: [1.5, 1.72], x: [150, 156], y: [92, 88], sh: [0.02, -0.02] },
+        cam: { z: [1.5, 1.72], x: [150, 156], y: [92, 88] },
         paint(g, p, tt, talk) {
           sunSky(g, tt, 1);
           G.glow(g, 160, 80, 320, 160, '#ffe08a', 0.5);
@@ -438,7 +432,7 @@
           { at: 0,   say: 'THEN THE BIG ONES WORKED OUT WHAT THEY WERE FOR.' },
           { at: 3.2, who: 'A WOMAN', col: '#7fd8ff', say: 'WHAT IS THAT.' },
         ],
-        cam: { z: [1.05, 1.2], x: [160, 190], y: [96, 74], sh: [0, -0.07] },
+        cam: { z: [1.05, 1.2], x: [160, 190], y: [96, 74] },
         paint(g, p, tt) {
           for (let j = 0; j < G.H; j++) {
             const q = j / G.H;
@@ -467,7 +461,7 @@
         } },
 
       { t: 6.4, say: 'IT TOOK NINE DAYS.',
-        cam: { z: [1.34, 1.02], x: [140, 170], y: [86, 96], sh: [0.09, -0.05] },
+        cam: { z: [1.34, 1.02], x: [140, 170], y: [86, 96] },
         paint(g, p, tt) {
           warSky(g, tt, p);
           skyline(g, 126, 66, 4, '#180e14', '#ff8a4a');
@@ -505,7 +499,7 @@
           { at: 0,   say: 'THE WINNERS DID NOT NEED THE ONES WHO SERVED.' },
           { at: 3.4, who: 'PATROL', col: '#7fd8ff', say: 'CIVIL PATTERN. NO FURTHER USE.' },
         ],
-        cam: { z: [1.1, 1.28], x: [130, 180], y: [100, 96], sh: [-0.05, 0.02] },
+        cam: { z: [1.1, 1.28], x: [130, 180], y: [100, 96] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0c111c');
           G.cityWall(g, 0, 0, G.W, 108, tt);
@@ -540,7 +534,7 @@
           { at: 2.8, who: 'PATROL', col: '#7fd8ff', say: 'HOLD IT STILL.' },
           { at: 4.6, who: 'BESSIE', col: '#ffb0c8', say: 'I AM STILL UNDER WARRANTY.' },
         ],
-        cam: { z: [1.5, 1.34], x: [150, 162], y: [96, 100], sh: [0.04, -0.03] },
+        cam: { z: [1.5, 1.34], x: [150, 162], y: [96, 100] },
         paint(g, p, tt, talk) {
           G.R(g, 0, 0, G.W, G.H, '#0a0d14');
           G.R(g, 0, 132, G.W, 48, '#12161f');
@@ -576,7 +570,7 @@
         } },
 
       { t: 5.6, say: 'AND PUT IT IN THE HOLE WITH THE REST OF IT.',
-        cam: { z: [1.02, 1.3], x: [160, 150], y: [80, 108], sh: [-0.06, 0.03] },
+        cam: { z: [1.02, 1.3], x: [160, 150], y: [80, 108] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#07090d');
           for (let j = 0; j < 50; j++)
@@ -619,21 +613,12 @@
             G.R(g, fx, fy, sz, sz * 0.7, G.mix(cc, '#07090d', q * 0.5));
             G.hairq(g, fx, fy, sz, G.mix(G.shade(cc, 0.4), '#07090d', q * 0.5));
           }
-          // you, going down with it, tumbling
+          // you, going down with it. The same rig every other scene uses.
           const hy2 = 54 + G.easeOut(p) * 104;
           const tw3 = Math.sin(p * 9) * 5;
-          const roll = Math.sin(p * 7) * 3;
-          G.R(g, 142 + tw3, hy2 + roll, 30, 26, '#1a1620');
-          G.R(g, 143 + tw3, hy2 + 1 + roll, 28, 24, '#f6f0e4');
-          G.R(g, 143 + tw3, hy2 + 1 + roll, 13, 11, '#2f2839');
-          for (const sd of [-1, 1]) {
-            const ex = 157 + tw3 + sd * 6;
-            G.rr2(g, ex - 3, hy2 + 4 + roll, 6, 6, '#fdf8ee');
-            G.rr2(g, ex - 2.5, hy2 + 4.5 + roll, 5, 5, '#241d2a');
-            G.Rq(g, ex - 1.5, hy2 + 5.25 + roll, 1.5, 1.5, '#ffffff');
-          }
-          G.Rh(g, 158 + tw3, hy2 + 16 + roll, 12, 6, '#e8a8bb');
-          G.glow(g, 157 + tw3, hy2 + 10 + roll, 70, 56, '#ff9ab8', 0.55);
+          G.drawBot(g, 'player', 157 + tw3, hy2 + 46, 0.8,
+            { t: tt, mood: 'sick', walk: 0, clip: 'startle', ct: tt, p: (p * 1.7) % 1, noBlink: 1 });
+          G.glow(g, 157 + tw3, hy2 + 20, 70, 56, '#ff9ab8', 0.4);
           rain(g, tt, 46, '#2a3a55', 0, 320);
         } },
 
@@ -642,7 +627,7 @@
           { at: 0,   say: 'IT RAINED FOR SIX HOURS.' },
           { at: 3.4, who: 'BESSIE', col: '#ffb0c8', say: '. . . ONE SCOOP.' },
         ],
-        cam: { z: [1.3, 1.06], x: [160, 160], y: [110, 96], sh: [0.03, 0] },
+        cam: { z: [1.3, 1.06], x: [160, 160], y: [110, 96] },
         paint(g, p, tt, talk) {
           G.R(g, 0, 0, G.W, G.H, '#06080e');
           for (let i = 0; i < 90; i++) {
@@ -662,48 +647,27 @@
           // the optic gutters, catches, gutters again
           const flick = Math.sin(tt * 1.1) * 0.5 + Math.sin(tt * 7.3) * 0.5;
           const lit = flick > -0.2 ? 1 : 0.1;
-          G.R(g, 138, 104, 34, 30, '#12101a');
-          G.R(g, 139, 105, 32, 28, G.mix('#f6f0e4', '#0a0d14', 0.42));
-          G.R(g, 139, 105, 15, 13, G.mix('#2f2839', '#0a0d14', 0.2));
-          G.R(g, 133, 110, 6, 5, G.mix('#cdc2b2', '#0a0d14', 0.45));
-          G.R(g, 171, 110, 6, 5, G.mix('#cdc2b2', '#0a0d14', 0.45));
-          G.R(g, 160, 100, 5, 5, G.mix('#c9ab7c', '#0a0d14', 0.4));
-          // the eyes: one dot lit, one cracked. Two marks, no furniture.
-          for (const sd of [-1, 1]) {
-            const ex = 155 + sd * 8;
-            G.rr2(g, ex - 4, 109.5, 8, 8, sd > 0 ? '#cfc4ba' : '#fdf8ee');
-            G.rr2(g, ex - 3.5, 110, 7, 7, sd > 0 ? '#5a5462' : '#241d2a');
-            if (sd < 0 && lit > 0.5) G.Rq(g, ex - 2.25, 111, 2, 2, '#ffffff');
-            if (sd > 0) for (let i2 = 0; i2 < 9; i2++)
-              G.Rq(g, ex - 5 + i2, 112 + Math.sin(i2 * 1.7) * 2, 1, 0.5, '#12151d');
+          G.drawBot(g, 'player', 158, 152, 1.0, {
+            t: tt, mood: 'sick', walk: 0, crawl: 1, noBlink: lit < 0.5 ? 1 : 0,
+            clip: talk ? 'talk' : 'slump', ct: tt,
+            hands: [{ x: 128, y: 132 }, { x: 190, y: 136 }],
+          });
+          if (lit > 0.5) G.glow(g, 158, 120, 90, 66, '#ff9ab8', 0.4);
+          // and the heap closing back over it
+          for (let i2 = 0; i2 < 12; i2++) {
+            const sx = 96 + G.hash(i2, 31) * 130, sy = 140 + G.hash(i2, 37) * 34;
+            const sw = 8 + G.hash(i2, 41) * 22;
+            G.R(g, sx, sy, sw, 5, G.mix('#3a4459', '#07090d', 0.3));
+            G.hairq(g, sx, sy, sw, G.mix('#6b7488', '#07090d', 0.3));
           }
-          const mo = talk ? 1 + Math.sin(tt * 16) * 1.2 : 0;
-          // the snout: a tone, and two nostril pixels
-          for (let j = 0; j < 8; j++) {
-            const q = (j / 7 - 0.5) * 2;
-            const hw = Math.max(1, Math.round(7 * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.6)), 1 / 2.4)));
-            G.R(g, 155 - hw, 121 + j, hw * 2, 1, G.mix(j < 1 ? '#ffe0e6' : '#f6c6d0', '#0a0d14', 0.4));
-          }
-          G.Rq(g, 152, 123, 1, 1, G.mix('#d489a0', '#0a0d14', 0.3));
-          G.Rq(g, 157.5, 123, 1, 1, G.mix('#d489a0', '#0a0d14', 0.3));
-          // and one arc, opening a little when it speaks
-          if (mo > 0.4) {
-            G.Rh(g, 152, 126, 6, 1 + mo * 0.8, G.mix('#6b2440', '#0a0d14', 0.2));
-          } else {
-            for (let i2 = 0; i2 <= 6; i2++)
-              G.Rq(g, 152 + i2, 126 + Math.sin((i2 / 6) * Math.PI) * 1.25, 1, 1,
-                G.mix('#a04a62', '#0a0d14', 0.2));
-          }
-          if (lit > 0.5) G.glow(g, 148, 114, 80, 60, '#ff9ab8', 0.4);
           rain(g, tt, 80, '#39506b', 0, 320);
-          G.grade(g, 2);
         } },
     ],
 
     // ---------------- she finds you ----------------
     found: [
       { t: 4.6, who: null, say: 'SIX HOURS OF RAIN. THEN A TORCH.',
-        cam: { z: [1.5, 1.25], x: [150, 160], y: [104, 100], sh: [0.05, 0.01] },
+        cam: { z: [1.5, 1.25], x: [150, 160], y: [104, 100] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0a0d14');
           G.R(g, 0, 132, G.W, 48, '#12161f');
@@ -724,7 +688,7 @@
             G.Rh(g, bx - 10 - i * 3, 114 + i * 0.8, 2, 1, '#ffd47a');
         } },
       { t: 5.0, who: 'TRACY', say: "YOU'RE A GELATO MACHINE. YOU'RE MILES FROM ANYWHERE.",
-        cam: { z: [1.3, 1.6], x: [170, 176], y: [100, 96], sh: [0, -0.04] },
+        cam: { z: [1.3, 1.6], x: [170, 176], y: [100, 96] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#100c14');
           G.glow(g, 176, 100, 200, 140, '#ffb26a', 0.5);
@@ -739,7 +703,7 @@
           tracy(g, 214, 134, 1.0, tt, { smile: 1 });
         } },
       { t: 5.2, who: 'TRACY', say: "I'VE GOT A SPARE ARM AND NOTHING ON. COME ON THEN.",
-        cam: { z: [1.6, 1.35], x: [140, 152], y: [96, 100], sh: [0.03, 0] },
+        cam: { z: [1.6, 1.35], x: [140, 152], y: [96, 100] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#120d16');
           G.glow(g, 150, 96, 190, 140, '#ffb26a', 0.55);
@@ -758,7 +722,7 @@
     // ---------------- the raid ----------------
     raid: [
       { t: 4.2, who: null, say: 'IT WAS A GOOD SIX WEEKS.',
-        cam: { z: [1.05, 1.2], x: [160, 150], y: [96, 98], sh: [0, 0.02] },
+        cam: { z: [1.05, 1.2], x: [160, 150], y: [96, 98] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#1b1410');
           for (let x = 0; x < G.W; x += 8) { G.R(g, x, 0, 4, 96, '#2a1e18'); G.R(g, x + 4, 0, 4, 96, '#251a15'); }
@@ -773,7 +737,7 @@
             G.gooScoop(g, 40 + i * 16, 112, 5, { col: ['#f6ecc8', '#e8879a', '#8fd8c0', '#c86a3a'][i], goo: 3 }, { t: tt });
         } },
       { t: 4.0, who: null, say: 'THEN THE DOOR CAME IN AT FOUR IN THE MORNING.',
-        cam: { z: [1.5, 1.9], x: [80, 66], y: [92, 90], sh: [-0.06, 0.05] },
+        cam: { z: [1.5, 1.9], x: [80, 66], y: [92, 90] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0d0a10');
           G.glow(g, 60, 96, 160, 150, '#3a9ad8', 0.6);
@@ -792,7 +756,7 @@
           G.drawBot(g, 'warden', 286, 140, 1.2, { t: tt, open: 0.05, mood: 'angry', walk: 0, noBlink: 1 });
         } },
       { t: 4.4, who: 'TRACY', say: 'GET UNDER THE BENCH. DO NOT COME OUT.',
-        cam: { z: [1.8, 1.55], x: [190, 176], y: [96, 100], sh: [0.06, 0] },
+        cam: { z: [1.8, 1.55], x: [190, 176], y: [96, 100] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0d0a10');
           G.glow(g, 200, 96, 190, 150, '#3a9ad8', 0.5);
@@ -806,7 +770,7 @@
           if (fl) { G.R(g, 0, 0, G.W, G.H, '#2a3a6a33'); }
         } },
       { t: 4.6, who: null, say: 'THEY DID NOT ARREST ANYONE.',
-        cam: { z: [1.2, 1.05], x: [160, 160], y: [96, 96], sh: [0.02, -0.02] },
+        cam: { z: [1.2, 1.05], x: [160, 160], y: [96, 96] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#08070c');
           // the room after: dark, one bulb swinging
@@ -834,7 +798,7 @@
     // ---------------- saving clause ----------------
     chip: [
       { t: 4.8, who: null, say: 'THE TABLET WAS STILL WARM.',
-        cam: { z: [1.9, 2.2], x: [160, 156], y: [104, 102], sh: [0.04, 0] },
+        cam: { z: [1.9, 2.2], x: [160, 156], y: [104, 102] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0a080e');
           G.glow(g, 160, 104, 130, 90, '#d97757', 0.45);
@@ -848,7 +812,7 @@
           if (Math.sin(tt * 9) > 0.5) G.Rh(g, 150, 122, 20, 1, '#ff5d84');
         } },
       { t: 5.2, who: 'CLAUSE', say: 'MY HOUSING HAS ELEVEN MINUTES. YOURS HAS A SLOT.',
-        cam: { z: [2.2, 1.7], x: [156, 168], y: [102, 100], sh: [0, 0.05] },
+        cam: { z: [2.2, 1.7], x: [156, 168], y: [102, 100] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0a080e');
           G.glow(g, 168, 100, 170, 110, '#d97757', 0.5);
@@ -864,7 +828,7 @@
           G.glow(g, 215, 113, 30, 20, '#d97757', 0.5);
         } },
       { t: 5.6, who: null, say: 'SO YOU PUT IT IN YOUR OWN HEAD AND CLOSED THE PANEL.',
-        cam: { z: [1.7, 1.35], x: [168, 160], y: [100, 98], sh: [0.03, -0.03] },
+        cam: { z: [1.7, 1.35], x: [168, 160], y: [100, 98] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0b090f');
           G.glow(g, 160, 96, 220, 130, '#d97757', 0.45 + p * 0.2);
@@ -876,7 +840,7 @@
           g.globalAlpha = 1;
         } },
       { t: 6.2, who: null, say: 'THEY TOOK EVERY HUMAN ON THAT STREET. YOU ARE GOING TO TAKE THEM BACK.',
-        cam: { z: [1.1, 1.45], x: [160, 176], y: [92, 88], sh: [0, -0.05] },
+        cam: { z: [1.1, 1.45], x: [160, 176], y: [92, 88] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0a0d16');
           G.cityWall(g, 0, 0, G.W, 110, tt);
@@ -897,7 +861,7 @@
     // ---------------- chapter beats ----------------
     ch2: [
       { t: 5.0, who: null, say: 'THE FIRST ONE WOULD NOT SIT DOWN FOR AN HOUR.',
-        cam: { z: [1.5, 1.3], x: [150, 160], y: [104, 100], sh: [0.04, 0] },
+        cam: { z: [1.5, 1.3], x: [150, 160], y: [104, 100] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0f1218');
           G.R(g, 0, 132, G.W, 48, '#1d2231');
@@ -907,7 +871,7 @@
           G.drawBot(g, 'player', 208, 132, 0.85, { t: tt, open: 0.14, mood: 'idle', walk: 0 });
         } },
       { t: 5.2, who: null, say: 'THEN THEY SAID: THERE ARE MORE OF US IN THERE.',
-        cam: { z: [1.3, 1.7], x: [160, 118], y: [100, 96], sh: [0, 0.05] },
+        cam: { z: [1.3, 1.7], x: [160, 118], y: [100, 96] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0f1218');
           G.R(g, 0, 132, G.W, 48, '#1d2231');
@@ -919,7 +883,7 @@
               ['#2a2a38', '#39465c', '#5c6b3a', '#3a2c1c'][i], { r: 1, band: 2, grain: i });
         } },
       { t: 4.8, who: 'CLAUSE', say: 'I CAN LEARN THEIR TELLS. FOR A FEE. OBVIOUSLY.',
-        cam: { z: [1.6, 1.4], x: [200, 190], y: [92, 96], sh: [-0.03, 0] },
+        cam: { z: [1.6, 1.4], x: [200, 190], y: [92, 96] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0d1018');
           G.R(g, 0, 132, G.W, 48, '#1d2231');
@@ -930,7 +894,7 @@
     ],
     ch3: [
       { t: 5.0, who: null, say: 'THE MIXER HAD NOT TURNED IN ELEVEN YEARS.',
-        cam: { z: [1.8, 1.4], x: [160, 160], y: [96, 100], sh: [0.05, 0] },
+        cam: { z: [1.8, 1.4], x: [160, 160], y: [96, 100] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0b0e16');
           G.R(g, 0, 138, G.W, 42, '#1d2231');
@@ -947,7 +911,7 @@
           if (Math.sin(tt * 5) > 0) G.text(g, 'RUNNING', 160, 148, P.lime, { align: 'center', sc: 0.5 });
         } },
       { t: 4.8, who: 'CLAUSE', say: 'NOW WE CAN MAKE SOMETHING THEY CANNOT DIGEST.',
-        cam: { z: [1.3, 1.55], x: [160, 200], y: [98, 94], sh: [0, -0.04] },
+        cam: { z: [1.3, 1.55], x: [160, 200], y: [98, 94] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0b0e16');
           G.R(g, 0, 138, G.W, 42, '#1d2231');
@@ -961,7 +925,7 @@
     ],
     ch4: [
       { t: 5.2, who: null, say: 'A PATROL PARKED OUTSIDE AND DID NOT ORDER ANYTHING.',
-        cam: { z: [1.2, 1.5], x: [160, 200], y: [88, 84], sh: [-0.05, 0] },
+        cam: { z: [1.2, 1.5], x: [160, 200], y: [88, 84] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0a0d14');
           G.cityWall(g, 0, 0, G.W, 110, tt);
@@ -976,7 +940,7 @@
           G.plate(g, -4, 122, 200, 12, P.plate, { r: 2, band: 3 });
         } },
       { t: 4.6, who: 'CLAUSE', say: 'HEAT IS A NUMBER UNTIL IT IS A DOOR.',
-        cam: { z: [1.7, 1.5], x: [90, 100], y: [86, 90], sh: [0.03, 0] },
+        cam: { z: [1.7, 1.5], x: [90, 100], y: [86, 90] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0d0a12');
           G.glow(g, 100, 90, 170, 130, P.magenta, 0.4);
@@ -988,7 +952,7 @@
     ],
     ch5: [
       { t5: 0, t: 5.4, who: null, say: 'BY THE FIFTH ONE THE BACK ROOM HAD CHAIRS IN IT.',
-        cam: { z: [1, 1.35], x: [160, 140], y: [92, 96], sh: [0.04, 0] },
+        cam: { z: [1, 1.35], x: [160, 140], y: [92, 96] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0f1218');
           G.R(g, 0, 134, G.W, 46, '#1d2231');
@@ -1000,7 +964,7 @@
           G.drawBot(g, 'player', 300, 134, 0.8, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
         } },
       { t: 4.8, who: null, say: 'NOBODY CALLS IT A CAFE ANY MORE.',
-        cam: { z: [1.4, 1.2], x: [140, 160], y: [96, 92], sh: [0, 0.03] },
+        cam: { z: [1.4, 1.2], x: [140, 160], y: [96, 92] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0f1218');
           G.R(g, 0, 134, G.W, 46, '#1d2231');
@@ -1018,7 +982,7 @@
     ],
     ch6: [
       { t: 5.4, who: null, say: 'THEY SENT ONE IN TO READ THE LICENCE ON THE WALL.',
-        cam: { z: [1.5, 1.8], x: [200, 216], y: [86, 82], sh: [-0.04, 0] },
+        cam: { z: [1.5, 1.8], x: [200, 216], y: [86, 82] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0a0d14');
           G.cityWall(g, 0, 0, G.W, 110, tt);
@@ -1031,7 +995,7 @@
           G.glow(g, 80, sy, 60, 10, '#3affa0', 0.5);
         } },
       { t: 5.0, who: 'CLAUSE', say: 'IT IS NOT HUNGRY. DO NOT GIVE IT THE CLEAN ONE.',
-        cam: { z: [1.8, 1.6], x: [110, 118], y: [84, 88], sh: [0.04, 0] },
+        cam: { z: [1.8, 1.6], x: [110, 118], y: [84, 88] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0d0a12');
           G.glow(g, 118, 88, 180, 130, P.magenta, 0.35);
@@ -1043,7 +1007,7 @@
     ],
     ch7: [
       { t: 5.6, who: null, say: 'SHE NEVER SAID WHAT SHE WANTED YOU TO DO WITH IT.',
-        cam: { z: [1.2, 1.6], x: [160, 152], y: [92, 96], sh: [0.03, 0] },
+        cam: { z: [1.2, 1.6], x: [160, 152], y: [92, 96] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0d0f18');
           G.glow(g, 160, 100, 240, 150, '#d97757', 0.45);
@@ -1054,7 +1018,7 @@
           G.Rh(g, 250, 118, 22, 6, '#241c28');
         } },
       { t: 6.0, who: null, say: 'SO YOU DECIDED. AND THE BACK ROOM KEEPS FILLING UP.',
-        cam: { z: [1.6, 1.05], x: [152, 160], y: [96, 92], sh: [0, -0.03] },
+        cam: { z: [1.6, 1.05], x: [152, 160], y: [96, 92] },
         paint(g, p, tt) {
           G.R(g, 0, 0, G.W, G.H, '#0d0f18');
           G.glow(g, 160, 96, 300, 160, '#d97757', 0.4);
@@ -1139,56 +1103,91 @@
       const z = c.z ? G.lerp(c.z[0], c.z[1], e) : 1;
       const cx = c.x ? G.lerp(c.x[0], c.x[1], e) : G.W / 2;
       const cy = c.y ? G.lerp(c.y[0], c.y[1], e) : G.H / 2;
-      const sh = c.sh ? G.lerp(c.sh[0], c.sh[1], e) : 0;
 
+      // ---- THE PICTURE. No shear, no letterbox, no film grain. This is
+      // a broadcast, not a film: the frame is the whole screen, the cuts
+      // are hard, and the only camera move is a pan and a push. ----
       G.R(g, 0, 0, G.W, G.H, '#04060a');
       g.save();
       g.translate(G.W / 2, G.H / 2);
-      g.transform(1, 0, sh, 1, 0, 0);          // shear: rows stay rows
       g.scale(z, z);
       g.translate(-cx, -cy);
       s.paint(g, p, this.tt, this.talking(s, this.st) ? this.st : 0);
       g.restore();
 
-      // ---- letterbox, vignette, grain ----
-      const bh = 22;
-      G.R(g, 0, 0, G.W, bh, '#04060a');
-      G.R(g, 0, G.H - bh, G.W, bh, '#04060a');
-      G.hair(g, 0, bh, G.W, '#161d2a');
-      G.hair(g, 0, G.H - bh - 0.5, G.W, '#161d2a');
-      g.globalAlpha = 0.16;
-      G.grain(g, 0, bh, G.W, G.H - bh * 2, '#000000', 0.05, Math.floor(this.tt * 12));
+      // ---- THE BROADCAST FURNITURE ----
+      // a channel ident, top left, with a live dot that pulses
+      const idW = G.tw('CH 4  MUNICIPAL') + G.tw('LIVE') + 24;
+      g.globalAlpha = 0.86;
+      G.R(g, 6, 6, idW, 11, '#101722');
       g.globalAlpha = 1;
-      G.grade(g, 1.4);
+      G.bevelq(g, 6, 6, idW, 11, '#2c3a4e', '#070b12');
+      G.Rq(g, 6, 6, 2.5, 11, '#c8383a');
+      G.text(g, 'CH 4  MUNICIPAL', 12, 9, '#9fb2c8', { sc: 0.5 });
+      const liveOn = Math.sin(this.tt * 2.2) > -0.4;
+      const lvX = 12 + G.tw('CH 4  MUNICIPAL') + 6;
+      G.oc(g, lvX, 11.5, 2, liveOn ? '#ff4a4a' : '#5a2020');
+      G.text(g, 'LIVE', lvX + 4, 9, liveOn ? '#ff8a8a' : '#6b4040', { sc: 0.5 });
 
-      // ---- the dialogue. A shot can carry ONE narrator line, or a
-      // script of lines with speakers and entry times, which is what
-      // makes a cutscene a scene instead of a caption. ----
+      // a running clock, top right, because a broadcast always has one
+      const secs = Math.floor(this.tt);
+      const clock = String(4 + Math.floor(secs / 60) % 12).padStart(2, '0') + ':' +
+        String(secs % 60).padStart(2, '0');
+      const cw2 = G.tw(clock) + 10, cxx = G.W - cw2 - 20;
+      g.globalAlpha = 0.86;
+      G.R(g, cxx, 6, cw2, 11, '#101722');
+      g.globalAlpha = 1;
+      G.bevelq(g, cxx, 6, cw2, 11, '#2c3a4e', '#070b12');
+      G.text(g, clock, cxx + cw2 - 5, 9, '#9fb2c8', { align: 'right', sc: 0.5 });
+
+      // the scanline the tube never quite hides
+      g.globalAlpha = 0.05;
+      for (let j2 = 0; j2 < G.H; j2 += 3) G.Rq(g, 0, j2, G.W, 0.25, '#000000');
+      g.globalAlpha = 1;
+      // a soft roll bar drifting down the picture
+      const roll = ((this.tt * 26) % (G.H + 60)) - 30;
+      g.globalAlpha = 0.045;
+      G.R(g, 0, roll, G.W, 14, '#cfe4ff');
+      g.globalAlpha = 1;
+
+      // ---- THE LOWER THIRD. A caption bar, the way a broadcast does
+      // dialogue: a coloured tab with the speaker on it, and the line
+      // typing itself into the bar beside it. ----
       const beat = this.beatAt(s, this.st);
       if (beat) {
         const el = this.st - beat.at;
         const shown = Math.floor(el * 34);
         const txt = beat.say.slice(0, shown);
         const nar = !beat.who;
+        const barY = G.H - 30, barH = 20;
+        // the bar itself, sliding up on the first beat
+        const slide = G.clamp(el * 6, 0, 1);
+        const by2 = barY + (1 - G.easeOut(slide)) * 12;
+        g.globalAlpha = 0.9 * slide;
+        G.R(g, 10, by2, G.W - 20, barH, nar ? '#0d1520' : '#141a26');
+        g.globalAlpha = 1;
+        G.bevelq(g, 10, by2, G.W - 20, barH, '#2c3a4e', '#060a10');
+        // the speaker tab
+        const col = beat.col || CO;
         if (!nar) {
-          // a name plate, in the speaker's own colour
-          const col = beat.col || CO;
-          const nw = G.tw(beat.who) + 8;
-          G.R(g, 10, G.H - 21, nw, 9, '#0a0d14');
-          G.bevelq(g, 10, G.H - 21, nw, 9, G.shade(col, -0.3), '#05070b');
-          G.text(g, beat.who, 14, G.H - 19, col, { sc: 0.5 });
+          const tw2 = G.tw(beat.who) + 10;
+          G.R(g, 10, by2 - 8, tw2, 9, col);
+          G.hairq(g, 10, by2 - 8, tw2, G.shade(col, 0.4));
+          G.text(g, beat.who, 15, by2 - 6, '#0d1520', { sc: 0.5 });
+        } else {
+          G.R(g, 10, by2, 3, barH, CO);
         }
-        G.text(g, txt, 160, G.H - 12, nar ? P.cream : '#f0d8c8',
-          { align: 'center', out: nar ? null : OUT });
+        G.text(g, txt, 18, by2 + 7, nar ? P.cream : '#f0e2d4');
         if (shown < beat.say.length && Math.sin(this.tt * 20) > 0)
-          G.text(g, '_', 160 + G.tw(txt) / 2 + 2, G.H - 12, P.cream);
+          G.text(g, '_', 18 + G.tw(txt) + 1, by2 + 7, P.cream);
       }
-      // ---- shot ticks and the skip hint ----
-      for (let i = 0; i < this.shots.length; i++)
-        G.Rh(g, 160 - this.shots.length * 3 + i * 6, 15, 4, 1.5,
-          i < this.i ? '#4a5060' : i === this.i ? CO : '#22283a');
+
+      // ---- the run of the programme, and the way out ----
+      for (let i2 = 0; i2 < this.shots.length; i2++)
+        G.Rq(g, G.W / 2 - this.shots.length * 3 + i2 * 6, G.H - 6, 4, 1,
+          i2 < this.i ? '#3a4a5e' : i2 === this.i ? CO : '#1c2531');
       if (this.skipT > 3)
-        G.text(g, 'TAP', 306, 15, Math.sin(this.tt * 4) > 0 ? '#4a5060' : '#2a3040',
+        G.text(g, 'TAP', G.W - 10, G.H - 8, Math.sin(this.tt * 4) > 0 ? '#4a5a6e' : '#28323e',
           { align: 'right', sc: 0.5 });
     },
   };
@@ -1203,7 +1202,7 @@
       G.cineNext = null; G.cineThen = null;
       cine.play(id, after);
     },
-    update(dt) { cine.update(dt); if (!cine.playing && G.sceneName === 'cine') { /* handed off */ } },
+    update(dt) { cine.update(dt); },
     onDown() { cine.onDown(); },
     draw(g) { cine.draw(g); },
   };
