@@ -427,6 +427,62 @@
       }
     },
   };
+  // ---- and the restaurant itself, in pieces ----
+  Object.assign(JUNK, {
+    tray(g, x, y, s, c, sd) {
+      const w = Math.round(16 * s), h = Math.round(4 * s);
+      bx(g, x - w / 2, y - h, w, h, '#b8434c');
+      G.Rh(g, x - w / 2 + 1, y - h + 1, w - 2, 1, '#7a2830');
+      G.Rh(g, x - w / 2 + 2, y - h, w - 4, 0.5, '#e8828c');
+    },
+    booth(g, x, y, s, c, sd) {
+      const w = Math.round(18 * s), h = Math.round(11 * s);
+      bx(g, x - w / 2, y - h, w, h, '#8a2f3a', { grain: sd });
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++)
+        G.Rq(g, x - w / 2 + 3 + i * (w / 3.4), y - h + 3 + j * (h / 2.6), 1, 1, '#4a1620');
+      G.Rh(g, x - w / 2, y - h, w, 1, '#c8505c');
+      G.Rh(g, x - w / 2 + 1, y - 2, w - 2, 2, '#3a2a2a');       // the burnt underside
+    },
+    letter(g, x, y, s, c, sd) {
+      // a letter off the sign: a neon tube in a burnt steel can
+      const w = Math.round(11 * s), h = Math.round(14 * s);
+      bx(g, x - w / 2, y - h, w, h, '#2a3242');
+      const on = G.hash(Math.round(x), 3) > 0.72;
+      const col = on ? '#ff8ab0' : '#5c3a48';
+      G.Rh(g, x - w / 2 + 2, y - h + 2, w - 4, 1, col);
+      G.Rh(g, x - w / 2 + 2, y - h + 2, 1, h - 4, col);
+      G.Rh(g, x + w / 2 - 3, y - h + 2, 1, h - 4, col);
+      G.Rh(g, x - w / 2 + 2, y - 3, w - 4, 1, col);
+      if (on) G.glow(g, x, y - h / 2, w * 3, h * 2, '#ff8ab0', 0.3);
+    },
+    cupb(g, x, y, s, c, sd) {
+      const w = Math.round(6 * s), h = Math.round(8 * s);
+      for (let j = 0; j < h; j++) {
+        const hw = (w / 2) * (0.72 + 0.28 * (1 - j / h));
+        G.R(g, x - hw - 1, y - h + j, hw * 2 + 2, 1, OUT);
+        G.R(g, x - hw, y - h + j, hw * 2, 1, j < 2 ? '#f0e2d4' : '#d8c8b4');
+      }
+      G.Rh(g, x - w / 2 - 1, y - h, w + 2, 1.5, '#c8505c');
+      G.Rh(g, x + 1, y - h - Math.round(5 * s), 1, Math.round(5 * s), '#e8828c');
+    },
+    fryer(g, x, y, s, c, sd) {
+      const w = Math.round(13 * s), h = Math.round(7 * s);
+      bx(g, x - w / 2, y - h, w, h, '#8a94a8');
+      for (let i = 1; i < 5; i++) G.vairq(g, x - w / 2 + i * (w / 5), y - h + 1, h - 2, '#4a5468');
+      G.Rh(g, x + w / 2 - 1, y - h - Math.round(4 * s), Math.round(7 * s), 1.5, '#5c6470');
+    },
+    crownp(g, x, y, s, c, sd) {
+      const w = Math.round(10 * s);
+      for (let i = 0; i < 4; i++) {
+        const px = x - w / 2 + i * (w / 3.4);
+        G.R(g, px - 1, y - Math.round(5 * s) - 1, 3, Math.round(5 * s) + 1, OUT);
+        G.R(g, px, y - Math.round(5 * s), 2, Math.round(5 * s), '#d8a83a');
+      }
+      G.R(g, x - w / 2 - 1, y - 3, w + 2, 4, OUT);
+      G.R(g, x - w / 2, y - 2, w, 2, '#e0b040');
+      G.Rh(g, x - w / 2, y - 2, w, 0.5, '#ffd45a');
+    },
+  });
   const JUNK_KEYS = Object.keys(JUNK);
 
   // ------------------------------------------------------------
@@ -456,6 +512,46 @@
     { x: 1340, kind: 'car' },
   ];
   const SIGN = { x: 700 };
+
+  // ---- WHAT IS LEFT OF THE PEOPLE. Five places along the crawl where
+  // you stop and call out. Nothing calls back until the last one. ----
+  const CALLS = [
+    { x: 210,  art: 'crown', say: 'A PAPER CROWN. SIZE SMALL.' },
+    { x: 470,  art: 'tray',  say: 'TABLE FOUR. NOBODY AT TABLE FOUR.' },
+    { x: 720,  art: 'shoe',  say: 'ONE SHOE. I CALLED. NOTHING CALLED BACK.' },
+    { x: 980,  art: 'badge', say: 'A STAFF BADGE. THE NAME IS BURNT OFF IT.' },
+    { x: 1230, art: 'radio', say: 'A RADIO, STILL ON. NOBODY ON IT.' },
+  ];
+  const CALLART = {
+    crown(g, x, y, t) { JUNK.crownp(g, x, y, 1.1, '#e0b040', 2); },
+    tray(g, x, y, t) {
+      JUNK.tray(g, x, y, 1.2, '#b8434c', 2);
+      JUNK.cupb(g, x + 9, y, 1, '#f0e2d4', 2);
+    },
+    shoe(g, x, y, t) {
+      G.R(g, x - 7, y - 6, 15, 7, OUT);
+      G.R(g, x - 6, y - 5, 13, 5, '#3a2a24');
+      G.hairq(g, x - 6, y - 5, 13, '#6b5244');
+      G.Rh(g, x - 2, y - 8, 5, 3, '#3a2a24');
+      G.Rq(g, x, y - 4, 1, 1, '#c8b490');
+    },
+    badge(g, x, y, t) {
+      G.R(g, x - 6, y - 5, 13, 6, OUT);
+      G.R(g, x - 5, y - 4, 11, 4, '#e8dccb');
+      G.Rh(g, x - 5, y - 4, 11, 1, '#c8505c');
+      for (let i = 0; i < 4; i++) G.Rq(g, x - 3 + i * 2, y - 2, 1, 1, '#3a2a24');
+      if (Math.sin(t * 3) > 0.4) G.glow(g, x, y - 3, 22, 14, '#ffd47a', 0.24);
+    },
+    radio(g, x, y, t) {
+      G.R(g, x - 7, y - 9, 15, 10, OUT);
+      G.R(g, x - 6, y - 8, 13, 8, '#3a4250');
+      G.Rh(g, x - 4, y - 6, 6, 4, '#12161f');
+      for (let i = 0; i < 4; i++)
+        G.Rq(g, x - 4 + G.rand(0, 6), y - 6 + G.rand(0, 4), 1, 1, Math.random() < 0.5 ? '#7fd8ff' : '#2a3a4a');
+      G.Rh(g, x + 4, y - 15, 1, 7, '#8a94a8');
+      G.Rq(g, x + 4, y - 16, 1, 1, '#ff4a4a');
+    },
+  };
 
   function ground(x) {
     let h = 130;
@@ -493,7 +589,12 @@
         { x: this.bx - 20, y: this.by + 12, grip: null, side: -1, reach: 0, tone: '#d2d6dc', slip: 0 },
         { x: this.bx + 20, y: this.by + 12, grip: null, side: 1, reach: 0, tone: '#f6f0e4', slip: 0 },
       ];
-      this.active = null;             // the hand the pointer is driving
+      this.active = null;             // the hand the stroke is driving
+      this.goal = null;               // where you tapped
+      this.anchor = 1;                // which hand takes the next stroke
+      this.strokeT = 0;
+      this.found = 0;
+      this.calls = CALLS.map((c) => ({ x: c.x, art: c.art, say: c.say, hit: 0, pulse: 0 }));
       this.strain = 0;
       this.grunt = 0;
       this.msg = null; this.msgT = 9;
@@ -592,37 +693,16 @@
         G.showEgg(G.findEgg('e_moo'));
         return;
       }
-      // whichever hand is free and nearer the pointer takes the job
-      let best = null, bd = 1e9;
-      for (const h of this.hands) {
-        const d = G.dist(wx, wy, h.x, h.y);
-        if (d < bd) { bd = d; best = h; }
-      }
-      // prefer a free hand if the nearest one is already holding
-      if (best.grip) {
-        const other = this.hands.find((h) => h !== best);
-        if (!other.grip) best = other;
-      }
-      if (best.grip) { best.grip = null; }
-      this.active = best;
-      best.reach = 0;
-      best.want = { x: wx, y: wy };
+      // TAP TO MOVE. One point. The hands work out the rest.
+      this.goal = { x: wx, y: wy, t: 0 };
       G.audio.sfx('grab');
     },
 
     onMove(x, y) {
-      if (this.active) this.active.want = { x: this.toWorldX(x), y: this.toWorldY(y) };
+      if (G.mouse.down && this.goal) { this.goal.x = this.toWorldX(x); this.goal.y = this.toWorldY(y); }
     },
 
-    onUp() {
-      if (this.active) {
-        if (this.active.grip && this.strain > 0.1) G.audio.sfx('release');
-        this.active.grip = null;
-        this.active.want = null;
-        this.active = null;
-      }
-      this.strain = 0;
-    },
+    onUp() { /* the goal outlives the press: a tap is enough */ },
 
     // ---------- update ----------
     update(dt) {
@@ -640,82 +720,83 @@
         return;
       }
 
-      // ---- the active hand reaches for the pointer ----
-      const a = this.active;
-      if (a && a.want) {
-        a.reach = Math.min(1, a.reach + dt * 6);
-        if (!a.grip) {
-          // It goes for the GROUND under where you pressed, not for the
-          // exact point: press anywhere near the muck and the hand finds
-          // something. Missing was the least interesting way to lose.
-          const sx = this.bx + a.side * 6, sy = this.by + 4;
-          const wantX = G.clamp(a.want.x, this.bx - ARM * 0.95, this.bx + ARM * 0.95);
-          const wantY = Math.max(a.want.y, ground(wantX) - 1);
-          let dx = wantX - sx, dy = wantY - sy;
-          const d = Math.hypot(dx, dy) || 1;
-          const r = Math.min(d, ARM);
-          const tx = sx + (dx / d) * r, ty = sy + (dy / d) * r;
-          a.x = G.lerp(a.x, tx, Math.min(1, dt * 16));
-          a.y = G.lerp(a.y, ty, Math.min(1, dt * 16));
-          // it latches when the palm is anywhere near the surface
-          const gy = ground(a.x);
-          if (a.y >= gy - 7) {
-            a.y = gy - 1;
-            a.grip = { x: a.x, y: a.y, hold: gripAt(a.x, a.y) };
-            a.slip = 0;
-            G.audio.sfx('clank');
-            G.shake(1.4, 0.1);
-            for (let i = 0; i < 7; i++)
-              this.grit.push({ x: a.x + G.rand(-5, 5), y: a.y + G.rand(-2, 3),
-                vx: G.rand(-16, 16), vy: G.rand(-24, 4), t: 0, life: G.rand(0.3, 0.9) });
-          }
-        }
-      }
-
-      // ---- the haul. Drag away from a planted hand and it pulls you in. ----
-      let held = 0;
+      // ---- THE STROKE. You tap; the hands do the work. One hand
+      // reaches out ahead along the way you asked for, sinks into the
+      // debris and hauls until the body is under it. Then the other one
+      // does it. That is the whole crawl, and it is one finger. ----
+      const A = this.hands[this.anchor];
+      this.active = null;
       this.strain = Math.max(0, this.strain - dt * 0.8);
-      for (const h of this.hands) {
-        if (!h.grip) continue;
-        held++;
-        h.x = h.grip.x; h.y = h.grip.y;
-        if (h === a && a.want && M.down) {
-          const away = G.dist(a.want.x, a.want.y, h.grip.x, h.grip.y);
-          const eff = G.clamp((away - 12) / 56, 0, 1.2);
-          if (eff > 0.05) {
-            // toward the anchor, in both axes: this is how you go up a mound
-            const dx = h.grip.x - this.bx, dy = h.grip.y - 6 - this.by;
+      if (this.goal) {
+        this.goal.t += dt;
+        const gap = this.goal.x - this.bx;
+        if (Math.abs(gap) < 18) {
+          this.goal = null;
+          for (const h of this.hands) h.grip = null;
+          this.strokeT = 0;
+        } else {
+          const dir = gap < 0 ? -1 : 1;
+          if (!A.grip) {
+            this.active = A;
+            // reach: a point ahead of you, on whatever surface is there
+            const tx = this.bx + dir * Math.min(ARM * 0.88, Math.abs(gap) + 12);
+            const ty = ground(tx) - 2;
+            A.reach = Math.min(1, A.reach + dt * 7);
+            A.x = G.lerp(A.x, tx, Math.min(1, dt * 11));
+            A.y = G.lerp(A.y, ty, Math.min(1, dt * 11));
+            if (G.dist(A.x, A.y, tx, ty) < 5) {
+              A.x = tx; A.y = ty;
+              A.grip = { x: tx, y: ty, hold: gripAt(tx, ty) };
+              A.slip = 0; this.strokeT = 0;
+              G.audio.sfx('clank'); G.shake(1.1, 0.08);
+              for (let i = 0; i < 7; i++)
+                this.grit.push({ x: tx + G.rand(-5, 5), y: ty + G.rand(-2, 3),
+                  vx: G.rand(-16, 16), vy: G.rand(-24, 4), t: 0, life: G.rand(0.3, 0.9) });
+            }
+          } else {
+            // haul: toward the planted hand in BOTH axes, which is also
+            // how you get up the side of a heap
+            this.strokeT += dt;
+            const dx = A.grip.x - this.bx, dy = A.grip.y - 6 - this.by;
             const d = Math.hypot(dx, dy) || 1;
-            const F = 760 * eff;
-            this.vx += (dx / d) * F * dt;
-            this.vy += (dy / d) * F * dt;
-            this.strain = Math.min(1.4, this.strain + dt * (0.08 + eff * 0.22 / Math.max(0.5, h.grip.hold)));
+            this.vx += (dx / d) * 340 * dt;
+            this.vy += (dy / d) * 340 * dt;
+            this.strain = Math.min(1.4, this.strain + dt * 0.46 / Math.max(0.6, A.grip.hold));
             this.grunt -= dt;
-            if (this.grunt <= 0) { this.grunt = 0.5; G.audio.sfx('strain'); }
-            if (Math.random() < dt * 26)
-              this.grit.push({ x: h.grip.x + G.rand(-7, 7), y: h.grip.y + G.rand(-3, 4),
+            if (this.grunt <= 0) { this.grunt = 0.45; G.audio.sfx('strain'); }
+            if (Math.random() < dt * 22)
+              this.grit.push({ x: A.grip.x + G.rand(-7, 7), y: A.grip.y + G.rand(-3, 4),
                 vx: G.rand(-20, 20), vy: G.rand(-30, 6), t: 0, life: G.rand(0.3, 1) });
-            // loose ground gives way under a hard pull
-            h.slip += dt * eff * Math.max(0, 1.1 - h.grip.hold);
-            if (h.slip > 2.2) {
-              h.grip = null; h.slip = 0;
-              G.audio.sfx('snap'); G.shake(3, 0.25);
+            // loose footing gives, but only after a long pull on bad ground
+            A.slip += dt * Math.max(0, 1.15 - A.grip.hold);
+            if (A.slip > 2.8) {
+              A.grip = null; A.slip = 0; A.reach = 0; this.strokeT = 0;
+              this.anchor = 1 - this.anchor;
+              G.audio.sfx('snap'); G.shake(2.4, 0.2);
               this.say('IT GIVES');
-              for (let i = 0; i < 16; i++)
-                this.grit.push({ x: h.x + G.rand(-9, 9), y: h.y + G.rand(-4, 6),
+              for (let i = 0; i < 14; i++)
+                this.grit.push({ x: A.x + G.rand(-9, 9), y: A.y + G.rand(-4, 6),
                   vx: G.rand(-40, 40), vy: G.rand(-40, 10), t: 0, life: G.rand(0.4, 1.2) });
+            } else if (d < ARM * 0.32 || this.strokeT > 1.6) {
+              // the body is under the hand: let go and swap over
+              A.grip = null; A.reach = 0; this.strokeT = 0;
+              this.anchor = 1 - this.anchor;
             }
           }
         }
+      } else {
+        for (const h of this.hands) h.grip = null;
       }
+      let held = 0;
+      for (const h of this.hands) { if (h.grip) { h.x = h.grip.x; h.y = h.grip.y; held++; } }
 
       // ---- gravity, and the weight of having no legs. The damping is
       // light on purpose: a hard pull has to still be moving you when
       // you let go, or none of this is worth doing. ----
       this.vy += (held ? 170 : 340) * dt;
-      this.vx *= Math.pow(held ? 0.34 : 0.62, dt);
+      this.vx *= Math.pow(held ? 0.30 : 0.16, dt);
       this.vy *= Math.pow(0.55, dt);
-      this.vx = G.clamp(this.vx, -230, 230);
+      this.vx = G.clamp(this.vx, -85, 85);
       this.vy = G.clamp(this.vy, -260, 300);
       this.bx += this.vx * dt;
       this.by += this.vy * dt;
@@ -759,7 +840,7 @@
 
       // free hands trail beside the body
       for (const h of this.hands) {
-        if (h.grip || h === a) continue;
+        if (h.grip || (h === A && this.goal)) continue;
         h.x = G.lerp(h.x, this.bx + h.side * 20, Math.min(1, dt * 7));
         h.y = G.lerp(h.y, Math.min(ground(this.bx + h.side * 20) - 2, this.by + 12), Math.min(1, dt * 7));
       }
@@ -767,6 +848,15 @@
       // ---- the camera ----
       this.camX = G.lerp(this.camX, G.clamp(this.bx - 118, 0, W1 - G.W + 40), Math.min(1, dt * 4));
       this.camY = G.lerp(this.camY, G.clamp(this.by - 104, -14, 64), Math.min(1, dt * 3));
+
+      // ---- what is left of the people, and calling out at it ----
+      for (const c of this.calls) {
+        if (c.pulse > 0) c.pulse = Math.max(0, c.pulse - dt);
+        if (c.hit || Math.abs(this.bx - c.x) > 30) continue;
+        c.hit = 1; c.pulse = 1.6; this.found++;
+        this.say(c.say);
+        G.audio.sfx('order');
+      }
 
       // ---- out ----
       if (this.bx >= W1 && this.state === 'crawl') {
@@ -790,7 +880,7 @@
     finish() {
       if (this.state === 'done') return;
       this.state = 'done';
-      G.playCine('found', () => G.go('tracy', "TRACY'S PLACE"));
+      G.playCine('found', () => G.go('legfit', 'THE BENCH'));
     },
 
     // ---------- draw ----------
@@ -975,6 +1065,52 @@
         g.globalAlpha = 1;
       }
 
+      // ===== fires still going in the heap, and the smoke off them =====
+      for (let i = 0; i < 9; i++) {
+        const fx = 90 + i * 158;
+        const sx = this.onScreenX(fx);
+        if (sx < -60 || sx > G.W + 60) continue;
+        const gy2 = this.onScreenY(ground(fx)) - 2;
+        const fl = 0.65 + Math.sin(t * 5 + i * 2.1) * 0.35;
+        G.glow(g, sx, gy2 - 4, 46 * fl, 26 * fl, '#ff7a2a', 0.32);
+        for (let k = 0; k < 4; k++)
+          G.Rh(g, sx - 3 + k * 2, gy2 - 2 - k * 2 - fl * 3, 2, 3, k % 2 ? '#ffb050' : '#e0762a');
+        g.globalAlpha = 0.16;
+        for (let k = 0; k < 9; k++) {
+          const sy2 = gy2 - 8 - ((t * 13 + k * 9 + i * 5) % 78);
+          G.Rh(g, sx - 4 + Math.sin(sy2 * 0.09 + i) * 5, sy2, 5 + k * 0.7, 4, '#8a7c88');
+        }
+        g.globalAlpha = 1;
+      }
+
+      // ===== what is left of the people =====
+      for (const c of this.calls) {
+        const sx = this.onScreenX(c.x);
+        if (sx < -40 || sx > G.W + 40) continue;
+        const gy2 = this.onScreenY(ground(c.x));
+        if (!c.hit) {                                  // a hint of light on it
+          g.globalAlpha = 0.2 + Math.sin(t * 2 + c.x) * 0.06;
+          G.glow(g, sx, gy2 - 6, 40, 26, '#ffd47a', 0.5);
+          g.globalAlpha = 1;
+        }
+        (CALLART[c.art] || CALLART.tray)(g, sx, gy2, t);
+        if (c.pulse > 0) {
+          g.globalAlpha = c.pulse / 1.6;
+          G.oc(g, sx, gy2 - 6, 10 + (1.6 - c.pulse) * 22, '#ffd47a');
+          g.globalAlpha = 1;
+        }
+      }
+
+      // ===== where you told it to go =====
+      if (this.goal && this.state === 'crawl') {
+        const gx2 = this.onScreenX(this.goal.x), gy3 = this.onScreenY(ground(this.goal.x));
+        const pl = 0.5 + Math.sin(t * 7) * 0.5;
+        g.globalAlpha = 0.5 + pl * 0.4;
+        G.oc(g, gx2, gy3 - 3, 6 + pl * 2, '#b6ff3a');
+        G.Rq(g, gx2 - 0.5, gy3 - 12 - pl * 2, 1, 5, '#b6ff3a');
+        g.globalAlpha = 1;
+      }
+
       // ===== grit =====
       for (const s of this.grit) {
         g.globalAlpha = Math.max(0, 1 - s.t / s.life) * 0.9;
@@ -1133,10 +1269,10 @@
       if (w > 1.2) {
         const lines = [
           'POWER . . . 4%',
-          'LEGS . . . NOT FOUND',
-          'LEFT ARM . . . SALVAGE',
-          'RIGHT ARM . . . PRESENT',
-          'PURPOSE . . . GELATO',
+          'RIGHT LEG . . . NOT FOUND',
+          'LEFT LEG . . . PRESENT',
+          'SITE . . . BIG MOO, UNIT 4',
+          'OTHER STAFF . . . SEARCHING',
         ];
         for (let i = 0; i < lines.length; i++) {
           const st = 1.2 + i * 0.5;
@@ -1148,9 +1284,9 @@
       }
       if (w > 3.4) {
         const fl = Math.sin(t * 5) > 0;
-        G.text(g, 'PUT A HAND DOWN. THEN PULL.', 160, 146, fl ? '#ffe4b0' : '#8a7458',
+        G.text(g, 'FIND SOMEBODY.', 160, 146, fl ? '#ffe4b0' : '#8a7458',
           { align: 'center', out: OUT });
-        G.text(g, 'PRESS WHERE YOU WANT A HAND  ·  DRAG BACK TO HAUL', 160, 158, '#6b5f4a',
+        G.text(g, 'TAP WHERE YOU WANT TO GO  ·  IT WILL CRAWL THERE', 160, 158, '#6b5f4a',
           { align: 'center', sc: 0.5 });
       }
     },
@@ -1183,30 +1319,23 @@
         G.hairq(g, gx + 1, 159, Math.round((gw - 2) * f), '#ffffff');
         G.text(g, f > 0.78 ? 'IT IS GOING TO GIVE' : 'PULL', gx + gw / 2, 148,
           f > 0.78 ? P.magentaLt : '#c8b490', { align: 'center', sc: 0.5 });
-      } else if (!this.hands[0].grip && !this.hands[1].grip) {
-        G.text(g, 'PRESS WHERE YOU WANT A HAND', 160, 158, '#5c5040', { align: 'center', sc: 0.5 });
-      }
-      // which hands are holding
-      for (let i = 0; i < 2; i++) {
-        const h = this.hands[i];
-        const bxx = 12 + i * 14;
-        G.R(g, bxx, 158, 10, 8, h.grip ? '#2a4a30' : '#1a1622');
-        G.bevelq(g, bxx, 158, 10, 8, h.grip ? '#6bbf7a' : '#3a3448', '#0e0c14');
-        G.text(g, i ? 'R' : 'L', bxx + 5, 160, h.grip ? '#b6ff3a' : '#5c5470',
+      } else if (!this.goal) {
+        G.text(g, 'TAP WHERE YOU WANT TO GO', 160, 158, Math.sin(t * 3) > 0 ? '#8a7458' : '#5c5040',
           { align: 'center', sc: 0.5 });
+      }
+      // who you have found. It stays on nought for a long time.
+      G.text(g, 'FOUND', 12, 150, '#5c5470', { sc: 0.5 });
+      for (let i = 0; i < this.calls.length; i++) {
+        const c = this.calls[i];
+        G.R(g, 12 + i * 8, 158, 6, 8, c.hit ? '#4a3a22' : '#1a1622');
+        G.bevelq(g, 12 + i * 8, 158, 6, 8, c.hit ? '#8a7a4a' : '#3a3448', '#0e0c14');
+        if (c.hit) G.Rq(g, 14 + i * 8, 161, 2, 2, '#ffd47a');
       }
       // and what just happened to you
       if (this.msg && this.msgT < 2.2) {
         const a = Math.min(1, this.msgT * 4) * Math.min(1, (2.2 - this.msgT) * 2);
         g.globalAlpha = a;
         G.text(g, this.msg, 160, 24, '#c8b490', { align: 'center', sc: 0.5, out: OUT });
-        g.globalAlpha = 1;
-      }
-      // a ghost of the reach circle while a hand is in the air
-      if (this.active && !this.active.grip) {
-        const sx = this.onScreenX(this.bx), sy = this.onScreenY(this.by);
-        g.globalAlpha = 0.13;
-        G.oc(g, sx, sy + 4, ARM, '#ffe4b0');
         g.globalAlpha = 1;
       }
     },
@@ -1227,9 +1356,9 @@
       if (o > 1.6) {
         const a = G.clamp((o - 1.6) / 0.6, 0, 1);
         g.globalAlpha = a;
-        G.text(g, 'TWO MILES OF IT ON YOUR HANDS.', 160, 92, '#c8b490',
+        G.text(g, 'FIVE THINGS THAT USED TO BELONG TO SOMEBODY.', 160, 92, '#c8b490',
           { align: 'center', sc: 0.5 });
-        G.text(g, 'THEN SOMEBODY SHINES A TORCH AT YOU.', 160, 100, '#c8b490',
+        G.text(g, 'AND THEN SOMEBODY SHINES A TORCH AT YOU.', 160, 100, '#c8b490',
           { align: 'center', sc: 0.5 });
         g.globalAlpha = 1;
       }

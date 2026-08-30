@@ -40,7 +40,7 @@
     // YOU. A dairy unit. Built to stand in a field of nothing and turn
     // out gelato, and given a face soft enough that the children would
     // come up to it. Tracy kept the face and rebuilt everything under it.
-    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.16, h: 0.9,  hs: 1.24, soft: 2, cow: 1, dots: 1 },
+    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.04, h: 0.9,  hs: 1.36, soft: 2, cow: 1, dots: 1, mascot: 1 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -256,7 +256,7 @@
   // ============================================================
   // BASES - how it stands
   // ============================================================
-  function drawBase(g, kind, cx, footY, bw, u, b, t, walk) {
+  function drawBase(g, kind, cx, footY, bw, u, b, t, walk, fr, bo) {
     const c = b.col, c2 = b.col2, hue = b.hue;
     if (kind === 'tread') {
       const w = Math.round(bw * 1.06), h = u(11);
@@ -344,7 +344,8 @@
     // keeps time behind it whether or not anyone is watching.
     if (kind === 'hoof') {
       const sw = Math.sin(walk * 5) * u(2);
-      const lw = Math.max(4, u(9)), lh = u(16), hf = Math.max(3, u(5));
+      const mas = fr && fr.mascot ? 1 : 0;
+      const lw = Math.max(4, u(mas ? 10 : 9)), lh = u(mas ? 11 : 16), hf = Math.max(3, u(mas ? 6 : 5));
       // the tail goes down first so the body covers where it attaches
       const tw2 = Math.sin(t * 1.15);
       const tx0 = cx + Math.round(bw * 0.34), ty0 = footY - lh - u(4);
@@ -368,8 +369,29 @@
         G.R(g, q[0], q[1], 2, 3, q[2] % 2 ? '#2a2230' : '#3d3444');
         G.hair(g, q[0], q[1], 2, '#57495f');
       }
+      // the right leg is the one she found in a crate marked SPARES.
+      // It is a different colour and it always will be.
+      const spare = bo && (bo.spare === undefined ? (G.state && G.state.legFixed) : bo.spare);
+      const legOff = bo && bo.legOff;
       for (const s of [-1, 1]) {
+        if (legOff && s > 0) {
+          // the socket it came out of: a torn skirt of plate and a
+          // severed loom that will not stop arcing
+          const hx2 = cx + Math.round(bw * 0.22);
+          G.R(g, hx2 - lw / 2 - 1, footY - lh, lw + 2, u(5), '#2a3040');
+          for (let i2 = 0; i2 < 5; i2++)
+            G.Rh(g, hx2 - lw / 2 + i2 * (lw / 5), footY - lh + u(3) + (i2 % 2), Math.max(1, lw / 6), u(3),
+              i2 % 2 ? '#48546c' : '#6b3f22');
+          if (Math.random() < 0.28) {
+            const spx = hx2 + G.rand(-lw / 2, lw / 2);
+            G.pip(g, spx, footY - lh + u(4), '#ffffff');
+            G.glow(g, spx, footY - lh + u(4), u(10), u(7), '#7fd8ff', 0.5);
+          }
+          continue;
+        }
         const off = (s < 0 ? sw : -sw);
+        const isSpare = spare && s > 0;
+        const c = isSpare ? '#bcc0c6' : b.col;
         const lx = cx + s * Math.round(bw * 0.22) - lw / 2;
         const ly = footY - lh + off;
         plate(g, lx, ly, lw, lh - hf - u(2) - Math.abs(off), c, { r: 1, band: 2, spec: false });
@@ -383,11 +405,11 @@
         G.hair(g, lx - 1.5, footY - hf - u(3) + off, lw + 3, '#4c3f56');
         const fy = footY - hf + off;
         G.R(g, lx - 3, fy - 1, lw + 6, hf + 2, OUT);
-        G.R(g, lx - 2, fy, lw + 4, hf, '#332b3a');
-        G.hair(g, lx - 2, fy, lw + 4, '#5c4e66');
-        G.hair(g, lx - 2, fy + hf - 1, lw + 4, '#150f1c');
-        G.vseam(g, lx + lw / 2, fy + 1, hf - 1, '#140f1c', '#4a3e52');
-        G.R(g, lx - 1, fy + 1, 2, 1, '#9a8ca2');
+        G.R(g, lx - 2, fy, lw + 4, hf, '#4a3f56');
+        G.hair(g, lx - 2, fy, lw + 4, '#7a6a88');
+        G.hair(g, lx - 2, fy + hf - 1, lw + 4, '#221a2c');
+        G.vseam(g, lx + lw / 2, fy + 1, hf - 1, '#221a2c', '#6b5c78');
+        G.R(g, lx - 1, fy + 1, 2, 1, '#bcaec4');
         // a hairline of light down the outer edge of the leg
         G.vairq(g, lx + (s > 0 ? lw - 0.25 : 0), ly + 1, lh - hf - u(3), G.shade(c, s > 0 ? -0.3 : 0.34));
       }
@@ -489,7 +511,7 @@
     let w = bw, h = u(26);
     if (kind === 'slab')    { w = Math.round(bw * 1.1); h = u(24); }
     if (kind === 'narrow')  { w = Math.round(bw * 0.62); h = u(28); }
-    if (kind === 'barrel')  { w = Math.round(bw * 1.12); h = u(30); }
+    if (kind === 'barrel')  { w = Math.round(bw * 1.12); h = u(o && o.mascot ? 22 : 30); }
     if (kind === 'violin')  { w = Math.round(bw * 0.78); h = u(32); }
     if (kind === 'robe')    { w = Math.round(bw * 1.02); h = u(30); }
     if (kind === 'filing')  { w = Math.round(bw * 0.94); h = u(28); }
@@ -1217,20 +1239,19 @@
         for (let hi = 0; hi < 2; hi++) {
           const sd = hi ? 1 : -1, H = o.hands[hi];
           if (!H) continue;
-          const col = hi ? G.shade(c, -0.06) : '#c8ccd2';
+          const col = G.shade(c, hi ? -0.06 : -0.14);
           const shx = cx + sd * (tw / 2 - u(1)), shy = ty + Math.round(th * 0.24);
           const mx = (shx + H.x) / 2 + sd * u(1.5), my2 = (shy + H.y) / 2 + u(2);
           reachRun(g, shx, shy, mx, my2, aw2 + u(1), aw2, col);
           reachRun(g, mx, my2, H.x, H.y, aw2, aw2 - u(0.5), col);
-          mitten({ x: H.x, y: H.y - u(3) }, sd, hi ? G.shade(c, -0.02) : '#dde1e6');
+          mitten({ x: H.x, y: H.y - u(3) }, sd, G.shade(c, hi ? -0.02 : -0.06));
         }
       } else {
       const swL = (o.swingL || 0) * u(4), swR = (o.swingR || 0) * u(4);
-      const l = softLimb(-1, Math.round(th * 0.44) + sway + swL, aw2, '#bcc0c6');
-      mitten(l, -1, '#d2d6dc');
-      // two fine seams down the borrowed one so it reads as not yours
-      const r = softLimb(1, Math.round(th * 0.38) - sway + swR, aw2, G.shade(c, -0.12));
-      mitten(r, 1, G.shade(c, -0.08));
+      const l = softLimb(-1, Math.round(th * 0.44) + sway + swL, aw2, G.shade(c, -0.14));
+      mitten(l, -1, G.shade(c, -0.04));
+      const r = softLimb(1, Math.round(th * 0.38) - sway + swR, aw2, G.shade(c, -0.1));
+      mitten(r, 1, G.shade(c, -0.02));
       }
     } else if (kind === 'heavy') {
       for (const s of [-1, 1]) {
@@ -1555,7 +1576,7 @@
     // is not a second cow drawn by a second piece of code. ----
     const base = o.crawl
       ? { top: footY - u(6), w: Math.round(bw * 0.7) }
-      : drawBase(g, fr.base, cx, footY, bw, u, b, t, walk);
+      : drawBase(g, fr.base, cx, footY, bw, u, b, t, walk, fr, o);
     if (o.crawl) {
       // the torn hip, where the rest of it used to be
       G.R(g, cx - u(11), footY - u(7), u(22), u(5), '#2a3040');
@@ -1568,7 +1589,7 @@
         G.glow(g, spx, footY - u(3), u(12), u(8), '#7fd8ff', 0.5);
       }
     }
-    const tOpt = { emblem: fr.emblem, soft: fr.soft || 0, cow: fr.cow || 0 };
+    const tOpt = { emblem: fr.emblem, soft: fr.soft || 0, cow: fr.cow || 0, mascot: fr.mascot || 0 };
     const aOpt = Object.assign({}, o, { swingL: A ? A.armL : 0, swingR: A ? A.armR : 0 });
     // reaching arms come out from BEHIND the body, or they cross the badge
     const torso = o.crawl
@@ -1734,147 +1755,20 @@
     return r;
   };
 
-  // ---- the creature under the shell ----
-  // A limb section: an outlined taper from one joint to the next. Two of
-  // these end to end is an arm, and an arm that bends at the elbow is
-  // the difference between a puppet and a person.
-  function limbRun(g, x0, y0, x1, y1, w0, w1, col, lit) {
-    const d = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0)));
-    const pts = [];
-    for (let i = 0; i <= d; i++) {
-      const p = i / d;
-      pts.push([G.lerp(x0, x1, p), G.lerp(y0, y1, p), Math.max(1, G.lerp(w0, w1, p))]);
-    }
-    for (const q of pts) G.R(g, q[0] - q[2] / 2 - 1, q[1] - q[2] / 2 - 1, q[2] + 2, q[2] + 2, OUT);
-    for (const q of pts) {
-      G.Rh(g, q[0] - q[2] / 2, q[1] - q[2] / 2, q[2], q[2], col);
-      G.hairq(g, q[0] - q[2] / 2, q[1] - q[2] / 2, q[2], lit);
-    }
-  }
 
   G.drawCreature = function (g, kind, cx, footY, scale, o) {
     o = o || {};
     const S = scale || 1;
-    const u = (v) => Math.max(1, Math.round(v * S));
     const t = o.t || 0;
+    // People come out of the folk rig now: one seed makes one whole
+    // person - build, skull, nose, hair, clothes and a nervous habit -
+    // so a room never fills up with the same body twice.
+    if (kind === 'human') return G.drawFolk(g, cx, footY, S, o);
+    const u = (v) => Math.max(1, Math.round(v * S));
     cx = Math.round(cx); footY = Math.round(footY);
     g.globalAlpha = 0.32;
     G.rr(g, cx - u(12), footY - 2, u(24), 4, '#000000');
     g.globalAlpha = 1;
-
-    if (kind === 'human') {
-      const skin = o.skin || '#c8a184', skinD = G.shade(skin, -0.3), skinL = G.shade(skin, 0.28);
-      const coat = o.coat || '#3a4a5c';
-      const hairc = o.hair || '#3a2a1c';
-      // ---- the performance. Everything below is placed off this. ----
-      const A = o.pose || G.pose(o.clip || (o.walk ? 'walk' : 'idle'),
-        o.ct === undefined ? (o.walk || t) : o.ct,
-        { speed: o.speed, dir: o.dir, seed: o.seed || cx * 0.013, p: o.p, emph: o.emph });
-      const bob = A.bob + A.breathe * 0.3;
-      const lean = A.lean * u(3);
-      const hipY = footY - u(18);
-      // ---- legs. A stride is a hip swing, a knee that bends on the
-      // back leg and a foot that stays put while it is on the ground. ----
-      const legs = [['legL', -1], ['legR', 1]];
-      for (const [key, sd] of legs) {
-        const sw = A[key];
-        const hx0 = cx + sd * u(4) + lean * 0.4;
-        const fx = hx0 + sw * u(5.5);                      // where the foot went
-        const lift = Math.max(0, -sw) * u(4);             // back leg picks up
-        const fy = footY - lift;
-        const kx = (hx0 + fx) / 2 + Math.max(0, sw) * u(1);
-        const ky = hipY + (fy - hipY) * 0.5 - lift * 0.3;
-        // thigh, then shin, as two tapered runs
-        limbRun(g, hx0, hipY, kx, ky, u(4.4), u(3.8), G.shade(coat, -0.32), G.shade(coat, -0.05));
-        limbRun(g, kx, ky, fx, fy - u(2), u(3.8), u(3), G.shade(coat, -0.4), G.shade(coat, -0.12));
-        // boot
-        G.R(g, fx - u(3) - 1, fy - u(3) - 1, u(6) + 2, u(3) + 2, OUT);
-        G.Rh(g, fx - u(3), fy - u(3), u(6), u(3), '#241c18');
-        G.hairq(g, fx - u(3), fy - u(3), u(6), '#5a4a40');
-        // dust off the heel as it lands
-        if (A.step && sd * A.step > 0.86 && lift < 1) {
-          g.globalAlpha = 0.3;
-          for (let k = 0; k < 3; k++) G.Rq(g, fx - u(4) - k * 1.5, fy - 1 - k * 0.5, 2, 1, '#a89882');
-          g.globalAlpha = 1;
-        }
-      }
-      // ---- torso: leans into the walk and squashes on the breath ----
-      const by = footY - u(32) + bob;
-      const th = u(19) * (1 + A.squash);
-      const tx = cx - u(9) + lean;
-      G.R(g, tx - 1, by - 1, u(18) + 2, th + 2, OUT);
-      G.Rh(g, tx, by, u(18), th, coat);
-      G.bevel(g, tx, by, u(18), th, G.shade(coat, 0.3), G.shade(coat, -0.42));
-      G.vseam(g, cx + lean, by + u(3), th - u(3), G.shade(coat, -0.5), G.shade(coat, 0.2));
-      for (let i2 = 0; i2 < 3; i2++) G.rivet(g, cx + 1 + lean, by + u(6) + i2 * u(4), '#12141c', G.shade(coat, 0.5));
-      G.Rh(g, tx, by, u(18), u(3), G.shade(coat, 0.16));
-      G.Rh(g, cx - u(5) + lean, by + u(2), u(4), u(5), G.shade(coat, -0.3));
-      G.Rh(g, cx + u(1) + lean, by + u(2), u(4), u(5), G.shade(coat, -0.3));
-      // ---- arms. Shoulder, elbow, hand - and the hand goes where the
-      // clip says, which is how a reach or a point reads at all. ----
-      let handR = null;
-      for (const [key, sd] of [['armL', -1], ['armR', 1]]) {
-        const sw = A[key];
-        const shx = cx + sd * u(10) + lean, shy = by + u(4);
-        const up = (key === 'armR' ? A.armUp : 0);
-        // the hand target: swings fore and aft, or reaches out, or goes up
-        let hx2 = shx + sd * u(1) + sw * u(6);
-        let hy2 = shy + u(15) - Math.abs(sw) * u(2) - up * u(26);
-        if (A.reach && ((sd > 0) === (sw > 0))) {
-          hx2 = shx + sd * u(13) * A.reach + sw * u(3);
-          hy2 = shy + u(9) - A.reach * u(3);
-        }
-        if (A.hold && key === 'armR') { hx2 = shx - sd * u(2); hy2 = shy + u(2) - A.hold * u(5); }
-        if (up > 0.2) hx2 += Math.sin(t * 11) * u(2) * A.flap;
-        const ex = (shx + hx2) / 2 - sd * u(1.5), ey = (shy + hy2) / 2 + u(1);
-        limbRun(g, shx, shy, ex, ey, u(4.4), u(3.6), G.shade(coat, -0.3), G.shade(coat, 0.24));
-        limbRun(g, ex, ey, hx2, hy2, u(3.6), u(3), G.shade(coat, -0.38), G.shade(coat, 0.16));
-        G.R(g, hx2 - u(2) - 1, hy2 - 1, u(4) + 2, u(4) + 2, OUT);
-        G.Rh(g, hx2 - u(2), hy2, u(4), u(4), skin);
-        G.hairq(g, hx2 - u(2), hy2, u(4), skinL);
-        if (sd > 0) handR = { x: hx2, y: hy2 };
-      }
-      // ---- head: turns, tilts, blinks, and talks ----
-      const turn = A.headTurn * u(3);
-      const hy = by - u(13) + A.headTilt * u(1) + bob * 0.4;
-      const hx = cx + lean + turn;
-      G.R(g, hx - u(6) - 1, hy - 1, u(12) + 2, u(13) + 2, OUT);
-      G.Rh(g, hx - u(6), hy, u(12), u(13), skin);
-      G.bevel(g, hx - u(6), hy, u(12), u(13), skinL, skinD);
-      G.Rh(g, hx - u(7), hy - u(2), u(14), u(5), hairc);
-      G.hair(g, hx - u(7), hy - u(2), u(14), G.shade(hairc, 0.4));
-      for (let i2 = 0; i2 < 5; i2++) G.Rh(g, hx - u(6) + i2 * u(3), hy + u(2), u(2), u(2), hairc);
-      G.Rh(g, hx - u(8) - turn * 0.3, hy + u(1), u(2), u(7), hairc);
-      G.Rh(g, hx + u(6) - turn * 0.3, hy + u(1), u(2), u(7), hairc);
-      // the eyes track the turn, and shut when the clip says shut
-      for (const sd of [-1, 1]) {
-        const ex = hx + sd * u(3) - u(1.5) + turn * 0.4, ey = hy + u(6);
-        if (A.blink) {
-          G.Rh(g, ex, ey + u(1), u(3), 0.75, skinD);
-        } else {
-          G.Rh(g, ex, ey, u(3), u(2), '#f4ece0');
-          G.Rh(g, ex + u(1) + turn * 0.3, ey + u(0.5), 1, 1, '#2a1c12');
-          if (A.stare) G.Rq(g, ex - 0.25, ey - 0.25, u(3) + 0.5, u(2) + 0.5, '#f4ece0');
-        }
-        G.hair(g, ex, ey - u(1) - (A.stare ? u(1) : 0), u(3), G.shade(hairc, 0.1));
-      }
-      G.Rh(g, hx - 0.5 + turn * 0.4, hy + u(8), 1, u(2), skinD);
-      // the mouth: a line, a smile, or a hole that flaps while talking
-      const mo = A.mouth;
-      if (mo > 0.08) {
-        const mh = Math.max(1, u(1 + mo * 2.6));
-        G.R(g, hx - u(2) - 1 + turn * 0.4, hy + u(10) - 1, u(4) + 2, mh + 2, OUT);
-        G.Rh(g, hx - u(2) + turn * 0.4, hy + u(10), u(4), mh, '#5c2430');
-        G.hairq(g, hx - u(2) + turn * 0.4, hy + u(10), u(4), '#8a4a4a');
-      } else if (o.smile) {
-        G.Rh(g, hx - u(2) + turn * 0.4, hy + u(11), u(4), 1, '#8a4a4a');
-        G.Rq(g, hx - u(3) + turn * 0.4, hy + u(10.5), 1, 1, '#8a4a4a');
-        G.Rq(g, hx + u(2) + turn * 0.4, hy + u(10.5), 1, 1, '#8a4a4a');
-      } else {
-        G.Rh(g, hx - u(2) + turn * 0.4, hy + u(11), u(4), 1, '#8a4a4a');
-      }
-      return { headTop: hy - u(2), cx: hx, hand: handR, pose: A };
-    }
 
     // ---- cat / dog: a quadruped, side-on, looking at you ----
     const dog = kind === 'dog';

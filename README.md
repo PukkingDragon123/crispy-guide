@@ -2,13 +2,20 @@
 
 **They took the world. You have gelato.**
 
-A zero-dependency pixel-art game at **1280×720**. You are a scrapped gelato
-machine — a **dairy unit**: two dot eyes, one smile, a cream hide, two black
-patches, a cowbell and a brand roundel on the tank — in a city the machines own.
+A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: two dot
+eyes, one smile, a cream hide, two black patches, a cowbell and a brand roundel
+on the belly. For six years you were the face of BIG MOO, a burger chain with a
+cow on the sign, open twenty-four hours.
 
-A woman called Tracy dug you out of a landfill, bolted her own spare arm on, and
-taught you to make ice cream. Then a patrol came through the door at four in the
-morning and took everyone on the street.
+Then a patrol machine walked in through the front door, shot one of your legs
+off and put a charge under the counter. You came back on in the debris, missing
+a leg, and crawled the length of the site looking for anybody at all.
+
+An old woman called **Tracy**, who has been making gelato since before machines
+could hold a scoop, found you with a torch, carried you home, bolted a leg out
+of a crate marked SPARES onto you and taught you the only thing worth knowing.
+Then a patrol came through *her* door at four in the morning and took everyone
+on the street.
 
 **So now you serve them something laced. Their systems fail. You bill them to
 put it right. And you watch the queue, because some of what walks in is not a
@@ -43,113 +50,112 @@ else.
 
 The story is not a film. It is **Channel 4, Municipal**, and you are watching it
 on a set: a channel ident with a live dot in the corner, a clock running in the
-other one, scanlines, and a roll bar drifting down the picture.
+other one, scanlines, and a roll bar drifting down the picture. When it stops
+being a nice evening, a **BREAKING** strap comes up under the ident and stays
+there.
 
-There is no letterbox, no film grain, no vignette and no camera shear — all of
-that came off. The picture fills the frame, the cuts are hard, and the only
-camera move left is a pan and a push.
+There is no letterbox, no film grain, no vignette and no camera shear. The
+picture fills the frame, the cuts are hard, and the only camera move left is a
+pan and a push.
 
 Dialogue arrives the way a broadcast does it: a **lower third** slides up from
 the bottom with a coloured tab carrying the speaker's name, and the line types
 itself into the bar beside it.
 
-![The summer](screenshots/open-summer.png)
+![BIG MOO](screenshots/big-moo.png)
 
-The awning lifts in the wind, the queue shuffles rather than stands, the lamp
-swings on its flex, and a child **walks the length of the shot** — a real stride,
-knees and all — asks for the pink one, and then takes it and holds it up to look
-at it.
+A burger chain with a cow on the sign, in the rain, at night. The neon buzzes
+and drops out and comes back. The wet car park keeps the light that fell on it —
+the doorway's warm pool, the sign's pink and gold — and a family goes in under
+one umbrella that is too small for two of them.
 
-> **A CHILD:** CAN I HAVE THE PINK ONE
-> **BESSIE:** YOU CAN HAVE TWO.
+> **BESSIE:** TABLE FOUR! TWO SWIRLS AND A HAPPY BIRTHDAY!
 
-![The turn](screenshots/open-turn.png)
+![The show](screenshots/the-show.png)
 
-Then the colour drains out of the frame over four seconds, something comes up
-over the rooftops, and the heads turn to look at it **left to right in a wave** —
-each person notices a beat after the one before, and the ones who have seen it
-put an arm up to point. One of them is close enough to see it happen to: she
-recoils, and then she just stares.
+Six shows a day. Twelve on a Saturday. A checkerboard floor, booths down both
+walls, bunting somebody put up, a cake with four candles that have been lit too
+long, and three children in paper crowns who point at you all at once.
 
-> **A WOMAN:** WHAT IS THAT.
+> **A CHILD:** MOO! MOO! MOO!
+> **BESSIE:** WHO WANTS A SWIRL, THEN? EVERYBODY? RIGHT.
 
-![Nine days](screenshots/open-war.png)
+![The door](screenshots/the-door.png)
 
-**It took nine days.** Siege units walking a burning city — actually walking,
-legs swinging, hulls rocking — rim-lit down the leading edge, with a crowd
-running the other way across a street lit from behind.
+Then the door came off its hinges. The glass goes out in one piece and then in
+thirty, the rain comes in with it, and something fills the doorway with a red
+optic and a rim of light down the side the room is lighting. Everybody in the
+room recoils on the same frame and then stops moving.
 
-![The arm](screenshots/open-arm.png)
+> **PATROL:** CIVIL PATTERN. NOBODY MOVE.
 
-The winners did not need the ones who served. A patrol walks the line of
-switched-off civilian units — **slumped**, heads down — with a torch that sweeps
-ahead of it. One of them is still twitching, which is worse than none of them
-twitching. Then the saw finds
-the joint, bites, and the arm comes away and lies on the floor still trying to
-close.
+![The shot](screenshots/the-shot.png)
 
-> **PATROL:** HOLD IT STILL.
-> **BESSIE:** I AM STILL UNDER WARRANTY.
+It did not ask anything. **One frame of white** — the whole picture, not a
+flash effect over it — and then a leg tumbling out of shot on a real arc, still
+trying to take a step, and a torn socket where it used to bolt on.
 
-![The hole](screenshots/open-hole.png)
+> **BESSIE:** I'M — I'M STILL UNDER WARRA—
 
-The tipper bed rises over the shot and you go into the hole with the rest of it,
-tumbling. It rained for six hours. The optic gutters, catches, gutters again.
+![The charge](screenshots/the-charge.png)
+
+Then it put something under the counter, with a red light on it that keeps time.
+Everybody who can run, runs. You are not somebody who can run.
+
+> **PATROL:** CLEAR THE FLOOR.
+
+![The blast](screenshots/the-blast.png)
+
+Cut outside. The roof lifts off in one piece, the fireball boils rather than
+inflates — seven blobs turning over each other round a hot core — fifty pieces
+of the building go out on their own ballistic arcs in silhouette, the windows
+blow into teeth, and the sign comes off its pole and down onto the car park.
+
+![Six hours](screenshots/the-rain.png)
+
+It rained for six hours. Two fires still going in the heap, the cow off the
+sign face down in a puddle still trying to light, and you in the middle of it
+with one leg and an optic that gutters, catches, gutters again.
 
 > **BESSIE:** . . . ONE SCOOP.
 
 ---
 
-## 🏜️ The wasteland
+## 🧱 The site
 
-The first thing you do in this game is cross two miles of tip on your hands,
-because you do not have anything else.
+The first thing you do in this game is crawl the length of a blast site,
+because you have one leg and nothing else.
 
-![Waking up](screenshots/pit-wake.png)
+![Waking up](screenshots/wake.png)
 
-You come back on at 4% power. Legs: not found. Left arm: salvage. Right arm:
-present. Purpose: gelato.
+You come back on at 4% power. Right leg: not found. Left leg: present. Site: BIG
+MOO, Unit 4. Other staff: **searching**.
 
-![The tip](screenshots/pit.png)
+![The site](screenshots/site.png)
 
-**Mountains of it.** Four parallax ranges of tipped heaps — cones on cones,
-because that is how a tip gets built — each nearer one taller, darker and more
-obviously made of rubbish, with fridges and tyres and buses breaking the
-silhouette. A dead sun behind them, smoke off the far side, and the machine city
-on the horizon where all of this came from.
+**Tap where you want to go.** That is the whole control. One hand reaches out
+ahead along the way you asked for, sinks into the debris and hauls until the
+body is under it; then the other one does it. Hand over hand, on one finger, and
+you can stop anywhere and change your mind.
 
-Under your hands: a heightfield of crushed rubbish in five visible lifts, a warm
-crust of dust over the top, and the edges of things pressed into the face of it.
-**Forty kinds of junk** scattered across it — some buried, some sitting on the
-surface, some piled a body's height above it.
+Underneath it is still two arms and physics: the pull works in *both* axes, so
+it is also how you get over a heap; loose footing gives way if you lean on it too
+long; and you slide back down anything genuinely steep, because you have no legs.
 
-![Crawling](screenshots/pit-haul.png)
+![Crawling](screenshots/crawl.png)
 
-**Two hands, and physics.**
+The heap is generated — **forty-eight kinds of rubbish** scattered across a
+heightfield, including the restaurant itself in pieces: booth seats, cafeteria
+trays, paper cups, a fry basket, a paper crown, and letters off the sign with
+the tube still in them, some of which are still lit.
 
-- **Press** where you want a hand. It reaches out — clamped to arm's length — and
-  sinks into the muck.
-- **Drag back** and it hauls you toward itself, in *both* axes, so that is also
-  how you get over a mound. It pulls hard.
-- **Let go** mid-haul and you keep the momentum. That is the whole game: a good
-  yank is still moving you after you have released it.
+**Five things that used to belong to somebody** are laid out along the route, and
+you stop at each one and call out. A paper crown, size small. A tray from table
+four. One shoe. A staff badge with the name burnt off it. A radio, still on, with
+nobody on it. The counter at the bottom of the screen fills up, and it is not a
+counter of people.
 
-Plant one hand, pull, plant the other, pull, and you walk on your hands. Plant
-both and you can vault. Leave both off the ground on a slope and you slide back
-down it, because you have no legs — nothing here is a cliff, and everything here
-is something you can lose ground on.
-
-It is meant to be a crossing, not a trial. The hand goes for the **ground under
-where you pressed** rather than the exact point, so you cannot miss by being a
-few pixels high; the grip holds unless you lean on one spot for a very long
-time; and you only slide back on genuinely steep ground. Seven low mounds between
-you and the road — the tallest is about a head — and seven things that came off
-the lorry whole lying on top of the heap. A run is about forty-five pulls.
-
-Somewhere out there, leaning out of the muck, is a sign with a cow on it. It used
-to be over a door.
-
-![The road](screenshots/pit-out.png)
+![The road](screenshots/road.png)
 
 Then somebody shines a torch at you.
 
@@ -157,18 +163,87 @@ Then somebody shines a torch at you.
 
 ## 🍨 Tracy
 
+![Tracy](screenshots/tracy-model.png)
+
+Seventy-odd, four foot eleven in her shoes, a silver set she does the front of
+herself, half-moons worn down the nose on a beaded chain, and an apron she has
+been making gelato in since before machines could hold a scoop. She is built on
+exactly the same rig as everybody else in the game — same skeleton, same clips —
+with her own clothes layered over the top through two hooks, so she stands in
+the same world as the crowd rather than beside it.
+
+![The torch](screenshots/torch.png)
+
+Six hours of rain, and then a torch coming down the slope — the only light on
+the whole site, and it is looking for people.
+
 ![Found](screenshots/found.png)
 
-She has a spare arm and nothing on. She bolts it to your shoulder on a kitchen
-bench under a lamp, and then she teaches you the only thing worth knowing.
+She gets down onto the rubble to reach you, which at her age is a decision.
+
+> **TRACY:** OH, YOU POOR ARTICLE. YOU'RE THE COW OFF THE SIGN.
+
+![Carried](screenshots/carried.png)
+
+> **TRACY:** RIGHT. HOME. I'VE GOT A CRATE OF LEGS AND NOTHING ON TONIGHT.
+
+---
+
+## 🔩 The crate marked SPARES
+
+She puts you under the good lamp and goes and gets the crate. **Six stages, six
+different verbs**, and none of them can be failed permanently — a stripped bolt
+is a bolt you do again.
+
+![Seat it](screenshots/bench-seat.png)
+
+**SEAT.** Drag the leg off the rack and into the socket. There is a ghost of
+where it goes, a keyway to line up, and it goes home with a clank you can feel.
+
+![Three leads](screenshots/bench-lines.png)
+
+**LINES.** Three leads come out of the leg — hydraulic, power, signal — and three
+ports go into your hip, **and they are not in the same order**. Drag each one
+across; the cable sags under its own weight as you move it. Put a lead in the
+wrong hole and it says so and springs back.
+
+![Torque](screenshots/bench-bolts.png)
+
+**BOLTS.** Four of them round the collar. Tap one to get the driver on it, then
+**hold** — the head turns, the needle climbs — and let go inside the green band.
+Let go early and it is not tight. Hold past the end of the gauge and you strip
+the thread and start that one again.
+
+**PRIME.** A hydraulic pump on a hose to the joint. Hold to build pressure and
+release inside the band, three good strokes, not four — go over the top and the
+seal blows and that stroke does not count.
+
+![Toes](screenshots/bench-on.png)
+
+**POWER**, and then **TOES** — three lamps down the hoof light one at a time and
+you tap each one as it comes up, because she wants to see it work.
+
+> **TRACY:** THERE. YOU'VE GOT A LEG. TRY NOT TO LOSE THIS ONE.
+
+From here on, **every scene in the game draws that leg** — it is a different
+colour to the rest of you and it always will be.
+
+---
+
+## 🏠 Her front room, which she calls the shop
 
 ![Tracy's kitchen](screenshots/tracy.png)
 
-The warmest room in the game, and the tutorial. One tub of gelato, one cone, one
-very patient human, and her AI on a cracked tablet. Every step is gated, so you
-cannot get it wrong — you can only not have done it yet. Take a cone. Press into
-the gelato and sweep, *don't stab it*. Put it on the cone. Give it here then,
-she's been up since four.
+Mint and cream stripes, a rose border, bunting on a string that sags properly,
+gingham curtains and a box of geraniums in the window, three framed photographs
+of a shop that is not there any more, a shelf of jars in colours she chose to
+look at rather than to sell, a spider plant she talks to, and a cat asleep on the
+warm end of the counter.
+
+It is also the tutorial. One tub of gelato, one cone, one very patient human, and
+her AI on a cracked tablet. Every step is gated, so you cannot get it wrong — you
+can only not have done it yet. Take a cone. Press into the gelato and sweep,
+*don't stab it*. Put it on the cone. Give it here then, she's been up since four.
 
 ![The first one](screenshots/tracy-taste.png)
 
@@ -197,9 +272,9 @@ and the same patrol coming back.
 
 ![A chapter](screenshots/cine-chapter.png)
 
-The camera pans, pushes and leans — a shear rather than a rotation, so every
-scanline stays a scanline and nothing goes soft. Letterbox bars, film grain, the
-line typing itself in.
+Same set the whole way through: the ident, the clock, the scanlines, the roll
+bar and the lower third. The camera pans and pushes and nothing rotates, so
+every scanline stays a scanline.
 
 ---
 
@@ -494,10 +569,52 @@ close-ups drew a third. Every time the face changed, two of them silently
 stopped matching.
 
 Now there is one. `drawBot` took a **crawl mode**: no legs, a torn hip that
-sparks, and both hands placed by the caller — so the wasteland passes in the
-positions its physics produced and gets back the same cow the shop sells gelato
-with, same head, same badge, same bell. The cutscenes pass nothing special at
-all.
+sparks, and both hands placed by the caller — so the site passes in the positions
+its physics produced and gets back the same cow the shop sells gelato with, same
+head, same badge, same bell. The cutscenes pass nothing special at all.
+
+It also took a **`legOff` mode** — one leg gone, a torn skirt of plate and a
+severed loom arcing where it used to bolt on — which is what the shot in the
+opening actually does to you, and a **`spare` flag** that comes off the save, so
+from the moment Tracy finishes the fitting, every scene in the game draws the
+mismatched leg without being told to.
+
+**And the proportions are a costume's.** The head is half again the size it was,
+the body is a third shorter, the legs are stubby, the arms are cream instead of
+steel and the feet are far too big. It is not a machine that happens to look
+friendly; it is somebody in a suit, which is what a mascot is.
+
+---
+
+## 🧍 The people
+
+![The people](screenshots/folk.png)
+
+Humans used to be one sprite with a recoloured coat. Now a **seed becomes a
+person**: height, girth, skull shape, nose, eye size and spacing, brow angle,
+ear size, hair style and colour, facial hair, glasses, freckles, blush, what
+they are wearing on top and underneath, how big their shoes are, whether they
+have a belly, whether they stoop — and **one nervous habit they cannot help
+doing**.
+
+The same seed always gives you the same person, so the woman at the end of the
+counter is the same woman in the next shot.
+
+The proportions are deliberately wrong. The head is a third of the body, the
+shoes are far too big, the arms are noodles and the torso is short. That is what
+makes a cartoon read as a cartoon rather than as a short adult.
+
+**The habit** is a small pose the clip system knows nothing about, added on top
+of an idle so a room of people is never a row of statues doing the same breath.
+Most of them are periodic bursts rather than constant motion: one rocks on the
+spot, one scratches the back of its head every nine seconds or so, one checks a
+wrist, one bounces, one cranes to see past whoever is in front. Everybody also
+gets a phase offset and a speed multiplier, so a crowd never walks in lockstep.
+
+Everything is drawn on the quarter-unit grid — one native pixel — row by row,
+**outlines in one pass and fills in the second**. Do it per row and each row's
+outline paints over the last row's fill and the whole person turns into a black
+blob. That mistake has been made in this repository three times.
 
 ---
 
@@ -652,13 +769,19 @@ not.
   speakers and name plates, and paint functions are handed a `talking` flag so
   mouths move while their owner is mid-sentence
 - A **clip/pose animation layer** (`anim.js`) that no sprite code has to know
-  about: ten named clips return pose offsets, and `drawBot`, `drawCreature` and
+  about: ten named clips return pose offsets, and `drawBot`, `drawFolk` and
   Tracy all read the same fields. Contralateral gait, double-frequency bob,
   weight-leading lean, unpredictable blinks, and cross-fades between clips
-- The wasteland is a **heightfield with two-hand physics** over it: a body with
-  real velocity, rigid arm constraints to whatever each hand is holding, a haul
-  force along the anchor vector, slope-driven slide-back and per-surface grip
-  quality
+- The site is a **heightfield with two-hand physics** over it: a body with real
+  velocity, rigid arm constraints to whatever each hand is holding, a haul force
+  along the anchor vector, slope-driven slide-back and per-surface grip quality —
+  driven by **one tap**, with a stroke machine that reaches, plants, hauls and
+  swaps hands on its own
+- **Procedural people** (`folk.js`): a seed becomes a genome — height, girth,
+  skull shape, nose, eye size, hair, facial hair, glasses, clothes, shoes, hat
+  and one nervous habit — and the rig draws it on the quarter-unit grid,
+  outlines in one pass and fills in the next. Cartoon proportions on purpose:
+  the head is a third of the body and the shoes are enormous
 - All audio synthesised with WebAudio — servo whines, arc zaps, a cat's purr, a
   shell coming off, a shutter rolling, footsteps, and the five-note arpeggio for
   a secret. No sample files.
@@ -672,6 +795,7 @@ not.
 index.html          canvas + boot
 js/util.js          maths, primitives, the half and quarter detail tiers, juice
 js/anim.js          the clip/pose animation layer: ten clips, one pose bag
+js/folk.js          the people: a genome per seed, and the rig that draws it
 js/font.js          5×7 bitmap font, standard and fine tiers
 js/audio.js         WebAudio synthesis
 js/state.js         ingredients, systems, 19 frames, disguises, crew, chapters
@@ -682,8 +806,9 @@ js/bots.js          the rig: frames, plate detail, optics and dot eyes,
                     posed creatures, tells, the tip jar cat, goo scoops
 js/clause.js        clause.ai — flight, chatter, asks, the books
 js/cine.js          the cutscene camera and every story beat
-js/dump.js          the wasteland you cross on your hands
-js/tracy.js         her kitchen, and the lesson
+js/dump.js          the blast site you cross on your hands
+js/tracy.js         her front room, and the lesson
+js/fix.js           the bench: fitting the leg, six stages
 js/day.js           the floor: pits, sweeping, tips, spotting, closing
 js/lab.js           the station panels: order, mixer, the line
 js/back.js          the back room you walk

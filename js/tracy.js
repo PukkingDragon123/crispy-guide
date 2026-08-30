@@ -234,61 +234,107 @@
     draw(g) {
       const t = this.t;
       G.toastY = -40;
-      // ===== a warm room =====
-      G.R(g, 0, 0, G.W, G.H, '#1b1410');
-      // wallpaper: a faded stripe, wood dado below
-      for (let x = 0; x < G.W; x += 8) {
-        G.R(g, x, 0, 4, 92, '#2a1e18');
-        G.R(g, x + 4, 0, 4, 92, '#251a15');
-        G.vair(g, x, 0, 92, '#372620');
+      // ===== her front room, which she calls the shop =====
+      // Mint and cream stripes, a rose border, and more things pinned
+      // to the walls than there is wall.
+      G.R(g, 0, 0, G.W, G.H, '#f3e6d2');
+      for (let x = 0; x < G.W; x += 12) {
+        G.R(g, x, 0, 6, 96, '#e9f2e4');
+        G.R(g, x + 6, 0, 6, 96, '#f7efe0');
+        G.vairq(g, x + 6, 0, 96, '#dfe9d8');
       }
-      G.grain(g, 0, 0, G.W, 92, '#3a2a22', 0.05, 4);
-      G.plate(g, -4, 88, G.W + 8, 6, '#5c4028', { r: 1, band: 2, grain: 2 });
-      G.R(g, 0, 94, G.W, 26, '#3a2a1e');
-      for (let x = 0; x < G.W; x += 26) G.vseam(g, x, 94, 26, '#2a1c14', '#4a3626');
-      G.grain(g, 0, 94, G.W, 26, '#2a1c14', 0.07, 9);
-
-      // a window with rain, and the city being a long way off
-      G.plate(g, 214, 12, 66, 52, '#4a3626', { r: 2, band: 2, grain: 5 });
-      G.R(g, 218, 16, 58, 44, '#131b28');
-      for (let i = 0; i < 20; i++) {
-        const s = G.hash(i, 3);
-        G.Rh(g, 219 + ((s * 56 + t * 12) % 56), 17 + ((G.hash(i, 5) * 44 + t * 60) % 44), 0.5, 3, '#3a5a72');
+      // a rose border along the top
+      G.R(g, 0, 0, G.W, 12, '#dbeae0');
+      for (let i = 0; i < 27; i++) {
+        const rx = 6 + i * 12, ry = 6 + Math.sin(i * 0.9) * 1.5;
+        G.fc(g, rx, ry, 2.4, '#f0a8bc');
+        G.fc(g, rx, ry, 1.2, '#ffd0dc');
+        G.Rq(g, rx + 2.5, ry + 1.5, 2, 1, '#8fbf7a');
+        G.Rq(g, rx - 4, ry + 1, 2, 1, '#8fbf7a');
       }
-      G.Rh(g, 246, 16, 1.5, 44, '#4a3626');
-      G.Rh(g, 218, 37, 58, 1.5, '#4a3626');
-      G.glow(g, 247, 38, 60, 46, '#2f4a6b', 0.4);
+      G.R(g, 0, 12, G.W, 1.5, '#d8a8b8');
+      // the dado, in painted board
+      G.plate(g, -4, 92, G.W + 8, 5, '#e8dcc6', { r: 1, band: 2, spec: false });
+      G.R(g, 0, 97, G.W, 24, '#cfe0d4');
+      for (let x = 0; x < G.W; x += 14) G.vseam(g, x, 97, 24, '#b3c9ba', '#e6f1e6');
 
-      // her lamp, which is the whole mood
-      G.Rh(g, 96, 0, 1.5, 14, '#2a1c14');
-      G.plate(g, 82, 14, 30, 5, '#8a4a2a', { r: 1, band: 2 });
+      // the window, with gingham curtains and a box of geraniums
+      G.plate(g, 210, 16, 72, 56, '#e8c8a0', { r: 2, band: 2 });
+      G.R(g, 214, 20, 64, 48, '#9fc4dd');
+      for (let j = 0; j < 48; j += 1) G.Rh(g, 214, 20 + j, 64, 1, G.mix('#bcd9ec', '#7fa8c8', j / 48));
+      for (let i = 0; i < 16; i++) {                   // soft rain outside
+        const sd = G.hash(i, 3);
+        G.Rh(g, 215 + ((sd * 62 + t * 10) % 62), 21 + ((G.hash(i, 5) * 46 + t * 44) % 46), 0.5, 3, '#cfe4ff');
+      }
+      G.Rh(g, 245, 20, 1.5, 48, '#e8c8a0');
+      G.Rh(g, 214, 43, 64, 1.5, '#e8c8a0');
+      for (const sd of [-1, 1]) {                      // gingham curtains
+        const cx2 = sd < 0 ? 212 : 268;
+        for (let i = 0; i < 3; i++) for (let j = 0; j < 11; j++)
+          G.Rh(g, cx2 + i * 4, 18 + j * 4, 4, 4, (i + j) % 2 ? '#f6c8d2' : '#fbeef0');
+        G.Rh(g, cx2, 18, 12, 1, '#e0a0b0');
+        G.Rh(g, cx2 + (sd < 0 ? 11 : 0), 40, 1, 22, '#e0a0b0');
+      }
+      G.Rh(g, 208, 14, 76, 2, '#c8a884');
+      G.plate(g, 216, 70, 60, 8, '#b8785c', { r: 1, band: 1, spec: false });
+      for (let i = 0; i < 7; i++) {                    // geraniums
+        const fx = 221 + i * 8, sw = Math.sin(t * 1.2 + i) * 1;
+        G.Rh(g, fx + sw, 64, 1, 7, '#6b9a4a');
+        G.fc(g, fx + sw, 63, 2.2, ['#e0574a', '#f0a8bc', '#ffd45a'][i % 3]);
+        G.Rq(g, fx + sw - 1, 62, 1, 1, '#ffffff');
+      }
+
+      // her lamp, which is still the whole mood
+      G.Rh(g, 96, 0, 1.5, 12, '#c8a884');
+      G.plate(g, 84, 12, 26, 4, '#e0574a', { r: 1, band: 2 });
       for (let j = 0; j < 6; j++) {
-        const w = 30 - j * 3;
-        G.Rh(g, 97 - w / 2, 19 + j, w, 1, j < 2 ? '#c86a3a' : '#8a4a2a');
+        const w = 26 - j * 3;
+        G.Rh(g, 97 - w / 2, 16 + j, w, 1, j < 2 ? '#ff8a7a' : '#c8483a');
       }
-      G.fc(g, 97, 27, 3, '#fff4c8');
-      G.glow(g, 97, 30, 190, 150, '#ffb26a', 0.5);
-      // and a string of little bulbs, because she is like that
-      for (let i = 0; i < 9; i++) {
-        const bx = 8 + i * 24, by = 8 + Math.sin(i * 0.9) * 4;
-        G.Rh(g, bx, by, 1, 1.5, '#2a1c14');
-        const on = Math.sin(t * 2 + i) > -0.6;
-        G.fc(g, bx, by + 3, 1.6, on ? '#ffe4a0' : '#6b5230');
-        if (on) G.glow(g, bx, by + 3, 14, 12, '#ffc06a', 0.4);
+      G.fc(g, 97, 24, 3, '#fff4c8');
+      G.glow(g, 97, 28, 200, 160, '#ffd9a0', 0.42);
+      // bunting, because she put it up when you woke up and never took
+      // it down. A string first, then triangles hanging off it.
+      for (let x = 0; x < G.W; x += 2) {
+        const q = (x % 80) / 80;
+        G.Rq(g, x, 15 + Math.sin(q * Math.PI) * 3 + Math.sin(t * 0.5 + x * 0.02) * 0.5, 2, 1, '#c8a884');
       }
-      // shelves of jars
-      for (const sy of [40, 62]) {
-        G.plate(g, 8, sy, 74, 3, '#5c4028', { r: 1, band: 1, spec: false });
-        for (let i = 0; i < 5; i++) {
-          const jx = 12 + i * 14;
-          const col = ['#c86a3a', '#8fd8c0', '#e8879a', '#ffd47a', '#b48ae0'][i];
-          G.plate(g, jx, sy - 11, 10, 11, G.mix(col, '#3a2a22', 0.35), { r: 1, band: 1, spec: false });
-          G.Rh(g, jx + 1, sy - 9, 8, 6, col);
-          G.hair(g, jx + 1, sy - 9, 8, G.shade(col, 0.5));
-          G.Rh(g, jx + 2, sy - 13, 6, 2, '#8a7458');
-        }
+      for (let i = 0; i < 12; i++) {
+        const bx = 8 + i * 26;
+        const sag = Math.sin(((bx % 80) / 80) * Math.PI) * 3 + Math.sin(t * 0.5 + bx * 0.02) * 0.5;
+        const col = ['#f6c8d2', '#cfe4c8', '#ffe6a8', '#cfe0f0'][i % 4];
+        for (let j = 0; j < 5; j++)
+          G.Rh(g, bx - 4 + j, 16 + sag + j, 9 - j * 2, 1, j < 1 ? G.shade(col, 0.3) : col);
       }
-      // motes of dust
+      // three framed photographs of a shop that is not there any more
+      for (let i = 0; i < 3; i++) {
+        const fx = 20 + i * 30, fy = 26 + (i % 2) * 6;
+        G.plate(g, fx, fy, 24, 20, '#c8a884', { r: 1, band: 1, spec: false });
+        G.R(g, fx + 3, fy + 3, 18, 14, i === 1 ? '#8fbfd8' : '#e8d8c0');
+        if (i === 1) { G.R(g, fx + 3, fy + 11, 18, 6, '#c8a070'); G.fc(g, fx + 12, fy + 8, 3, '#f0a8bc'); }
+        else { G.fc(g, fx + 8, fy + 9, 3, '#d8a882'); G.fc(g, fx + 15, fy + 9, 3, '#d8a882'); }
+      }
+      // a shelf of jars in colours she chose to look at, not to sell
+      G.plate(g, 122, 44, 76, 3, '#c8a884', { r: 1, band: 1, spec: false });
+      for (let i = 0; i < 5; i++) {
+        const jx = 126 + i * 14;
+        const col = ['#f0a8bc', '#8fd8c0', '#ffd45a', '#b48ae0', '#8fbfd8'][i];
+        G.plate(g, jx, 33, 10, 11, G.mix(col, '#f3e6d2', 0.5), { r: 1, band: 1, spec: false });
+        G.Rh(g, jx + 1, 35, 8, 6, col);
+        G.hair(g, jx + 1, 35, 8, G.shade(col, 0.5));
+        G.Rh(g, jx + 2, 31, 6, 2, '#c8a884');
+        G.Rq(g, jx + 3, 30, 4, 1, '#e8dccb');
+      }
+      // a pot plant she talks to
+      G.plate(g, 8, 68, 16, 12, '#c8785a', { r: 1, band: 2 });
+      G.Rh(g, 6, 66, 20, 3, '#e0947a');
+      for (let i = 0; i < 6; i++) {
+        const a2 = -1.9 + i * 0.42, ln = 12 + (i % 3) * 5;
+        for (let k = 0; k < ln; k++)
+          G.Rh(g, 16 + Math.cos(a2) * k + Math.sin(t * 1.1 + i) * (k * 0.05),
+            66 + Math.sin(a2) * k, 1.5, 1.5, k > ln - 4 ? '#a8d878' : '#6b9a4a');
+      }
+      // motes of dust in the lamplight
       for (const m of this.motes) {
         g.globalAlpha = 0.34;
         G.Rh(g, m.x, m.y, 1, 1, '#ffd9a0');
@@ -296,17 +342,23 @@
       }
 
       // ===== the counter =====
-      G.plate(g, -4, CNT_Y, G.W + 8, 10, '#7a5638', { r: 2, band: 3, grain: 3 });
-      G.hair(g, -4, CNT_Y, G.W + 8, '#b88a58');
-      for (let x = 0; x < G.W; x += 18) G.vseam(g, x, CNT_Y + 2, 8, '#5c4028', '#8a6440');
-      G.R(g, -4, CNT_Y + 10, G.W + 8, 4, '#4a3020');
+      G.plate(g, -4, CNT_Y, G.W + 8, 10, '#e8dcc6', { r: 2, band: 3, grain: 2 });
+      G.hair(g, -4, CNT_Y, G.W + 8, '#fffaf0');
+      for (let x = 0; x < G.W; x += 18) G.vseam(g, x, CNT_Y + 2, 8, '#c8b89c', '#fffaf0');
+      G.R(g, -4, CNT_Y + 10, G.W + 8, 4, '#c9b89c');
+      // the front, in mint and cream stripes like a deckchair
+      for (let i = 0; i < 24; i++)
+        G.R(g, -4 + i * 14, CNT_Y + 14, 7, 22, i % 2 ? '#cfe4d8' : '#fbf3e6');
+      G.R(g, -4, CNT_Y + 14, G.W + 8, 1, '#b3c9ba');
       // a checked cloth over one end
       for (let i = 0; i < 9; i++) for (let j = 0; j < 3; j++)
-        G.Rh(g, 168 + i * 5, CNT_Y - 2 + j * 4, 5, 4, (i + j) % 2 ? '#c8483a' : '#f2e4d0');
+        G.Rh(g, 168 + i * 5, CNT_Y - 2 + j * 4, 5, 4, (i + j) % 2 ? '#f0a8bc' : '#fbeef0');
+      // the cat, asleep on the warm end of the counter
+      G.drawCreature(g, 'cat', 300, CNT_Y, 0.42, { t, clip: 'slump', ct: t, fur: '#e8c8a0' });
 
       // ===== her gelato pit, in a wooden tub =====
-      G.plate(g, PIT.x - 7, PIT.y - 8, PIT.w + 14, PIT.h + 22, '#5c4028',
-        { r: 2, band: 2, grain: 4, bolts: 1 });
+      G.plate(g, PIT.x - 7, PIT.y - 8, PIT.w + 14, PIT.h + 22, '#c8a884',
+        { r: 2, band: 2, grain: 3, bolts: 1 });
       // steel rim round the mouth of the tub
       G.R(g, PIT.x - 4, PIT.y - 5, PIT.w + 8, PIT.h + 8, '#2a1c14');
       G.Rh(g, PIT.x - 4, PIT.y - 5, PIT.w + 8, 2, '#8a94a8');
@@ -335,12 +387,12 @@
       g.globalAlpha = 0.3;
       G.Rh(g, PIT.x - 3, PIT.y - 3, PIT.w + 6, 2, '#dff0ff');
       g.globalAlpha = 1;
-      G.Rh(g, PIT.x - 4, PIT.y + PIT.h + 4, PIT.w + 8, 8, '#2a1c14');
-      G.text(g, 'GELATO DELLA CASA', PIT.x + PIT.w / 2, PIT.y + PIT.h + 5, '#e0c8a0',
+      G.Rh(g, PIT.x - 4, PIT.y + PIT.h + 4, PIT.w + 8, 8, '#3a4a44');
+      G.text(g, 'GELATO DELLA CASA', PIT.x + PIT.w / 2, PIT.y + PIT.h + 5, '#e8f2e6',
         { align: 'center', sc: 0.5 });
 
       // ===== the cone stand =====
-      G.plate(g, CONE_X - 12, CNT_Y - 4, 24, 5, '#5c4028', { r: 1, band: 1 });
+      G.plate(g, CONE_X - 12, CNT_Y - 4, 24, 5, '#c8a884', { r: 1, band: 1 });
       if (!this.build) {
         G.cone(g, CONE_X, CNT_Y - 4, { w: 15, h: 20 });
       } else {
@@ -392,83 +444,32 @@
     drawTracy(g, t) {
       const x = TRACY_X, fy = TRACY_Y;
       const eat = this.eatT > 0;
-      const bob = Math.sin(t * 1.6) * 0.6;
-      const skin = '#d8a882', skinD = '#a87a58', hair = '#3a241c';
-      const by = fy - 74 + bob;
-      // legs and boots
-      for (const sd of [-1, 1]) {
-        G.Rh(g, x + sd * 5 - 4, by + 46, 7, 22, '#33505e');
-        G.vair(g, x + sd * 5 - 4, by + 46, 22, '#4a6a7a');
-        G.Rh(g, x + sd * 5 - 5, fy - 4, 9, 4, '#2a1c14');
-        G.hair(g, x + sd * 5 - 5, fy - 4, 9, '#4a3626');
-      }
-      G.R(g, x - 12, by + 20, 24, 28, '#3f5c6b');                 // dungarees
-      G.bevel(g, x - 12, by + 20, 24, 28, '#5c7f92', '#2a4450');
-      G.Rh(g, x - 9, by + 22, 6, 8, '#33505e');                   // pocket
-      G.Rh(g, x - 12, by + 18, 5, 6, '#5c7f92');                  // straps
-      G.Rh(g, x + 7, by + 18, 5, 6, '#5c7f92');
-      G.Rh(g, x - 13, by + 30, 26, 2, '#2a4450');
-      // a jumper under it
-      G.Rh(g, x - 13, by + 12, 26, 10, '#c8785a');
-      G.hair(g, x - 13, by + 12, 26, '#e0947a');
-      // arms: one holding a rag, one out for the cone
-      const reach = this.build && this.build.scoops.length && !eat ? 1 : 0;
-      G.Rh(g, x - 18, by + 14, 6, 16, '#c8785a');
-      G.Rh(g, x - 19, by + 28, 7, 5, skin);
-      const rax = x + 12 - reach * 10, ray = by + 14 + reach * 6;
-      G.Rh(g, rax, ray, 6, 14 - reach * 4, '#c8785a');
-      G.Rh(g, rax - 1, ray + (14 - reach * 4), 8, 5, skin);
-      G.hair(g, rax - 1, ray + (14 - reach * 4), 8, '#f0c8a0');
-      // head
-      const hy = by - 2;
-      G.R(g, x - 9, hy, 18, 18, OUT);
-      G.R(g, x - 8, hy + 1, 16, 16, skin);
-      G.bevel(g, x - 8, hy + 1, 16, 16, '#f0c8a0', skinD);
-      // hair: a bun and a loose strand
-      G.Rh(g, x - 10, hy - 2, 20, 7, hair);
-      G.hair(g, x - 10, hy - 2, 20, '#5c3a2c');
-      G.fc(g, x + 9, hy + 1, 4, hair);
-      G.Rh(g, x - 11, hy + 3, 3, 9, hair);
-      G.Rh(g, x - 12, hy + 5, 2, 5, hair);
-      // eyes: kind, and tired
-      const blink = Math.sin(t * 0.9) > 0.985;
-      for (const sd of [-1, 1]) {
-        const ex = x + sd * 4;
-        if (blink) { G.Rh(g, ex - 2, hy + 8, 4, 1, skinD); continue; }
-        G.Rh(g, ex - 2.5, hy + 6.5, 5, 3.5, '#f6f2e4');
-        G.Rh(g, ex - 1, hy + 7, 2, 2.5, '#3a5a4a');
-        G.Rh(g, ex - 0.5, hy + 7.5, 1, 1.5, '#1a1410');
-        G.Rh(g, ex - 1.5, hy + 7, 1, 1, '#ffffff');
-        G.Rh(g, ex - 2.5, hy + 5.5, 5, 0.5, hair);
-        // the shadows under them
-        g.globalAlpha = 0.3; G.Rh(g, ex - 2, hy + 10.5, 4, 1, '#8a5a4a'); g.globalAlpha = 1;
-      }
-      G.Rh(g, x - 0.5, hy + 10, 1, 2, skinD);
-      // mouth: she is either talking, smiling or eating
-      if (eat) {
-        const ph = (this.eatT * 3) % 1;
-        const o = 1 + Math.sin(ph * Math.PI) * 2;
-        G.Rh(g, x - 2, hy + 12, 5, o, '#8a4a4a');
-      } else if (this.step >= 5) {
-        for (let i = 0; i < 7; i++)
-          G.Rh(g, x - 3 + i, hy + 12 + Math.sin((i / 6) * Math.PI) * 1.4, 1, 1, '#8a4a4a');
-      } else G.Rh(g, x - 2, hy + 12, 5, 1, '#8a4a4a');
+      const wants = this.build && this.build.scoops.length && !eat;
+      // one model, the same one the cutscenes use
+      const clip = eat ? 'take' : wants ? 'reach' : this.talking() ? 'talk' : 'idle';
+      const r = G.drawTracy(g, x, fy, 1.5, {
+        t, clip, ct: t, dir: -1, smile: this.step >= 5 || eat,
+        p: eat ? G.clamp(this.eatT / 1.2, 0, 1) : 1,
+      });
       // the cone in her hand while she eats it
-      if (eat) {
+      if (eat && r.hand) {
         const left = Math.max(0, 1 - this.eatT / 2.6);
-        G.cone(g, rax + 3, ray + 12, { w: 10, h: 13 });
-        if (left > 0.1) G.gooScoop(g, rax + 3, ray + 2, 4 + left * 5, this.flav, { t });
+        G.cone(g, r.hand.x, r.hand.y + 8, { w: 10, h: 13 });
+        if (left > 0.1) G.gooScoop(g, r.hand.x, r.hand.y - 2, 4 + left * 5, this.flav, { t });
       }
-      // her name, chalked on the counter edge
-      G.text(g, 'TRACY', x, fy - 6, '#c8a884', { align: 'center', sc: 0.5 });
       if (this.clap > 0.2) {
         g.globalAlpha = this.clap;
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           const a2 = t * 4 + i;
-          G.Rh(g, x + Math.cos(a2) * 22, hy + 4 + Math.sin(a2) * 14, 1.5, 1.5, '#ffd47a');
+          G.Rh(g, x + Math.cos(a2) * 24, r.headTop + 6 + Math.sin(a2) * 16, 1.5, 1.5, '#ffd47a');
         }
         g.globalAlpha = 1;
       }
+    },
+    // she is mid-line while her card is still typing itself out
+    talking() {
+      const st = this.cur();
+      return this.stepT * 34 < st.say.length;
     },
 
     // ---- what she is saying, and what you have to do ----

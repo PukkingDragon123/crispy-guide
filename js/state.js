@@ -661,6 +661,7 @@
     const fl = starterFlavours();
     return {
       money: 40, moneyShown: 40, day: 1,
+      legFixed: 0,                                    // she bolted a new one on
       shelf: { cream: 3, milk: 3, sugar: 4, vanilla: 2, cocoa: 2 },   // ingredient counts
       flavours: fl,                                   // invented recipes
       batches: [{ fid: fl[0].id, qty: 12 }],          // churned, waiting in the cold room
