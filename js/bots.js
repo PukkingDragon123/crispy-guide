@@ -375,17 +375,21 @@
       const legOff = bo && bo.legOff;
       for (const s of [-1, 1]) {
         if (legOff && s > 0) {
-          // the socket it came out of: a torn skirt of plate and a
-          // severed loom that will not stop arcing
+          // The socket it came out of. It sits UP at the hip and it is
+          // wider than the leg was, because a small dark box down at
+          // ankle height just reads as a second short foot.
           const hx2 = cx + Math.round(bw * 0.22);
-          G.R(g, hx2 - lw / 2 - 1, footY - lh, lw + 2, u(5), '#2a3040');
+          const sy = footY - lh - u(2);
+          G.R(g, hx2 - lw / 2 - 2, sy - 1, lw + 4, u(8) + 2, OUT);
+          G.R(g, hx2 - lw / 2 - 1, sy, lw + 2, u(8), '#2a3040');
+          G.hair(g, hx2 - lw / 2 - 1, sy, lw + 2, '#5c6478');
           for (let i2 = 0; i2 < 5; i2++)
-            G.Rh(g, hx2 - lw / 2 + i2 * (lw / 5), footY - lh + u(3) + (i2 % 2), Math.max(1, lw / 6), u(3),
-              i2 % 2 ? '#48546c' : '#6b3f22');
-          if (Math.random() < 0.28) {
+            G.Rh(g, hx2 - lw / 2 + i2 * (lw / 5), sy + u(4) + (i2 % 2) * u(1),
+              Math.max(1, lw / 6), u(4), i2 % 2 ? '#48546c' : '#6b3f22');
+          if (Math.random() < 0.3) {
             const spx = hx2 + G.rand(-lw / 2, lw / 2);
-            G.pip(g, spx, footY - lh + u(4), '#ffffff');
-            G.glow(g, spx, footY - lh + u(4), u(10), u(7), '#7fd8ff', 0.5);
+            G.pip(g, spx, sy + u(5), '#ffffff');
+            G.glow(g, spx, sy + u(5), u(12), u(9), '#7fd8ff', 0.55);
           }
           continue;
         }

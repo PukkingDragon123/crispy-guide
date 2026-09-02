@@ -447,7 +447,10 @@
       const wants = this.build && this.build.scoops.length && !eat;
       // one model, the same one the cutscenes use
       const clip = eat ? 'take' : wants ? 'reach' : this.talking() ? 'talk' : 'idle';
-      const r = G.drawTracy(g, x, fy, 1.5, {
+      // Her room is a close-up: the counter top is 42 screen units off
+      // her floor, so at 1.9 that counter is waist high on her, which is
+      // what a counter is.
+      const r = G.drawTracy(g, x, fy, 1.9, {
         t, clip, ct: t, dir: -1, smile: this.step >= 5 || eat,
         p: eat ? G.clamp(this.eatT / 1.2, 0, 1) : 1,
       });

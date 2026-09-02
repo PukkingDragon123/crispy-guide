@@ -21,6 +21,30 @@
   G.PX = 4;                      // native pixels per logical unit
   G.WN = 1280;                   // native raster width
   G.HN = 720;                    // native raster height
+  // ------------------------------------------------------------
+  // ONE SCALE FOR THE WHOLE GAME.
+  // Everything used to be sized by eye, which is why a counter came up
+  // to a grown woman's shoulder and the mascot's head was bigger than
+  // a customer. So: an adult is 52 logical units head to heel, at draw
+  // scale 1.0, standing on the floor line. Every prop in a walkable
+  // scene is sized off that and nothing else.
+  // ------------------------------------------------------------
+  G.FLOOR = 150;                 // the floor line in a walkable scene
+  G.SZ = {
+    ADULT: 52,                   // head to heel
+    KID: 34,
+    MASCOT: 52,                  // a person in a suit, so: a person
+    HEAD: 12,                    // an adult head, top to chin
+    DOOR_H: 78, DOOR_W: 32,      // you can walk through it
+    COUNTER: 22,                 // top surface off the floor - waist high
+    TABLE: 20, TABLE_W: 42,      // table top off the floor
+    SEAT: 12,                    // seat pad off the floor
+    BOOTH: 32,                   // the back of a booth
+    STOOL: 16,
+    SHELF: 40,                   // eye-level shelf
+    SIGN: 18,                    // a wall sign, above head height
+    STEP: 5,
+  };
   G.HALF = 0.5;                  // the structural detail step (2 native px)
   G.Q = 0.25;                    // one native pixel, in logical units
 

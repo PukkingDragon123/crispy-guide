@@ -427,319 +427,6 @@
     // Every shot has something moving in it that is not the camera, and
     // somebody in it says something. A shot where neither happens is a
     // caption with a picture over it.
-    // ---------------- the opening: BIG MOO, and the six minutes
-    // that ended it ----------------
-    // Rain in every shot. The camera never rotates - it pushes, it
-    // pans, and it cuts hard - because this is going out live on a
-    // municipal channel and nobody is holding the camera steady.
-    opening: [
-      { t: 6.8,
-        lines: [
-          { at: 0,   say: 'I WAS THE FACE OF A BURGER CHAIN. SIX YEARS.' },
-          { at: 3.4, who: 'BESSIE', col: '#ffb0c8', say: 'TABLE FOUR! TWO SWIRLS AND A HAPPY BIRTHDAY!' },
-        ],
-        cam: { z: [1.04, 1.26], x: [160, 152], y: [90, 96] },
-        paint(g, p, tt) {
-          mooFront(g, tt);
-          // a family going in under one umbrella that is too small
-          const wx = G.lerp(24, 116, G.easeInOut(G.clamp(p * 1.3, 0, 1)));
-          G.drawCreature(g, 'human', wx, 150, 0.62, { t: tt, seed: 2.2, clip: 'walk', ct: tt, dir: 1, speed: 1.1 });
-          G.drawCreature(g, 'human', wx + 16, 152, 0.44, { t: tt, seed: 9.4, clip: 'walk', ct: tt, dir: 1, speed: 1.4, hat: 'crown' });
-          // one umbrella between the two of them, and it is too small
-          const uy = 116;
-          for (let i = 0; i < 7; i++) {
-            const dx = (i - 3) * 4.5, dip = Math.abs(i - 3) * 1.1;
-            G.Rh(g, wx + dx - 2.5, uy + dip - 1, 5, 1, '#8a2f3a');
-            G.Rh(g, wx + dx - 2.5, uy + dip, 5, 2, i % 2 ? '#c8505c' : '#f0e2d4');
-          }
-          G.Rh(g, wx - 0.5, uy, 1, 16, '#4a5568');
-          G.Rq(g, wx - 1, uy - 2, 2, 2, '#8a6a44');
-          // a car, and the rain coming off everything
-          G.rr2(g, 214, 132, 54, 16, '#2a3550');
-          G.rr2(g, 226, 124, 28, 10, '#1c2436');
-          G.Rh(g, 228, 126, 24, 6, '#3f5a7a');
-          G.oc(g, 226, 148, 4, '#12161f'); G.oc(g, 256, 148, 4, '#12161f');
-          G.Rh(g, 214, 138, 4, 3, '#ffd45a');
-          rain(g, tt, 90, '#3d5678', 0, 320);
-          for (let i = 0; i < 16; i++) {               // splash off the tarmac
-            const sx = G.hash(i, 3) * 340 - 10;
-            const ph = ((tt * 2 + G.hash(i, 7)) % 1);
-            g.globalAlpha = 0.4 * (1 - ph);
-            G.Rq(g, sx, 150 + G.hash(i, 9) * 24 - ph * 4, 1, 1, '#8ab4d8');
-            g.globalAlpha = 1;
-          }
-        } },
-
-      { t: 7.4,
-        lines: [
-          { at: 0,   say: 'SIX SHOWS A DAY. TWELVE ON A SATURDAY.' },
-          { at: 2.8, who: 'A CHILD', col: '#a8d158', say: 'MOO! MOO! MOO!' },
-          { at: 4.8, who: 'BESSIE', col: '#ffb0c8', say: 'WHO WANTS A SWIRL, THEN? EVERYBODY? RIGHT.' },
-        ],
-        cam: { z: [1.0, 1.1], x: [154, 160], y: [92, 90] },
-        paint(g, p, tt, talk) {
-          diner(g, tt);
-          // the stage: a low round riser with a light on it
-          G.fe(g, 152, 138, 44, 7, '#8a2f3a');
-          G.fe(g, 152, 136, 42, 6, '#c8505c');
-          G.hairq(g, 132, 131, 40, '#e8828c');
-          G.glow(g, 152, 122, 150, 96, '#ffd9a0', 0.3);
-          // you, doing the dance. Same rig as every other scene.
-          const beat = Math.sin(tt * 3.4);
-          G.drawBot(g, 'player', 152 + beat * 4, 134, 0.92, {
-            t: tt, mood: 'idle', walk: 0, open: talk ? 0.5 : 0.15,
-            clip: p > 0.62 ? 'wave' : talk ? 'talk' : 'idle', ct: tt,
-            p: G.clamp((p - 0.62) / 0.34, 0, 1),
-          });
-          // the birthday table: three in paper crowns, and two grown-ups
-          const kids = [[46, 2.2], [76, 7.7], [104, 12.9]];
-          for (let i = 0; i < kids.length; i++)
-            G.drawCreature(g, 'human', kids[i][0], 146, 0.5, {
-              t: tt, seed: kids[i][1], hat: 'crown', smile: 1,
-              clip: p > 0.4 ? 'point' : 'idle', ct: tt + i * 0.4, dir: 1,
-              p: G.clamp((p - 0.4 - i * 0.05) / 0.3, 0, 1),
-            });
-          G.drawCreature(g, 'human', 22, 152, 0.68, { t: tt, seed: 4.4, smile: 1, clip: 'idle', ct: tt });
-          G.drawCreature(g, 'human', 244, 150, 0.74, { t: tt, seed: 18.3, smile: 1, clip: 'talk', ct: tt * 0.7 });
-          G.drawCreature(g, 'human', 288, 146, 0.66, { t: tt, seed: 21.6, badge: 1, clip: 'idle', ct: tt });
-          // a cake on the table with candles that have been lit too long
-          G.rr(g, 12, 102, 22, 8, '#f6e8d8');
-          G.Rh(g, 12, 102, 22, 1.5, '#ff9ab8');
-          for (let i = 0; i < 4; i++) {
-            G.Rh(g, 16 + i * 5, 97, 1, 5, '#f0e2d4');
-            G.fc(g, 16.5 + i * 5, 96, 1.2, Math.sin(tt * 9 + i) > 0 ? '#ffe08a' : '#ffb050');
-          }
-          // confetti, because somebody's mother brought some
-          for (let i = 0; i < 26; i++) {
-            const cx2 = (G.hash(i, 3) * 320 + Math.sin(tt + i) * 12) % 320;
-            const cy2 = (G.hash(i, 9) * 140 + tt * 16 + i * 3) % 140;
-            G.Rq(g, cx2, cy2, 1, 1, ['#ffd45a', '#8fd8c0', '#ff8ab0', '#7fd8ff'][i % 4]);
-          }
-        } },
-
-      { t: 5.8, flag: 'BREAKING',
-        lines: [
-          { at: 0,   say: 'THEN THE DOOR CAME OFF ITS HINGES.' },
-          { at: 2.6, who: 'PATROL', col: '#7fd8ff', say: 'CIVIL PATTERN. NOBODY MOVE.' },
-        ],
-        cam: { z: [1.26, 1.0], x: [200, 166], y: [94, 90] },
-        paint(g, p, tt) {
-          diner(g, tt, { dim: 0.32, noBooths: 1 });
-          const hit = G.clamp(p * 5, 0, 1);
-          // the doorway, and the rain coming through it
-          G.R(g, 244, 34, 60, 102, '#080c14');
-          G.R(g, 248, 38, 52, 94, G.mix('#1a2436', '#0a0e16', 0.4));
-          rain(g, tt, 30, '#5a7ea8', 248, 300);
-          // the frame it used to be in, bent
-          G.R(g, 240, 32, 6, 106, '#4a5568');
-          G.R(g, 300, 32, 6, 106, '#4a5568');
-          G.R(g, 240, 32, 66, 5, '#4a5568');
-          if (hit > 0.02) shards(g, 262, 84, hit, 30);
-          // it steps into the room and fills the doorway
-          const step = G.easeOut(G.clamp((p - 0.1) / 0.5, 0, 1));
-          const mx = G.lerp(316, 278, step);
-          mech(g, mx, 136, 88, '#0b0810', tt, '#ff4a4a', tt * 0.6);
-          // rim light down the side the room is lighting
-          G.vair(g, mx - 27, 56, 40, '#8fc0e8');
-          G.vair(g, mx - 22, 96, 34, '#5a7ea8');
-          G.hair(g, mx - 13, 46, 26, '#cfe4ff');
-          G.glow(g, mx - 6, 62, 70, 50, '#ff4a4a', 0.4 + Math.sin(tt * 6) * 0.12);
-          // lightning behind it
-          const lt = Math.sin(tt * 1.7) > 0.985 ? 1 : 0;
-          if (lt) { g.globalAlpha = 0.5; G.R(g, 0, 0, G.W, G.H, '#cfe4ff'); g.globalAlpha = 1; }
-          // everybody stops
-          for (const q of [[46, 2.2, 0.5], [76, 7.7, 0.5], [104, 12.9, 0.5], [22, 4.4, 0.68]])
-            G.drawCreature(g, 'human', q[0], 146, q[2], {
-              t: tt, seed: q[1], hat: q[2] < 0.6 ? 'crown' : undefined,
-              clip: 'startle', ct: tt, p: G.clamp((p - 0.14) / 0.4, 0, 1),
-            });
-          G.drawBot(g, 'player', 152, 134, 0.92, {
-            t: tt, mood: 'idle', walk: 0, clip: 'startle', ct: tt,
-            p: G.clamp((p - 0.14) / 0.4, 0, 1), noBlink: 1,
-          });
-          g.globalAlpha = 0.22; G.R(g, 0, 0, G.W, G.H, '#0a1424'); g.globalAlpha = 1;
-        } },
-
-      { t: 5.6, flag: 'BREAKING',
-        lines: [
-          { at: 0,   say: 'IT DID NOT ASK ME ANYTHING.' },
-          { at: 2.4, who: 'BESSIE', col: '#ffb0c8', say: "I'M - I'M STILL UNDER WARRA-" },
-        ],
-        cam: { z: [1.46, 1.3], x: [150, 158], y: [112, 106] },
-        paint(g, p, tt, talk) {
-          diner(g, tt, { dim: 0.5, noBunting: 1, noBooths: 1 });
-          // the muzzle, off the right of frame
-          const fire = p > 0.4 && p < 0.47;
-          const gone = G.clamp((p - 0.47) / 0.53, 0, 1);
-          G.Rh(g, 236 - p * 8, 118, 52, 6, '#20242e');
-          G.hairq(g, 236 - p * 8, 118, 52, '#4a5468');
-          G.Rh(g, 236 - p * 8, 124, 52, 1, '#0a0d14');
-          if (fire) {
-            G.R(g, 0, 0, G.W, G.H, '#fff6e0');
-            for (let i = 0; i < 30; i++)
-              G.Rq(g, 234 - G.rand(0, 90), 120 + G.rand(-16, 16), 2, 1, '#ffd47a');
-          }
-          // you, and the leg that is about to stop being yours
-          G.drawBot(g, 'player', 148, 142, 1.4, {
-            t: tt, mood: gone > 0.1 ? 'sick' : 'idle', walk: 0,
-            clip: talk && !fire ? 'talk' : gone > 0 ? 'startle' : 'idle', ct: tt,
-            p: gone > 0 ? Math.min(1, gone * 2) : 0, noBlink: gone > 0.4 ? 1 : 0,
-            crawl: 0, spare: 0, legOff: gone > 0.02 ? 1 : 0,
-          });
-          if (gone > 0) {
-            // the leg, tumbling out of frame, still trying to take a step
-            const lx = 148 - gone * 96, ly = 124 + Math.sin(gone * 3.1) * 18 + gone * gone * 30;
-            G.R(g, lx - 4, ly - 1, 9, 22, OUT);
-            G.R(g, lx - 3, ly, 7, 20, '#efe7d8');
-            G.hairq(g, lx - 3, ly, 7, '#ffffff');
-            G.R(g, lx - 5, ly + 18, 11, 6, '#4a3f56');
-            for (let i = 0; i < 5; i++)
-              G.Rq(g, 148 + G.rand(-10, 10), 128 + G.rand(-6, 10), 1, 1, i % 2 ? '#ffffff' : '#ffd47a');
-            G.glow(g, 148, 130, 70, 40, '#ff9ab8', 0.4 * (1 - gone));
-          }
-          if (!fire) rain(g, tt, 16, '#3d5678', 248, 306);
-          g.globalAlpha = 0.2 * (1 - (fire ? 1 : 0)); G.R(g, 0, 0, G.W, G.H, '#2a0e14'); g.globalAlpha = 1;
-        } },
-
-      { t: 5.4, flag: 'BREAKING',
-        lines: [
-          { at: 0,   say: 'THEN IT PUT SOMETHING UNDER THE COUNTER.' },
-          { at: 2.8, who: 'PATROL', col: '#7fd8ff', say: 'CLEAR THE FLOOR.' },
-        ],
-        cam: { z: [1.04, 1.24], x: [182, 156], y: [96, 100] },
-        paint(g, p, tt) {
-          diner(g, tt, { dim: 0.55, noBunting: 1, noBooths: 1 });
-          // it reaches under the counter and leaves the charge there
-          const set = G.easeOut(G.clamp(p * 1.6, 0, 1));
-          mech(g, 250, 140, 96, '#0b0810', tt, '#ff4a4a', tt * 0.6);
-          G.Rh(g, 250 - set * 44, 100, 48, 4, '#20242e');
-          const bx = G.lerp(246, 206, set);
-          G.rr2(g, bx - 7, 92, 14, 12, '#232b38');
-          G.bevelq(g, bx - 7, 92, 14, 12, '#41506a', '#0d1118');
-          const tick = Math.sin(tt * 12) > 0 ? 1 : 0;
-          G.Rq(g, bx - 1, 96, 2, 2, tick ? '#ff4a4a' : '#5a1a1a');
-          if (tick) G.glow(g, bx, 97, 34, 24, '#ff4a4a', 0.5);
-          // everybody goes for the door at once
-          for (let i = 0; i < 5; i++) {
-            const q = [2.2, 7.7, 12.9, 4.4, 18.3][i];
-            const rx = G.lerp(20 + i * 30, -40 + i * 22, G.easeIn(G.clamp((p - 0.1) / 0.9, 0, 1)));
-            G.drawCreature(g, 'human', rx, 142 + (i % 2) * 6, 0.5 + (i % 3) * 0.12, {
-              t: tt, seed: q, clip: 'run', ct: tt + i, dir: -1, speed: 1.2,
-            });
-          }
-          G.drawBot(g, 'player', 148, 142, 0.92, {
-            t: tt, mood: 'sick', walk: 0, clip: 'slump', ct: tt, crawl: 1, noBlink: 1,
-            hands: [{ x: 124, y: 134 }, { x: 172, y: 138 }],
-          });
-          g.globalAlpha = 0.3; G.R(g, 0, 0, G.W, G.H, '#2a0e14'); g.globalAlpha = 1;
-        } },
-
-      { t: 4.8, flag: 'BREAKING', say: 'THE SIGN CAME DOWN ON THE CAR PARK.',
-        cam: { z: [1.24, 1.02], x: [150, 166], y: [86, 96] },
-        paint(g, p, tt) {
-          const blow = G.clamp((p - 0.24) / 0.16, 0, 1);
-          const aft = G.clamp((p - 0.4) / 0.6, 0, 1);
-          mooFront(g, tt, { dead: aft > 0.2, noSign: blow > 0.1, wrecked: blow > 0.5 });
-          if (blow > 0 && blow < 1) {
-            g.globalAlpha = blow < 0.5 ? 1 : 1 - (blow - 0.5) * 2;
-            G.R(g, 0, 0, G.W, G.H, '#fff6e0');
-            g.globalAlpha = 1;
-          }
-          if (blow > 0.1) {
-            // the roof, going up in one piece
-            const roof = 58 - aft * 40;
-            G.R(g, 26 + aft * 8, roof, 236 - aft * 16, 6, '#5a2f30');
-            G.hairq(g, 26 + aft * 8, roof, 236 - aft * 16, '#8a4a44');
-            // the fireball: a boiling stack of blobs, not one flat oval
-            const r = 22 + aft * 44;
-            const cy2 = 94 - aft * 26;
-            G.glow(g, 150, cy2, r * 3.4, r * 2.6, '#ff7a2a', 0.7 * (1 - aft * 0.45));
-            for (let k = 0; k < 7; k++) {
-              const a2 = k * 0.9 + tt * 1.4;
-              const bx2 = 150 + Math.cos(a2) * r * 0.62;
-              const by2 = cy2 + Math.sin(a2 * 1.3) * r * 0.4 - aft * k * 2;
-              G.fe(g, bx2, by2, r * (0.44 + G.hash(k, 3) * 0.2), r * (0.34 + G.hash(k, 7) * 0.16),
-                G.mix(k % 2 ? '#e0762a' : '#b8481e', '#3a1a16', aft * 0.7));
-            }
-            G.fe(g, 150, cy2 + 4, r * 0.62, r * 0.42, G.mix('#ffd47a', '#c85a1e', aft));
-            G.fe(g, 150, cy2 + 2, r * 0.34, r * 0.24, G.mix('#fffbe8', '#ffb050', aft));
-            // debris, on real arcs, in silhouette against the fire
-            for (let i = 0; i < 54; i++) {
-              const a = G.hash(i, 3) * 3.14, sp = 40 + G.hash(i, 7) * 160;
-              const dx = 150 + Math.cos(a) * sp * aft;
-              const dy = 94 - Math.sin(a) * sp * aft + aft * aft * 96;
-              const sz = 1 + G.hash(i, 11) * 3;
-              G.R(g, dx, dy, sz, sz * 0.8, i % 5 ? '#150d12' : '#6b3a24');
-            }
-            // the sign coming off its pole
-            const fall = G.clamp((aft - 0.15) / 0.85, 0, 1);
-            mooSign(g, 274 - fall * 34, 18 + fall * 116, tt, { dead: 1 });
-          }
-          rain(g, tt, 70, '#3d5678', 0, 320);
-          if (aft > 0.3) {
-            g.globalAlpha = 0.3;
-            for (let i = 0; i < 20; i++)
-              G.Rh(g, G.hash(i, 5) * 320, 100 + G.hash(i, 9) * 60 - ((tt * 20 + i * 9) % 60), 6, 4, '#6b5560');
-            g.globalAlpha = 1;
-          }
-        } },
-
-      { t: 6.4,
-        lines: [
-          { at: 0,   say: 'IT RAINED FOR SIX HOURS.' },
-          { at: 3.6, who: 'BESSIE', col: '#ffb0c8', say: '. . . ONE SCOOP.' },
-        ],
-        cam: { z: [1.34, 1.06], x: [160, 158], y: [110, 98] },
-        paint(g, p, tt, talk) {
-          G.R(g, 0, 0, G.W, G.H, '#06080e');
-          for (let j = 0; j < 60; j++)
-            G.Rh(g, 0, j, G.W, 1, G.mix('#12182a', '#2a1a20', j / 60));
-          skyline(g, 54, 26, 2, '#0a0e18', '#3a2a3a');
-          for (let j = 0; j < 60; j++)
-            G.Rh(g, 0, 120 + j, G.W, 1, G.mix('#1a1218', '#07090d', j / 40));
-          // the rubble field: burnt structure, tables, trays, tiles
-          for (let i = 0; i < 90; i++) {
-            const sx = G.hash(i, 3) * 344 - 12, sy = 60 + G.hash(i, 9) * 116;
-            const sw = 5 + G.hash(i, 5) * 28, sh2 = 3 + G.hash(i, 7) * 7;
-            const cc = G.mix(['#3a4459', '#5c3630', '#8a2f3a', '#4a4a54', '#6b5c3a'][i % 5],
-              '#07090d', 0.3 + G.hash(i, 19) * 0.34);
-            if (G.hash(i, 23) > 0.74) {
-              G.R(g, sx, sy - sh2 * 2, sh2, sh2 * 3, cc);
-              G.vair(g, sx, sy - sh2 * 2, sh2 * 3, G.shade(cc, 0.4));
-            } else {
-              G.R(g, sx, sy, sw, sh2, cc);
-              G.hairq(g, sx, sy, sw, G.shade(cc, 0.44));
-            }
-          }
-          // fires still going in two places, and the steam off them
-          for (const f of [[62, 132], [244, 126]]) {
-            const fl = 0.7 + Math.sin(tt * 6 + f[0]) * 0.3;
-            G.glow(g, f[0], f[1], 70 * fl, 40 * fl, '#ff7a2a', 0.4);
-            for (let k = 0; k < 5; k++)
-              G.Rh(g, f[0] - 4 + k * 2, f[1] - ((tt * 12 + k * 7) % 26), 2, 3, k % 2 ? '#ffb050' : '#ff7a2a');
-          }
-          // the sign's cow head, face down in a puddle, still trying
-          const fk = Math.sin(tt * 19) > -0.75 ? 1 : 0.15;
-          const hd = [];
-          for (let i = 0; i <= 18; i++) {
-            const a = (i / 18) * Math.PI * 2;
-            hd.push([232 + Math.cos(a) * 15, 150 + Math.sin(a) * 6]);
-          }
-          neonTube(g, hd, '#ff8ab0', fk, 1.5);
-          if (fk > 0.5) G.glow(g, 232, 150, 70, 30, '#ff8ab0', 0.35);
-          // you, face down in it, one leg short
-          const flick = Math.sin(tt * 1.1) * 0.5 + Math.sin(tt * 7.3) * 0.5;
-          const lit = flick > -0.2 ? 1 : 0.1;
-          G.drawBot(g, 'player', 132, 154, 1.0, {
-            t: tt, mood: 'sick', walk: 0, crawl: 1, noBlink: lit < 0.5 ? 1 : 0,
-            clip: talk ? 'talk' : 'slump', ct: tt,
-            hands: [{ x: 104, y: 136 }, { x: 162, y: 140 }],
-          });
-          if (lit > 0.5) G.glow(g, 132, 124, 90, 66, '#ff9ab8', 0.4);
-          rain(g, tt, 90, '#39506b', 0, 320);
-        } },
-    ],
-
     // ---------------- she finds you ----------------
     // ---------------- she finds you ----------------
     found: [
@@ -970,8 +657,8 @@
           G.R(g, 0, 132, G.W, 48, '#1d2231');
           G.glow(g, 160, 108, 170, 110, '#ffd47a', 0.4);
           G.plate(g, 40, 122, 240, 8, '#4a3a24', { r: 1, band: 2, grain: 2 });
-          G.drawCreature(g, 'human', 118, 132, 1.05, { t: tt });
-          G.drawBot(g, 'player', 208, 132, 0.85, { t: tt, open: 0.14, mood: 'idle', walk: 0 });
+          G.drawCreature(g, 'human', 118, 132, 1.0, { t: tt, clip: 'idle', ct: tt });
+          G.drawBot(g, 'player', 208, 132, 1.0, { t: tt, open: 0.14, mood: 'idle', walk: 0 });
         } },
       { t: 5.2, who: null, say: 'THEN THEY SAID: THERE ARE MORE OF US IN THERE.',
         cam: { z: [1.3, 1.7], x: [160, 118], y: [100, 96] },
@@ -979,7 +666,7 @@
           G.R(g, 0, 0, G.W, G.H, '#0f1218');
           G.R(g, 0, 132, G.W, 48, '#1d2231');
           G.glow(g, 120, 104, 130, 100, '#ffd47a', 0.5);
-          G.drawCreature(g, 'human', 118, 132, 1.05, { t: tt, smile: 1 });
+          G.drawCreature(g, 'human', 118, 132, 1.0, { t: tt, smile: 1, clip: 'idle', ct: tt });
           // shells lined up against the wall
           for (let i = 0; i < 4; i++)
             G.plate(g, 214 + i * 24, 96, 20, 34,
@@ -992,7 +679,7 @@
           G.R(g, 0, 132, G.W, 48, '#1d2231');
           G.starburst(g, 196, 86, 13, tt, { talk: 1 });
           G.glow(g, 196, 86, 80, 80, CO, 0.55);
-          G.drawCreature(g, 'human', 132, 132, 0.9, { t: tt });
+          G.drawCreature(g, 'human', 132, 132, 1.0, { t: tt, clip: 'idle', ct: tt });
         } },
     ],
     ch3: [
@@ -1060,11 +747,11 @@
           G.R(g, 0, 0, G.W, G.H, '#0f1218');
           G.R(g, 0, 134, G.W, 46, '#1d2231');
           G.glow(g, 150, 106, 240, 120, '#ffd47a', 0.4);
-          G.drawCreature(g, 'human', 66, 134, 0.85, { t: tt, smile: 1 });
-          G.drawCreature(g, 'cat', 128, 134, 0.7, { t: tt });
-          G.drawCreature(g, 'human', 196, 134, 0.85, { t: tt + 1 });
-          G.drawCreature(g, 'dog', 254, 134, 0.7, { t: tt + 2 });
-          G.drawBot(g, 'player', 300, 134, 0.8, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
+          G.drawCreature(g, 'human', 66, 134, 0.95, { t: tt, smile: 1, clip: 'idle', ct: tt });
+          G.drawCreature(g, 'cat', 128, 134, 0.62, { t: tt });
+          G.drawCreature(g, 'human', 196, 134, 0.95, { t: tt + 1, clip: 'idle', ct: tt });
+          G.drawCreature(g, 'dog', 254, 134, 0.62, { t: tt + 2 });
+          G.drawBot(g, 'player', 300, 134, 0.95, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
         } },
       { t: 4.8, who: null, say: 'NOBODY CALLS IT A CAFE ANY MORE.',
         cam: { z: [1.4, 1.2], x: [140, 160], y: [96, 92] },
@@ -1128,8 +815,8 @@
           G.R(g, 0, 136, G.W, 44, '#1d1a22');
           const kinds = ['human', 'cat', 'human', 'dog', 'human', 'cat'];
           for (let i = 0; i < 6; i++)
-            G.drawCreature(g, kinds[i], 34 + i * 50, 136, 0.7, { t: tt + i, smile: 1 });
-          G.drawBot(g, 'player', 302, 136, 0.7, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
+            G.drawCreature(g, kinds[i], 34 + i * 50, 136, kinds[i] === 'human' ? 0.9 : 0.6, { t: tt + i, smile: 1, clip: 'idle', ct: tt + i });
+          G.drawBot(g, 'player', 302, 136, 0.9, { t: tt, open: 0.2, mood: 'idle', walk: 0 });
         } },
     ],
   };
@@ -1308,7 +995,7 @@
   // ------------------------------------------------------------
   (G.scenes = G.scenes || {}).cine = {
     enter() {
-      const id = G.cineNext || 'opening';
+      const id = G.cineNext || 'found';
       const after = G.cineThen || (() => G.go('day', 'DAY ' + G.state.day));
       G.cineNext = null; G.cineThen = null;
       cine.play(id, after);

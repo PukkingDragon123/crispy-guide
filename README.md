@@ -8,8 +8,9 @@ on the belly. For six years you were the face of BIG MOO, a burger chain with a
 cow on the sign, open twenty-four hours.
 
 Then a patrol machine walked in through the front door, shot one of your legs
-off and put a charge under the counter. You came back on in the debris, missing
-a leg, and crawled the length of the site looking for anybody at all.
+off and put a charge under the counter. You came back on four hours later in
+the wreck, on one leg and a length of scaffold pipe, looking for anybody at
+all.
 
 An old woman called **Tracy**, who has been making gelato since before machines
 could hold a scoop, found you with a torch, carried you home, bolted a leg out
@@ -46,118 +47,116 @@ else.
 
 ---
 
-## 📺 Before any of it
+## 🕹️ The prologue is a place, not a picture
 
-The story is not a film. It is **Channel 4, Municipal**, and you are watching it
-on a set: a channel ident with a live dot in the corner, a clock running in the
-other one, scanlines, and a roll bar drifting down the picture. When it stops
-being a nice evening, a **BREAKING** strap comes up under the ident and stays
-there.
+The first act of this game used to be nine cutscene shots and a two-mile
+crawl — a camera looking at things while you waited. It is now **two rooms you
+walk around in**. Tap where you want to go and the mascot walks there. Tap the
+green chevron over something and it walks over and uses it.
 
-There is no letterbox, no film grain, no vignette and no camera shear. The
-picture fills the frame, the cuts are hard, and the only camera move left is a
-pan and a push.
+Everything in them runs off `stage.js`: a floor line, a scrolling camera, a
+cast of people each running their own **script of intentions**, places you can
+walk up to and use, speech bubbles over the right heads, and beats that fire
+when you get there.
 
-Dialogue arrives the way a broadcast does it: a **lower third** slides up from
-the bottom with a coloured tab carrying the speaker's name, and the line types
-itself into the bar beside it.
+![The floor of BIG MOO](screenshots/floor.png)
 
-![BIG MOO](screenshots/big-moo.png)
+**ACT ONE — the floor.** Mid-shift at a burger chain with a cow on the sign.
+There is a **birthday party in the second booth**, a couple eating in the
+first, two staff behind the counter, a queue that forms and clears, and a kid
+who will not sit down.
 
-A burger chain with a cow on the sign, in the rain, at night. The neon buzzes
-and drops out and comes back. The wet car park keeps the light that fell on it —
-the doorway's warm pool, the sign's pink and gold — and a family goes in under
-one umbrella that is too small for two of them.
+The room is **two planes deep**: the counter, the booths and the staff stand on
+a back floor eighteen units further away, so you walk *in front* of the
+furniture instead of standing in it, and anyone sat in a booth is cut off at
+the chest by the bench in front of them — which is what sitting down looks
+like from the side.
 
-> **BESSIE:** TABLE FOUR! TWO SWIRLS AND A HAPPY BIRTHDAY!
+![Table four](screenshots/floor-party.png)
 
-![The show](screenshots/the-show.png)
+Four jobs, in order, each gated behind the last. **Say hello to table four.**
 
-Six shows a day. Twelve on a Saturday. A checkerboard floor, booths down both
-walls, bunting somebody put up, a cake with four candles that have been lit too
-long, and three children in paper crowns who point at you all at once.
-
+> **BESSIE:** WHO IS FOUR TODAY, THEN?
 > **A CHILD:** MOO! MOO! MOO!
-> **BESSIE:** WHO WANTS A SWIRL, THEN? EVERYBODY? RIGHT.
 
-![The door](screenshots/the-door.png)
+![The stage](screenshots/floor-stage.png)
 
-Then the door came off its hinges. The glass goes out in one piece and then in
-thirty, the rain comes in with it, and something fills the doorway with a red
-optic and a rim of light down the side the room is lighting. Everybody in the
-room recoils on the same frame and then stops moving.
+**Get up on the stage and do the dance.** Control is taken off you for three
+seconds, you wave, the whole table points at once, and it is handed back.
+
+![The counter](screenshots/floor-counter.png)
+
+**Collect table four's order** — the staff member you walk up to reaches under
+the counter and hands you two swirls, which you then carry, in both hands,
+until you put them down.
+
+> **SAM:** TWO SWIRLS. MIND THE FLOOR, IT IS WET.
+
+![The door](screenshots/floor-door.png)
+
+**Take them over.** And when you do, the door comes off its hinges. Everybody
+in the room recoils on the same frame. The glass goes out in thirty pieces on
+thirty different arcs. Something fills the doorway.
 
 > **PATROL:** CIVIL PATTERN. NOBODY MOVE.
 
-![The shot](screenshots/the-shot.png)
+![The charge](screenshots/floor-shot.png)
 
-It did not ask anything. **One frame of white** — the whole picture, not a
-flash effect over it — and then a leg tumbling out of shot on a real arc, still
-trying to take a step, and a torn socket where it used to bolt on.
-
-> **BESSIE:** I'M — I'M STILL UNDER WARRA—
-
-![The charge](screenshots/the-charge.png)
-
-Then it put something under the counter, with a red light on it that keeps time.
-Everybody who can run, runs. You are not somebody who can run.
+One frame of white. Then a leg leaving on a real arc, a torn socket arcing
+where it used to bolt on, everybody who can run running, and a small box with
+a red light on it going under the counter.
 
 > **PATROL:** CLEAR THE FLOOR.
 
-![The blast](screenshots/the-blast.png)
+---
 
-Cut outside. The roof lifts off in one piece, the fireball boils rather than
-inflates — seven blobs turning over each other round a hot core — fifty pieces
-of the building go out on their own ballistic arcs in silhouette, the windows
-blow into teeth, and the sign comes off its pole and down onto the car park.
+## 🧱 Act two: the wreck
 
-![Six hours](screenshots/the-rain.png)
+![The wreck](screenshots/wreck.png)
 
-It rained for six hours. Two fires still going in the heap, the cow off the
-sign face down in a puddle still trying to light, and you in the middle of it
-with one leg and an optic that gutters, catches, gutters again.
+The same building, four hours later. The wall is still standing — burnt
+blockwork with the top taken off it, four window holes punched through, the
+fascia still there in patches — and the roof is on the floor. Two fires still
+going. Rain, embers on the wind, and puddles holding the firelight.
 
-> **BESSIE:** . . . ONE SCOOP.
+You are on **one leg and a length of scaffold pipe**, which is why you move at
+about half speed and hop when you walk.
+
+![One shoe](screenshots/wreck-find.png)
+
+**Five things that used to belong to somebody**, laid out along the road where
+they fell. Walk up to each one and you stop and call out. A paper crown, size
+small. A tray from table four. One shoe. A staff badge with the name burnt off
+it. A radio, still on, with nobody on it. The counter at the top fills up, and
+it is not a counter of people.
+
+![The torch](screenshots/wreck-tracy.png)
+
+When it reads five out of five, a torch comes down the road. She walks to you,
+you walk to her, and she gets down onto the rubble to reach it — which at her
+age is a decision.
+
+> **TRACY:** OH, YOU POOR ARTICLE. YOU ARE THE COW OFF THE SIGN.
+> **TRACY:** RIGHT. HOME. I HAVE GOT A CRATE OF LEGS AND NOTHING ON TONIGHT.
 
 ---
 
-## 🧱 The site
+## 📏 One scale for the whole game
 
-The first thing you do in this game is crawl the length of a blast site,
-because you have one leg and nothing else.
+![One scale](screenshots/scale.png)
 
-![Waking up](screenshots/wake.png)
+Everything used to be sized by eye. That is why a counter came up to a grown
+woman's shoulder in one room and to her knee in another, and why a customer
+stood next to the mascot at half its height.
 
-You come back on at 4% power. Right leg: not found. Left leg: present. Site: BIG
-MOO, Unit 4. Other staff: **searching**.
+So there is a table now, and one rule: **an adult is 52 logical units head to
+heel at draw scale 1.0, standing on the floor line.** A door is 78, because
+you should be able to walk through it. A counter top is 22, because that is
+waist high. A table is 20, a booth back is 32, a seat pad is 12.
 
-![The site](screenshots/site.png)
-
-**Tap where you want to go.** That is the whole control. One hand reaches out
-ahead along the way you asked for, sinks into the debris and hauls until the
-body is under it; then the other one does it. Hand over hand, on one finger, and
-you can stop anywhere and change your mind.
-
-Underneath it is still two arms and physics: the pull works in *both* axes, so
-it is also how you get over a heap; loose footing gives way if you lean on it too
-long; and you slide back down anything genuinely steep, because you have no legs.
-
-![Crawling](screenshots/crawl.png)
-
-The heap is generated — **forty-eight kinds of rubbish** scattered across a
-heightfield, including the restaurant itself in pieces: booth seats, cafeteria
-trays, paper cups, a fry basket, a paper crown, and letters off the sign with
-the tube still in them, some of which are still lit.
-
-**Five things that used to belong to somebody** are laid out along the route, and
-you stop at each one and call out. A paper crown, size small. A tray from table
-four. One shoe. A staff badge with the name burnt off it. A radio, still on, with
-nobody on it. The counter at the bottom of the screen fills up, and it is not a
-counter of people.
-
-![The road](screenshots/road.png)
-
-Then somebody shines a torch at you.
+In a walkable scene **everybody is drawn at 1.0** and the room is built around
+them. The mascot comes out at 52 as well, because a mascot is a person in a
+suit.
 
 ---
 
@@ -172,20 +171,8 @@ exactly the same rig as everybody else in the game — same skeleton, same clips
 with her own clothes layered over the top through two hooks, so she stands in
 the same world as the crowd rather than beside it.
 
-![The torch](screenshots/torch.png)
-
-Six hours of rain, and then a torch coming down the slope — the only light on
-the whole site, and it is looking for people.
-
-![Found](screenshots/found.png)
-
-She gets down onto the rubble to reach you, which at her age is a decision.
-
-> **TRACY:** OH, YOU POOR ARTICLE. YOU'RE THE COW OFF THE SIGN.
-
-![Carried](screenshots/carried.png)
-
-> **TRACY:** RIGHT. HOME. I'VE GOT A CRATE OF LEGS AND NOTHING ON TONIGHT.
+She turns up at the end of act two with a torch, and she is the one who walks
+to *you*.
 
 ---
 
@@ -272,9 +259,12 @@ and the same patrol coming back.
 
 ![A chapter](screenshots/cine-chapter.png)
 
-Same set the whole way through: the ident, the clock, the scanlines, the roll
-bar and the lower third. The camera pans and pushes and nothing rotates, so
-every scanline stays a scanline.
+The seven mid-game chapters are still cutscenes — they are short, and they are
+somebody else's news broadcast rather than your shift. Same set the whole way
+through: the ident, the clock, the scanlines, the roll bar and the lower third.
+The camera pans and pushes and nothing rotates, so every scanline stays a
+scanline. Everybody in them is drawn at the same scale as everybody else now,
+which they were not.
 
 ---
 
@@ -611,6 +601,12 @@ spot, one scratches the back of its head every nine seconds or so, one checks a
 wrist, one bounces, one cranes to see past whoever is in front. Everybody also
 gets a phase offset and a speed multiplier, so a crowd never walks in lockstep.
 
+**And they have somewhere to be.** In a walkable scene every person runs a
+**script of intentions** that loops: walk to the counter, wait, order, walk to
+a booth, sit down, talk, get up, leave. Staff stay behind the counter. Children
+run. Nobody stands in the middle of the floor doing nothing, which is the thing
+that makes a set look like a set.
+
 Everything is drawn on the quarter-unit grid — one native pixel — row by row,
 **outlines in one pass and fills in the second**. Do it per row and each row's
 outline paints over the last row's fill and the whole person turns into a black
@@ -772,11 +768,12 @@ not.
   about: ten named clips return pose offsets, and `drawBot`, `drawFolk` and
   Tracy all read the same fields. Contralateral gait, double-frequency bob,
   weight-leading lean, unpredictable blinks, and cross-fades between clips
-- The site is a **heightfield with two-hand physics** over it: a body with real
-  velocity, rigid arm constraints to whatever each hand is holding, a haul force
-  along the anchor vector, slope-driven slide-back and per-surface grip quality —
-  driven by **one tap**, with a stroke machine that reaches, plants, hauls and
-  swaps hands on its own
+- A **walkable stage** (`stage.js`): a floor line, a scrolling camera, tap to
+  walk, hotspots you walk up to and use, speech bubbles that find the right
+  head, a beat timeline that can take control and hand it back, and **two depth
+  planes** so furniture on the back floor occludes the people sat behind it
+- **One scale table** (`G.SZ`) that every walkable room is built from: an adult
+  is 52 units, a door is 78, a counter top is 22
 - **Procedural people** (`folk.js`): a seed becomes a genome — height, girth,
   skull shape, nose, eye size, hair, facial hair, glasses, clothes, shoes, hat
   and one nervous habit — and the rig draws it on the quarter-unit grid,
@@ -796,6 +793,7 @@ index.html          canvas + boot
 js/util.js          maths, primitives, the half and quarter detail tiers, juice
 js/anim.js          the clip/pose animation layer: ten clips, one pose bag
 js/folk.js          the people: a genome per seed, and the rig that draws it
+js/stage.js         the walkable stage: floor, camera, actors, spots, beats
 js/font.js          5×7 bitmap font, standard and fine tiers
 js/audio.js         WebAudio synthesis
 js/state.js         ingredients, systems, 19 frames, disguises, crew, chapters
@@ -806,7 +804,7 @@ js/bots.js          the rig: frames, plate detail, optics and dot eyes,
                     posed creatures, tells, the tip jar cat, goo scoops
 js/clause.js        clause.ai — flight, chatter, asks, the books
 js/cine.js          the cutscene camera and every story beat
-js/dump.js          the blast site you cross on your hands
+js/acts.js          act one, the floor of BIG MOO; act two, the wreck
 js/tracy.js         her front room, and the lesson
 js/fix.js           the bench: fitting the leg, six stages
 js/day.js           the floor: pits, sweeping, tips, spotting, closing

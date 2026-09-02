@@ -221,7 +221,9 @@
     const qv = (k) => A[k] + (Q ? (Q[k] || 0) : 0);
 
     // ---- the skeleton ----
-    const tot = 46 * gene.h * S;
+    // 50 * h puts an adult at 46..58 units and a child at 29..39,
+    // which is G.SZ.ADULT either side of the middle
+    const tot = 50 * gene.h * S;
     const hdH = tot * 0.25 * gene.head;
     const legH = tot * 0.40 * gene.legL;
     const nkH = tot * 0.028 * gene.neck;
