@@ -354,7 +354,7 @@
       for (let i = 0; i < 9; i++) for (let j = 0; j < 3; j++)
         G.Rh(g, 168 + i * 5, CNT_Y - 2 + j * 4, 5, 4, (i + j) % 2 ? '#f0a8bc' : '#fbeef0');
       // the cat, asleep on the warm end of the counter
-      G.drawCreature(g, 'cat', 300, CNT_Y, 0.42, { t, clip: 'slump', ct: t, fur: '#e8c8a0' });
+      G.drawCreature(g, 'cat', 298, CNT_Y + 1, 0.6, { t, clip: 'slump', ct: t, fur: '#e8c8a0' });
 
       // ===== her gelato pit, in a wooden tub =====
       G.plate(g, PIT.x - 7, PIT.y - 8, PIT.w + 14, PIT.h + 22, '#c8a884',
@@ -478,27 +478,37 @@
     // ---- what she is saying, and what you have to do ----
     drawTalk(g, t) {
       const st = this.cur();
-      // her line, in a warm speech card
-      const bw = 200, bx = 14, by = 150;
-      G.plate(g, bx, by, bw, 26, '#2e1f16',
+      // her line, in a warm speech card - AT FULL SIZE, because it is
+      // the only thing in the room actually talking to you
+      const bw = 226, bx = 8, by = 142;
+      G.plate(g, bx, by, bw, 34, '#2e1f16',
         { r: 2, band: 2, lit: '#432d20', dk: '#170f0a', spec: false });
       G.R(g, bx + 2, by + 2, bw - 4, 1, '#c8783a');
-      G.text(g, 'TRACY', bx + 5, by + 4, '#c8783a', { sc: 0.5 });
+      const nw = G.tw('TRACY', 0.5) + 8;
+      G.R(g, bx + 4, by - 8, nw, 9, '#c8783a');
+      G.text(g, 'TRACY', bx + 8, by - 6, '#1a1418', { sc: 0.5 });
       const shown = Math.floor(this.stepT * 34);
-      G.text(g, st.say.slice(0, shown), bx + 5, by + 12, '#f2e4d0', { sc: 0.5 });
+      const said = st.say.slice(0, shown);
+      const lines = G.wrap(said, bw - 16, 1);
+      for (let i = 0; i < Math.min(3, lines.length); i++)
+        G.text(g, lines[i], bx + 8, by + 6 + i * 10, '#f6e8d4');
       if (shown < st.say.length && Math.sin(t * 18) > 0)
-        G.text(g, '_', bx + 5 + G.tw(st.say.slice(0, shown), 0.5), by + 12, '#f2e4d0', { sc: 0.5 });
+        G.text(g, '_', bx + 8 + G.tw(lines[Math.min(2, lines.length - 1)] || '', 1) + 1,
+          by + 6 + Math.min(2, Math.max(0, lines.length - 1)) * 10, '#f6e8d4');
       // what to do, if anything
       if (st.hint && this.stepT > 0.9) {
         const fl = Math.sin(t * 4) > 0;
-        G.plate(g, 220, 150, 96, 26, '#1a2418', { r: 2, band: 2, spec: false });
-        G.R(g, 222, 152, 92, 1, P.lime);
-        G.text(g, 'DO THIS', 224, 154, '#6b8a4a', { sc: 0.5 });
-        G.text(g, st.hint, 224, 162, fl ? '#dfffcf' : '#8ab06a', { sc: 0.5 });
+        const hl = G.wrap(st.hint, 68, 0.5);
+        G.plate(g, 240, 142, 76, 34, '#1a2418', { r: 2, band: 2, spec: false });
+        G.R(g, 242, 144, 72, 1, P.lime);
+        G.text(g, 'DO THIS', 244, 146, '#6b8a4a', { sc: 0.5 });
+        for (let i = 0; i < hl.length; i++)
+          G.text(g, hl[i], 244, 155 + i * 7, fl ? '#dfffcf' : '#8ab06a', { sc: 0.5 });
       } else if (!st.need && this.stepT > 0.8) {
-        G.text(g, st.id === 'done' ? 'TAP TO GO ON' : 'TAP', 268, 162,
+        G.text(g, st.id === 'done' ? 'TAP TO GO ON' : 'TAP', 278, 158,
           Math.sin(t * 4) > 0 ? '#c8a884' : '#6b5240', { align: 'center', sc: 0.5 });
       }
+      // whatever just went wrong
       // clause's own line, if you poked the tablet
       if (this.clauseT > 0) {
         g.globalAlpha = Math.min(1, this.clauseT);
@@ -509,7 +519,7 @@
       }
       // a step counter, so it feels like a lesson with an end
       for (let i = 0; i < STEPS.length; i++)
-        G.Rh(g, 118 + i * 6, 144, 4, 3, i < this.step ? '#c8783a' : i === this.step ? '#ffd47a' : '#3a2a22');
+        G.Rh(g, 118 + i * 6, 136, 4, 3, i < this.step ? '#c8783a' : i === this.step ? '#ffd47a' : '#3a2a22');
     },
   };
 })();

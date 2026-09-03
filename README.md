@@ -110,6 +110,73 @@ a red light on it going under the counter.
 
 ---
 
+## 🗣️ Everybody has a name and a mouth
+
+The dialogue used to be half-size text in a small white box. It is now **full
+size**, wrapped to the width of the bubble by `G.wrap`, with a **name tab**
+hanging off the top corner in the speaker's own colour — so you can read a
+line from across the room and you always know who said it.
+
+**One line on screen at a time.** Three hundred and twenty units across and a
+hundred and eighty down does not hold two bubbles: the second one ends up
+under the objective plate with its name tab buried, so a new line replaces the
+old one. The bubble pops in on a **back-out curve** — up past where it lands,
+then down onto it — and its tail is a **tapering stalk that reaches the head
+of whoever is talking**, however far up the bubble had to be pushed to stay
+clear of the chrome.
+
+And they talk **unprompted**. Every actor in act one carries a name and a pool
+of things they say:
+
+> **SAM:** THE SHAKE MACHINE IS DOWN. THE SHAKE MACHINE IS ALWAYS DOWN.
+> **DEREK:** I HAVE HAD THE SAME THING EVERY FRIDAY FOR ELEVEN YEARS.
+> **MUM:** DO NOT CLIMB ON THE COW.
+> **A MAN IN A COAT:** IS THE COW REAL.
+
+While you walk around, the room picks somebody **within forty-six units of
+you** who has not spoken for a while, hops them, and gives them a line off
+their own pool — then waits two and a half to five seconds and does it again.
+Walk from one end of the floor to the other and you get a different four
+lines every time, and each of them is somebody's, not the room's.
+
+---
+
+## 🍮 The bounce
+
+Nothing in a walkable scene moves at a constant velocity any more.
+
+- **A squash spring.** `S.sq` is a real spring — a stiffness, a damping and a
+  velocity. It kicks negative when you leave the mark (stretch) and slams
+  positive when you arrive (squash). The barrel torso reads it, and so do the
+  legs, so the whole body compresses together instead of the belly giving
+  while the feet stay bolted down.
+- **A hop in the walk.** Every step lifts you off the floor by a couple of
+  units, and the landing adds a dip on top of it.
+- **Dust.** Five puffs where you land, and one at every footfall on the way.
+- **Pops.** `S.pop` throws `ring`, `star`, `dust` and `bit` — the last one is
+  confetti, with gravity and a tumble on it. `S.bang` fires a burst and shakes
+  the camera; `S.cheer` makes a list of people jump.
+- **A plate that arrives.** The objective drops in on a back-out curve and
+  flashes for nine tenths of a second every time it changes.
+- **People who notice you.** An actor within fifty-two units turns their head
+  toward you, and their pupils track you inside it.
+
+Every job on the floor now ends in something: saying hello sets the whole
+booth cheering, the dance drops confetti, collecting the order rings the
+counter bell, handing it over pops five stars and a **3 / 4** over your head.
+
+### Two things that do nothing at all
+
+- **The mop bucket.** There is a wet floor sign and a bucket at the end of the
+  counter. Walk into it and you go over — legs up, a yelp, a splash of pops,
+  and everybody in earshot hops. It is repeatable. It is worth nothing.
+- **Your own bell.** Tap yourself, above the waist, and you ring the bell on
+  your collar. Rings go out, stars come off it, the whole room hops, and
+  somebody says **MOO** or **AGAIN**.
+
+---
+
+
 ## 🧱 Act two: the wreck
 
 ![The wreck](screenshots/wreck.png)
@@ -570,9 +637,24 @@ from the moment Tracy finishes the fitting, every scene in the game draws the
 mismatched leg without being told to.
 
 **And the proportions are a costume's.** The head is half again the size it was,
-the body is a third shorter, the legs are stubby, the arms are cream instead of
-steel and the feet are far too big. It is not a machine that happens to look
-friendly; it is somebody in a suit, which is what a mascot is.
+the body is a third shorter, the arms are cream instead of steel and the feet
+are far too big. It is not a machine that happens to look friendly; it is
+somebody in a suit, which is what a mascot is.
+
+The legs took two goes. Stubby ones came out as a **pair of dark blocks side by
+side**, which does not read as legs — it reads as a filing cabinet with a cow
+on top. So the leg got its structure back, in four parts: a long **cream
+shank** with a soft crease where the knee is, a fat **white boot cuff** that
+overhangs the shank, a short **black stocking** under it, and a **split hoof**
+wider than the leg it is on. The dark is now clearly a boot with a sock above
+it, and the gap between the two legs is wide enough to see the floor through.
+
+The badge went the same way. A cow's head drawn at seven pixels of radius with
+sunglasses on it is four grey pixels fighting for room, so the icon is now big
+shapes only — ears, horn nubs, a skull, and a **pink muzzle in its own colour**
+with two nostrils, because a muzzle painted the same cream as the field behind
+it is not a muzzle, it is a hole in the badge. The eyes drop out entirely once
+the roundel is too small to hold them.
 
 ---
 
@@ -806,6 +888,12 @@ not.
 - **One material for the whole cast.** Outline, base, lit crown, shaded belly,
   two rims and a specular — the mascot's treatment, applied to every person,
   cat and dog, so nothing in a room is made of different stuff to anything else
+- **Dialogue at full size**, wrapped by `G.wrap`, one bubble at a time, with a
+  name tab in the speaker's colour and a tail that reaches their head
+- **A juice layer in the stage**: a real squash spring that reaches the legs,
+  a hop in the walk, footfall dust, four kinds of pop (rings, stars, dust,
+  tumbling confetti), camera shake, an objective plate that drops in on a
+  back-out curve, actors that hop and track you with their pupils
 - All audio synthesised with WebAudio — servo whines, arc zaps, a cat's purr, a
   shell coming off, a shutter rolling, footsteps, and the five-note arpeggio for
   a secret. No sample files.

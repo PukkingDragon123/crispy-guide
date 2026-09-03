@@ -188,6 +188,21 @@
             dy0 + ((G.hash(i, 17) * Z.DOOR_H + S.t * 160) % Z.DOOR_H), 0.5, 4, '#6b90b8');
         }
       }
+      // the mop bucket and the sign nobody reads
+      G.R(g, 322, F - 13, 16, 13, M('#3f6a7a'));
+      G.bevelq(g, 322, F - 13, 16, 13, M('#6b9aa8'), M('#1e3a44'));
+      G.Rh(g, 322, F - 13, 16, 1, M('#8fc0cc'));
+      G.Rh(g, 325, F - 15, 10, 2, M('#c8ccd4'));
+      G.Rh(g, 337, F - 34, 1.5, 22, M('#8a6a44'));
+      G.Rh(g, 335, F - 38, 6, 5, M('#c8b490'));
+      for (let i = 0; i < 5; i++) {                      // the A-board
+        const yy = F - 30 + i * 5;
+        G.R(g, 344 - i * 1.5, yy, 3 + i * 3, 5, M(i % 2 ? '#f0c04a' : '#e8dccb'));
+      }
+      G.text(g, '!', 349, F - 22, M('#2a2028'), { sc: 0.5 });
+      g.globalAlpha = 0.24;                              // and the wet patch
+      G.fe(g, 330, F + 1, 24, 4, '#8fd8ff');
+      g.globalAlpha = 1;
       // the little stage, on the near floor, with a light on it
       G.fe(g, STAGE_X, F + 1, 36, 7, M('#7a262f'));
       G.fe(g, STAGE_X, F - 2, 34, 6, M('#c8505c'));
@@ -273,48 +288,68 @@
       }
     },
 
-    // ---- the shift ----
+    // ---- the shift. Everybody has a name, a job, and things they
+    // say when you walk past them. ----
     actors: [
-      // behind the counter, all shift
-      { id: 'sam', at: 400, dy: -18, behind: 1, seed: 21.6, badge: 1, col: '#8fd8c0',
+      { id: 'sam', name: 'SAM', at: 400, dy: -18, behind: 1, seed: 21.6, badge: 1, col: '#8fd8c0',
+        lines: ['THE SHAKE MACHINE IS DOWN. THE SHAKE MACHINE IS ALWAYS DOWN.',
+                'IF ANYONE ASKS, THE FRIES ARE FRESH.',
+                'SOMEBODY ORDERED A BURGER WITH NO BURGER IN IT.',
+                'I HAVE BEEN ON SINCE SIX AND I HAVE SEEN THINGS.'],
         script: [{ clip: 'idle', d: 4 },
                  { say: 'TABLE FOUR! TWO SWIRLS AND A HAPPY BIRTHDAY!', d: 2.8 },
                  { clip: 'reach', d: 1.8 }, { wait: 3 },
                  { say: 'ORDER UP.', d: 1.6 }, { wait: 5 }] },
-      { id: 'sam2', at: 460, dy: -18, behind: 1, seed: 44.2, badge: 1, col: '#8fd8c0',
+      { id: 'sam2', name: 'KEV', at: 460, dy: -18, behind: 1, seed: 44.2, badge: 1, col: '#8fd8c0',
+        lines: ['I AM NOT PAID ENOUGH TO WEAR THIS HAT.',
+                'THE ICE MACHINE IS MAKING A NEW NOISE.',
+                'BESSIE. YOUR BELL IS IN THE GRAVY.'],
         script: [{ clip: 'reach', d: 2.4 }, { clip: 'idle', d: 3 }, { clip: 'talk', d: 2 }, { wait: 4 }] },
-      // the birthday table: three kneeling on the bench in paper crowns
-      { id: 'k1', at: B2 + 18, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 2.2,
+      { id: 'k1', name: 'LEO', at: B2 + 18, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 2.2,
         hat: 'crown', smile: 1, col: '#a8d158',
+        lines: ['ARE YOU A REAL COW', 'MY DAD SAYS YOU ARE A MACHINE',
+                'CAN I HAVE YOUR BELL', 'WHY HAVE YOU GOT A BADGE'],
         script: [{ clip: 'idle', d: 3 }, { say: 'IS IT COMING', d: 1.8 }, { clip: 'talk', d: 2 }, { wait: 4 }] },
-      { id: 'k2', at: B2 + 44, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 7.7,
+      { id: 'k2', name: 'PIP', at: B2 + 44, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 7.7,
         hat: 'crown', smile: 1, col: '#a8d158',
+        lines: ['MOO', 'MOO MOO', 'I HAVE HAD SIX', 'I AM NOT TIRED'],
         script: [{ wait: 2 }, { clip: 'talk', d: 2.4 }, { wait: 5 }] },
-      { id: 'k3', at: B2 + 70, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 12.9,
+      { id: 'k3', name: 'BEA', at: B2 + 70, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 12.9,
         hat: 'crown', smile: 1, col: '#a8d158',
+        lines: ['I AM FOUR', 'I AM FOUR AND A HALF', 'DO IT AGAIN', 'AGAIN'],
         script: [{ wait: 5 }, { say: 'MOO! MOO!', d: 2 }, { wait: 6 }] },
-      { id: 'mum', at: B2 + 94, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 4.4, smile: 1, col: '#7fd8ff',
+      { id: 'mum', name: 'MUM', at: B2 + 94, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 4.4,
+        smile: 1, col: '#7fd8ff',
+        lines: ['THEY HAVE HAD SO MUCH SUGAR.', 'DO NOT CLIMB ON THE COW.',
+                'SAY THANK YOU TO THE COW.', 'I ONLY CAME IN FOR A COFFEE.'],
         script: [{ clip: 'idle', d: 6 }, { say: 'SIT DOWN AND EAT IT, THE PAIR OF YOU.', d: 2.6 }, { wait: 7 }] },
-      // a couple in the far booth, eating
-      { id: 'e1', at: B1 + 20, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 18.3,
+      { id: 'e1', name: 'DEREK', at: B1 + 20, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 18.3,
+        col: '#f0c04a',
+        lines: ['I SAID NO GHERKINS.', 'THERE ARE GHERKINS.',
+                'I AM NOT GOING TO SAY ANYTHING.', 'I HAVE SAID SOMETHING.'],
         script: [{ clip: 'idle', d: 5 }, { clip: 'talk', d: 3 }, { wait: 6 }] },
-      { id: 'e2', at: B1 + 60, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 31.2, smile: 1,
+      { id: 'e2', name: 'SHIRL', at: B1 + 60, sit: 1, sitDy: -18, dy: -18, behind: 1, seed: 31.2,
+        smile: 1, col: '#e07aa8',
+        lines: ['HE IS BUILDING UP TO THE GHERKINS.', 'IT IS A LOVELY LITTLE PLACE.',
+                'THAT COW HAS BEEN DANCING FOR AN HOUR.', 'LEAVE THE COW ALONE, DEREK.'],
         script: [{ wait: 3 }, { clip: 'talk', d: 2.4 }, { clip: 'idle', d: 6 }] },
-      // and two who come in, queue, order and go and sit down
-      { id: 'q1', at: 600, seed: 9.4, col: '#f0c04a',
+      { id: 'q1', name: 'A MAN IN A COAT', at: 600, seed: 9.4, col: '#f0c04a',
+        lines: ['IS THE COW PART OF THE MEAL DEAL', 'I WILL HAVE WHAT HE IS HAVING.',
+                'HE IS NOT HAVING ANYTHING.'],
         script: [{ at: 600 }, { go: 452 }, { wait: 2.4 },
                  { say: 'JUST A SWIRL. NO, TWO.', d: 2.2 }, { wait: 2.6 },
                  { go: 320 }, { go: 268 }, { wait: 1.2 }, { go: 600, sp: 1.1 }, { wait: 5 }] },
-      { id: 'q2', at: 640, seed: 27.1, hat: 'cap',
+      { id: 'q2', name: 'A WOMAN IN A CAP', at: 640, seed: 27.1, hat: 'cap', col: '#8fd8ff',
+        lines: ['WHAT IS IN THE BIG MOO SAUCE', 'DO NOT TELL ME WHAT IS IN THE BIG MOO SAUCE',
+                'I HAVE MADE MY PEACE WITH IT.'],
         script: [{ at: 640 }, { wait: 6 }, { go: 482 }, { wait: 4 },
                  { say: 'ARE YOU STILL DOING THE MEAL DEAL', d: 2.2 }, { wait: 3 },
                  { go: 640, sp: 1.1 }, { wait: 8 }] },
-      // a kid who will not sit down
-      { id: 'run', at: 206, seed: 33.7, smile: 1, hat: 'crown',
+      { id: 'run', name: 'A CHILD', at: 206, seed: 33.7, smile: 1, hat: 'crown', col: '#a8d158',
+        lines: ['WHEEEE', 'I AM A COW TOO', 'I AM NOT ALLOWED SUGAR', 'MOOOOO'],
         script: [{ go: 274, sp: 1.6 }, { wait: 0.6 }, { go: 196, sp: 1.6 }, { wait: 1.4 }] },
-      // and the thing that comes through the door
-      { id: 'pat', kind: 'bot', bot: 'police', at: 620, dy: -18, scale: 1.2, col: '#7fd8ff',
-        hide: (S) => !S.flags.busted, script: [{ clip: 'idle', d: 9 }] },
+      { id: 'pat', name: 'PATROL', kind: 'bot', bot: 'police', at: 620, dy: -18, scale: 1.2,
+        col: '#7fd8ff', hide: (S) => !S.flags.busted, script: [{ clip: 'idle', d: 9 }] },
     ],
 
     spots: [
@@ -322,43 +357,103 @@
         once: 1,
         on(S) {
           S.mine('WHO IS FOUR TODAY, THEN?');
+          S.bang(S.px, FB - 30, '#ffd45a', 10);
+          S.cheer(['k1', 'k2', 'k3'], 30);
           for (const id of ['k1', 'k2', 'k3']) {
             const a = S.actor(id); if (a) { a.hold = 2.6; a.holdClip = 'point'; a.p = 1; }
           }
-          S.play([{ d: 1.0 }, { d: 2.4, go(S2) { S2.say('k3', 'MOO! MOO! MOO!', 2.4); } }]);
-          S.obj = 'GET UP ON THE STAGE'; G.audio.sfx('unlock');
+          S.play([{ d: 1.1 }, { d: 2.4, go(S2) { S2.say('k3', 'I AM FOUR AND A HALF.', 2.4); S2.jump('k3', 34); } }]);
+          S.setObj('GET UP ON THE STAGE'); G.audio.sfx('unlock');
+          G.floatText('HELLO!', S.px - Math.round(G.cam.x), FB - 62, '#ffd45a');
         } },
-      { id: 'dance', x: STAGE_X, label: 'DO THE DANCE', markY: FB - 90,
+      { id: 'dance', x: STAGE_X, label: 'DO THE DANCE', markY: F - 70,
         once: 1, hidden: (S) => !S.done.hello,
         on(S) {
           S.flags.onstage = 1;
           S.play([
-            { d: 0.4, go(S2) { S2.lock = 1; S2.pclip = 'wave'; S2.pp = 0.5; G.audio.sfx('menu'); } },
-            { d: 3.2,
-              go(S2) { S2.mine('WHO WANTS A SWIRL, THEN? EVERYBODY? RIGHT.', 3); },
-              tick(S2, p) { S2.pclip = p < 0.5 ? 'wave' : 'talk'; S2.pp = Math.sin(p * 6.28) * 0.5 + 0.5; } },
-            { d: 1.6, go(S2) { for (const id of ['k1', 'k2', 'k3', 'run']) { const a = S2.actor(id); if (a) { a.hold = 2.2; a.holdClip = 'point'; a.p = 1; } } G.audio.sfx('coin'); } },
-            { d: 0.2, go(S2) { S2.lock = 0; S2.pclip = 'idle'; S2.obj = "COLLECT TABLE FOUR'S ORDER"; G.audio.sfx('unlock'); } },
+            { d: 0.4, go(S2) { S2.lock = 1; S2.pclip = 'wave'; S2.pp = 0.5; S2.sqV = -46; G.audio.sfx('menu'); } },
+            { d: 3.4,
+              go(S2) { S2.mine('WHO WANTS A SWIRL, THEN? EVERYBODY? RIGHT.', 3.2); },
+              tick(S2, p) {
+                S2.pclip = p < 0.45 ? 'wave' : 'talk';
+                S2.pp = Math.sin(p * 6.28) * 0.5 + 0.5;
+                if (Math.random() < 0.5) {
+                  const cs = ['#ffd45a', '#8fd8c0', '#ff8ab0', '#7fd8ff'];
+                  S2.pop(STAGE_X + G.rand(-46, 46), 26, 'bit', cs[Math.floor(Math.random() * 4)], 0, 2.2);
+                }
+                if (Math.random() < 0.14) S2.sqV = -20;
+              } },
+            { d: 1.8,
+              go(S2) {
+                S2.cheer(['k1', 'k2', 'k3', 'run', 'e2', 'mum'], 36);
+                for (const id of ['k1', 'k2', 'k3', 'run']) { const a = S2.actor(id); if (a) { a.hold = 2.4; a.holdClip = 'point'; a.p = 1; } }
+                S2.bang(STAGE_X, F - 40, '#ff8ab0', 16, 3);
+                G.audio.sfx('coin');
+                G.floatText('CROWD PLEASER', G.W / 2, 44, '#ff9ab8', 1);
+                S2.say('e2', 'THAT COW HAS STILL GOT IT.', 2.6);
+              } },
+            { d: 0.2, go(S2) { S2.lock = 0; S2.pclip = 'idle'; S2.setObj("COLLECT TABLE FOUR'S ORDER"); G.audio.sfx('unlock'); } },
           ]);
         } },
       { id: 'collect', x: 400, label: 'COLLECT', markY: CNT_TOP - 42,
         once: 1, hidden: (S) => !S.done.dance,
         on(S) {
-          const a = S.actor('sam'); if (a) { a.hold = 2.4; a.holdClip = 'reach'; a.p = 1; }
-          S.say('sam', 'TWO SWIRLS. MIND THE FLOOR, IT IS WET.', 2.6);
+          const a = S.actor('sam'); if (a) { a.hold = 2.4; a.holdClip = 'reach'; a.p = 1; a.hopV = -20; }
+          S.say('sam', 'TWO SWIRLS. MIND THE FLOOR, IT IS WET.', 2.8);
           S.flags.carry = 1;
-          S.obj = 'TAKE THEM TO TABLE FOUR'; G.audio.sfx('grab');
+          S.bang(S.px + 8, CNT_TOP - 6, '#8fd8c0', 8, 1.6);
+          S.setObj('TAKE THEM TO TABLE FOUR'); G.audio.sfx('grab');
+          G.floatText('x2 SWIRL', S.px - Math.round(G.cam.x), CNT_TOP - 30, '#8fd8c0');
         } },
       { id: 'serve', x: B2 + 14, off: 0, label: 'HAND THEM OVER', markY: FB - 54,
         once: 1, hidden: (S) => !S.done.collect,
         on(S) {
           S.flags.carry = 0;
-          S.say('k1', 'THANK YOU MOO', 2);
-          S.obj = null; S.objDone = 1;
+          S.say('k1', 'THANK YOU MOO', 2.2);
+          S.cheer(['k1', 'k2', 'k3'], 32);
+          S.bang(S.px, FB - 34, '#ffd45a', 14, 2.6);
+          G.floatText('HAPPY BIRTHDAY', G.W / 2, 44, '#ffd45a', 1);
+          S.setObj(null); S.objDone = 1;
           G.audio.sfx('serve');
-          S.play(ATTACK);
+          S.play([{ d: 1.4 }, { d: 2.6, go(S2) { S2.mine('SIX YEARS OF THIS AND I STILL LIKE IT.', 2.6); } },
+                  { d: 0.1, go(S2) { S2.play(ATTACK); } }]);
+        } },
+      // ---- and two things that are not jobs, just fun ----
+      { id: 'slip', x: 330, label: 'WET FLOOR', markY: F - 44,
+        on(S) {
+          // the mop bucket. It is signposted. You walk into it anyway.
+          S.play([
+            { d: 0.5, go(S2) { S2.lock = 1; S2.pclip = 'startle'; S2.pp = 1; S2.sqV = 60;
+                               G.audio.sfx('snap'); G.shake(4, 0.3);
+                               S2.bang(S2.px, F - 6, '#8fd8ff', 12, 0); } },
+            { d: 1.6, go(S2) { S2.mine('OW.', 1.6); for (let i = 0; i < 7; i++)
+                               S2.pop(S2.px + G.rand(-12, 12), F - 20 - G.rand(0, 10), 'star', '#ffffff', 0, 0.8); } },
+            { d: 1.4, go(S2) { S2.pclip = 'idle'; S2.sqV = -30;
+                               S2.say('sam', 'I DID SAY.', 1.8); S2.jump('sam', 18); } },
+            { d: 0.1, go(S2) { S2.lock = 0; S2.done.slip = 0; } },
+          ]);
         } },
     ],
+    // tap yourself and the bell goes. It does nothing. Everybody
+    // reacts to it every single time.
+    onTap(S, wx, y) {
+      if (Math.abs(wx - S.px) < 15 && y > F - 62) {
+        S.bang(S.px, F - 34, '#ffd45a', 6, 1.4);
+        for (let i = 0; i < 3; i++)
+          S.pop(S.px + G.rand(-10, 10), F - 40 - G.rand(0, 8), 'ring', '#ffe6a8', 9, 0.4);
+        S.sqV = 28; G.audio.sfx('bell');
+        const who = ['k1', 'k2', 'k3', 'run'].filter((id) => {
+          const a = S.actor(id); return a && Math.abs(a.x - S.px) < 130;
+        });
+        S.cheer(who, 26);
+        if (Math.random() < 0.6 && who.length && S.bubbles.length < 2) {
+          const a = S.actor(who[Math.floor(Math.random() * who.length)]);
+          S.say(a.id, G.pick(['MOO', 'AGAIN', 'DO IT AGAIN', 'HA']), 1.4);
+        }
+        return true;
+      }
+      return false;
+    },
 
     update(S, dt) {
       if (S.flags.flash) S.flags.flash = Math.max(0, S.flags.flash - dt * 2.2);
@@ -473,7 +568,7 @@
 
   const wreckDef = {
     w: 560, start: 40, obj: 'FIND ANYBODY  ·  0 / 5',
-    minX: 22, maxX: 528, pspeed: 0.6, grade: 1.25,
+    minX: 22, maxX: 528, pspeed: 0.6, grade: 1.25, hopAmp: 4.2,
 
     sky(g, S) {
       for (let j = 0; j < G.H; j++)
@@ -688,9 +783,12 @@
         S.mine(f.say, 2.8);
         S.found = (S.found || 0) + 1;
         G.audio.sfx('order');
-        S.obj = 'FIND ANYBODY  ·  ' + S.found + ' / 5';
+        S.bang(f.x, FB - 12, '#ffd47a', 9, 1.8);
+        G.floatText(String(S.found) + ' / 5', f.x - Math.round(G.cam.x), FB - 34, '#ffd47a');
+        S.setObj('FIND ANYBODY  ·  ' + S.found + ' / 5');
+        S.mut = G.rand(7, 12);
         if (S.found >= 5) {
-          S.obj = 'SOMETHING IS COMING DOWN THE ROAD';
+          S.setObj('SOMETHING IS COMING DOWN THE ROAD');
           S.flags.torch = 0.01;
           const tr = S.actor('tracy'); if (tr) tr.x = 560;
         }
@@ -701,10 +799,19 @@
         on(S) { S.play(RESCUE); } },
     ]),
 
-    enter(S) { S.found = 0; S.plegOff = 1; S.pmood = 'sick'; },
+    enter(S) { S.found = 0; S.plegOff = 1; S.pmood = 'sick'; S.mut = 6; },
 
     update(S, dt) {
-      S.pdy = S.pclip === 'walk' ? -Math.abs(Math.sin(S.t * 7)) * 3 : 0;
+      // you talk to yourself out here, because there is nobody else
+      S.mut -= dt;
+      if (S.mut <= 0 && !S.lock && !S.bubbles.length) {
+        S.mine(G.pick([
+          'HELLO?', 'ANYBODY.', 'THIS IS FINE. THIS IS ALL FINE.',
+          'I AM STILL UNDER WARRANTY.', 'SAM? KEV?',
+          'THE SHAKE MACHINE IS DEFINITELY DOWN NOW.',
+        ]), 2.8);
+        S.mut = G.rand(9, 15);
+      }
       if (S.flags.torch) {
         S.flags.torch = Math.min(1, S.flags.torch + dt * 0.5);
         const tr = S.actor('tracy');

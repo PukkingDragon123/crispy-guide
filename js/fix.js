@@ -597,36 +597,43 @@
     // ---- what she is saying, and what you have to do ----
     drawTalk(g, t) {
       const st = this.cur();
-      const bw = 196, bx = 10, by = 152;
-      G.plate(g, bx, by, bw, 24, '#2e1f16',
+      const bw = 214, bx = 8, by = 142;
+      G.plate(g, bx, by, bw, 34, '#2e1f16',
         { r: 2, band: 2, lit: '#432d20', dk: '#170f0a', spec: false });
       G.R(g, bx + 2, by + 2, bw - 4, 1, '#c8783a');
-      G.text(g, 'TRACY', bx + 5, by + 4, '#c8783a', { sc: 0.5 });
+      const nw = G.tw('TRACY', 0.5) + 8;
+      G.R(g, bx + 4, by - 8, nw, 9, '#c8783a');
+      G.text(g, 'TRACY', bx + 8, by - 6, '#1a1418', { sc: 0.5 });
       const shown = Math.floor(this.stepT * 34);
-      G.text(g, st.say.slice(0, shown), bx + 5, by + 12, '#f2e4d0', { sc: 0.5 });
+      const lines = G.wrap(st.say.slice(0, shown), bw - 16, 1);
+      for (let i = 0; i < Math.min(3, lines.length); i++)
+        G.text(g, lines[i], bx + 8, by + 6 + i * 10, '#f6e8d4');
       if (shown < st.say.length && Math.sin(t * 18) > 0)
-        G.text(g, '_', bx + 5 + G.tw(st.say.slice(0, shown), 0.5), by + 12, '#f2e4d0', { sc: 0.5 });
+        G.text(g, '_', bx + 8 + G.tw(lines[Math.min(2, lines.length - 1)] || '', 1) + 1,
+          by + 6 + Math.min(2, Math.max(0, lines.length - 1)) * 10, '#f6e8d4');
       // the job
       if (st.hint) {
         const fl = Math.sin(t * 4) > 0;
-        G.plate(g, 212, 152, 100, 24, '#1a2418', { r: 2, band: 2, spec: false });
-        G.R(g, 214, 154, 96, 1, P.lime);
-        G.text(g, 'DO THIS', 216, 156, '#6b8a4a', { sc: 0.5 });
-        G.text(g, st.hint, 216, 164, fl ? '#dfffcf' : '#8ab06a', { sc: 0.5 });
+        const hl = G.wrap(st.hint, 76, 0.5);
+        G.plate(g, 228, 142, 86, 34, '#1a2418', { r: 2, band: 2, spec: false });
+        G.R(g, 230, 144, 82, 1, P.lime);
+        G.text(g, 'DO THIS', 232, 146, '#6b8a4a', { sc: 0.5 });
+        for (let i = 0; i < hl.length; i++)
+          G.text(g, hl[i], 232, 155 + i * 7, fl ? '#dfffcf' : '#8ab06a', { sc: 0.5 });
       } else if (this.stepT > 0.8) {
-        G.text(g, 'TAP TO GO ON', 262, 164, Math.sin(t * 4) > 0 ? '#c8a884' : '#6b5240',
+        G.text(g, 'TAP TO GO ON', 270, 158, Math.sin(t * 4) > 0 ? '#c8a884' : '#6b5240',
           { align: 'center', sc: 0.5 });
       }
       // whatever just went wrong
       if (this.msg && this.msgT < 2.2) {
         const a = Math.min(1, this.msgT * 4) * Math.min(1, (2.2 - this.msgT) * 2);
         g.globalAlpha = a;
-        G.text(g, this.msg, 160, 138, '#ffd47a', { align: 'center', sc: 0.5, out: OUT });
+        G.text(g, this.msg, 160, 130, '#ffd47a', { align: 'center', out: OUT });
         g.globalAlpha = 1;
       }
       // the run of the job
       for (let i = 0; i < STEPS.length; i++)
-        G.Rh(g, 110 + i * 6, 146, 4, 3, i < this.step ? '#c8783a' : i === this.step ? '#ffd47a' : '#3a2a22');
+        G.Rh(g, 110 + i * 6, 136, 4, 3, i < this.step ? '#c8783a' : i === this.step ? '#ffd47a' : '#3a2a22');
     },
   };
 })();

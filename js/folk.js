@@ -425,9 +425,13 @@
       let hy2 = shy + armLen * (0.95 - Math.abs(sw) * 0.1) - up * armLen * 1.7;
       // only the arm the clip actually threw out reaches; the other
       // one hanging out at the same angle is a T-pose
+      let reaching = 0;
       if (A.reach > 0.05 && Math.abs(sw) > 0.6 && ((sd > 0) === (sw > 0))) {
-        hx2 = shx + sd * armLen * 0.92 * A.reach + sw * tot * 0.05;
-        hy2 = shy + armLen * 0.55 - A.reach * tot * 0.06;
+        // out and DOWN. A reach held level with the shoulder is a rod
+        // with a knob on it, not somebody showing you something.
+        hx2 = shx + sd * armLen * 0.86 * A.reach + sw * tot * 0.05;
+        hy2 = shy + armLen * 0.74 - A.reach * tot * 0.035;
+        reaching = 1;
       }
       if (A.hold && key === 'armR') { hx2 = shx - sd * tot * 0.05; hy2 = shy + tot * 0.04 - A.hold * tot * 0.1; }
       if (Q && Q.scratch > 0.1 && key === 'armR') {    // scratching the head
@@ -438,7 +442,8 @@
         hx2 = cxT - shW * 0.2; hy2 = torT + torHn * 0.36;
       }
       if (up > 0.2) hx2 += Math.sin(t * 11) * tot * 0.035 * A.flap;
-      const ex = (shx + hx2) / 2 - sd * tot * 0.035, ey = (shy + hy2) / 2 + tot * 0.02;
+      const ex = (shx + hx2) / 2 - sd * tot * (reaching ? 0.012 : 0.035);
+      const ey = (shy + hy2) / 2 + tot * (reaching ? 0.05 : 0.02);
       const w0 = tot * 0.075, w1 = tot * 0.055;
       // sleeve to where it ends, then bare forearm
       const sxE = G.lerp(shx, ex, Math.min(1, sl / 0.5)), syE = G.lerp(shy, ey, Math.min(1, sl / 0.5));

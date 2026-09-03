@@ -596,6 +596,18 @@
   };
 
   G.floaters = [];
+  // wrap a line to a pixel width at a given type size
+  G.wrap = function (str, wide, sc) {
+    const words = String(str).split(' ');
+    const lines = []; let cur = '';
+    for (const w of words) {
+      const test = cur ? cur + ' ' + w : w;
+      if (G.tw(test, sc) > wide && cur) { lines.push(cur); cur = w; } else cur = test;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
   G.floatText = function (str, x, y, col, big) { G.floaters.push({ str, x, y, col: col || P.gold, t: 0, big: !!big }); };
 
   // ------------------------------------------------------------
