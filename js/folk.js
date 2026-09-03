@@ -68,7 +68,7 @@
       // ---- face ----
       nose: pick(['button', 'bulb', 'beak', 'spud', 'ski', 'squish'], 12),
       eye: G.lerp(0.9, 1.4, h(13)),
-      gap: G.lerp(0.8, 1.18, h(14)),
+      gap: G.lerp(0.9, 1.22, h(14)),
       brow: h(15) * 2 - 1,
       ears: G.lerp(0.8, 1.6, h(16)),
       teeth: h(17) > 0.5,
@@ -91,6 +91,9 @@
       shoe: pick(SHOEC, 32),
       shoeSz: G.lerp(1.0, 1.55, h(33)),
       hat: h(34) > 0.84 ? pick(['cap', 'beanie', 'crown', 'party'], 35) : 'none',
+      // ---- something in the hand, because people carry things ----
+      prop: h(39) > 0.52 ? ['bag', 'cup', 'cone', 'phone', 'lolly', 'balloon', 'brolly', 'flowers'][Math.floor(h(40) * 8)] : 'none',
+      scarf: h(41) > 0.76,
       // ---- the thing they cannot help doing ----
       quirk: pick(['rock', 'scratch', 'check', 'bounce', 'peer', 'none', 'none', 'none'], 36),
       ph: h(37) * 6.283,
@@ -141,8 +144,31 @@
   // ------------------------------------------------------------
   const q = (v) => Math.round(v * 4) / 4;
 
+  // ------------------------------------------------------------
+  // THE MASCOT'S MATERIAL, ON A PERSON.
+  //
+  // Everything the cow is made of has five things going on: a hard
+  // black outline, a base tone, a LIT CROWN across the top, a SHADED
+  // BELLY across the bottom, a rim down each edge, and one short
+  // specular streak on the light shoulder. People used to be a flat
+  // fill with a single bright row, which is why they read as cardboard
+  // standing next to it. Now they are made of the same stuff.
+  // ------------------------------------------------------------
+  function tones(c) {
+    return {
+      hi: G.shade(c, 0.5), lit: G.shade(c, 0.24), base: c,
+      dk: G.shade(c, -0.22), dk2: G.shade(c, -0.46),
+    };
+  }
+  function band(T, p) {
+    return p < 0.09 ? T.hi : p < 0.21 ? T.lit
+      : p > 0.9 ? T.dk2 : p > 0.76 ? T.dk : T.base;
+  }
+
   // a solid of revolution: half-width as a function of 0..1 down it
-  function body(g, cx, top, h, hwOf, fill, lit, dk) {
+  function body(g, cx, top, h, hwOf, c, o) {
+    o = o || {};
+    const T = tones(c);
     const n = Math.max(3, Math.round(h * 4));
     const W = [];
     for (let i = 0; i < n; i++) W.push(Math.max(0.25, q(hwOf((i + 0.5) / n))));
@@ -151,15 +177,20 @@
     G.Rh(g, cx - W[0] + 0.25, top - 0.25, W[0] * 2 - 0.5, 0.25, OUT);
     G.Rh(g, cx - W[n - 1] + 0.25, top + n * 0.25, W[n - 1] * 2 - 0.5, 0.25, OUT);
     for (let i = 0; i < n; i++) {
-      const p = (i + 0.5) / n;
-      G.Rh(g, cx - W[i], top + i * 0.25, W[i] * 2, 0.25, p < 0.14 ? lit : p > 0.84 ? dk : fill);
-      G.Rh(g, cx - W[i], top + i * 0.25, 0.25, 0.25, lit);
-      G.Rh(g, cx + W[i] - 0.25, top + i * 0.25, 0.25, 0.25, dk);
+      const p = (i + 0.5) / n, y = top + i * 0.25;
+      G.Rh(g, cx - W[i], y, W[i] * 2, 0.25, band(T, p));
+      G.Rh(g, cx - W[i], y, 0.25, 0.25, T.hi);                 // rim, light side
+      G.Rh(g, cx + W[i] - 0.25, y, 0.25, 0.25, T.dk2);         // rim, shadow side
+      // the specular streak down the light shoulder
+      if (!o.flat && p > 0.17 && p < 0.31 && W[i] > 1.6)
+        G.Rh(g, cx - W[i] * 0.58, y, 0.25, 0.25, T.hi);
     }
   }
 
-  // a round blob. out=null skips the outline (for things inside a shape)
+  // a round blob, shaded like a ball and not like a disc.
+  // out=null skips the outline (for marks that live inside a shape)
   function ball(g, cx, cy, r, col, out, lit) {
+    const T = tones(col);
     const n = Math.max(2, Math.round(r * 8));
     const W = [];
     for (let i = 0; i < n; i++) {
@@ -172,13 +203,20 @@
       G.Rh(g, cx - W[0] + 0.25, top - 0.25, W[0] * 2 - 0.5, 0.25, out);
       G.Rh(g, cx - W[n - 1] + 0.25, top + n * 0.25, W[n - 1] * 2 - 0.5, 0.25, out);
     }
-    for (let i = 0; i < n; i++) G.Rh(g, cx - W[i], top + i * 0.25, W[i] * 2, 0.25, col);
-    if (lit) for (let i = 0; i < Math.min(n, Math.max(1, Math.round(n * 0.3))); i++)
-      G.Rh(g, cx - W[i] * 0.7, top + i * 0.25, W[i] * 1.1, 0.25, lit);
+    for (let i = 0; i < n; i++) {
+      const p = (i + 0.5) / n, y = top + i * 0.25;
+      G.Rh(g, cx - W[i], y, W[i] * 2, 0.25,
+        lit ? (p < 0.18 ? T.hi : p < 0.34 ? T.lit : p > 0.86 ? T.dk2 : p > 0.7 ? T.dk : T.base) : col);
+    }
+    // one catch-light, up and to the left, the way the cow's eye has one
+    if (lit && r >= 1.25) G.Rq(g, cx - r * 0.42, top + r * 0.5, 1, 1,
+      typeof lit === 'string' ? lit : T.hi);
   }
 
-  // a noodle: a tapered outlined run from joint to joint
+  // a noodle: a tapered outlined run from joint to joint, lit down one
+  // side and shaded down the other
   function noodle(g, x0, y0, x1, y1, w0, w1, col, lit) {
+    const T = tones(col);
     const d = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) * 3));
     const P = [];
     for (let i = 0; i <= d; i++) {
@@ -186,10 +224,22 @@
       P.push([q(G.lerp(x0, x1, p)), q(G.lerp(y0, y1, p)), Math.max(0.5, q(G.lerp(w0, w1, p)))]);
     }
     for (const s of P) G.Rh(g, s[0] - s[2] / 2 - 0.25, s[1] - s[2] / 2 - 0.25, s[2] + 0.5, s[2] + 0.5, OUT);
-    for (const s of P) {
-      G.Rh(g, s[0] - s[2] / 2, s[1] - s[2] / 2, s[2], s[2], col);
-      if (lit) G.Rh(g, s[0] - s[2] / 2, s[1] - s[2] / 2, 0.25, s[2], lit);
+    for (let i = 0; i < P.length; i++) {
+      const s = P[i], p = i / P.length;
+      G.Rh(g, s[0] - s[2] / 2, s[1] - s[2] / 2, s[2], s[2], p < 0.16 ? T.lit : T.base);
+      G.Rh(g, s[0] - s[2] / 2, s[1] - s[2] / 2, 0.25, s[2], lit || T.hi);
+      G.Rh(g, s[0] + s[2] / 2 - 0.25, s[1] - s[2] / 2, 0.25, s[2], T.dk2);
     }
+  }
+
+  // a stitched seam, a hem, a cuff: the small stuff that turns a
+  // coloured block into a garment
+  function hem(g, x, y, w, c) {
+    G.Rh(g, q(x), q(y), q(w), 0.5, G.shade(c, -0.3));
+    G.Rh(g, q(x), q(y), q(w), 0.25, G.shade(c, 0.3));
+  }
+  function stitch(g, x, y, w, c) {
+    for (let i = 0; i < w; i += 1.5) G.Rq(g, x + i, y, 1, 1, c);
   }
 
   // ------------------------------------------------------------
@@ -264,13 +314,19 @@
       if (bare && !gene.shorts) {                     // a sock over the shin
         G.Rh(g, q(fx - tot * 0.05), q(fy - shoeH - tot * 0.05), q(tot * 0.1), q(tot * 0.05), '#f2ece0');
       }
-      // the shoe: far too big, which is the whole joke
+      // the shoe: far too big, which is the whole joke, and now it has
+      // a toe cap, a sole and a lace on it
       const sx = q(fx - shoeW * 0.5), sy = q(fy - shoeH);
-      G.rr2(g, sx - 0.25, sy - 0.25, q(shoeW) + 0.5, q(shoeH) + 0.5, OUT);
-      G.rr2(g, sx, sy, q(shoeW), q(shoeH), gene.shoe);
-      G.Rh(g, sx + 0.5, sy, q(shoeW) - 1, 0.25, G.shade(gene.shoe, 0.35));
-      G.Rh(g, sx, sy + q(shoeH) - 0.5, q(shoeW), 0.5, G.shade(gene.shoe, -0.45));
-      G.Rh(g, sx + q(shoeW) * 0.32, sy + 0.25, 0.5, 0.25, G.shade(gene.shoe, 0.6));
+      const sw2 = q(shoeW), sh2 = q(shoeH);
+      G.rr2(g, sx - 0.25, sy - 0.25, sw2 + 0.5, sh2 + 0.5, OUT);
+      G.rr2(g, sx, sy, sw2, sh2, gene.shoe);
+      G.Rh(g, sx + 0.5, sy, sw2 - 1, 0.25, G.shade(gene.shoe, 0.4));
+      G.Rh(g, sx + 0.75, sy + 0.25, sw2 * 0.34, 0.25, G.shade(gene.shoe, 0.6));
+      ball(g, sx + sw2 * 0.82, sy + sh2 * 0.45, sh2 * 0.5, gene.shoe, null, 1);
+      G.Rh(g, sx, sy + sh2 - 0.75, sw2, 0.75, G.shade(gene.shoe, -0.5));
+      G.Rh(g, sx, sy + sh2 - 1, sw2, 0.25, '#e8e2d6');
+      G.Rq(g, sx + sw2 * 0.3, sy + sh2 * 0.34, 1, 1, '#f0e8dc');
+      G.Rq(g, sx + sw2 * 0.46, sy + sh2 * 0.34, 1, 1, '#f0e8dc');
       if (A.step && sd * A.step > 0.86 && lift < 1) {
         g.globalAlpha = 0.3;
         for (let k = 0; k < 3; k++) G.Rq(g, fx - shoeW * 0.5 - k * 1.5, fy - 0.5 - k * 0.5, 2, 1, '#a89882');
@@ -286,7 +342,7 @@
       const waist = 1 - Math.sin(p * Math.PI) * (0.1 - bellyP);
       return G.lerp(shW, hipW, p) * 0.5 * shoulder * waist;
     };
-    body(g, cxT, torT, torHn, torHw, top, topL, topD);
+    body(g, cxT, torT, torHn, torHw, top);
 
     // ---- what they are wearing on it ----
     const tW = shW * 0.5;
@@ -310,11 +366,12 @@
       G.Rh(g, cxT + tW * 0.3, torT + torHn * 0.02, tW * 0.5, torHn * 0.3, topL);
       G.Rh(g, cxT - tW, hipY - 0.5, tW * 2, 1, topD);
     } else if (K === 'dress') {
-      const hem = hipY + legH * 0.22;
-      body(g, cxT, hipY - torHn * 0.1, hem - hipY + torHn * 0.1,
-        (p) => G.lerp(hipW * 0.5, hipW * 0.86, p), top, topL, topD);
+      const hemY = hipY + legH * 0.22, hemY0 = torHn;
+      body(g, cxT, hipY - hemY0 * 0.1, hemY - hipY + hemY0 * 0.1,
+        (p) => G.lerp(hipW * 0.5, hipW * 0.86, p), top);
       for (let i = 0; i < 5; i++)
-        G.Rh(g, cxT - hipW * 0.4 + i * hipW * 0.2, hem - torHn * 0.1, 0.25, torHn * 0.1, topD);
+        G.Rh(g, cxT - hipW * 0.4 + i * hipW * 0.2, hemY - torHn * 0.1, 0.25, torHn * 0.1, topD);
+      hem(g, cxT - hipW * 0.43, hemY - 0.5, hipW * 0.86, top);
     } else if (K === 'cardi') {
       // knitted, worn open, one button done up out of habit
       G.Rh(g, cxT - tW * 0.34, torT + torHn * 0.06, tW * 0.68, torHn * 0.94, gene.top2);
@@ -332,6 +389,24 @@
       for (let i = 0; i < 3; i++)
         G.Rh(g, cxT - tW * 0.5 + i * tW * 0.5 - 0.5, torT + torHn * 0.4, 1, 1, gene.top2);
     }
+    // ---- the small stuff that turns a coloured block into clothes ----
+    hem(g, cxT - torHw(0.98), hipY - 1.5, torHw(0.98) * 2, top);
+    // a collar, with the shadow it casts on the chest
+    const colW = tW * 0.5;
+    G.Rh(g, q(cxT - colW * 0.5), q(torT + torHn * 0.02), q(colW), 0.5, G.shade(top, 0.4));
+    g.globalAlpha = 0.3;
+    G.Rh(g, q(cxT - colW * 0.55), q(torT + torHn * 0.06), q(colW * 1.1), 0.5, '#000000');
+    g.globalAlpha = 1;
+    if (gene.scarf) {                                  // and a scarf, on some
+      const sc2 = gene.top2;
+      G.Rh(g, q(cxT - tW * 0.72), q(torT + torHn * 0.04) - 0.25, q(tW * 1.44), q(torHn * 0.16) + 0.5, OUT);
+      G.Rh(g, q(cxT - tW * 0.7), q(torT + torHn * 0.04), q(tW * 1.4), q(torHn * 0.14), sc2);
+      G.Rh(g, q(cxT - tW * 0.7), q(torT + torHn * 0.04), q(tW * 1.4), 0.25, G.shade(sc2, 0.4));
+      G.Rh(g, q(cxT + tW * 0.22) - 0.25, q(torT + torHn * 0.16) - 0.25, q(tW * 0.3) + 0.5, q(torHn * 0.3) + 0.5, OUT);
+      G.Rh(g, q(cxT + tW * 0.22), q(torT + torHn * 0.16), q(tW * 0.3), q(torHn * 0.3), G.shade(sc2, -0.12));
+      for (let i = 0; i < 4; i++)
+        G.Rq(g, cxT + tW * 0.24 + i * 1.5, torT + torHn * 0.44, 1, 1, G.shade(sc2, -0.4));
+    }
     if (o.onTorso) o.onTorso(g, { cxT, torT, torHn, shW, hipW, tW, tot, hipY, legH, torHw });
     if (o.badge) {                                     // a name badge, for staff
       G.Rh(g, cxT + tW * 0.3, torT + torHn * 0.2, tW * 0.5, torHn * 0.16, '#f2ece0');
@@ -339,7 +414,7 @@
     }
 
     // ============ arms ============
-    let handR = null;
+    let handR = null, handL = null;
     const sl = SLEEVE[K] === undefined ? 0.8 : SLEEVE[K];
     const armLen = tot * 0.29 * gene.armL;
     for (const [key, sd] of [['armL', -1], ['armR', 1]]) {
@@ -367,20 +442,31 @@
       const w0 = tot * 0.075, w1 = tot * 0.055;
       // sleeve to where it ends, then bare forearm
       const sxE = G.lerp(shx, ex, Math.min(1, sl / 0.5)), syE = G.lerp(shy, ey, Math.min(1, sl / 0.5));
+      let cuffX = null, cuffY = 0;
       if (sl >= 0.5) {
         noodle(g, shx, shy, ex, ey, w0, w1, G.shade(top, -0.2), topL);
         const p2 = Math.min(1, (sl - 0.5) / 0.5);
         const mx = G.lerp(ex, hx2, p2), my = G.lerp(ey, hy2, p2);
         if (p2 > 0.02) noodle(g, ex, ey, mx, my, w1, w1 * 0.9, G.shade(top, -0.28), topL);
-        if (p2 < 0.98) noodle(g, mx, my, hx2, hy2, w1 * 0.9, w1 * 0.8, skin, skinL);
+        if (p2 < 0.98) { noodle(g, mx, my, hx2, hy2, w1 * 0.9, w1 * 0.8, skin, skinL); cuffX = mx; cuffY = my; }
       } else {
         noodle(g, shx, shy, sxE, syE, w0, w1, G.shade(top, -0.2), topL);
         noodle(g, sxE, syE, hx2, hy2, w1, w1 * 0.82, skin, skinL);
+        cuffX = sxE; cuffY = syE;
       }
-      // a mitten of a hand
-      ball(g, hx2, hy2 + tot * 0.02, tot * 0.055, skin, OUT, skinL);
+      // a cuff exactly where the sleeve stops, no wider than the arm
+      if (cuffX !== null) {
+        G.Rh(g, q(cuffX - w1 * 0.58), q(cuffY - w1 * 0.5), q(w1 * 1.16), 0.5, G.shade(top, 0.4));
+        G.Rh(g, q(cuffX - w1 * 0.58), q(cuffY), q(w1 * 1.16), 0.25, G.shade(top, -0.4));
+      }
+      // a mitten of a hand, shaded like the cow's
+      ball(g, hx2, hy2 + tot * 0.02, tot * 0.058, skin, OUT, 1);
       if (sd > 0) handR = { x: hx2, y: hy2 + tot * 0.02 };
+      else handL = { x: hx2, y: hy2 + tot * 0.02 };
     }
+    // and whatever they came in carrying
+    if ((o.prop || gene.prop) !== 'none' && !o.dead)
+      prop(g, o.prop || gene.prop, handL || handR, tot, gene, t);
 
     // ============ neck ============
     const turn = qv('headTurn') * hdW * 0.14;
@@ -413,40 +499,55 @@
       else if (shape === 'box') k = (p < 0.1 || p > 0.92) ? 0.82 : 1;
       else if (shape === 'long') k = Math.min(1, r * 1.24);
       return hdW * 0.5 * k;
-    }, skin, skinL, skinD);
+    }, skin);
 
-    // ---- the face ----
-    const eyY = hyT + hdH * (gene.kid ? 0.52 : 0.46);
-    const eyX = hdW * 0.2 * gene.gap;
-    const eR = hdH * 0.1 * gene.eye;
+    // ---- the face. THE SAME THREE MARKS THE COW HAS: a light ring,
+    // a dark round, a white pip. Bigger than they were, because bigger
+    // is cuter, and nothing else in the eye at all. ----
+    const eyY = hyT + hdH * (gene.kid ? 0.52 : 0.47);
+    const eyX = hdW * 0.235 * gene.gap;
+    // never let the two rounds touch, whatever the genome asked for
+    const eR = Math.min(hdH * 0.105 * gene.eye, eyX * 0.72);
     const dead = o.dead;
+    // a soft cheek tone and a chin shadow, so the face is not a flat field
+    g.globalAlpha = 0.5;
+    ball(g, hcx + turn * 0.5, hyT + hdH * 0.86, hdW * 0.3, skinD, null);
+    g.globalAlpha = 1;
     for (const sd of [-1, 1]) {
       const ex = hcx + sd * eyX + turn * 0.7;
-      if (dead) { G.Rh(g, q(ex - eR), q(eyY), q(eR * 2), 0.25, skinD); continue; }
+      const ey = eyY + eR * 0.4;
+      if (dead) { G.Rh(g, q(ex - eR), q(ey), q(eR * 2), 0.25, skinD); continue; }
       if (A.blink && !o.noBlink) {
-        G.Rh(g, q(ex - eR), q(eyY + eR * 0.3), q(eR * 2), 0.25, '#3a2a24');
-        G.Rh(g, q(ex - eR), q(eyY + eR * 0.55), q(eR * 2), 0.25, skinD);
+        // a shut lid, with a lash under it
+        G.Rh(g, q(ex - eR), q(ey - eR * 0.1), q(eR * 2), 0.5, '#3a2a30');
+        G.Rh(g, q(ex - eR * 0.7), q(ey + eR * 0.4), q(eR * 1.4), 0.25, skinD);
         continue;
       }
-      const wide = A.stare ? 1.24 : 1;
-      ball(g, ex, eyY + eR * 0.4, eR * wide, '#fbf8f2', OUT);
-      const pR = Math.max(0.5, eR * (A.stare ? 0.42 : 0.56));
-      const px = ex + turn * 0.5 + (o.look === undefined ? 0 : o.look) * eR * 0.3;
-      ball(g, px, eyY + eR * 0.5, pR, '#241d2a', null);
-      G.Rq(g, px - pR * 0.3, eyY + eR * 0.5 - pR * 0.6, 1, 1, '#ffffff');
-      // brow
-      const bA = gene.brow * 0.5 + (A.stare ? -0.5 : 0);
-      G.Rh(g, q(ex - eR), q(eyY - eR * (0.85 + (A.stare ? 0.5 : 0)) + sd * bA * eR * 0.4),
-        q(eR * 2), 0.5, G.mix(G.shade(hairC, -0.25), '#2a1c18', 0.35));
+      const wide = A.stare ? 1.3 : 1;
+      const r = eR * wide;
+      ball(g, ex, ey, r + 0.25, '#fdf8ee', null);              // the light ring
+      ball(g, ex, ey, r, '#241d2a', null);                      // the round
+      G.Rq(g, ex - r * 0.34, ey - r * 0.4, 1, 1, '#ffffff');    // the pip
+      if (r > 1.6) G.Rq(g, ex + r * 0.28, ey + r * 0.24, 1, 1, '#6b5f78');
+      // one thin brow, well clear of the eye, only where the face wants one
+      if (Math.abs(gene.brow) > 0.25 || A.stare) {
+        const lift = A.stare ? -eR * 0.5 : 0;
+        G.Rh(g, q(ex - eR * 0.9), q(ey - r - eR * 0.85 + lift + sd * gene.brow * eR * 0.35),
+          q(eR * 1.8), 0.25, G.mix(G.shade(hairC, -0.2), '#3a2a24', 0.4));
+      }
     }
     if (gene.blush && !dead) {
-      g.globalAlpha = 0.4;
-      for (const sd of [-1, 1]) ball(g, hcx + sd * hdW * 0.34 + turn * 0.5, eyY + eR * 1.9, hdH * 0.08, '#e07a8a', null);
-      g.globalAlpha = 1;
+      for (const sd of [-1, 1]) {
+        g.globalAlpha = 0.42;
+        ball(g, hcx + sd * hdW * 0.35 + turn * 0.5, eyY + eR * 2.1, hdH * 0.085, '#e07a8a', null);
+        g.globalAlpha = 0.24;
+        ball(g, hcx + sd * hdW * 0.35 + turn * 0.5, eyY + eR * 1.9, hdH * 0.055, '#ff9ab8', null);
+        g.globalAlpha = 1;
+      }
     }
     if (gene.freck) for (let i = 0; i < 6; i++) {
       const sd = i < 3 ? -1 : 1;
-      G.Rq(g, hcx + sd * hdW * (0.2 + (i % 3) * 0.09) + turn * 0.5, eyY + eR * (1.7 + (i % 2) * 0.5), 1, 1, skinD);
+      G.Rq(g, hcx + sd * hdW * (0.2 + (i % 3) * 0.09) + turn * 0.5, eyY + eR * (1.8 + (i % 2) * 0.5), 1, 1, skinD);
     }
     // ---- the nose ----
     const nY = hyT + hdH * 0.6, nX = hcx + turn * 0.85;
@@ -463,30 +564,37 @@
     } else { G.Rh(g, q(nX - hdH * 0.09), q(nY), q(hdH * 0.18), 0.5, skinD); }
     if (gene.specs && !dead) specs(g, gene, hcx + turn * 0.7, eyY + eR * 0.4, eyX, eR, hdW);
 
-    // ---- the mouth ----
-    const mY = hyT + hdH * 0.78, mW = hdW * 0.3;
+    // ---- the mouth. One arc, the ends turned up, and a lighter pixel
+    // under it so it sits IN the face instead of on it. ----
+    const mY = hyT + hdH * 0.79, mW = hdW * 0.32;
+    const mx0 = hcx + turn * 0.7;
     if (dead) {
-      G.Rh(g, q(hcx - mW * 0.5 + turn * 0.7), q(mY), q(mW), 0.5, skinD);
+      G.Rh(g, q(mx0 - mW * 0.5), q(mY), q(mW), 0.5, skinD);
     } else if (A.mouth > 0.08) {
-      const oh = Math.max(0.75, hdH * 0.06 + A.mouth * hdH * 0.2);
-      const ow = mW * (0.7 + A.mouth * 0.4);
-      G.rr2(g, q(hcx - ow * 0.5 + turn * 0.7) - 0.25, q(mY) - 0.25, q(ow) + 0.5, q(oh) + 0.5, OUT);
-      G.rr2(g, q(hcx - ow * 0.5 + turn * 0.7), q(mY), q(ow), q(oh), '#6b2440');
-      if (gene.teeth) G.Rh(g, q(hcx - ow * 0.4 + turn * 0.7), q(mY), q(ow * 0.8), 0.5, '#fbf8f2');
-      G.Rh(g, q(hcx - ow * 0.2 + turn * 0.7), q(mY + oh - 0.5), q(ow * 0.4), 0.25, '#c0546a');
-    } else if (o.smile || A.hold) {
-      const n2 = Math.max(4, Math.round(mW * 4));
-      for (let i = 0; i < n2; i++) {
-        const p = i / (n2 - 1);
-        G.Rh(g, q(hcx - mW * 0.5 + turn * 0.7 + p * mW), q(mY + Math.sin(p * Math.PI) * hdH * 0.06), 0.25, 0.5, '#a04a62');
-      }
-      if (gene.teeth) G.Rh(g, q(hcx - mW * 0.3 + turn * 0.7), q(mY + hdH * 0.03), q(mW * 0.6), 0.25, '#fbf8f2');
-    } else if (A.droop || A.stare) {
-      G.rr2(g, q(hcx - mW * 0.3 + turn * 0.7), q(mY), q(mW * 0.6), q(hdH * 0.12), '#6b2440');
+      // open: a small rounded shape with the smile corners left in
+      const oh = Math.max(0.75, hdH * 0.055 + A.mouth * hdH * 0.19);
+      const ow = mW * (0.66 + A.mouth * 0.36);
+      G.rr2(g, q(mx0 - ow * 0.5) - 0.25, q(mY) - 0.25, q(ow) + 0.5, q(oh) + 0.5, OUT);
+      G.rr2(g, q(mx0 - ow * 0.5), q(mY), q(ow), q(oh), '#6b2440');
+      if (gene.teeth) G.Rh(g, q(mx0 - ow * 0.38), q(mY), q(ow * 0.76), 0.5, '#fbf8f2');
+      G.Rh(g, q(mx0 - ow * 0.2), q(mY + oh - 0.5), q(ow * 0.4), 0.25, '#c0546a');
+      G.Rq(g, mx0 - ow * 0.5 - 0.75, mY - 0.5, 1, 1, '#a04a62');
+      G.Rq(g, mx0 + ow * 0.5 - 0.25, mY - 0.5, 1, 1, '#a04a62');
     } else {
-      G.Rh(g, q(hcx - mW * 0.4 + turn * 0.7), q(mY), q(mW * 0.8), 0.5, '#a04a62');
-      G.Rq(g, hcx - mW * 0.5 + turn * 0.7, mY - 0.25, 1, 1, '#a04a62');
-      G.Rq(g, hcx + mW * 0.4 + turn * 0.7, mY - 0.25, 1, 1, '#a04a62');
+      const wideS = (o.smile || A.hold) ? 1.24 : 1;
+      const dip = (o.smile || A.hold) ? hdH * 0.06 : hdH * 0.03;
+      const n2 = Math.max(4, Math.round(mW * wideS * 4));
+      for (let i = 0; i < n2; i++) {
+        const p2 = i / (n2 - 1);
+        const yy = mY + Math.sin(p2 * Math.PI) * dip;
+        G.Rh(g, q(mx0 - mW * wideS * 0.5 + p2 * mW * wideS), q(yy), 0.25, 0.5, '#a04a62');
+        G.Rh(g, q(mx0 - mW * wideS * 0.5 + p2 * mW * wideS), q(yy + 0.5), 0.25, 0.25, '#ffd8e0');
+      }
+      // the ends turn up, which is the entire expression
+      G.Rq(g, mx0 - mW * wideS * 0.5 - 0.5, mY - 0.5, 1, 1, '#a04a62');
+      G.Rq(g, mx0 + mW * wideS * 0.5 - 0.25, mY - 0.5, 1, 1, '#a04a62');
+      if (gene.teeth && (o.smile || A.hold))
+        G.Rh(g, q(mx0 - mW * 0.3), q(mY + dip * 0.5), q(mW * 0.6), 0.25, '#fbf8f2');
     }
     if (o.onHead) o.onHead(g, { hcx, hyT, hdW, hdH, turn, eyY, eyX, eR, mY, nY, skin, skinD, skinL });
     facialHair(g, gene, hcx + turn * 0.7, hyT, hdW, hdH, hairC, mY, nY);
@@ -495,6 +603,74 @@
 
     return { headTop: hyT, cx: hcx, hand: handR, pose: A, gene, hdH, hdW };
   };
+
+  // ------------------------------------------------------------
+  // WHAT THEY ARE CARRYING. Everybody in a real room has something in
+  // one hand, and it is the cheapest character detail there is.
+  // ------------------------------------------------------------
+  function prop(g, kind, h, tot, gene, t) {
+    if (!h) return;
+    const x = q(h.x), y = q(h.y), u = (v) => q(tot * v);
+    if (kind === 'bag') {
+      const w = u(0.14), hh = u(0.17);
+      G.Rh(g, x - w / 2 - 0.25, y + u(0.03) - 0.25, w + 0.5, hh + 0.5, OUT);
+      G.Rh(g, x - w / 2, y + u(0.03), w, hh, gene.top2);
+      G.Rh(g, x - w / 2, y + u(0.03), w, 0.5, G.shade(gene.top2, 0.4));
+      G.Rh(g, x - w / 2, y + u(0.03) + hh - 0.5, w, 0.5, G.shade(gene.top2, -0.4));
+      for (let i = 0; i < 3; i++)                          // a handle over the top
+        G.Rq(g, x - w * 0.3 + i * w * 0.3, y + u(0.01), 1, 1, G.shade(gene.top2, -0.5));
+      stitch(g, x - w / 2 + 0.5, y + u(0.03) + hh * 0.4, w - 1, G.shade(gene.top2, -0.3));
+    } else if (kind === 'cup') {
+      const w = u(0.075), hh = u(0.12);
+      for (let j = 0; j < hh; j += 0.25) {
+        const hw = (w / 2) * (0.74 + 0.26 * (1 - j / hh));
+        G.Rh(g, x - hw - 0.25, y + j, hw * 2 + 0.5, 0.25, OUT);
+        G.Rh(g, x - hw, y + j, hw * 2, 0.25, j < 0.75 ? '#fbf4e8' : '#e4d6c2');
+      }
+      G.Rh(g, x - w * 0.62, y - 0.5, w * 1.24, 0.75, '#c8505c');
+      G.Rh(g, x + w * 0.1, y - u(0.05), 0.5, u(0.05), '#e8828c');
+    } else if (kind === 'cone') {
+      G.cone(g, x, y + u(0.11), { w: u(0.075), h: u(0.11) });
+      ball(g, x, y + u(0.02), u(0.045), '#ffd9b0', OUT, 1);
+    } else if (kind === 'phone') {
+      const w = u(0.055), hh = u(0.09);
+      G.Rh(g, x - w / 2 - 0.25, y - 0.25, w + 0.5, hh + 0.5, OUT);
+      G.Rh(g, x - w / 2, y, w, hh, '#2a2a34');
+      G.Rh(g, x - w / 2 + 0.25, y + 0.5, w - 0.5, hh - 1, Math.sin(t * 3) > -0.4 ? '#8fd8ff' : '#3a4a5c');
+      G.glow(g, x, y + hh * 0.5, u(0.16), u(0.16), '#8fd8ff', 0.24);
+    } else if (kind === 'lolly') {
+      G.Rh(g, x - 0.25, y, 0.5, u(0.1), '#d8c4a0');
+      ball(g, x, y - u(0.01), u(0.05), ['#ff8ab0', '#8fd8c0', '#ffd45a'][Math.floor(gene.ph) % 3], OUT, 1);
+    } else if (kind === 'balloon') {
+      // it wants to be over the head, or it is not a balloon
+      const bx = x + Math.sin(t * 1.3 + gene.ph) * u(0.05), by = y - u(0.62);
+      for (let i = 0; i < 14; i++)
+        G.Rq(g, G.lerp(x, bx, i / 13), G.lerp(y, by + u(0.08), i / 13), 1, 1, '#c8b490');
+      ball(g, bx, by, u(0.075), ['#e0574a', '#3a8ac8', '#ffd45a'][Math.floor(gene.ph * 2) % 3], OUT, 1);
+      G.Rq(g, bx - 0.5, by + u(0.075), 1, 1, OUT);
+    } else if (kind === 'brolly') {
+      G.Rh(g, x - 0.25, y - u(0.3), 0.5, u(0.34), '#4a5568');
+      for (let i = 0; i < 9; i++) {
+        const dx = (i - 4) * u(0.038), dip = Math.abs(i - 4) * u(0.012);
+        G.Rh(g, x + dx - u(0.022), y - u(0.31) + dip - 0.25, u(0.044), 0.75, OUT);
+        G.Rh(g, x + dx - u(0.022), y - u(0.31) + dip, u(0.044), 0.5, i % 2 ? gene.top2 : '#f6ead8');
+      }
+      G.Rq(g, x - 0.5, y - u(0.33), 1, 1, '#8a6a44');
+    } else if (kind === 'flowers') {
+      // a wrap in the fist, stems out of the top of it
+      G.Rh(g, q(x - u(0.035)) - 0.25, q(y - u(0.02)) - 0.25, q(u(0.07)) + 0.5, q(u(0.075)) + 0.5, OUT);
+      G.Rh(g, q(x - u(0.035)), q(y - u(0.02)), q(u(0.07)), q(u(0.075)), '#f6ead8');
+      G.Rh(g, q(x - u(0.035)), q(y - u(0.02)), q(u(0.07)), 0.25, '#ffffff');
+      for (let i = 0; i < 4; i++) {
+        const lean = (i - 1.5) * u(0.022);
+        const fy = y - u(0.03);
+        for (let k = 0; k < 8; k++)
+          G.Rh(g, q(x + lean * (k / 7)), q(fy - k * u(0.014)), 0.5, u(0.02), '#6b9a4a');
+        ball(g, x + lean, fy - u(0.1), u(0.03),
+          ['#e0574a', '#f0a8bc', '#ffd45a', '#b48ae0'][i], OUT, 1);
+      }
+    }
+  }
 
   // ------------------------------------------------------------
   // hair, in two layers so a bun sits behind and a fringe in front
@@ -608,7 +784,7 @@
       G.Rh(g, q(cx + w * 0.14), q(nY + h * 0.05), q(w * 0.05), q(h * 0.03), cd);
     }
     if (f === 'beard') {
-      body(g, cx, mY + h * 0.02, h * 0.2, (p) => w * 0.3 * (1 - p * 0.45), cd, G.shade(c, 0.1), G.shade(c, -0.4));
+      body(g, cx, mY + h * 0.02, h * 0.2, (p) => w * 0.3 * (1 - p * 0.45), cd);
     } else if (f === 'chops') {
       for (const sd of [-1, 1]) G.Rh(g, q(cx + sd * w * 0.36 - (sd > 0 ? q(w * 0.1) : 0)), q(top + h * 0.5), q(w * 0.1), q(h * 0.24), cd);
     } else if (f === 'stubble') {
@@ -638,18 +814,23 @@
         G.Rh(g, q(ex + sd * lw), q(ly), q(w * 0.09), 0.25, rim);     // temple arm
         continue;
       }
+      // A RIM, not a lens. The eye behind it is the character; a filled
+      // pane over a dark round is just a dark round with a smudge on it.
       if (gene.specs === 'round') {
-        ball(g, ex, ey + eR * 0.1, r, rim, null);
-        g.globalAlpha = 0.22;
-        ball(g, ex, ey + eR * 0.1, Math.max(0.5, r - 0.25), '#cfe4ff', null);
-        g.globalAlpha = 1;
+        const n2 = 22;
+        for (let k = 0; k < n2; k++) {
+          const a2 = (k / n2) * Math.PI * 2;
+          G.Rq(g, ex + Math.cos(a2) * r, ey + eR * 0.1 + Math.sin(a2) * r, 1, 1, rim);
+        }
       } else {
-        G.Rh(g, q(ex - r), q(ey - r * 0.7), q(r * 2), q(r * 1.4), rim);
-        g.globalAlpha = 0.22;
-        G.Rh(g, q(ex - r + 0.25), q(ey - r * 0.7 + 0.25), q(r * 2) - 0.5, q(r * 1.4) - 0.5, '#cfe4ff');
-        g.globalAlpha = 1;
+        G.Rh(g, q(ex - r), q(ey - r * 0.75), q(r * 2), 0.25, rim);
+        G.Rh(g, q(ex - r), q(ey + r * 0.65), q(r * 2), 0.25, rim);
+        G.Rh(g, q(ex - r), q(ey - r * 0.75), 0.25, q(r * 1.4), rim);
+        G.Rh(g, q(ex + r - 0.25), q(ey - r * 0.75), 0.25, q(r * 1.4), rim);
       }
-      G.Rq(g, ex - r * 0.5, ey - r * 0.4, 1, 1, '#ffffff');
+      // one glint across the glass, which is all you need
+      G.Rq(g, ex - r * 0.45, ey - r * 0.45, 1, 1, '#ffffff');
+      G.Rq(g, ex - r * 0.2, ey - r * 0.2, 1, 1, '#e8f2ff');
       G.Rh(g, q(ex + sd * r), q(ey), q(w * 0.1), 0.25, rim);
     }
     G.Rh(g, q(cx - eyX * 0.4), q(ey), q(eyX * 0.8), 0.25, rim);
@@ -658,13 +839,13 @@
     const hx = cx + turn * 0.35;
     if (kind === 'cap') {
       const c = gene.top2;
-      body(g, hx, top - h * 0.16, h * 0.22, (p) => w * 0.5 * (0.7 + p * 0.32), c, G.shade(c, 0.3), G.shade(c, -0.3));
+      body(g, hx, top - h * 0.16, h * 0.22, (p) => w * 0.5 * (0.7 + p * 0.32), c);
       G.Rh(g, q(hx - w * 0.1), q(top + h * 0.05) - 0.25, q(w * 0.62) + 0.5, q(h * 0.05) + 0.5, OUT);
       G.Rh(g, q(hx - w * 0.1), q(top + h * 0.05), q(w * 0.62), q(h * 0.05), G.shade(c, -0.2));
       ball(g, hx, top - h * 0.16, w * 0.05, G.shade(c, 0.4), null);
     } else if (kind === 'beanie') {
       const c = gene.top2;
-      body(g, hx, top - h * 0.14, h * 0.3, (p) => w * 0.5 * (0.62 + p * 0.42), c, G.shade(c, 0.3), G.shade(c, -0.3));
+      body(g, hx, top - h * 0.14, h * 0.3, (p) => w * 0.5 * (0.62 + p * 0.42), c);
       G.Rh(g, q(hx - w * 0.5), q(top + h * 0.08), q(w), q(h * 0.07), G.shade(c, 0.2));
       ball(g, hx, top - h * 0.2, w * 0.11, '#f6f2e6', OUT);
     } else if (kind === 'crown') {

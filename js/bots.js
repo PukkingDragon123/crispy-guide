@@ -1822,6 +1822,10 @@
     G.Rh(g, hx - u(6), hy, u(12), u(11), fur);
     G.bevel(g, hx - u(6), hy, u(12), u(11), furL, furD);
     G.Rh(g, hx - u(6), hy, u(12), u(2), furL);            // lit crown
+    G.hair(g, hx - u(6), hy, u(12), G.shade(fur, 0.55));  // and a hot top edge
+    G.vairq(g, hx - u(6), hy + u(1), u(9), G.shade(fur, 0.5));
+    G.vairq(g, hx + u(6) - 0.25, hy + u(1), u(9), G.shade(fur, -0.5));
+    G.Rh(g, hx - u(4.5), hy + u(1.5), u(2), 0.5, G.shade(fur, 0.6));
     // ears: narrow at the tip, wide where they meet the skull
     if (dog) {
       for (const sd of [-1, 1]) {
@@ -1840,23 +1844,26 @@
         G.Rh(g, hx + sd * u(4) - 0.5, hy - u(2), 1, u(2), '#d99aa8');
       }
     }
-    // eyes: big cartoon rounds aimed straight at you
+    // eyes: THE SAME THREE MARKS THE COW HAS - a light ring, a dark
+    // round and a white pip - with one coloured crescent at the bottom
+    // so a cat still reads as a cat
     for (const sd of [-1, 1]) {
-      const ex = hx + sd * u(3) - u(2), ey = hy + u(3);
+      const ex = hx + sd * u(3), ey = hy + u(4.6);
+      const er = Math.max(1.5, u(2.4));
       if (A2.blink) {
-        G.rr2(g, ex - 0.5, ey + u(1.5), u(4) + 1, u(1.5), '#1a1410');
-        G.Rq(g, ex, ey + u(1.5), u(4), 0.5, furD);
+        G.rr2(g, ex - er - 0.25, ey - 0.25, er * 2 + 0.5, 1.25, '#1a1410');
+        G.Rq(g, ex - er * 0.7, ey + 0.75, er * 1.4, 0.5, furD);
         continue;
       }
-      G.rr2(g, ex - 0.5, ey - 0.5, u(4) + 1, u(4) + 1, '#1a1410');
-      G.rr2(g, ex, ey, u(4), u(4), '#f6f2e4');
-      const ir = Math.max(2, u(2.6));
-      G.rr(g, ex + (u(4) - ir) / 2, ey + (u(4) - ir) / 2, ir, ir, dog ? '#7a4a1c' : '#2f9a62');
-      G.Rh(g, ex + u(1.4), ey + u(1.4), u(1.2), u(1.2), '#0b0806');
-      G.Rh(g, ex + u(0.5), ey + u(0.5), 1, 1, '#ffffff');
+      G.fc(g, ex, ey, er + 0.5, '#fdf8ee');
+      G.fc(g, ex, ey, er, '#241d2a');
+      G.Rh(g, ex - er * 0.55, ey + er * 0.3, er * 1.1, Math.max(0.5, er * 0.34),
+        dog ? '#b07a3a' : '#3fbf82');
+      G.Rq(g, ex - er * 0.4, ey - er * 0.45, 1, 1, '#ffffff');
+      if (er > 2) G.Rq(g, ex + er * 0.3, ey + er * 0.2, 1, 1, '#8a7f94');
     }
-    // brow tufts
-    for (const sd of [-1, 1]) G.Rh(g, hx + sd * u(3) - u(2), hy + u(2), u(4), 0.5, furD);
+    // a soft brow, well clear of the eye
+    for (const sd of [-1, 1]) G.Rh(g, hx + sd * u(3) - u(2), hy + u(1.4), u(4), 0.5, furD);
     // muzzle and nose
     G.Rh(g, hx - u(3), hy + u(7), u(6), u(3.5), belly);
     G.bevel(g, hx - u(3), hy + u(7), u(6), u(3.5), G.shade(belly, 0.3), G.shade(belly, -0.3));
@@ -1871,7 +1878,19 @@
     // a collar, because someone kept them
     G.Rh(g, hx - u(5), hy + u(11), u(10), u(1.5), dog ? '#8a2f42' : '#2f6b8a');
     G.hair(g, hx - u(5), hy + u(11), u(10), '#ffffff');
-    G.Rh(g, hx - u(0.5), hy + u(12), 1.5, 1.5, '#e0c04a');
+    G.Rh(g, hx - u(5), hy + u(12.25), u(10), 0.25, dog ? '#4a1420' : '#153a52');
+    // a little bell, swinging a pixel either way, same as the cow's
+    const bsw2 = Math.sin(t * 2.3) * 0.5;
+    const bx3 = hx + bsw2, by3 = hy + u(12.5);
+    const bh3 = Math.max(3, u(3.4)), bw3 = Math.max(3, u(4));
+    for (let k = 0; k < bh3; k++) {
+      const p3 = k / (bh3 - 1);
+      const hh3 = Math.max(1, Math.round((bw3 / 2) * (0.42 + 0.58 * Math.pow(p3, 0.62))));
+      G.R(g, bx3 - hh3 - 1, by3 + k, hh3 * 2 + 2, 1, OUT);
+      G.R(g, bx3 - hh3, by3 + k, hh3 * 2, 1,
+        k < 1 ? '#ffeaa4' : p3 > 0.84 ? '#a8760e' : p3 > 0.5 ? '#e0a41e' : '#f7c93c');
+    }
+    G.Rh(g, bx3 - bw3 * 0.28, by3 + bh3 - 1.5, bw3 * 0.56, 0.5, '#3a2a06');
     return { headTop: hy - u(5), cx: hx };
   };
 

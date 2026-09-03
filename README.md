@@ -594,6 +594,29 @@ The proportions are deliberately wrong. The head is a third of the body, the
 shoes are far too big, the arms are noodles and the torso is short. That is what
 makes a cartoon read as a cartoon rather than as a short adult.
 
+**And they are made of the same stuff the cow is.** Everything the mascot is
+built from has five things going on: a hard black outline, a base tone, a **lit
+crown** across the top, a **shaded belly** across the bottom, a rim down each
+edge and one short specular streak on the light shoulder. People used to be a
+flat fill with a single bright row, which is exactly why they read as cardboard
+standing next to it. Now every torso, limb, hand, shoe and skull goes through
+the same five-tone treatment — and so do the cats and the dogs.
+
+**Same eyes, too.** The cow's face is three marks: a one-pixel light ring, a
+dark round, a white pip. So that is what everybody has now — bigger than
+before, because bigger is cuter — with a second dim catch-light in the larger
+ones, a lid with a lash under it when they blink, and a thin brow set well
+clear of the eye only on the faces whose genome asked for one. Glasses are a
+**rim and a glint**, never a filled pane, because a pane over a dark round is
+just a smudge.
+
+The detail that came with it: collars that cast a shadow on the chest, hems on
+every garment, cuffs exactly where the sleeve stops, scarves with a tail and
+a fringe, shoes with a toe cap and a lace and a white sole, a chin shadow, and
+two-tone blush. Half of them are **carrying something** — a bag, a paper cup, a
+cone, a phone, a lolly, a balloon on a string, an umbrella, or a wrapped bunch
+of flowers.
+
 **The habit** is a small pose the clip system knows nothing about, added on top
 of an idle so a room of people is never a row of statues doing the same breath.
 Most of them are periodic bursts rather than constant motion: one rocks on the
@@ -775,10 +798,14 @@ not.
 - **One scale table** (`G.SZ`) that every walkable room is built from: an adult
   is 52 units, a door is 78, a counter top is 22
 - **Procedural people** (`folk.js`): a seed becomes a genome — height, girth,
-  skull shape, nose, eye size, hair, facial hair, glasses, clothes, shoes, hat
-  and one nervous habit — and the rig draws it on the quarter-unit grid,
-  outlines in one pass and fills in the next. Cartoon proportions on purpose:
-  the head is a third of the body and the shoes are enormous
+  skull shape, nose, eye size, hair, facial hair, glasses, clothes, shoes, hat,
+  what they are carrying, and one nervous habit — and the rig draws it on the
+  quarter-unit grid, outlines in one pass and fills in the next. Cartoon
+  proportions on purpose: the head is a third of the body and the shoes are
+  enormous
+- **One material for the whole cast.** Outline, base, lit crown, shaded belly,
+  two rims and a specular — the mascot's treatment, applied to every person,
+  cat and dog, so nothing in a room is made of different stuff to anything else
 - All audio synthesised with WebAudio — servo whines, arc zaps, a cat's purr, a
   shell coming off, a shutter rolling, footsteps, and the five-note arpeggio for
   a secret. No sample files.
