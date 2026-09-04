@@ -188,6 +188,10 @@
       case 'weld': noise(t, 0.3, 0.1, 'bandpass', 2200, 1.4); osc('sawtooth', 120, t, 0.28, 0.05); break;
       case 'clank': osc('square', 180, t, 0.07, 0.11, 90); noise(t, 0.14, 0.12, 'bandpass', 700, 1.6);
         osc('triangle', 900, t, 0.05, 0.05); break;
+      case 'boom':                                   // the last thing act one does
+        osc('sine', 90, t, 1.1, 0.3, 24); osc('triangle', 46, t, 1.3, 0.18, 18);
+        noise(t, 1.2, 0.26, 'lowpass', 900, 0.7, 120);
+        noise(t, 0.14, 0.3, 'highpass', 2400); break;
       case 'boot': [48, 55, 60, 67, 72].forEach((n, i) => osc('square', N2F(n), t + i * 0.06, 0.14, 0.05)); break;
     }
   };

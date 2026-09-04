@@ -920,6 +920,13 @@
         G.rr2(g, ex, dy, dd, dd, mood === 'sick' ? '#4a4458' : '#241d2a');
         const pw = Math.max(0.5, Math.round(dd * 0.3 * 4) / 4);
         G.Rq(g, ex + dd * 0.18, dy + dd * 0.16, pw, pw, '#ffffff');
+        // hurt: a lid half down over the dot. With the mouth turned over
+        // it is the only thing this face has to say it with.
+        if (mood === 'sick') {
+          const ld = Math.max(1, Math.round(dd * 0.4));
+          G.rr2(g, ex - 0.25, dy - 0.25, dd + 0.5, ld + 0.25, '#fdf8ee');
+          G.Rh(g, ex, dy + ld - 0.25, dd, 0.75, '#241d2a');
+        }
       }
     } else if (o.shades) {
       // ---- THE SHADES. One wraparound band across the whole face, a
@@ -1136,16 +1143,18 @@
         // square tooth and a tongue in here; none of it survived the
         // fact that the mouth is six pixels across. ----
         const aw2 = Math.max(4, Math.round(mw * 0.62));
-        const dep = Math.max(1, Math.round(mw * 0.17));
+        // hurt turns the same curve upside down. That is the whole face.
+        const hurt = mood === 'sick' ? -1 : 1;
+        const dep = Math.max(1, Math.round(mw * 0.17)) * hurt;
         for (let i2 = 0; i2 <= aw2; i2++) {
           const pr = i2 / aw2;
-          const yy = my + Math.sin(pr * Math.PI) * dep;
+          const yy = my + Math.sin(pr * Math.PI) * dep + (hurt < 0 ? 1 : 0);
           G.Rq(g, cx - aw2 / 2 + i2, yy, 1, 1, '#a04a62');
-          G.Rq(g, cx - aw2 / 2 + i2, yy + 1, 1, 0.5, '#ffd8e0');
+          G.Rq(g, cx - aw2 / 2 + i2, yy + 1, 1, 0.5, hurt < 0 ? '#e0b8c0' : '#ffd8e0');
         }
         // the two ends turn up, which is the entire expression
         for (const sd of [-1, 1])
-          G.Rq(g, cx + sd * (aw2 / 2 + 0.5), my - 0.5, 1, 1, '#a04a62');
+          G.Rq(g, cx + sd * (aw2 / 2 + 0.5), my + (hurt < 0 ? 1.5 : -0.5), 1, 1, '#a04a62');
       } else {
       for (let i = 0; i <= sw2; i++) {
         const p = i / sw2;

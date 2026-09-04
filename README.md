@@ -90,21 +90,55 @@ seconds, you wave, the whole table points at once, and it is handed back.
 the counter and hands you two swirls, which you then carry, in both hands,
 until you put them down.
 
-> **SAM:** TWO SWIRLS. MIND THE FLOOR, IT IS WET.
+> **SAM:** TWO SWIRLS. MIND THE STEP ON YOUR WAY OVER.
 
 ![The door](screenshots/floor-door.png)
 
 **Take them over.** And when you do, the door comes off its hinges. Everybody
-in the room recoils on the same frame. The glass goes out in thirty pieces on
-thirty different arcs. Something fills the doorway.
+in the room recoils on the same frame — mouths open, arms out, the whole room
+at once. The glass goes out in thirty pieces on thirty different arcs.
+Something rolls in through the hole where the door was, steps down out of the
+back of the room into the lane you walk in, and brings a gun with it.
 
 > **PATROL:** CIVIL PATTERN. NOBODY MOVE.
 
-![The charge](screenshots/floor-shot.png)
+![The aim](screenshots/floor-aim.png)
 
-One frame of white. Then a leg leaving on a real arc, a torn socket arcing
-where it used to bolt on, everybody who can run running, and a small box with
-a red light on it going under the counter.
+The child who has spent the whole shift running the length of the room stops
+running. A dashed red line crawls out of the barrel, finds them, and settles.
+The dot sits on their chest and pulses. Nobody in the room is going to do
+anything about it.
+
+> **PATROL:** THAT ONE IS NOT ON THE ROLL.
+
+### The only thing in this game you have to be quick about
+
+Then it gives you the floor back.
+
+![Get in front of them](screenshots/floor-window.png)
+
+**GET IN FRONT OF THEM.** A bar runs down at the top of the screen, you move
+almost twice as fast as you have all shift, and there is a marker on the boards
+between the child and the barrel. You have four and a half seconds.
+
+**It cannot be failed.** If the bar empties while you are still stood by the
+booth, you go anyway — the same jump, from wherever you were standing, because
+that was always what you were going to do. Getting there yourself just means
+you got there yourself.
+
+![The shot](screenshots/floor-shot.png)
+
+You jump. You land between them. The shot is a white line from the muzzle into
+your chest, and then: one frame of flash, your leg leaving on a real arc with
+the hoof still on it, a torn socket arcing where it used to bolt on, and a
+mascot on the floor with its smile turned upside down for the first time in
+the game.
+
+> **BESSIE:** I'M — I'M STILL UNDER WARRA—
+> **A CHILD:** IT MOVED. IT MOVED FOR ME.
+
+Everybody who can run runs. A small box with a red light on it goes under the
+counter.
 
 > **PATROL:** CLEAR THE FLOOR.
 
@@ -165,14 +199,16 @@ Every job on the floor now ends in something: saying hello sets the whole
 booth cheering, the dance drops confetti, collecting the order rings the
 counter bell, handing it over pops five stars and a **3 / 4** over your head.
 
-### Two things that do nothing at all
+### One thing that does nothing at all
 
-- **The mop bucket.** There is a wet floor sign and a bucket at the end of the
-  counter. Walk into it and you go over — legs up, a yelp, a splash of pops,
-  and everybody in earshot hops. It is repeatable. It is worth nothing.
 - **Your own bell.** Tap yourself, above the waist, and you ring the bell on
   your collar. Rings go out, stars come off it, the whole room hops, and
-  somebody says **MOO** or **AGAIN**.
+  somebody says **MOO** or **AGAIN**. It is repeatable. It is worth nothing.
+
+There used to be a mop bucket and a wet floor sign down at the end of the
+counter, and walking into them put you on your back. They are gone. The floor
+you walk in act one is now clear from the booths to the door — nothing to
+trip over, nothing between you and the last twelve seconds of the shift.
 
 ---
 
@@ -712,10 +748,38 @@ a booth, sit down, talk, get up, leave. Staff stay behind the counter. Children
 run. Nobody stands in the middle of the floor doing nothing, which is the thing
 that makes a set look like a set.
 
-Everything is drawn on the quarter-unit grid — one native pixel — row by row,
-**outlines in one pass and fills in the second**. Do it per row and each row's
-outline paints over the last row's fill and the whole person turns into a black
-blob. That mistake has been made in this repository three times.
+### Coarser, and drawn with a fatter pen
+
+People used to be drawn on the **quarter-unit** grid — one native pixel — the
+same grid the cow's rivets and seams are on. At that resolution a human is a
+smooth, slightly soft thing standing next to a mascot built out of chunky
+plates, and the two do not look like they come from the same box of crayons.
+
+So the whole of `folk.js` was moved down one tier. Every rectangle a person is
+made of now goes through a single snapper —
+
+```js
+const GR = 0.5;                                  // the grid: two native pixels
+const q = (v) => Math.round(v / GR) * GR;
+function R(g, x, y, w, h, c) {
+  const x0 = q(x), y0 = q(y);
+  G.Rh(g, x0, y0, Math.max(GR, q(x + w) - x0), Math.max(GR, q(y + h) - y0), c);
+}
+```
+
+— and there are **174 call sites**, so there is no back door. Limbs step in
+half-units. Outlines are half-units, which is **two native pixels of black**
+instead of one. Hems, stitches, rims and catch-lights are all half-unit blocks
+with half-unit minimums, so nothing can quietly shrink back to a hairline.
+
+The result is bigger pixels, blunter edges and a heavier black line around
+everybody — the same drawing, done with a fatter pen, at the weight the mascot
+was already drawn at.
+
+Everything is still drawn row by row with **outlines in one pass and fills in
+the second**. Do it per row and each row's outline paints over the last row's
+fill and the whole person turns into a black blob. That mistake has been made
+in this repository three times.
 
 ---
 
@@ -877,8 +941,16 @@ not.
   walk, hotspots you walk up to and use, speech bubbles that find the right
   head, a beat timeline that can take control and hand it back, and **two depth
   planes** so furniture on the back floor occludes the people sat behind it
+- **A third, coarser tier for people.** `folk.js` draws entirely on the
+  **half-unit** grid through its own snapper, with half-unit outlines — two
+  native pixels of black — so humans carry the same line weight as the plated
+  machines standing next to them
 - **One scale table** (`G.SZ`) that every walkable room is built from: an adult
   is 52 units, a door is 78, a counter top is 22
+- A **camera override** on the stage (`S.camAt`): a beat can point the camera
+  at a spot instead of at you, and hand it back by setting it to `null`
+- A **speed multiplier** on the player (`S.pspeedMul`), so the one moment in
+  the game that is timed can move you at nearly twice your walking pace
 - **Procedural people** (`folk.js`): a seed becomes a genome — height, girth,
   skull shape, nose, eye size, hair, facial hair, glasses, clothes, shoes, hat,
   what they are carrying, and one nervous habit — and the rig draws it on the

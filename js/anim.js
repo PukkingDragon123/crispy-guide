@@ -170,6 +170,7 @@
         headTurn: 0,
         headTilt: -set * 0.3,
         stare: set,
+        mouth: set * 0.62,          // and the mouth goes with it
         blink: 0,
       };
     },

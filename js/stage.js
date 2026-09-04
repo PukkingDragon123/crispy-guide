@@ -52,7 +52,13 @@
     // the pop: up past where it lands, then back down onto it
     const e = G.backOut(G.clamp(pop, 0, 1));
     const rise = (1 - e) * -7;
-    const bx = Math.round(cx - bw / 2);
+    // keep the whole card on screen; the tail still points at whoever
+    // said it, so a speaker at the edge does not get a clipped bubble.
+    // Bubbles are drawn INSIDE the camera transform, so the bounds have
+    // to be pushed into world space or the card lands at world zero.
+    const cam0 = Math.round(G.cam.x + G.cam.sx);
+    const bx = Math.round(G.clamp(cx - bw / 2, cam0 + 3,
+      Math.max(cam0 + 3, cam0 + G.W - bw - 3)));
     // never let it climb into the objective plate, tab and all
     let by = Math.round(Math.max(who ? 36 : 27, topY - bh - 6 + rise));
     const rect = { x: bx, y: by, w: bw, h: bh };
@@ -212,6 +218,7 @@
       q: null, qi: 0, qt: 0, qfired: false,
       flags: {}, over: 0,
       pops: [], sq: 0, sqV: 0, chat: 2.5, land: 0,
+      pspeedMul: 1, pdy: 0, camAt: null, hush: 0,
     };
     S.pop = (x, y, kind, col, r, life) => {
       if (S.pops.length > 120) return;
@@ -254,6 +261,9 @@
         S.px = def.start === undefined ? 60 : def.start;
         S.goal = null; S.pending = null; S.lock = 0; S.q = null; S.over = 0;
         S.objDone = 0; S.obj = def.obj || null; S.objT = 0;
+        S.pspeedMul = 1; S.pdy = 0; S.camAt = null; S.hush = 0;
+        S.pcrawl = 0; S.phands = null;
+        S.plegOff = 0; S.pmood = null; S.pnoBlink = 0; S.pp = 0.8; S.popen = 0;
         for (const a of def.actors || []) {
           S.actors.push(Object.assign({
             t: G.rand(0, 4), si: 0, st: 0, started: false, dir: 1,
@@ -316,7 +326,7 @@
         }
 
         // ---- you ----
-        const speed = (def.pspeed || 1) * WALK;
+        const speed = (def.pspeed || 1) * (S.pspeedMul || 1) * WALK;
         if (!S.lock && S.goal !== null) {
           const d = S.goal - S.px;
           if (Math.abs(d) <= speed * dt) {
@@ -349,7 +359,7 @@
         // say and they say it. This is most of what makes a room feel
         // like it has people in it rather than props. ----
         S.chat -= dt;
-        if (S.chat <= 0 && !S.lock && !S.bubbles.length) {
+        if (S.chat <= 0 && !S.lock && !S.hush && !S.bubbles.length) {
           const near = S.actors.filter((a) => a.lines && a.lines.length &&
             Math.abs(a.x - S.px) < 46 && (a.said || 0) <= 0 && (!a.hide || !a.hide(S)));
           if (near.length) {
@@ -367,8 +377,11 @@
           if (S.bubbles[i].t > S.bubbles[i].life) S.bubbles.splice(i, 1);
         }
 
-        // ---- camera keeps you a bit ahead of centre ----
-        G.cam.goto(G.clamp(S.px - G.W / 2 + S.pdir * 26, 0, Math.max(0, S.w - G.W)), 0);
+        // ---- camera keeps you a bit ahead of centre, unless a beat
+        // has told it to look somewhere else ----
+        const cAt = S.camAt === null || S.camAt === undefined
+          ? S.px + S.pdir * 26 : S.camAt;
+        G.cam.goto(G.clamp(cAt - G.W / 2, 0, Math.max(0, S.w - G.W)), 0);
 
         if (def.update) def.update(S, dt);
       },

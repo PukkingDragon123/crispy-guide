@@ -125,6 +125,9 @@
   const DOOR_X = 524;
   const B1 = 16, B2 = 140;                  // two booths
   const BW1 = 88, BW2 = 100;
+  const TARGET_X = 250;                     // where it points. A child is stood there.
+  const PAT_X = 352;                        // and where it stops, close enough to see
+  const WINDOW = 4.5;                       // how long you get. It cannot be failed.
 
   const floorDef = {
     w: 580, start: 122, obj: 'SAY HELLO TO TABLE FOUR',
@@ -188,21 +191,6 @@
             dy0 + ((G.hash(i, 17) * Z.DOOR_H + S.t * 160) % Z.DOOR_H), 0.5, 4, '#6b90b8');
         }
       }
-      // the mop bucket and the sign nobody reads
-      G.R(g, 322, F - 13, 16, 13, M('#3f6a7a'));
-      G.bevelq(g, 322, F - 13, 16, 13, M('#6b9aa8'), M('#1e3a44'));
-      G.Rh(g, 322, F - 13, 16, 1, M('#8fc0cc'));
-      G.Rh(g, 325, F - 15, 10, 2, M('#c8ccd4'));
-      G.Rh(g, 337, F - 34, 1.5, 22, M('#8a6a44'));
-      G.Rh(g, 335, F - 38, 6, 5, M('#c8b490'));
-      for (let i = 0; i < 5; i++) {                      // the A-board
-        const yy = F - 30 + i * 5;
-        G.R(g, 344 - i * 1.5, yy, 3 + i * 3, 5, M(i % 2 ? '#f0c04a' : '#e8dccb'));
-      }
-      G.text(g, '!', 349, F - 22, M('#2a2028'), { sc: 0.5 });
-      g.globalAlpha = 0.24;                              // and the wet patch
-      G.fe(g, 330, F + 1, 24, 4, '#8fd8ff');
-      g.globalAlpha = 1;
       // the little stage, on the near floor, with a light on it
       G.fe(g, STAGE_X, F + 1, 36, 7, M('#7a262f'));
       G.fe(g, STAGE_X, F - 2, 34, 6, M('#c8505c'));
@@ -256,6 +244,62 @@
     },
 
     fore(g, S) {
+      // ---- IT CAME IN WITH A GUN. The barrel, the line it is
+      // drawing across the room, and the dot sitting on a child. ----
+      if (S.flags.busted && !S.flags.dark) {
+        const pat = S.actor('pat');
+        const gx = (pat ? pat.x : PAT_X) - 9, gy = F - 40;
+        const tx = TARGET_X + 4, ty = F - 24;
+        G.R(g, gx - 30, gy - 5, 34, 10, OUT);                // barrel
+        G.R(g, gx - 29, gy - 4, 32, 8, '#8695ad');
+        G.Rh(g, gx - 29, gy - 4, 32, 2, '#d2dced');
+        G.Rh(g, gx - 29, gy + 2, 32, 2, '#4a5670');
+        G.Rh(g, gx - 22, gy - 4, 1.5, 8, '#5c6a84');         // a joint in it
+        G.Rh(g, gx - 13, gy - 4, 1.5, 8, '#5c6a84');
+        G.R(g, gx - 7, gy - 11, 13, 18, OUT);                // body and grip
+        G.R(g, gx - 6, gy - 10, 11, 16, '#6f7f99');
+        G.Rh(g, gx - 6, gy - 10, 11, 2, '#c4cfe2');
+        G.R(g, gx - 5, gy + 7, 9, 9, OUT);
+        G.R(g, gx - 4, gy + 8, 7, 7, '#3f4a60');
+        G.Rh(g, gx - 4, gy - 6, 8, 2, '#ffd45a');            // a charge, filling
+        G.R(g, gx - 33, gy - 3, 4, 6, OUT);                  // muzzle, warm
+        G.R(g, gx - 32, gy - 2, 3, 4, '#ff8a4a');
+        G.glow(g, gx - 31, gy, 26, 16, '#ff8a4a', 0.5);
+        // the line, walking toward whoever it has decided about
+        if (S.flags.aim) {
+          const span = Math.max(1, gx - 28 - tx);
+          const n = Math.max(1, Math.floor(span / 9));
+          for (let i = 0; i < n; i++) {
+            if (((S.t * 9 + i) % 3) < 0.8) continue;
+            const q2 = i / Math.max(1, n - 1);
+            const ly = G.lerp(gy - 1, ty, q2);
+            G.Rh(g, gx - 28 - i * 9, ly, 6, 1.5, '#ff2a2a');
+            G.Rh(g, gx - 28 - i * 9, ly, 6, 0.5, '#ffb0a0');
+          }
+          // the dot, on a four-year-old
+          const puls = 2 + Math.sin(S.t * 13) * 0.9;
+          G.glow(g, tx, ty, 26, 26, '#ff2a2a', 0.75 * S.flags.aim);
+          G.fc(g, tx, ty, puls, '#ff2a2a');
+          G.fc(g, tx, ty, puls * 0.4, '#ffd0c8');
+          for (let i = 0; i < 4; i++) {                      // reticle ticks
+            const a2 = i * 1.5708 + S.t * 0.9, rr = 5.5 + Math.sin(S.t * 13) * 1.2;
+            G.Rh(g, tx + Math.cos(a2) * rr - 0.75, ty + Math.sin(a2) * rr - 0.75, 1.5, 1.5, '#ff2a2a');
+          }
+        }
+      }
+      // ---- and it goes into you instead ----
+      if (S.flags.beam > 0) {
+        const pat = S.actor('pat');
+        const gx = (pat ? pat.x : PAT_X) - 42, gy = F - 40;
+        const bx = S.px + 4, by = F - 20;      // dead on the badge
+        const w2 = 2 + S.flags.beam * 2.5;
+        for (let i = 0; i <= 30; i++) {
+          const p2 = i / 30;
+          G.Rh(g, G.lerp(gx, bx, p2) - w2, G.lerp(gy, by, p2) - w2 * 0.5, w2 * 2, w2, '#fff0d0');
+        }
+        G.glow(g, (gx + bx) / 2, (gy + by) / 2, Math.abs(gx - bx) + 30, 26, '#ffb060', S.flags.beam);
+        G.glow(g, bx, by, 46, 40, '#fff0d0', S.flags.beam);
+      }
       if (S.flags.shards) {
         const p = S.flags.shards;
         for (let i = 0; i < 30; i++) {
@@ -273,13 +317,25 @@
         G.Rq(g, bx - 1, CNT_TOP - 9, 2, 2, tick ? '#ff4a4a' : '#5a1a1a');
         if (tick) G.glow(g, bx, CNT_TOP - 8, 36, 26, '#ff4a4a', 0.5);
       }
+      // ---- your leg, going the other way ----
       if (S.flags.leg) {
         const p = S.flags.leg;
-        const lx = S.px - p * 90, ly = F - 32 + Math.sin(p * 3.1) * 18 + p * p * 34;
-        G.R(g, lx - 4, ly - 1, 9, 22, OUT);
-        G.R(g, lx - 3, ly, 7, 20, '#efe7d8');
-        G.hairq(g, lx - 3, ly, 7, '#ffffff');
-        G.R(g, lx - 5, ly + 18, 11, 6, '#4a3f56');
+        const lx = S.px - 6 - p * 96, ly = F - 44 + Math.sin(p * 3.1) * 24 + p * p * 50;
+        g.save();
+        g.translate(lx, ly + 13); g.rotate(-p * 6.2); g.translate(-lx, -(ly + 13));
+        G.R(g, lx - 5, ly - 1, 11, 20, OUT);                  // shank
+        G.R(g, lx - 4, ly, 9, 18, '#efe7d8');
+        G.Rh(g, lx - 4, ly, 2, 18, '#ffffff');
+        G.Rh(g, lx + 3, ly, 2, 18, '#c8bfae');
+        G.R(g, lx - 4, ly, 9, 3, '#8f8474');                  // where it tore
+        G.Rq(g, lx - 3, ly + 1, 2, 1, '#ff7a6a');
+        G.Rq(g, lx + 1, ly, 1, 2, '#ffb04a');
+        G.R(g, lx - 7, ly + 17, 15, 7, OUT);                  // the boot cuff
+        G.R(g, lx - 6, ly + 18, 13, 5, '#fbf8f2');
+        G.R(g, lx - 6, ly + 23, 13, 7, OUT);                  // and the hoof
+        G.R(g, lx - 5, ly + 24, 11, 5, '#1a1620');
+        G.Rh(g, lx, ly + 24, 1, 5, '#3a3448');
+        g.restore();
       }
       if (S.flags.flash) {
         g.globalAlpha = S.flags.flash;
@@ -399,12 +455,16 @@
         once: 1, hidden: (S) => !S.done.dance,
         on(S) {
           const a = S.actor('sam'); if (a) { a.hold = 2.4; a.holdClip = 'reach'; a.p = 1; a.hopV = -20; }
-          S.say('sam', 'TWO SWIRLS. MIND THE FLOOR, IT IS WET.', 2.8);
+          S.say('sam', 'TWO SWIRLS. MIND THE STEP ON YOUR WAY OVER.', 2.8);
           S.flags.carry = 1;
           S.bang(S.px + 8, CNT_TOP - 6, '#8fd8c0', 8, 1.6);
           S.setObj('TAKE THEM TO TABLE FOUR'); G.audio.sfx('grab');
           G.floatText('x2 SWIRL', S.px - Math.round(G.cam.x), CNT_TOP - 30, '#8fd8c0');
         } },
+      // ---- the only thing in this game you have to be quick about ----
+      { id: 'save', x: TARGET_X + 28, off: 0, label: 'GET IN FRONT', markY: F - 50,
+        once: 1, hidden: (S) => !S.flags.window,
+        on(S) { dive(S, 1); } },
       { id: 'serve', x: B2 + 14, off: 0, label: 'HAND THEM OVER', markY: FB - 54,
         once: 1, hidden: (S) => !S.done.collect,
         on(S) {
@@ -417,21 +477,6 @@
           G.audio.sfx('serve');
           S.play([{ d: 1.4 }, { d: 2.6, go(S2) { S2.mine('SIX YEARS OF THIS AND I STILL LIKE IT.', 2.6); } },
                   { d: 0.1, go(S2) { S2.play(ATTACK); } }]);
-        } },
-      // ---- and two things that are not jobs, just fun ----
-      { id: 'slip', x: 330, label: 'WET FLOOR', markY: F - 44,
-        on(S) {
-          // the mop bucket. It is signposted. You walk into it anyway.
-          S.play([
-            { d: 0.5, go(S2) { S2.lock = 1; S2.pclip = 'startle'; S2.pp = 1; S2.sqV = 60;
-                               G.audio.sfx('snap'); G.shake(4, 0.3);
-                               S2.bang(S2.px, F - 6, '#8fd8ff', 12, 0); } },
-            { d: 1.6, go(S2) { S2.mine('OW.', 1.6); for (let i = 0; i < 7; i++)
-                               S2.pop(S2.px + G.rand(-12, 12), F - 20 - G.rand(0, 10), 'star', '#ffffff', 0, 0.8); } },
-            { d: 1.4, go(S2) { S2.pclip = 'idle'; S2.sqV = -30;
-                               S2.say('sam', 'I DID SAY.', 1.8); S2.jump('sam', 18); } },
-            { d: 0.1, go(S2) { S2.lock = 0; S2.done.slip = 0; } },
-          ]);
         } },
     ],
     // tap yourself and the bell goes. It does nothing. Everybody
@@ -456,12 +501,30 @@
     },
 
     update(S, dt) {
-      if (S.flags.flash) S.flags.flash = Math.max(0, S.flags.flash - dt * 2.2);
+      if (S.flags.aim) S.flags.aim = Math.min(1, S.flags.aim + dt * 2.4);
+      // the window. It runs out; it cannot be failed. If you are still
+      // stood there when it does, you go anyway - you were always going.
+      if (S.flags.window > 0) {
+        S.flags.window -= dt;
+        if (S.flags.window <= 0) { S.flags.window = 0; dive(S, 0); }
+      }
+      if (S.flags.beam) S.flags.beam = Math.max(0, S.flags.beam - dt * 2.6);
+      if (S.flags.flash) S.flags.flash = Math.max(0, S.flags.flash - dt * 3.2);
       if (S.flags.shards) S.flags.shards = Math.min(1, S.flags.shards + dt * 1.1);
       if (S.flags.leg) S.flags.leg = Math.min(1, S.flags.leg + dt * 0.9);
     },
 
     after(g, S) {
+      // six seconds, drawn where you cannot miss it
+      if (S.flags.window > 0) {
+        const w = 122, x0 = Math.round(G.W / 2 - w / 2), y0 = 30;
+        G.R(g, x0 - 1, y0 - 1, w + 2, 7, OUT);
+        G.R(g, x0, y0, w, 5, '#2a1218');
+        const fr = G.clamp(S.flags.window / WINDOW, 0, 1);
+        const wd = Math.max(1, Math.round(w * fr));
+        G.R(g, x0, y0, wd, 5, fr > 0.4 ? '#ff8a4a' : '#ff4a4a');
+        G.hairq(g, x0, y0, wd, '#ffe0b8');
+      }
       if (S.flags.carry) {
         G.cam.push(g);
         G.cone(g, S.px - 16, F - 30, { w: 9, h: 12 });
@@ -476,10 +539,12 @@
     },
   };
 
-  // ---- the eight seconds it takes ----
+  // ---- IT COMES IN. Four beats of cutscene, then it hands you back
+  // the floor with a red dot sat on a four-year-old and a few seconds
+  // to do something about it. ----
   const ATTACK = [
-    { d: 1.4, go(S) { S.lock = 1; S.pclip = 'idle'; } },
-    { d: 1.2,
+    { d: 1.2, go(S) { S.lock = 1; S.hush = 1; S.pclip = 'idle'; S.bubbles.length = 0; } },
+    { d: 1.1,
       go(S) {
         S.flags.busted = 1; S.flags.shards = 0.01;
         G.audio.sfx('snap'); G.shake(5, 0.5); G.screenFlash('#cfe4ff', 0.3);
@@ -487,34 +552,105 @@
       } },
     { d: 2.2,
       go(S) {
-        S.say('pat', 'CIVIL PATTERN. NOBODY MOVE.', 2.4);
-        S.pclip = 'startle'; S.pp = 0;
-        for (const a of S.actors) { if (a.id === 'pat') continue; a.hold = 6; a.holdClip = 'startle'; a.p = 0.7; }
-      },
-      tick(S, p) { S.pp = Math.min(1, p * 2); const pat = S.actor('pat'); if (pat) pat.x = G.lerp(578, 508, G.easeOut(p)); } },
-    { d: 1.0,
-      go(S) {
-        S.flags.flash = 1; S.flags.leg = 0.01; S.plegOff = 1; S.pmood = 'sick'; S.pnoBlink = 1;
-        G.audio.sfx('zap'); G.shake(6, 0.6);
-        S.mine("I'M - I'M STILL UNDER WARRA-", 2.2);
-      } },
-    { d: 2.0,
-      go(S) {
-        S.pcrawl = 1; S.phands = [{ x: S.px - 22, y: F - 12 }, { x: S.px + 22, y: F - 8 }];
-        // everybody who can run, runs
-        const away = { q1: 660, q2: 680, run: -50, mum: -50 };
-        for (const id in away) {
-          const a = S.actor(id);
-          if (a) { a.hold = 0; a.sitting = 0; a.dy = 0; a.behind = 0; a.script = [{ go: away[id], sp: 1.7 }, { wait: 9 }]; a.si = 0; a.st = 0; a.started = false; }
+        S.say('pat', 'CIVIL PATTERN. NOBODY MOVE.', 2.2);
+        S.pclip = 'startle'; S.pp = 0; S.popen = 0.72;
+        for (const a of S.actors) {
+          if (a.id === 'pat') continue;
+          a.hold = 24; a.holdClip = 'startle'; a.p = 0.7;
         }
+        // the child stops running. That is the worst part of it.
+        const kid = S.actor('run');
+        if (kid) {
+          kid.x = TARGET_X; kid.dir = 1; kid.walking = 0;
+          kid.smile = 0; kid.p = 1; kid.hold = 30; kid.holdClip = 'startle';
+          kid.script = [{ clip: 'startle', d: 40 }];
+          kid.si = 0; kid.st = 0; kid.started = false;
+        }
+      },
+      tick(S, p) {
+        S.pp = Math.min(1, p * 2);
+        const pat = S.actor('pat');
+        if (pat) { pat.x = G.lerp(578, PAT_X, G.easeOut(p)); pat.dy = G.lerp(-18, 0, G.easeOut(p)); }
+        S.camAt = G.lerp(S.px + 26, TARGET_X + 30, G.easeOut(p));   // look at it
       } },
-    { d: 2.0,
-      go(S) { S.flags.charge = 1; S.say('pat', 'CLEAR THE FLOOR.', 1.8); G.audio.sfx('menu'); } },
-    { d: 1.4, go(S) { S.flags.dark = 0.4; }, tick(S, p) { S.flags.dark = 0.2 + p * 0.4; } },
-    { d: 1.2, go(S) { S.flags.white = 0; G.audio.sfx('boom'); G.shake(8, 1); },
-      tick(S, p) { S.flags.white = p; } },
-    { d: 0.6, go(S) { S.finish(() => G.go('wreck', 'FOUR HOURS LATER')); } },
+    { d: 2.2,
+      go(S) {
+        S.flags.aim = 0.01;                 // the dot comes up
+        S.say('pat', 'THAT ONE IS NOT ON THE ROLL.', 2.2);
+        G.audio.sfx('menu'); G.shake(2, 0.3);
+      } },
+    { d: 0.1,
+      go(S) {
+        S.lock = 0; S.pclip = 'idle'; S.camAt = null;
+        S.pspeedMul = 1.9;                  // you have never moved this fast
+        S.flags.window = WINDOW;
+        S.setObj('GET IN FRONT OF THEM');
+        S.say('mum', 'NO - NO, THAT IS MY -', 2.2);
+        G.audio.sfx('unlock');
+      } },
   ];
+
+  // ---- you go. Either because you tapped, or because the last
+  // second ran out and you were always going to. ----
+  function dive(S, earned) {
+    if (S.flags.dived) return;
+    S.flags.dived = 1; S.flags.window = 0;
+    S.lock = 1; S.goal = null; S.pending = null;
+    S.pspeedMul = 1; S.setObj(null); S.objDone = 1;
+    S.play(SHOT(earned, S.px));
+  }
+
+  // ---- and it goes into you instead ----
+  function SHOT(earned, x0) {
+    return [
+      { d: 0.55,
+        go(S) {
+          S.pclip = 'reach'; S.pp = 1;
+          G.audio.sfx('swish');
+          if (earned) G.floatText('GOOD COW', G.W / 2, 44, '#8fd8c0', 1);
+        },
+        tick(S, p) {
+          const e = G.easeOut(p);
+          S.px = G.lerp(x0, TARGET_X + 26, e);
+          S.pdy = -Math.sin(p * Math.PI) * 26;
+          S.pdir = 1;                         // you turn to face it
+          if (Math.random() < 0.5)
+            S.pop(S.px + G.rand(-8, 8), F - 2, 'dust', '#b8a890', 4, 0.35);
+        } },
+      { d: 1.0,
+        go(S) {
+          S.px = TARGET_X + 26; S.pdy = 0; S.pdir = 1;
+          const kid = S.actor('run'); if (kid) { kid.x = TARGET_X - 14; kid.hopV = -26; }
+          S.flags.aim = 0; S.flags.beam = 1; S.flags.flash = 0.8; S.flags.leg = 0.01;
+          S.plegOff = 1; S.pmood = 'sick'; S.pnoBlink = 1;
+          S.pclip = 'slump'; S.pp = 1; S.popen = 0.5;
+          G.audio.sfx('zap'); G.shake(6, 0.6);
+          S.bang(S.px, F - 34, '#ff8a4a', 16, 3);
+          S.mine("I'M - I'M STILL UNDER WARRA-", 2.2);
+        } },
+      { d: 2.2,
+        go(S) {
+          S.pcrawl = 1; S.popen = 0.2;
+          S.phands = [{ x: S.px - 22, y: F - 12 }, { x: S.px + 22, y: F - 8 }];
+          S.say('run', 'IT MOVED. IT MOVED FOR ME.', 2.2);
+          // everybody who can run, runs
+          const away = { q1: 660, q2: 680, run: -50, mum: -50 };
+          for (const id in away) {
+            const a = S.actor(id);
+            if (!a) continue;
+            a.hold = 0; a.sitting = 0; a.dy = 0; a.behind = 0;
+            a.script = [{ go: away[id], sp: 1.7 }, { wait: 9 }];
+            a.si = 0; a.st = 0; a.started = false;
+          }
+        } },
+      { d: 2.0,
+        go(S) { S.flags.charge = 1; S.say('pat', 'CLEAR THE FLOOR.', 1.8); G.audio.sfx('menu'); } },
+      { d: 1.4, go(S) { S.flags.dark = 0.4; }, tick(S, p) { S.flags.dark = 0.2 + p * 0.4; } },
+      { d: 1.2, go(S) { S.flags.white = 0; G.audio.sfx('boom'); G.shake(8, 1); },
+        tick(S, p) { S.flags.white = p; } },
+      { d: 0.6, go(S) { S.finish(() => G.go('wreck', 'FOUR HOURS LATER')); } },
+    ];
+  }
 
   (G.scenes = G.scenes || {}).floor = G.makeStage(floorDef);
 
