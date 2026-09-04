@@ -643,12 +643,20 @@
             a.si = 0; a.st = 0; a.started = false;
           }
         } },
-      { d: 2.0,
-        go(S) { S.flags.charge = 1; S.say('pat', 'CLEAR THE FLOOR.', 1.8); G.audio.sfx('menu'); } },
-      { d: 1.4, go(S) { S.flags.dark = 0.4; }, tick(S, p) { S.flags.dark = 0.2 + p * 0.4; } },
-      { d: 1.2, go(S) { S.flags.white = 0; G.audio.sfx('boom'); G.shake(8, 1); },
-        tick(S, p) { S.flags.white = p; } },
-      { d: 0.6, go(S) { S.finish(() => G.go('wreck', 'FOUR HOURS LATER')); } },
+      { d: 2.2,
+        go(S) {
+          S.flags.charge = 1; S.say('pat', 'CLEAR THE FLOOR.', 1.8);
+          G.audio.sfx('menu');
+          // it walks back out through the hole it made
+          const pat = S.actor('pat');
+          if (pat) { pat.script = [{ go: 620, sp: 1.3 }, { wait: 9 }]; pat.si = 0; pat.st = 0; pat.started = false; }
+        } },
+      { d: 1.6, go(S) { S.flags.dark = 0.3; }, tick(S, p) { S.flags.dark = 0.2 + p * 0.45; } },
+      // ---- and then the camera leaves the room. You do not watch the
+      // bomb go off from under it; you watch the front of the building
+      // come off from the car park, which is where it can be seen. ----
+      { d: 0.8, go(S) { S.flags.white = 0; }, tick(S, p) { S.flags.white = p * 0.7; } },
+      { d: 0.4, go(S) { S.finish(() => G.playCine('bomb', () => G.go('wreck', 'FOUR HOURS LATER'))); } },
     ];
   }
 
@@ -657,53 +665,8 @@
   // ============================================================
   // ACT TWO: THE WRECK
   // ============================================================
-  const FIND = [
-    { id: 'crown', x: 66,  label: 'A PAPER CROWN', say: 'A PAPER CROWN. SIZE SMALL.' },
-    { id: 'tray',  x: 176, label: 'A TRAY',        say: 'TABLE FOUR. NOBODY AT TABLE FOUR.' },
-    { id: 'shoe',  x: 244, label: 'A SHOE',        say: 'ONE SHOE. I CALLED. NOTHING CALLED BACK.' },
-    { id: 'badge', x: 348, label: 'A STAFF BADGE', say: 'A BADGE. THE NAME IS BURNT OFF IT.' },
-    { id: 'radio', x: 436, label: 'A RADIO',       say: 'A RADIO, STILL ON. NOBODY ON IT.' },
-  ];
-  const FINDART = {
-    crown(g, x, t) {
-      for (let i = 0; i < 5; i++) {
-        const px = x - 9 + i * 4;
-        G.R(g, px - 1, FB - 11, 4, 9, OUT); G.R(g, px, FB - 10, 3, 8, '#d8a83a');
-      }
-      G.R(g, x - 11, FB - 5, 23, 6, OUT); G.R(g, x - 10, FB - 4, 21, 4, '#e0b040');
-      G.hairq(g, x - 10, FB - 4, 21, '#ffd45a');
-    },
-    tray(g, x, t) {
-      G.R(g, x - 15, FB - 8, 31, 8, OUT); G.R(g, x - 14, FB - 7, 29, 6, '#b8434c');
-      G.hairq(g, x - 14, FB - 7, 29, '#e8828c');
-      G.R(g, x + 8, FB - 18, 8, 11, OUT); G.R(g, x + 9, FB - 17, 6, 10, '#f0e2d4');
-      G.Rh(g, x + 11, FB - 24, 1.5, 7, '#e8828c');
-    },
-    shoe(g, x, t) {
-      G.R(g, x - 13, FB - 11, 27, 11, OUT); G.R(g, x - 12, FB - 10, 25, 9, '#3a2a24');
-      G.hairq(g, x - 12, FB - 10, 25, '#6b5244');
-      G.R(g, x - 4, FB - 17, 10, 7, OUT); G.R(g, x - 3, FB - 16, 8, 6, '#3a2a24');
-      G.Rq(g, x, FB - 7, 1, 1, '#c8b490');
-    },
-    badge(g, x, t) {
-      G.R(g, x - 11, FB - 10, 23, 10, OUT); G.R(g, x - 10, FB - 9, 21, 8, '#e8dccb');
-      G.Rh(g, x - 10, FB - 9, 21, 2, '#c8505c');
-      for (let i = 0; i < 5; i++) G.Rq(g, x - 6 + i * 3, FB - 5, 2, 1, '#3a2a24');
-      if (Math.sin(t * 3) > 0.4) G.glow(g, x, FB - 6, 34, 22, '#ffd47a', 0.3);
-    },
-    radio(g, x, t) {
-      G.R(g, x - 13, FB - 18, 27, 18, OUT); G.R(g, x - 12, FB - 17, 25, 16, '#3a4250');
-      G.Rh(g, x - 9, FB - 14, 12, 8, '#12161f');
-      for (let i = 0; i < 5; i++)
-        G.Rq(g, x - 9 + G.rand(0, 11), FB - 14 + G.rand(0, 7), 1, 1,
-          Math.random() < 0.5 ? '#7fd8ff' : '#2a3a4a');
-      for (let i = 0; i < 3; i++) G.Rh(g, x + 5, FB - 13 + i * 3, 6, 1.5, '#5c6470');
-      G.Rh(g, x + 9, FB - 32, 1.5, 15, '#8a94a8'); G.Rq(g, x + 9, FB - 33, 1, 1, '#ff4a4a');
-    },
-  };
-
   const wreckDef = {
-    w: 560, start: 40, obj: 'FIND ANYBODY  ·  0 / 5',
+    w: 560, start: 40, obj: 'GET TO THE ROAD',
     minX: 22, maxX: 528, pspeed: 0.6, grade: 1.25, hopAmp: 4.2,
 
     sky(g, S) {
@@ -868,15 +831,6 @@
         G.R(g, sx, sy, sw, sh, cc);
         G.hairq(g, sx, sy, sw, G.shade(cc, 0.4));
       }
-      // ---- the things ----
-      for (const f of FIND) {
-        if (!S.done[f.id]) {
-          g.globalAlpha = 0.22 + Math.sin(S.t * 2 + f.x) * 0.06;
-          G.glow(g, f.x, FB - 8, 54, 34, '#ffd47a', 0.55);
-          g.globalAlpha = 1;
-        }
-        FINDART[f.id](g, f.x, S.t);
-      }
     },
 
     fore(g, S) {
@@ -913,31 +867,30 @@
         hide: (S) => !S.flags.torch, script: [{ clip: 'idle', d: 9 }] },
     ],
 
-    spots: FIND.map((f) => ({
-      id: f.id, x: f.x, label: f.label, markY: FB - 30, once: 1,
-      on(S) {
-        S.mine(f.say, 2.8);
-        S.found = (S.found || 0) + 1;
-        G.audio.sfx('order');
-        S.bang(f.x, FB - 12, '#ffd47a', 9, 1.8);
-        G.floatText(String(S.found) + ' / 5', f.x - Math.round(G.cam.x), FB - 34, '#ffd47a');
-        S.setObj('FIND ANYBODY  ·  ' + S.found + ' / 5');
-        S.mut = G.rand(7, 12);
-        if (S.found >= 5) {
-          S.setObj('SOMETHING IS COMING DOWN THE ROAD');
-          S.flags.torch = 0.01;
-          const tr = S.actor('tracy'); if (tr) tr.x = 560;
-        }
-      },
-    })).concat([
+    // ---- There used to be a scavenger hunt out here: five objects
+    // dropped along the apron with a glow on each, and an objective
+    // that counted them off, FIND ANYBODY 0/5. It made the worst
+    // night of this machine's life into a shopping list. It is gone.
+    // What is left is a long walk east and whatever it says to itself
+    // on the way, and then a light coming down the road. ----
+    spots: [
       { id: 'her', x: 486, label: 'GO TO HER', markY: FB - 64,
         once: 1, hidden: (S) => !S.flags.torch,
         on(S) { S.play(RESCUE); } },
-    ]),
+    ],
 
-    enter(S) { S.found = 0; S.plegOff = 1; S.pmood = 'sick'; S.mut = 6; },
+    enter(S) { S.plegOff = 1; S.pmood = 'sick'; S.mut = 4; },
 
     update(S, dt) {
+      // walk far enough east and something turns onto the road
+      if (!S.flags.torch && S.px > 372) {
+        S.flags.torch = 0.01;
+        S.setObj('SOMETHING IS COMING DOWN THE ROAD');
+        S.bubbles.length = 0;
+        S.mine('THAT IS A LIGHT. THAT IS SOMEBODY CARRYING A LIGHT.', 3);
+        G.audio.sfx('unlock');
+        const tr = S.actor('tracy'); if (tr) tr.x = 560;
+      }
       // you talk to yourself out here, because there is nobody else
       S.mut -= dt;
       if (S.mut <= 0 && !S.lock && !S.bubbles.length) {

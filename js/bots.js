@@ -19,24 +19,24 @@
   // FRAMES. base / torso / head / arms / prop, plus proportions.
   // ------------------------------------------------------------
   const FRAME = {
-    tank:    { base: 'tread',  torso: 'slab',    head: 'wedge',   arms: 'heavy',   prop: 'cannon',  w: 1.5,  h: 0.84, hs: 0.92 },
-    maid:    { base: 'skirt',  torso: 'narrow',  head: 'dome',    arms: 'slim',    prop: 'apron',   w: 0.9,  h: 1.06, hs: 1.0, soft: 1 },
-    mafia:   { base: 'legs',   torso: 'boxy',    head: 'tophat',  arms: 'heavy',   prop: 'cigar',   w: 1.2,  h: 1.0,  hs: 0.95, emblem: 'knot' },
-    police:  { base: 'wheel',  torso: 'boxy',    head: 'helmet',  arms: 'baton',   prop: 'siren',   w: 1.0,  h: 1.0,  hs: 0.95, emblem: 'badge' },
-    fat:     { base: 'plinth', torso: 'barrel',  head: 'small',   arms: 'stub',    prop: 'funnel',  w: 1.72, h: 0.9,  hs: 0.74, soft: 1 },
-    violin:  { base: 'legs',   torso: 'violin',  head: 'narrowH', arms: 'bow',     prop: 'scroll',  w: 0.86, h: 1.16, hs: 0.8, soft: 1 },
-    chef:    { base: 'legs',   torso: 'boxy',    head: 'dome',    arms: 'many',    prop: 'toque',   w: 1.1,  h: 1.0,  hs: 0.9, emblem: 'stamp', soft: 1 },
-    nurse:   { base: 'wheel',  torso: 'narrow',  head: 'dome',    arms: 'syringe', prop: 'cross',   w: 0.95, h: 1.02, hs: 1.0, soft: 1 },
-    judge:   { base: 'plinth', torso: 'robe',    head: 'boxy',    arms: 'gavel',   prop: 'wig',     w: 1.28, h: 1.04, hs: 0.9 },
-    miner:   { base: 'tread',  torso: 'boxy',    head: 'lamp',    arms: 'drill',   prop: 'none',    w: 1.2,  h: 0.94, hs: 0.9, emblem: 'star' },
-    priest:  { base: 'skirt',  torso: 'narrow',  head: 'bell',    arms: 'slim',    prop: 'halo',    w: 0.9,  h: 1.18, hs: 0.85, soft: 1 },
-    dj:      { base: 'plinth', torso: 'drum',    head: 'crt',     arms: 'slim',    prop: 'phones',  w: 1.06, h: 0.98, hs: 1.06, soft: 1 },
-    clerk:   { base: 'legs',   torso: 'filing',  head: 'boxy',    arms: 'stamp',   prop: 'specs',   w: 1.1,  h: 0.96, hs: 0.88, soft: 1 },
-    soldier: { base: 'legs',   torso: 'boxy',    head: 'helmet',  arms: 'rifle',   prop: 'webbing', w: 1.05, h: 1.0,  hs: 0.88, emblem: 'chevron' },
-    scav:    { base: 'legs',   torso: 'junk',    head: 'bucket',  arms: 'claw',    prop: 'aerial',  w: 1.0,  h: 1.0,  hs: 0.9, soft: 1 },
-    courier: { base: 'wheel',  torso: 'boxpack', head: 'wedge',   arms: 'slim',    prop: 'aerial',  w: 0.95, h: 0.96, hs: 0.84, soft: 1 },
-    garden:  { base: 'tread',  torso: 'narrow',  head: 'dome',    arms: 'can',     prop: 'moss',    w: 1.0,  h: 1.0,  hs: 0.9, soft: 1 },
-    warden:  { base: 'legs',   torso: 'slab',    head: 'lamp',    arms: 'heavy',   prop: 'shackle', w: 1.32, h: 1.08, hs: 0.9 },
+    tank:    { base: 'tread',  torso: 'slab',    head: 'wedge',   arms: 'heavy',   prop: 'cannon',  w: 1.16,  h: 0.84, hs: 1.30 },
+    maid:    { base: 'skirt',  torso: 'narrow',  head: 'dome',    arms: 'slim',    prop: 'apron',   w: 0.86,  h: 1.06, hs: 1.26, soft: 1 },
+    mafia:   { base: 'legs',   torso: 'boxy',    head: 'tophat',  arms: 'heavy',   prop: 'cigar',   w: 1.1,  h: 1.0,  hs: 1.28, emblem: 'knot' },
+    police:  { base: 'wheel',  torso: 'boxy',    head: 'helmet',  arms: 'baton',   prop: 'siren',   w: 0.98,  h: 1.0,  hs: 1.28, emblem: 'badge' },
+    fat:     { base: 'plinth', torso: 'drum',    head: 'small',   arms: 'stub',    prop: 'funnel',  w: 1.36, h: 0.9,  hs: 1.24, soft: 1 },
+    violin:  { base: 'legs',   torso: 'violin',  head: 'narrowH', arms: 'bow',     prop: 'scroll',  w: 0.82, h: 1.16, hs: 1.20, soft: 1 },
+    chef:    { base: 'legs',   torso: 'boxy',    head: 'dome',    arms: 'many',    prop: 'toque',   w: 1.02,  h: 1.0,  hs: 1.30, emblem: 'stamp', soft: 1 },
+    nurse:   { base: 'wheel',  torso: 'narrow',  head: 'dome',    arms: 'syringe', prop: 'cross',   w: 0.9, h: 1.02, hs: 1.28, soft: 1 },
+    judge:   { base: 'plinth', torso: 'robe',    head: 'boxy',    arms: 'gavel',   prop: 'wig',     w: 1.2, h: 1.04, hs: 1.26 },
+    miner:   { base: 'tread',  torso: 'boxy',    head: 'lamp',    arms: 'drill',   prop: 'none',    w: 1.12,  h: 0.94, hs: 1.26, emblem: 'star' },
+    priest:  { base: 'skirt',  torso: 'narrow',  head: 'bell',    arms: 'slim',    prop: 'halo',    w: 0.86,  h: 1.18, hs: 1.22, soft: 1 },
+    dj:      { base: 'plinth', torso: 'drum',    head: 'crt',     arms: 'slim',    prop: 'phones',  w: 1.0, h: 0.98, hs: 1.32, soft: 1 },
+    clerk:   { base: 'legs',   torso: 'filing',  head: 'boxy',    arms: 'stamp',   prop: 'specs',   w: 1.02,  h: 0.96, hs: 1.24, soft: 1 },
+    soldier: { base: 'legs',   torso: 'boxy',    head: 'helmet',  arms: 'rifle',   prop: 'webbing', w: 1.0, h: 1.0,  hs: 1.26, emblem: 'chevron' },
+    scav:    { base: 'legs',   torso: 'junk',    head: 'bucket',  arms: 'claw',    prop: 'aerial',  w: 0.96,  h: 1.0,  hs: 1.26, soft: 1 },
+    courier: { base: 'wheel',  torso: 'boxpack', head: 'wedge',   arms: 'slim',    prop: 'aerial',  w: 0.9, h: 0.96, hs: 1.24, soft: 1 },
+    garden:  { base: 'tread',  torso: 'narrow',  head: 'dome',    arms: 'can',     prop: 'moss',    w: 0.94,  h: 1.0,  hs: 1.28, soft: 1 },
+    warden:  { base: 'legs',   torso: 'slab',    head: 'lamp',    arms: 'heavy',   prop: 'shackle', w: 1.14, h: 1.08, hs: 1.30 },
     // YOU. A dairy unit. Built to stand in a field of nothing and turn
     // out gelato, and given a face soft enough that the children would
     // come up to it. Tracy kept the face and rebuilt everything under it.
@@ -201,57 +201,164 @@
       if (!o.noGlow) G.glow(g, cx, cy, w * 0.8, h * 0.8, hue, 0.4);
       return;
     }
-    for (let j = 0; j < h; j++) {                        // bezel
-      const c = j < 1 ? P.hullLt : j >= h - 1 ? P.hullDk : P.hull;
-      G.R(g, Math.round(cx - rows[j]), y + j, rows[j] * 2, 1, c);
+    // ---- THE MACHINE OPTIC. This used to be a camera lens drawn in
+    // full: a screwed bezel, a saturated iris filling three quarters
+    // of the glass, a white pupil in the middle of it, radial spokes
+    // and a scan line. At eight pixels across all of that collapses
+    // into one bright saturated donut with a hole in it, which reads
+    // as an inflamed eye rather than a thing that is looking at you.
+    //
+    // So it is now the same three marks the cow has and the people
+    // have: a DARK round, one thin ring of the unit's colour around
+    // it, and a white pip. Dark-dominant, because a pupil is dark. ----
+    for (let j = 0; j < h; j++) {                        // a plain dark bezel
+      const cc = j < 1 ? P.hullLt : j >= h - 1 ? '#0b0e14' : P.hullDk;
+      G.R(g, Math.round(cx - rows[j]), y + j, rows[j] * 2, 1, cc);
     }
-    // machined bezel: a bright rim hair on the upper left, dark on the
-    // lower right, and a ring of tiny screws on anything big enough
-    for (let j = 0; j < h; j++) {
-      const hw = rows[j];
-      G.Rh(g, cx - hw, y + j, 0.5, 0.5, j < h * 0.5 ? '#e8f0ff' : P.hullDk);
-      G.Rh(g, cx + hw - 0.5, y + j + 0.5, 0.5, 0.5, j < h * 0.5 ? P.hull : '#0f1218');
+    // the glass, dark, with the colour only as a rim inside the bezel
+    const gr = Math.max(2, Math.round(Math.min(w, h) * 0.82));
+    const grows = ballRows(gr, gr);
+    const gy0 = Math.round(cy - gr / 2);
+    for (let j = 0; j < gr; j++) {
+      const p = j / Math.max(1, gr - 1);
+      G.R(g, Math.round(cx - grows[j]), gy0 + j, grows[j] * 2, 1,
+        p < 0.14 ? '#2a2438' : p > 0.9 ? G.shade(hue, -0.6) : '#1c1728');
     }
-    if (w >= 9) for (let k = 0; k < 4; k++) {
-      const a = Math.PI * 0.25 + k * Math.PI * 0.5;
-      G.Rh(g, cx + Math.cos(a) * (w * 0.42) - 0.25, cy + Math.sin(a) * (h * 0.42) - 0.25, 0.5, 0.5, '#0f1218');
+    // the pupil: a big dark round that moves. NO coloured ring round it -
+    // a bright ring with a dark middle and a white dot in the middle of
+    // that is a bullseye, and eighteen of them is a shooting gallery.
+    // The unit's colour survives as a single crescent of bounce light
+    // along the bottom of the pupil, the way a dark eye catches a room.
+    const ir = Math.max(2, Math.round(Math.min(w, h) * (o.slit ? 0.4 : 0.6)));
+    const ih = o.slit ? Math.max(2, gr - 1) : ir;
+    const irows = ballRows(ir, ih);
+    const ix = Math.round(cx + (o.lookX || 0) * (w * 0.18));
+    const iy = Math.round(cy + (o.lookY || 0) * (h * 0.18));
+    for (let j = 0; j < ih; j++) {
+      const hw = irows[j], p = j / Math.max(1, ih - 1);
+      G.R(g, Math.round(ix - hw), Math.round(iy - ih / 2) + j, Math.max(1, hw * 2), 1,
+        p > 0.82 ? G.shade(hue, -0.42) : '#100e1a');
     }
-    const ir = Math.max(2, Math.round(Math.min(w, h) * 0.76));
-    const irows = ballRows(ir, ir);
-    const ix = cx + (o.lookX || 0) * (w / 2 - ir / 2);
-    const iy = cy + (o.lookY || 0) * (h / 2 - ir / 2);
-    const ir0 = Math.round(iy - ir / 2);
-    for (let j = 0; j < ir; j++) {
-      const c = j < ir * 0.28 ? G.shade(hue, -0.45) : j > ir * 0.74 ? G.shade(hue, 0.4) : hue;
-      G.R(g, Math.round(ix - irows[j]), ir0 + j, irows[j] * 2, 1, c);
-    }
-    const pw = Math.max(1, Math.round(ir * (o.slit ? 0.3 : 0.44)));
-    const ph = o.slit ? Math.max(2, ir - 1) : pw;
-    const prows = o.slit ? null : ballRows(pw, ph);
-    for (let j = 0; j < ph; j++) {
-      const hw = prows ? prows[j] : pw / 2;
-      G.R(g, Math.round(ix - hw), Math.round(iy - ph / 2) + j, Math.max(1, Math.round(hw * 2)), 1, '#ffffff');
-    }
-    // radial iris texture: fine spokes off the pupil
-    if (ir >= 7) for (let k = 0; k < 8; k++) {
-      const a = k * Math.PI / 4 + 0.4;
-      const r0 = ir * 0.3, r1 = ir * 0.46;
-      for (let rr = r0; rr < r1; rr += 0.5)
-        G.Rh(g, ix + Math.cos(a) * rr - 0.25, iy + Math.sin(a) * rr - 0.25, 0.5, 0.5, G.shade(hue, 0.5));
-    }
-    if (w > 6) G.R(g, Math.round(cx - rows[1] * 0.6), y + 1, 1, 1, '#ffffff');
-    // a bounce catch-light at the lower right, one native pixel
-    if (w >= 8) G.Rh(g, cx + w * 0.2, cy + h * 0.24, 0.5, 0.5, G.shade(hue, 0.75));
-    // the scan line crossing the glass
-    if (w >= 10 && !o.noScan) {
-      const sy = y + 1 + ((o.t || 0) * 9 % (h - 2));
-      g.globalAlpha = 0.5;
-      const j = G.clamp(Math.floor(sy - y), 0, h - 1);
-      G.Rh(g, cx - rows[j] + 0.5, sy, rows[j] * 2 - 1, 0.5, '#ffffff');
-      g.globalAlpha = 1;
-    }
-    if (!o.noGlow) G.glow(g, cx, cy, w * 0.9, h * 0.9, hue, 0.7);
+    // one white pip, high on the light side. That is the whole life in it.
+    const pw = Math.max(1, Math.round(ir * 0.3));
+    G.rr2(g, ix - ir * 0.32, iy - ir * 0.3, pw, pw, '#ffffff');
+    if (!o.noGlow) G.glow(g, cx, cy, w * 1.1, h * 1.1, hue, 0.3);
   };
+
+  // ============================================================
+  // ROBOT GEOMETRY
+  //
+  // Everything below the neck used to be a box. A thirty-by-thirty
+  // slab with a grille cut in it, a small head perched on the corner
+  // of it, two grey rods for arms and two posts for legs. Twenty
+  // archetypes built that way read as twenty filing cabinets, and
+  // recolouring a filing cabinet gets you a second filing cabinet.
+  //
+  // So a shell is now a SOLID OF REVOLUTION: a half-width as a
+  // function of how far down it you are. The PROFILE is what tells a
+  // tank from a priest, which puts the work back on the silhouette
+  // where it belongs. Rows are drawn with every outline in one pass
+  // and every fill in the next - do it per row and each row's black
+  // paints over the last row's metal.
+  // ============================================================
+
+  // the four tones every piece of this machine is lit with
+  function tone(c) {
+    return { base: c, lit: G.shade(c, 0.32), hot: G.shade(c, 0.62),
+             dk: G.shade(c, -0.3), dk2: G.shade(c, -0.56), rim: G.shade(c, 0.18) };
+  }
+
+  // a shell. hwOf(p) is the half-width at p down the form.
+  function shell(g, cx, top, h, hwOf, c, o) {
+    o = o || {};
+    const T = tone(c);
+    const n = Math.max(3, Math.round(h));
+    const W = [];
+    for (let i = 0; i < n; i++) W.push(Math.max(1, Math.round(hwOf((i + 0.5) / n))));
+    cx = Math.round(cx); top = Math.round(top);
+    for (let i = 0; i < n; i++) G.R(g, cx - W[i] - 1, top + i, W[i] * 2 + 2, 1, OUT);
+    G.R(g, cx - W[0], top - 1, W[0] * 2, 1, OUT);
+    G.R(g, cx - W[n - 1], top + n, W[n - 1] * 2, 1, OUT);
+    const band = Math.max(1, Math.round(h * 0.22));
+    for (let i = 0; i < n; i++) {
+      const p = (i + 0.5) / n, y = top + i, w = W[i];
+      G.R(g, cx - w, y, w * 2, 1,
+        i < band ? T.lit : p > 0.88 ? T.dk2 : p > 0.7 ? T.dk : T.base);
+      G.vairq(g, cx - w, y, 1, i < band ? T.hot : T.rim);            // light edge
+      G.vairq(g, cx + w - 0.25, y, 1, p > 0.5 ? T.dk2 : T.dk);       // shadow edge
+      if (i === band) G.hair(g, cx - w + 1, y, w * 2 - 2, G.shade(c, -0.14));
+    }
+    // one specular, laid along the light shoulder. Never two.
+    if (W[1] > 3) G.hair(g, cx - W[1] * 0.68, top + 1, Math.max(2, W[1] * 0.7), '#ffffff');
+    return { top, h: n, w: Math.max(...W) * 2, wOf: (p) => W[Math.min(n - 1, Math.max(0, Math.round(p * n)))] * 2 };
+  }
+  G.mechShell = shell;
+
+  // a ball joint: shoulder, elbow, hip, knee
+  function joint(g, cx, cy, r, c) {
+    const T = tone(c);
+    const n = Math.max(2, Math.round(r * 2));
+    cx = Math.round(cx); cy = Math.round(cy - r);
+    for (let i = 0; i < n; i++) {
+      const p = (i + 0.5) / n, q = (p - 0.5) * 2;
+      const w = Math.max(1, Math.round(r * Math.sqrt(Math.max(0.04, 1 - q * q))));
+      G.R(g, cx - w - 1, cy + i, w * 2 + 2, 1, OUT);
+    }
+    for (let i = 0; i < n; i++) {
+      const p = (i + 0.5) / n, q = (p - 0.5) * 2;
+      const w = Math.max(1, Math.round(r * Math.sqrt(Math.max(0.04, 1 - q * q))));
+      G.R(g, cx - w, cy + i, w * 2, 1, p < 0.3 ? T.lit : p > 0.76 ? T.dk : T.base);
+    }
+    if (r >= 2.5) G.Rq(g, cx - r * 0.4, cy + r * 0.5, 1, 1, T.hot);
+  }
+
+  // a limb segment: a tapering capsule from one point to another
+  function seg(g, x0, y0, x1, y1, w0, w1, c) {
+    const T = tone(c);
+    const d = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0)));
+    const P = [];
+    for (let i = 0; i <= d; i++) {
+      const p = i / d;
+      P.push([Math.round(G.lerp(x0, x1, p)), Math.round(G.lerp(y0, y1, p)),
+              Math.max(2, Math.round(G.lerp(w0, w1, p)))]);
+    }
+    for (const q of P) G.R(g, q[0] - q[2] / 2 - 1, q[1] - q[2] / 2 - 1, q[2] + 2, q[2] + 2, OUT);
+    for (let i = 0; i < P.length; i++) {
+      const q = P[i], p = i / P.length;
+      G.R(g, q[0] - q[2] / 2, q[1] - q[2] / 2, q[2], q[2], p < 0.22 ? T.lit : T.base);
+      G.vairq(g, q[0] - q[2] / 2, q[1] - q[2] / 2, q[2], T.rim);
+      G.vairq(g, q[0] + q[2] / 2 - 0.25, q[1] - q[2] / 2, q[2], T.dk2);
+    }
+  }
+
+  // a mitten hand, the same shape the mascot has, so the cast all
+  // came out of one box of parts
+  function paw(g, cx, cy, r, c, dir) {
+    const T = tone(c);
+    G.rr2(g, cx - r - 1, cy - r - 1, r * 2 + 2, r * 2 + 2, OUT);
+    G.rr2(g, cx - r, cy - r, r * 2, r * 2, T.base);
+    G.R(g, cx - r + 1, cy - r, r * 2 - 2, Math.max(1, Math.round(r * 0.5)), T.lit);
+    G.hair(g, cx - r + 1, cy - r, r * 2 - 2, T.hot);
+    G.R(g, cx - r + 1, cy + r - 2, r * 2 - 2, 2, T.dk);
+    // a thumb, out on the leading side, so it reads as a hand
+    if (r >= 3) {
+      const tw = Math.max(2, Math.round(r * 0.7));
+      G.rr2(g, cx + dir * (r - 1) - (dir < 0 ? tw : 0), cy - r * 0.3 - 1, tw + 1, tw + 1, OUT);
+      G.rr2(g, cx + dir * (r - 1) - (dir < 0 ? tw - 1 : 0), cy - r * 0.3, tw - 1, tw, T.base);
+    }
+    G.hairq(g, cx - r * 0.5, cy + r * 0.35, r, T.dk2);
+  }
+
+  // a foot: a shoe with a toe cap, not a block
+  function foot(g, cx, y, w, h, c) {
+    const T = tone(c);
+    G.rr2(g, cx - w / 2 - 1, y - 1, w + 2, h + 2, OUT);
+    G.rr2(g, cx - w / 2, y, w, h, T.dk);
+    G.R(g, cx - w / 2 + 1, y, w - 2, Math.max(1, Math.round(h * 0.4)), T.base);
+    G.hair(g, cx - w / 2 + 1, y, w - 2, T.lit);
+    G.R(g, cx - w / 2, y + h - 1, w, 1, '#0b0e14');
+    G.Rq(g, cx - w / 2 + 1, y + 0.75, Math.max(1, w * 0.3), 1, T.hot);
+  }
 
   // ============================================================
   // BASES - how it stands
@@ -290,20 +397,35 @@
       return { top: footY - h, w };
     }
     if (kind === 'wheel') {
-      const r = u(8);
+      // ---- a mono-wheel. It was a grey ball with four dots in it and
+      // a plate on top, which reads as a bomb on a box. Now: a tyre
+      // with a tread on it, a bright hub, three spokes that turn, and a
+      // fork that visibly holds the axle. ----
+      const r = u(8), cy = footY - r;
       const spin = walk * 5;
-      G.rr2(g, cx - r - 1, footY - r * 2 - 1, r * 2 + 2, r * 2 + 2, OUT);
-      const rows = ballRows(r * 2, r * 2);
-      for (let j = 0; j < r * 2; j++)
-        G.R(g, Math.round(cx - rows[j]), footY - r * 2 + j, rows[j] * 2, 1, j < r * 0.5 ? P.plate : P.plateDk);
-      for (let i = 0; i < 4; i++) {
-        const a = spin + i * Math.PI / 2;
-        G.R(g, cx + Math.round(Math.cos(a) * r * 0.6) - 1, footY - r + Math.round(Math.sin(a) * r * 0.6) - 1, 3, 3, P.hull);
+      // the fork legs, drawn first so the wheel sits in them
+      for (const sd of [-1, 1]) {
+        seg(g, cx + sd * u(1), cy - r - u(3), cx + sd * (r - u(1)), cy, u(3.6), u(2.6), c2);
       }
-      G.R(g, cx - 2, footY - r - 2, 4, 4, P.hullLt);
-      // fork
-      plate(g, cx - u(4), footY - r * 2 - u(6), u(8), u(7), c2, { r: 1, band: 1 });
-      return { top: footY - r * 2 - u(5), w: r * 2 };
+      G.fc(g, cx, cy, r + 1, OUT);
+      for (let j2 = 0; j2 < r * 2; j2++) {              // the tyre
+        const p = j2 / (r * 2 - 1), q = (p - 0.5) * 2;
+        const hw = Math.max(1, Math.round(r * Math.sqrt(Math.max(0.02, 1 - q * q))));
+        G.R(g, cx - hw, cy - r + j2, hw * 2, 1, p < 0.3 ? '#3a4050' : p > 0.78 ? '#0f1218' : '#23293a');
+      }
+      for (let k = 0; k < 12; k++) {                    // tread blocks, turning
+        const a = spin * 0.5 + k * Math.PI / 6;
+        G.Rq(g, cx + Math.cos(a) * (r - 0.75) - 0.5, cy + Math.sin(a) * (r - 0.75) - 0.5, 1.5, 1.5, '#0b0e14');
+      }
+      G.fc(g, cx, cy, Math.max(2, r * 0.42), OUT);      // the hub
+      G.fc(g, cx, cy, Math.max(1, r * 0.42 - 1), G.shade(c2, 0.2));
+      for (let k = 0; k < 3; k++) {                     // spokes
+        const a = spin + k * 2.094;
+        G.Rh(g, cx + Math.cos(a) * r * 0.5 - 0.75, cy + Math.sin(a) * r * 0.5 - 0.75, 1.5, 1.5, G.shade(c2, -0.4));
+      }
+      G.Rq(g, cx - r * 0.2, cy - r * 0.24, 1, 1, '#ffffff');
+      G.glow(g, cx, cy, r * 3, r * 2, hue, 0.16);
+      return { top: cy - r - u(3), w: r * 2 };
     }
     if (kind === 'skirt') {
       const w = Math.round(bw * 0.96), h = u(20);
@@ -326,18 +448,35 @@
       return { top: footY - h, w };
     }
     if (kind === 'plinth') {
-      const w = Math.round(bw * 1.0), h = u(9);
-      plate(g, cx - w / 2, footY - h, w, h, P.plateDk, { r: 1, band: 2, bolts: 1, grain: 5 });
-      G.R(g, cx - w / 2 + 2, footY - h + 2, w - 4, 1, hue);
-      G.glow(g, cx, footY - h + 2, w, 5, hue, 0.5);
-      // stepped base course with a lit nose
-      plate(g, cx - w / 2 - 2, footY - 4, w + 4, 4, P.plate, { r: 1, band: 1, spec: false });
-      G.hair(g, cx - w / 2 - 2, footY - 4, w + 4, P.chrome);
-      G.Rh(g, cx - w / 2 - 3, footY - 1.5, w + 6, 1.5, '#0b0e14');
-      // fluting
-      for (let i = 0; i < 6; i++)
-        G.vseam(g, cx - w / 2 + 3 + i * ((w - 6) / 5), footY - h + 3, h - 4, '#0b0e14', P.steel);
-      return { top: footY - h, w };
+      // ---- it used to be a fluted stone step with a light strip. A
+      // plinth under a robot reads as a museum exhibit. It is now a
+      // HOVER SKIRT: a rounded pod, a lit rim, and a downdraft that
+      // stirs the dust under it. ----
+      const w = Math.round(bw * 0.92), h = u(11);
+      const top = footY - h - Math.round(Math.sin(t * 1.7) * u(0.8)) - u(2);
+      for (let j2 = 0; j2 < h; j2++) {
+        const p = j2 / (h - 1);
+        const hw = Math.round((w / 2) * (0.72 + Math.sin(p * 3.14) * 0.28));
+        G.R(g, cx - hw - 1, top + j2, hw * 2 + 2, 1, OUT);
+        G.R(g, cx - hw, top + j2, hw * 2, 1,
+          j2 < 2 ? G.shade(c2, 0.32) : p > 0.84 ? G.shade(c2, -0.5) : p > 0.62 ? G.shade(c2, -0.26) : c2);
+        G.vairq(g, cx - hw, top + j2, 1, G.shade(c2, 0.2));
+        G.vairq(g, cx + hw - 0.25, top + j2, 1, G.shade(c2, -0.5));
+      }
+      // the lit rim under it, and the draught
+      const rw = Math.round(w * 0.94);
+      G.R(g, cx - rw / 2, top + h - 1, rw, 2, G.shade(hue, -0.3));
+      G.hair(g, cx - rw / 2 + 1, top + h - 1, rw - 2, hue);
+      G.glow(g, cx, top + h + u(2), rw * 1.3, u(12), hue, 0.4);
+      for (let i2 = 0; i2 < 7; i2++) {
+        const q = ((t * 1.6 + i2 * 0.31) % 1);
+        g.globalAlpha = (1 - q) * 0.5;
+        G.Rh(g, cx - rw * 0.4 + i2 * (rw * 0.13), top + h + 1 + q * u(6), 2, 1, hue);
+        g.globalAlpha = 1;
+      }
+      for (let i2 = 0; i2 < 5; i2++)                    // dust it kicks up
+        G.Rq(g, cx - rw * 0.5 + G.hash(i2 + Math.floor(t * 3), 13) * rw, footY - 1, 2, 1, '#3f4854');
+      return { top, w };
     }
     // hoof: a dairy chassis. A long cream shank, a white boot cuff, a
     // short black stocking and a split hoof that overhangs the leg -
@@ -439,28 +578,24 @@
       }
       return { top: footY - lh, w: Math.round(bw * 0.72) };
     }
-    // legs: two piston columns with a stride
-    const sw = Math.sin(walk * 6) * u(2);
-    const lw = Math.max(3, u(7)), lh = u(17);
+    // ---- LEGS. Two plate columns with a hinge block and a piston
+    // beside them, ending in a flat pad: a pair of table legs. Now a
+    // hip ball, a thigh, a knee ball, a shin and a boot with a toe on
+    // it - the same parts the arms have, so it reads as one machine
+    // rather than a body sat on furniture. ----
+    const sw = Math.sin(walk * 6) * u(2.2);
+    const lw = Math.max(3, u(7)), lh = u(16);
     for (const s of [-1, 1]) {
-      const lx = cx + s * Math.round(bw * 0.24) - lw / 2;
-      const ly = footY - lh + (s < 0 ? sw : -sw);
-      const kny = ly + Math.round(lh * 0.4);
-      plate(g, lx, ly, lw, lh - Math.abs(sw), c2, { r: 1, band: 2, spec: false });
-      // knee: a hinge block with a lit pin and a shin plate below
-      G.R(g, lx - 1, kny, lw + 2, 3, P.plateDk2);
-      G.hair(g, lx - 1, kny, lw + 2, G.shade(c2, 0.3));
-      G.rivet(g, lx + lw / 2 - 0.5, kny + 0.5, '#0b0e14', P.hullLt);
-      G.vseam(g, lx + lw / 2, kny + 3, lh * 0.5, G.shade(c2, -0.5), G.shade(c2, 0.2));
-      // ankle piston
-      G.Rh(g, lx + lw - 1, kny + 3, 1, lh * 0.4, P.hullDk);
-      G.vair(g, lx + lw - 1, kny + 3, lh * 0.4, P.hullLt);
-      // foot: pad, toe cap, tread
-      const fy = footY - 4 + (s < 0 ? sw : -sw);
-      plate(g, lx - 2, fy, lw + 4, 4, P.plateDk, { r: 1, band: 1, spec: false });
-      G.Rh(g, lx - 2, fy + 3, lw + 4, 1, '#0b0e14');
-      for (let i = 0; i < 3; i++) G.Rh(g, lx - 1 + i * ((lw + 2) / 3), fy + 2.5, 1.5, 1, P.hullDk);
-      G.Rh(g, lx + (s > 0 ? lw - 1 : -2), fy - 1, 3, 2, P.hull);
+      const off = s < 0 ? sw : -sw;
+      const hx = cx + s * Math.round(bw * 0.22);
+      const hy = footY - lh + off;
+      const kny = hy + Math.round(lh * 0.44);
+      const kx = hx + s * u(0.8);
+      joint(g, hx, hy + lw * 0.4, Math.max(2, lw * 0.5), G.shade(c2, 0.12));
+      seg(g, hx, hy, kx, kny, lw * 0.94, lw * 0.8, c2);
+      joint(g, kx, kny + lw * 0.24, Math.max(2, lw * 0.36), G.shade(c2, -0.18));
+      seg(g, kx, kny, hx, footY - u(4) + off, lw * 0.8, lw * 0.66, c2);
+      foot(g, hx + s * u(1), footY - u(4) + off, lw + u(3), u(4), G.shade(c2, -0.12));
     }
     return { top: footY - lh, w: Math.round(bw * 0.7) };
   }
@@ -530,23 +665,58 @@
   }
   G.chestRig = chestRig;
 
+  // ---- THE PROFILES. One half-width curve per chassis, in units of
+  // half the nominal width. This table IS the cast: read it as a row
+  // of silhouettes and you can tell the tank from the priest with
+  // every colour turned off. ----
+  const PROFILE = {
+    // wide shoulders, heavy chest, tapering to a narrow mount
+    slab:    (p) => 1.0 - Math.pow(p, 2.2) * 0.3 + Math.sin(p * 3.14) * 0.06,
+    // the everyman: rounded shoulders, a waist, a small flare at the hip
+    boxy:    (p) => 0.88 + Math.sin(p * 3.14) * 0.16 - Math.pow(p, 3) * 0.16,
+    // slim and upright
+    narrow:  (p) => 0.66 + Math.sin(p * 3.14) * 0.12 - Math.pow(p, 3) * 0.1,
+    // narrow shoulders opening into a wide skirt
+    robe:    (p) => 0.6 + Math.pow(p, 1.7) * 0.62,
+    // two bulges and a waist, because it IS a violin
+    violin:  (p) => 0.62 + Math.sin(p * 6.28 - 1.57) * 0.3,
+    // straight-sided, slightly wider at the foot: a cabinet with a soul
+    filing:  (p) => 0.8 + p * 0.1,
+    // a fat cylinder, barely tapered
+    drum:    (p) => 0.72 + Math.sin(p * 3.14) * 0.28,
+    // lumpy: nothing on it matches anything else on it
+    junk:    (p) => 0.82 + Math.sin(p * 9.4) * 0.12 + Math.sin(p * 3.1) * 0.1,
+    // a courier with the load on its back
+    boxpack: (p) => 0.74 + Math.sin(p * 3.14) * 0.1 + (p > 0.55 ? 0.12 : 0),
+    // the mascot's tank, and the only one that still bulges
+    barrel:  (p) => 0.78 + Math.sin(p * 3.14) * 0.22,
+  };
+  // how tall each chassis is, in units. Every one of these used to be
+  // 24-32 against a 19-unit head, which is why the head read as a
+  // detail on a cupboard instead of a face on a body.
+  const TORSO_H = {
+    slab: 20, boxy: 18, narrow: 19, robe: 20, violin: 21,
+    filing: 19, drum: 20, junk: 18, boxpack: 18, barrel: 19,
+  };
+
   function drawTorso(g, kind, cx, baseTop, bw, u, b, t, o) {
     const c = b.col, c2 = b.col2, hue = b.hue;
-    let w = bw, h = u(26);
-    if (kind === 'slab')    { w = Math.round(bw * 1.1); h = u(24); }
-    if (kind === 'narrow')  { w = Math.round(bw * 0.62); h = u(28); }
-    if (kind === 'barrel')  { w = Math.round(bw * 1.12); h = u(o && o.mascot ? 18 : 30); }
+    const mascot = o && o.mascot;
+    let w = bw, h = u(TORSO_H[kind] === undefined ? 18 : TORSO_H[kind]);
+    if (kind === 'slab')    w = Math.round(bw * 1.12);
+    if (kind === 'narrow')  w = Math.round(bw * 0.78);
+    if (kind === 'barrel')  { w = Math.round(bw * 1.12); h = u(mascot ? 18 : 19); }
+    if (kind === 'violin')  w = Math.round(bw * 0.9);
+    if (kind === 'robe')    w = Math.round(bw * 0.96);
+    if (kind === 'filing')  w = Math.round(bw * 0.96);
+    if (kind === 'drum')    w = Math.round(bw * 1.0);
+    if (kind === 'junk')    w = Math.round(bw * 0.96);
+    if (kind === 'boxpack') w = Math.round(bw * 0.92);
     // squash and stretch: the body gives, and the head rides on top of it
     if (o && o.sq) { h = Math.max(4, Math.round(h * (1 + o.sq))); w = Math.round(w * (1 - o.sq * 0.55)); }
-    if (kind === 'violin')  { w = Math.round(bw * 0.78); h = u(32); }
-    if (kind === 'robe')    { w = Math.round(bw * 1.02); h = u(30); }
-    if (kind === 'filing')  { w = Math.round(bw * 0.94); h = u(28); }
-    if (kind === 'drum')    { w = Math.round(bw * 0.98); h = u(24); }
-    if (kind === 'junk')    { w = Math.round(bw * 0.94); h = u(26); }
-    if (kind === 'boxpack') { w = Math.round(bw * 0.9);  h = u(26); }
     const y = baseTop - h;
 
-    if (kind === 'barrel') {
+    if (kind === 'barrel' && mascot) {
       // a bulging tank: rows widening then narrowing
       for (let j = 0; j < h; j++) {
         const p = j / (h - 1);
@@ -628,123 +798,142 @@
       const hx = cx - u(5);
       plate(g, hx, y + u(4), u(10), u(7), G.shade(c, 0.06), { r: 1, band: 1, spec: false, bolts: 1 });
       G.oc(g, hx + u(5), y + u(8), u(2), G.shade(c, -0.6));
-    } else if (kind === 'violin') {
-      // an hourglass resonator with f-holes and a bridge
-      for (let j = 0; j < h; j++) {
-        const p = j / (h - 1);
-        const waist = 1 - Math.exp(-Math.pow((p - 0.5) * 3.4, 2)) * 0.42;
-        const hw = Math.round((w / 2) * waist);
-        G.R(g, cx - hw - 1, y + j, hw * 2 + 2, 1, OUT);
-        G.R(g, cx - hw, y + j, hw * 2, 1, j < 2 ? G.shade(c, 0.34) : p > 0.88 ? G.shade(c, -0.42) : c);
-        if (j % 7 === 3) G.R(g, cx - hw + 1, y + j, hw * 2 - 2, 1, G.shade(c, 0.1));
-      }
-      for (const s of [-1, 1]) {
-        const fx = cx + s * u(7);
-        for (let k = 0; k < u(9); k++) G.R(g, fx + Math.round(Math.sin(k * 0.5) * 1.4), y + u(9) + k, 2, 1, P.plateDk2);
-      }
-      G.R(g, cx - u(8), y + Math.round(h * 0.6), u(16), 2, G.shade(c, -0.5));
-      for (let i = 0; i < 4; i++) G.R(g, cx - u(6) + i * u(4), y + u(4), 1, h - u(10), i % 2 ? P.hullLt : P.hull);
-    } else if (kind === 'robe') {
-      // wide shoulders falling into a straight robe
-      for (let j = 0; j < h; j++) {
-        const p = j / (h - 1);
-        const hw = Math.round((w / 2) * (0.72 + 0.28 * Math.min(1, p * 2)));
-        G.R(g, cx - hw - 1, y + j, hw * 2 + 2, 1, OUT);
-        G.R(g, cx - hw, y + j, hw * 2, 1, j < 2 ? G.shade(c, 0.26) : p > 0.86 ? G.shade(c, -0.4) : c);
-      }
-      // pleats
-      for (let i = -2; i <= 2; i++) G.R(g, cx + i * u(6), y + u(8), 1, h - u(10), G.shade(c, -0.24));
-      G.R(g, cx - u(10), y + u(2), u(20), 2, hue);
-    } else if (kind === 'filing') {
-      plate(g, cx - w / 2, y, w, h, c, { r: 1, band: 3, rivets: 1 });
-      // three drawers, one hanging open
-      for (let i = 0; i < 3; i++) {
-        const dy = y + 3 + i * Math.round((h - 6) / 3);
-        const outp = i === 1 ? u(3) : 0;
-        plate(g, cx - w / 2 + 2 - outp, dy, w - 4, Math.round((h - 8) / 3), c2, { r: 1, band: 1, spec: false });
-        G.R(g, cx - u(4) - outp, dy + Math.round((h - 8) / 6), u(8), 2, P.hullDk);
-      }
-    } else if (kind === 'drum') {
-      plate(g, cx - w / 2, y, w, h, c, { r: 2, band: 3 });
-      // a speaker cone with a live cabinet
-      const sr = Math.round(Math.min(w, h) * 0.36);
-      const rows = ballRows(sr * 2, sr * 2);
-      const puls = 1 + Math.sin(t * 9) * 0.1;
-      for (let j = 0; j < sr * 2; j++) {
-        const hw = Math.round(rows[j] * puls);
-        G.R(g, cx - hw, y + Math.round(h / 2) - sr + j, hw * 2, 1, j < sr * 0.7 ? P.plateDk2 : '#0d0f16');
-      }
-      const inner = ballRows(sr, sr);
-      for (let j = 0; j < sr; j++)
-        G.R(g, cx - inner[j], y + Math.round(h / 2) - Math.round(sr / 2) + j, inner[j] * 2, 1,
-          j < sr * 0.3 ? G.shade(hue, -0.35) : hue);
-      G.R(g, cx - 2, y + Math.round(h / 2) - 2, 4, 4, '#ffffff');
-      for (let i = 0; i < 3; i++) G.R(g, cx - w / 2 + 2, y + 2 + i * 2, w - 4, 1, G.shade(c, 0.2));
-    } else if (kind === 'junk') {
-      // mismatched panels bolted together
-      plate(g, cx - w / 2, y, w, h, c, { r: 1, band: 2 });
-      plate(g, cx - w / 2 + u(2), y + u(3), Math.round(w * 0.5), Math.round(h * 0.44), c2, { r: 1, band: 1, spec: false });
-      plate(g, cx + u(1), y + Math.round(h * 0.5), Math.round(w * 0.42), Math.round(h * 0.4), P.plateDk, { r: 1, band: 1, spec: false });
-      G.R(g, cx - w / 2 + 1, y + Math.round(h * 0.48), w - 2, 1, P.hullDk);
-      for (let i = 0; i < 5; i++)
-        G.R(g, cx - w / 2 + 3 + ((i * 7) % (w - 6)), y + 2 + ((i * 5) % (h - 4)), 2, 2, i % 2 ? P.hullDk : P.rust);
-    } else if (kind === 'boxpack') {
-      plate(g, cx - w / 2, y, w, h, c, { r: 1, band: 3 });
-      // a strapped delivery crate on the back
-      plate(g, cx - w / 2 - u(3), y + u(4), Math.round(w * 0.5), Math.round(h * 0.7), '#8a6a3a', { r: 1, band: 2 });
-      G.R(g, cx - w / 2 - u(3), y + u(4) + Math.round(h * 0.3), Math.round(w * 0.5), 2, '#5c4420');
-      G.R(g, cx - u(6), y + u(4), u(12), 1, hue);
-    } else if (kind === 'slab') {
-      plate(g, cx - w / 2, y, w, h, c, { r: 2, band: 4, rivets: 1, grain: 7, hazard: 1 });
-      // sloped glacis, with a welded lip where it meets the hull
-      for (let j = 0; j < u(7); j++)
-        G.R(g, cx - w / 2 + 1 + j, y + j, w - 2 - j * 2, 1, G.shade(c, 0.16 - j * 0.03));
-      G.seam(g, cx - w / 2 + u(7), y + u(7), w - u(14), G.shade(c, -0.55), G.shade(c, 0.24));
-      // riveted armour laps down both flanks
-      for (const sd of [-1, 1]) for (let i = 0; i < 5; i++)
-        G.rivet(g, cx + sd * (w / 2 - 3.5), y + u(9) + i * u(2.6), G.shade(c, -0.62), G.shade(c, 0.5));
-      // the vision block: recessed, with a lit slit and a wiper
-      const vx = cx - u(12), vy = y + u(9);
-      G.R(g, vx - 1, vy - 1, u(24) + 2, u(4) + 2, G.shade(c, -0.66));
-      G.R(g, vx, vy, u(24), u(4), '#12151f');
-      G.bevel(g, vx, vy, u(24), u(4), '#090c12', G.shade(c, 0.34));
-      accent(g, vx + 1, vy + 1, u(22), 1, hue);
-      G.Rh(g, vx + u(20), vy - 1.5, 1, u(6), P.hullDk);
-      // stowage box and two tow hooks
-      plate(g, cx + w / 2 - u(9), y + h - u(9), u(8), u(6), G.shade(c, -0.12),
-        { r: 1, band: 1, spec: false, bolts: 1 });
-      for (const sd of [-1, 1]) {
-        G.Rh(g, cx + sd * (w / 2 - u(4)) - 1, y + h - 3.5, 2, 1, P.hull);
-        G.Rh(g, cx + sd * (w / 2 - u(4)) - 1.5, y + h - 2.5, 3, 1, P.hullDk);
-      }
-      G.stencil(g, cx - w / 2 + 3, y + h - u(6), G.shade(c, -0.6));
     } else {
-      plate(g, cx - w / 2, y, w, h, c, { r: 2, band: 3, bolts: 1, notch: 1,
-        rivets: kind === 'boxy' ? 1 : 0 });
-      chestRig(g, cx, y, w, h, u, b, t);
-      if (o && o.emblem) drawEmblem(g, o.emblem, cx, y + Math.round(h * 0.78), u, hue);
+      // ---- EVERY OTHER CHASSIS. One shell off the profile table,
+      // then the two or three marks that say what it does for a
+      // living. No slabs, no letterbox grille, no cupboard. ----
+      const prof = PROFILE[kind] || PROFILE.boxy;
+      const sh = shell(g, cx, y, h, (p) => (w / 2) * prof(p), c, {});
+      const T = tone(c);
+      const hwAt = (p) => Math.max(2, Math.round((w / 2) * prof(p)));
+
+      // a chest plate, inset, where the emblem and the work live
+      const cpw = Math.max(6, Math.round(hwAt(0.42) * 1.24));
+      const cpy = y + Math.round(h * 0.26), cph = Math.max(5, Math.round(h * 0.42));
+      G.rr2(g, cx - cpw / 2 - 1, cpy - 1, cpw + 2, cph + 2, OUT);
+      G.rr2(g, cx - cpw / 2, cpy, cpw, cph, G.shade(c, -0.16));
+      G.hair(g, cx - cpw / 2 + 1, cpy, cpw - 2, T.lit);
+      G.hair(g, cx - cpw / 2 + 1, cpy + cph - 1, cpw - 2, T.dk2);
+      G.vairq(g, cx - cpw / 2 + 0.5, cpy + 1, cph - 2, G.shade(c, 0.14));
+      for (const s of [-1, 1]) G.rivet(g, cx + s * (cpw / 2 - 1.5), cpy + 1.5, T.dk2, T.hot);
+
+      // ---- and then the ONE thing that is not on any of the others ----
+      if (kind === 'violin') {                       // f-holes and a bridge
+        for (const s of [-1, 1]) {
+          const fx = cx + s * Math.round(w * 0.2);
+          for (let k = 0; k < u(7); k++)
+            G.Rq(g, fx + Math.round(Math.sin(k * 0.6) * 1.2), cpy + 1 + k, 1, 1, '#241a12');
+        }
+        for (let i = 0; i < 4; i++)
+          G.vairq(g, cx - u(2) + i * u(1.4), cpy, cph, '#e8dcc0');
+      } else if (kind === 'robe') {                  // vertical folds in the skirt
+        for (let i = 0; i < 5; i++) {
+          const fx = cx - w * 0.34 + i * (w * 0.17);
+          G.vairq(g, fx, y + h * 0.5, h * 0.48, T.dk2);
+          G.vairq(g, fx + 0.5, y + h * 0.5, h * 0.48, T.lit);
+        }
+        // ---- and a JABOT. The magistrate's chassis is near-black, so
+        // on a dark set it was a hole in the picture with a wig on top.
+        // A pale collar down the chest gives the value it was missing
+        // and says what the job is at the same time. ----
+        const jw = Math.max(4, Math.round(w * 0.3));
+        G.rr2(g, cx - jw / 2 - 1, y + u(1), jw + 2, Math.round(h * 0.44) + 1, OUT);
+        for (let j2 = 0; j2 < Math.round(h * 0.44); j2++) {
+          const p2 = j2 / Math.max(1, Math.round(h * 0.44) - 1);
+          const hw2 = Math.round((jw / 2) * (0.6 + p2 * 0.4));
+          G.R(g, cx - hw2, y + u(1) + j2, hw2 * 2, 1,
+            j2 < 2 ? '#ffffff' : p2 > 0.8 ? '#c8ccd8' : '#e8ecf4');
+          if (j2 % 3 === 1) G.hairq(g, cx - hw2 + 1, y + u(1) + j2, hw2 * 2 - 2, '#b0b6c4');
+        }
+        G.Rq(g, cx - u(1), y + u(2), u(2), 1, '#ffffff');
+      } else if (kind === 'filing') {                // three drawers with pulls
+        for (let i = 0; i < 3; i++) {
+          const dy = cpy + 1 + i * Math.round((cph - 2) / 3);
+          G.Rh(g, cx - cpw / 2 + 1, dy, cpw - 2, 1, T.dk2);
+          G.hair(g, cx - cpw / 2 + 1, dy + 1, cpw - 2, T.lit);
+          G.Rq(g, cx - u(1.5), dy + 1.5, u(3), 1, T.hot);
+        }
+      } else if (kind === 'drum') {                  // a speaker cone
+        const r = Math.max(3, Math.round(cph * 0.42));
+        G.fc(g, cx, cpy + cph / 2, r + 1, OUT);
+        G.fc(g, cx, cpy + cph / 2, r, '#1a1420');
+        G.oc(g, cx, cpy + cph / 2, r - 1, G.shade(hue, -0.3));
+        const pu = 1 + Math.abs(Math.sin(t * 5)) * (r * 0.3);
+        G.fc(g, cx, cpy + cph / 2, Math.max(1, r * 0.34 + pu * 0.2), hue);
+        G.glow(g, cx, cpy + cph / 2, r * 3, r * 3, hue, 0.35 + Math.abs(Math.sin(t * 5)) * 0.2);
+      } else if (kind === 'junk') {                  // welded scrap, none of it matching
+        for (let i = 0; i < 4; i++) {
+          const px = cx - w * 0.3 + G.hash(i, 11) * w * 0.6;
+          const py = cpy + G.hash(i, 17) * (cph - 3);
+          const pw = u(3) + G.hash(i, 23) * u(4);
+          G.R(g, px, py, pw, u(2.5), OUT);
+          G.R(g, px, py, pw - 1, u(2), ['#6b5c48', '#4a5262', '#7a4a32', '#3f4854'][i]);
+          G.hairq(g, px, py, pw - 1, '#a8a090');
+        }
+      } else if (kind === 'boxpack') {               // a parcel strapped on
+        const px = cx - u(4), py = y + Math.round(h * 0.5);
+        G.R(g, px - 1, py - 1, u(11), u(9), OUT);
+        G.R(g, px, py, u(9), u(7), '#c8a878');
+        G.hair(g, px, py, u(9), '#e8d0a8');
+        G.Rh(g, px + u(4), py, 1.5, u(7), '#8a6a44');
+        G.Rh(g, px, py + u(3), u(9), 1.5, '#8a6a44');
+      } else {
+        // the working chassis: a louvred vent under the chest plate
+        for (let i = 0; i < 3; i++) {
+          const vy = cpy + cph - 2 - i * 2;
+          G.Rh(g, cx - cpw * 0.3, vy, cpw * 0.6, 1, T.dk2);
+          G.hair(g, cx - cpw * 0.3, vy + 1, cpw * 0.6, T.lit);
+        }
+      }
+      // a status pip, so it is powered up
+      const pip = Math.sin(t * 2.6 + cx * 0.1) > -0.2 ? hue : G.shade(hue, -0.68);
+      G.Rq(g, cx + cpw / 2 - u(2), cpy + 1, u(1.5), u(1.5), pip);
+      if (pip === hue) G.glow(g, cx + cpw / 2 - u(1.5), cpy + 1.5, u(8), u(6), hue, 0.5);
+      G.stencil(g, cx - cpw / 2 + 1, cpy + cph - 3, T.dk2);
+      if (o && o.emblem) drawEmblem(g, o.emblem, cx, cpy + Math.round(cph * 0.5), u, hue);
+
+      // ---- shoulder caps. Two rounded pads sat ON the shoulder line,
+      // which is what turns a bottle into a body. ----
+      const shw = hwAt(0.06);
+      for (const s of [-1, 1]) {
+        const jx = cx + s * (shw - u(1)), jy = y + u(2.5);
+        joint(g, jx, jy + u(2), Math.max(2, u(3.2)), c2 || G.shade(c, 0.1));
+      }
+      // and a collar between them
+      const nw = Math.max(4, Math.round(hwAt(0) * 0.9));
+      G.rr2(g, cx - nw / 2 - 1, y - u(2) - 1, nw + 2, u(3) + 2, OUT);
+      G.rr2(g, cx - nw / 2, y - u(2), nw, u(3), G.shade(c, -0.24));
+      G.hair(g, cx - nw / 2 + 1, y - u(2), nw - 2, G.shade(c, 0.3));
     }
-    // shoulder yoke over every torso: a lit collar with fasteners.
-    // The soft chassis skips it - a rounded shoulder reads kinder.
-    if (w > u(14) && !(o && o.soft > 1)) {
-      plate(g, cx - w / 2 - 1, y - 1, w + 2, Math.max(3, u(4)), G.shade(c, 0.12),
-        { r: 1, band: 1, spec: false, bolts: 1 });
-      G.seam(g, cx - w / 2 + 1.5, y + u(4), w - 3, G.shade(c, -0.5), G.shade(c, 0.2));
-    }
-    // cable looms running out of the collar into the chest
-    if (w > u(12)) for (const s of [-1, 1])
-      G.loom(g, cx + s * (w * 0.3), y + u(3), cx + s * (w * 0.14), y + u(9), u(2), '#1a1f2e', P.hullDk);
     return { y, w, h, top: y };
   }
 
   // ============================================================
   // HEADS - the face of the job. Returns the mouth line.
   // ============================================================
+  // ---- HEAD PROFILES. Every head that was not a dome, a wedge, a bell
+  // or the cow was a flat plate box with a bezel screwed to it. A box
+  // with a box on it is a cabinet, so all of them now come off a
+  // curve. ----
+  const HEAD_PROFILE = {
+    boxy:    (p) => 0.98 - Math.pow(Math.abs(p - 0.42) * 2, 3.2) * 0.14,
+    helmet:  (p) => (p < 0.34 ? 0.72 + 0.28 * Math.sqrt(Math.max(0, 1 - Math.pow(1 - p / 0.34, 2))) : 1) - Math.pow(Math.max(0, p - 0.7) / 0.3, 2) * 0.16,
+    tophat:  (p) => 0.94 - Math.pow(Math.max(0, p - 0.6) / 0.4, 2) * 0.2,
+    bucket:  (p) => 1.0 - p * 0.22,
+    brick:   (p) => (p < 0.2 ? 0.86 + 0.14 * (p / 0.2) : 1) - Math.pow(Math.max(0, p - 0.76) / 0.24, 2) * 0.12,
+    visor:   (p) => 0.96 - Math.pow(Math.abs(p - 0.4) * 2, 2.6) * 0.2,
+    small:   (p) => 0.6 + Math.sin(p * 3.14) * 0.34,
+    narrowH: (p) => 0.82 + Math.sin(p * 3.14) * 0.16,
+    crt:     (p) => 0.94 - Math.pow(Math.abs(p - 0.44) * 2, 3.4) * 0.12,
+    lamp:    (p) => 0.66 + Math.sin(p * 3.14) * 0.32,
+    antenna: (p) => 0.8 + Math.sin(p * 3.14) * 0.18,
+  };
+
   function drawHead(g, kind, cx, neckY, hw, u, b, t, o) {
     const c = b.col, c2 = b.col2, hue = b.hue;
     const mood = o.mood || 'idle';
-    let w = hw * 2, h = u(20);
-    if (kind === 'small')   { w = hw * 1.2; h = u(14); }
+    let w = hw * 2, h = u(22);
+    if (kind === 'small')   { w = hw * 1.5; h = u(17); }
     if (kind === 'narrowH') { w = hw * 1.2; h = u(24); }
     if (kind === 'bell')    { w = hw * 1.8; h = u(24); }
     if (kind === 'lamp')    { w = hw * 1.6; h = u(18); }
@@ -875,7 +1064,29 @@
         G.pip(g, nx - rows2[1] * 0.5, ny - nb + 1, '#fffbe8');
       }
     } else {
-      plate(g, cx - w / 2, y, w, h, c, { r: kind === 'crt' ? 3 : 2, band: 3 });
+      const hp = HEAD_PROFILE[kind] || HEAD_PROFILE.boxy;
+      shell(g, cx, y, h, (p) => (w / 2) * hp(p), c, {});
+      // ---- A FACE PANEL. Half these chassis are near-black, and two
+      // dark eyes on a dark skull is a hole with a hat on it. So every
+      // face gets an inset panel a couple of steps off the shell: the
+      // eyes and the mouth now have something to read against whatever
+      // colour the unit came out of the factory. ----
+      const fpw = Math.max(6, Math.round(w * hp(0.42) * 0.86));
+      const fpy = y + Math.round(h * 0.19), fph = Math.max(6, Math.round(h * 0.6));
+      G.rr2(g, cx - fpw / 2 - 1, fpy - 1, fpw + 2, fph + 2, OUT);
+      // a light chassis wants the panel recessed; a near-black one wants
+      // it lifted, or the face is a hole in a hole
+      const lum = (parseInt(c.slice(1, 3), 16) * 0.3 + parseInt(c.slice(3, 5), 16) * 0.59
+                 + parseInt(c.slice(5, 7), 16) * 0.11) / 255;
+      const step = lum < 0.34 ? 0.5 : -0.28;
+      for (let j2 = 0; j2 < fph; j2++) {
+        const p2 = j2 / Math.max(1, fph - 1);
+        G.R(g, cx - fpw / 2, fpy + j2, fpw, 1,
+          p2 < 0.1 ? G.shade(c, step - 0.22) : p2 > 0.9 ? G.shade(c, step + 0.2) : G.shade(c, step));
+      }
+      G.hairq(g, cx - fpw / 2 + 1, fpy + 1, fpw - 2, G.shade(c, step + 0.16));
+      // a jaw shadow, so the face sits in the skull instead of on it
+      G.hair(g, cx - w * 0.34, y + h - 2, w * 0.68, G.shade(c, -0.5));
     }
     if (kind === 'crt') {
       plate(g, cx - w / 2 + 2, y + 2, w - 4, h - 7, '#0d1420', { r: 2, band: 1, spec: false });
@@ -888,10 +1099,10 @@
     // a friendly machine has big round optics set wide, not narrow slits
     const eg = soft ? (soft > 1 ? 0.16 : 0.08) : 0;
     const eh = cow ? Math.max(5, Math.round(h * 0.34))
-                   : Math.max(4, Math.round(h * (single ? 0.52 : 0.42 + eg)));
+                   : Math.max(4, Math.round(h * (single ? 0.4 : 0.3 + eg * 0.6)));
     const ew = cow ? Math.max(5, Math.round(w * 0.24))
-                   : single ? Math.round(w * 0.5) : Math.max(4, Math.round(w * (0.3 + eg * 0.6)));
-    const ey = y + Math.round(h * (cow ? 0.17 : kind === 'crt' ? 0.24 : 0.2));
+                   : single ? Math.round(w * 0.4) : Math.max(4, Math.round(w * (0.24 + eg * 0.5)));
+    const ey = y + Math.round(h * (cow ? 0.17 : kind === 'crt' ? 0.3 : 0.27));
     const blink = !o.noBlink && Math.sin(t * 1.1 + cx * 0.3) > 0.9975;
     if (single) {
       G.lens(g, cx - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, slit: mood === 'angry',
@@ -972,7 +1183,7 @@
       // and a hairline of sky along the top of the frame
       G.hairq(g, gx, gy - 0.25, gw, '#6b7f96');
     } else {
-      const sp = Math.round(w * (cow ? 0.25 : 0.23));
+      const sp = Math.round(w * (cow ? 0.25 : 0.27));
       for (const s of [-1, 1]) {
         G.lens(g, cx + s * sp - ew / 2, ey, ew, eh, { hue, closed: blink, dead: o.dead, t,
           cute: cow && mood !== 'angry' ? 1 : 0, lash: cow ? s : 0, lid: cow ? c : null,
@@ -1182,35 +1393,32 @@
   // ARMS - the tool of the trade
   // ============================================================
   function drawArms(g, kind, cx, ty, tw, th, u, b, t, o) {
-    const c = b.col2, hue = b.hue;
+    // limbs used to be painted in col2 flat, which on a dark chassis is a
+    // pair of pale bars stood next to the body instead of part of it
+    const c = G.mix(b.col, b.col2, 0.55), hue = b.hue;
     const sway = Math.sin(t * 1.6) * u(1);
     const sy = ty + Math.round(th * 0.2);
-    // a limb is a pauldron, an upper section, a hinged elbow with a
-    // piston beside it, and a forearm. Four parts instead of one slab.
+    // ---- AN ARM. This used to be a pauldron plate, an upper plate, a
+    // hinge plate, a forearm plate and a piston: five little grey
+    // boxes stacked in a column beside the body, attached to nothing.
+    // Twenty of those and the cast looks like scaffolding.
+    //
+    // Now it is a ball in the shoulder, a tapering upper arm, a ball
+    // at the elbow and a tapering forearm - the same four parts an
+    // arm actually has, with volume on them, hung off the shoulder
+    // line instead of floating past it. ----
     function limb(s, len, wd, col) {
-      const x = cx + s * (tw / 2 + wd / 2 - 1);
       const base = col || c;
-      const el = sy + Math.round(len * 0.45);
-      // shoulder pauldron, overhanging the joint
-      plate(g, x - wd / 2 - 1, sy - 2, wd + 2, Math.max(3, u(5)), G.shade(base, 0.1),
-        { r: 1, band: 2, spec: false, bolts: 1 });
-      // upper arm
-      plate(g, x - wd / 2, sy + u(2), wd, el - sy - u(1), base, { r: 1, band: 2, spec: false });
-      // the elbow: a dark hinge with a lit pin
-      G.R(g, x - wd / 2, el, wd, 2, P.plateDk2);
-      G.Rh(g, x - wd / 2, el, wd, 0.5, G.shade(base, 0.3));
-      G.rivet(g, x - 1, el, '#0d1018', P.hullLt);
-      // forearm
-      plate(g, x - wd / 2 + 0.5, el + 2, Math.max(2, wd - 1), len - (el - sy) - 2, base,
-        { r: 1, band: 2, spec: false });
-      // hydraulic piston running alongside
-      if (wd >= u(5)) {
-        const px = x + s * (wd / 2 - 1);
-        G.Rh(g, px, sy + u(3), 1, el - sy - u(2), P.hullDk);
-        G.vair(g, px, sy + u(3), el - sy - u(2), P.hullLt);
-        G.Rh(g, px - 0.5, el - 1, 2, 2, P.hull);
-      }
-      return { x, y: sy + len };
+      const shw = Math.round(tw * 0.4);                  // on the shoulder, not past it
+      const x = cx + s * (shw + Math.round(wd * 0.18));
+      const el = sy + Math.round(len * 0.48);
+      const ex = x + s * Math.round(wd * 0.14);          // the elbow sits out a little
+      const hx = x + s * Math.round(wd * 0.05);
+      joint(g, x, sy + wd * 0.5, Math.max(2, wd * 0.56), G.shade(base, 0.12));
+      seg(g, x, sy + wd * 0.3, ex, el, wd * 0.82, wd * 0.66, base);
+      joint(g, ex, el + wd * 0.28, Math.max(2, wd * 0.4), G.shade(base, -0.16));
+      seg(g, ex, el, hx, sy + len, wd * 0.66, wd * 0.52, base);
+      return { x: hx, y: sy + len, wd };
     }
     // a soft limb: a rounded shoulder cap sitting ON the body, one
     // tapered tube, and a mitten. No pauldrons, no pistons. It is what
@@ -1307,30 +1515,29 @@
       }
     } else if (kind === 'heavy') {
       for (const s of [-1, 1]) {
-        const e = limb(s, Math.round(th * 0.9) + sway * s, u(9));
-        plate(g, e.x - u(6), e.y - u(2), u(12), u(9), P.plateDk, { r: 2, band: 2, bolts: 1 });
-        // knuckles: four fingers folded over
-        for (let i = 0; i < 4; i++) {
-          const kx = e.x - u(5) + i * u(2.6);
-          G.Rh(g, kx, e.y - u(1), u(2), u(3), P.plate);
-          G.hair(g, kx, e.y - u(1), u(2), P.hullLt);
-          G.vair(g, kx + u(2) - 0.5, e.y - u(1), u(3), '#0d1018');
-        }
-        // a thumb across the front and a lit power line
-        G.Rh(g, e.x + s * u(5), e.y + u(1), u(2), u(4), P.plate);
-        G.R(g, e.x - u(4), e.y + u(5), u(8), 1, hue);
-        G.glow(g, e.x, e.y + u(5), u(12), u(4), hue, 0.5);
+        const e = limb(s, Math.round(th * 0.86) + sway * s, u(8));
+        // a fist, in the same mitten language as everything else, with
+        // three creases across the knuckles and a lit band at the wrist
+        paw(g, e.x, e.y + u(3), Math.max(3, u(4.4)), G.shade(c, -0.06), s);
+        for (let i = 0; i < 3; i++)
+          G.hairq(g, e.x - u(2.6), e.y + u(1.6) + i * u(1.4), u(5), '#0d1018');
+        G.Rq(g, e.x - u(3), e.y - u(1), u(6), 1, hue);
+        G.glow(g, e.x, e.y - u(1), u(10), u(4), hue, 0.4);
       }
     } else if (kind === 'stub') {
       for (const s of [-1, 1]) {
-        const e = limb(s, Math.round(th * 0.42), u(8));
-        plate(g, e.x - u(4), e.y - 1, u(8), u(5), P.plateDk, { r: 1, band: 1, spec: false });
+        const e = limb(s, Math.round(th * 0.44), u(7));
+        paw(g, e.x, e.y + u(2), Math.max(3, u(4)), G.shade(c, -0.06), s);
       }
     } else if (kind === 'many') {
       for (const s of [-1, 1]) for (let k = 0; k < 2; k++) {
-        const e = limb(s, Math.round(th * (0.6 + k * 0.28)) + sway * s, u(4));
-        if (k === 0) { plate(g, e.x - u(3), e.y, u(6), u(6), P.hull, { r: 1, band: 1, spec: false }); }
-        else { G.R(g, e.x - 1, e.y, 2, u(7), P.hullLt); G.R(g, e.x - u(3), e.y + u(6), u(6), 2, P.hull); }
+        const e = limb(s, Math.round(th * (0.58 + k * 0.3)) + sway * s, u(4));
+        paw(g, e.x, e.y + u(2), Math.max(3, u(3.2)), G.shade(c, k ? -0.16 : -0.04), s);
+        if (k) {                                         // the spare pair holds a whisk
+          G.Rh(g, e.x - 0.75, e.y + u(4), 1.5, u(5), '#8a94a8');
+          for (let i = 0; i < 3; i++)
+            G.Rh(g, e.x - u(1.6) + i * u(1.4), e.y + u(8), 1, u(3), '#d8e4f0');
+        }
       }
     } else if (kind === 'drill') {
       limb(-1, Math.round(th * 0.7), u(7));
@@ -1391,8 +1598,8 @@
       for (let i = 0; i < 3; i++) G.R(g, e.x + u(9) + i, e.y + u(3) + i * 2, 1, 1, '#7adcf4');
     } else {                                             // slim
       for (const s of [-1, 1]) {
-        const e = limb(s, Math.round(th * 0.72) + sway * s, u(5));
-        plate(g, e.x - u(3), e.y, u(6), u(6), P.hull, { r: 1, band: 1, spec: false });
+        const e = limb(s, Math.round(th * 0.74) + sway * s, u(5));
+        paw(g, e.x, e.y + u(2), Math.max(3, u(3.6)), G.shade(c, -0.04), s);
       }
     }
   }
@@ -1561,11 +1768,17 @@
       G.rr(g, cx - w / 2 - u(1), top - u(3), w + u(2), u(4), '#22222c');
       for (const s of [-1, 1]) G.R(g, cx + s * (w / 2 - u(1)) - u(2), top + u(6), u(4), 2, hue);
     } else if (kind === 'specs') {
+      // a RIM and a GLINT, never a filled pane. Two pale discs over two
+      // dark optics is a blindfold, which is what these used to be.
       for (const s of [-1, 1]) {
-        G.rr2(g, cx + s * u(6) - u(5), top + u(5), u(10), u(8), '#d8dce4');
-        G.rr2(g, cx + s * u(6) - u(4), top + u(6), u(8), u(6), '#0d1420');
+        const gx = cx + s * u(6.4);
+        G.oc(g, gx, top + u(9), u(5), OUT);
+        G.oc(g, gx, top + u(9), u(4.4), '#d8dce4');
+        G.Rq(g, gx - u(3), top + u(6.6), u(2), 1, '#ffffff');
+        G.Rh(g, gx + s * u(4.4), top + u(8), u(3), 1, '#a8b0bc');
       }
-      G.R(g, cx - u(2), top + u(8), u(4), 1, '#d8dce4');
+      G.R(g, cx - u(2), top + u(9), u(4), 1, '#d8dce4');
+      G.hairq(g, cx - u(2), top + u(9), u(4), '#ffffff');
     } else if (kind === 'webbing') {
       G.R(g, cx - u(10), top + hd.h + u(9), u(20), u(4), '#3a3f2a');
       for (let i = 0; i < 3; i++) plate(g, cx - u(8) + i * u(7), top + hd.h + u(8), u(5), u(6), '#4a5236', { r: 1, band: 1, spec: false });

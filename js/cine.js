@@ -59,6 +59,164 @@
     g.globalAlpha = a; G.rr(g, cx - w / 2, y, w, 6, col); g.globalAlpha = 1;
   }
 
+
+
+  // ------------------------------------------------------------
+  // HER FRONT ROOM, which she calls the shop. One builder in three
+  // states so the raid is the same room before, during and after.
+  //   o.warm     lamps on, the good six weeks
+  //   o.dark     four in the morning
+  //   o.wrecked  0..1  the tub over, the shelf down
+  // ------------------------------------------------------------
+  function room(g, tt, o) {
+    o = o || {};
+    const wr = o.wrecked || 0;
+    const wall = o.warm ? '#2a1e18' : '#150f14';
+    G.R(g, 0, 0, G.W, G.H, o.warm ? '#1b1410' : '#0b090e');
+    for (let x = 0; x < G.W; x += 8) {
+      G.R(g, x, 0, 4, 104, wall);
+      G.R(g, x + 4, 0, 4, 104, G.shade(wall, -0.14));
+    }
+    G.plate(g, -4, 100, G.W + 8, 8, o.warm ? '#5c4028' : '#33241a', { r: 1, band: 2, grain: 2 });
+    G.R(g, 0, 108, G.W, 72, o.warm ? '#3a2a1e' : '#1c1512');
+    if (o.warm) G.glow(g, 120, 60, 220, 140, '#ffb26a', 0.45);
+    // the long bench she works at
+    G.plate(g, 20, 118, 280, 10, o.warm ? '#7a5638' : '#4a3324', { r: 2, band: 3, grain: 3 });
+    G.hair(g, 22, 118, 276, o.warm ? '#a8794f' : '#6b4a34');
+    // the shelf of tubs above it, which comes down when they come in
+    for (let i = 0; i < 6; i++) {
+      const sx = 34 + i * 42;
+      const down = wr > 0.2 + i * 0.1;
+      if (down) {
+        G.rr2(g, sx - 6 + (i % 2 ? 8 : -6), 138 + (i % 3) * 4, 14, 9, '#4a3628');
+        G.rr2(g, sx - 5 + (i % 2 ? 8 : -6), 139 + (i % 3) * 4, 12, 7, '#8a6a4a');
+      } else {
+        G.rr2(g, sx - 8, 76, 18, 12, '#4a3628');
+        G.rr2(g, sx - 7, 77, 16, 10, o.warm ? '#c8a878' : '#7a6448');
+        G.hair(g, sx - 6, 77, 14, o.warm ? '#e8d0a8' : '#8a7458');
+      }
+    }
+    if (wr < 0.3) { G.R(g, 20, 88, 280, 3, '#3a2a1c'); G.hair(g, 20, 88, 280, '#5c4028'); }
+    else for (let i = 0; i < 3; i++) G.R(g, 24 + i * 96, 88 + i * 2, 60 - i * 12, 3, '#3a2a1c');
+    // the tub, upright or tipped
+    if (wr > 0.4) {
+      g.save(); g.translate(70, 132); g.rotate(-0.6); g.translate(-70, -132);
+      G.plate(g, 52, 118, 40, 20, '#5c4028', { r: 2, band: 2, grain: 4 });
+      g.restore();
+      for (let i = 0; i < 16; i++)
+        G.Rh(g, 56 + G.hash(i, 5) * 90, 134 + G.hash(i, 9) * 12, 3, 2, '#c8b090');
+    } else {
+      G.plate(g, 52, 108, 40, 20, '#5c4028', { r: 2, band: 2, grain: 4 });
+      G.rr2(g, 54, 106, 36, 5, '#8a6a4a');
+    }
+    if (o.after) {                                     // rain on the broken window
+      for (let i = 0; i < 24; i++) {
+        const s2 = G.hash(i * 3.1, 7.7);
+        G.Rh(g, 26 + ((s2 * 44 + tt * 20) % 44), ((G.hash(i, 2) * 120 + tt * 130) % 130) + 40, 0.5, 3, '#33445f');
+      }
+    }
+  }
+
+  // ------------------------------------------------------------
+  // THE OUTSIDE OF BIG MOO. Act one ends inside the room with a
+  // darken and a whiteout, which is a fade, not an explosion. So
+  // the camera goes out into the car park instead and watches the
+  // front of the building come off. One builder, five states, so
+  // every shot is the same corner of the same street.
+  //   o.blast  0..1  the front coming out
+  //   o.burn   0..1  fire in the holes afterwards
+  //   o.sign   0..1  the mascot sign coming off its post
+  // ------------------------------------------------------------
+  function bigmoo(g, tt, o) {
+    o = o || {};
+    const bl = o.blast || 0, bn = o.burn || 0, sg = o.sign || 0;
+    const GY = 132;                                    // the tarmac line
+    // sky and city
+    for (let j = 0; j < GY; j++)
+      G.Rh(g, 0, j, G.W, 1, G.mix('#0b1018', '#241a26', Math.pow(j / GY, 0.8)));
+    skyline(g, GY - 22, 44, 91, '#080c14', '#243040');
+    // the tarmac, wet
+    G.R(g, 0, GY, G.W, G.H - GY, '#191720');
+    for (let i = 0; i < 30; i++) {
+      const px = G.hash(i, 7) * G.W, pw = 10 + G.hash(i, 11) * 40;
+      g.globalAlpha = 0.16 + G.hash(i, 13) * 0.14;
+      G.rr(g, px, GY + 4 + G.hash(i, 17) * 40, pw, 3, '#4a6a8a');
+      g.globalAlpha = 1;
+    }
+    // ---- the unit itself: a low box on the corner ----
+    const BX = 54, BW = 214, BT = 52;
+    G.R(g, BX, BT, BW, GY - BT, '#2a2028');
+    G.R(g, BX, BT, BW, 5, '#8a2f3a');                  // the red fascia band
+    G.hair(g, BX, BT, BW, '#c8505c');
+    G.R(g, BX, BT + 5, BW, 3, '#4a3038');
+    // the glass front: four bays. They go one by one when it blows.
+    for (let i = 0; i < 4; i++) {
+      const gx = BX + 10 + i * 50, gw = 42, gy = BT + 14, gh = GY - gy - 8;
+      const gone = bl > 0.1 + i * 0.06;
+      G.R(g, gx - 2, gy - 2, gw + 4, gh + 4, '#c8b490');
+      if (gone) {
+        G.R(g, gx, gy, gw, gh, '#0a0810');             // a hole
+        if (bn > 0) {
+          // ---- FIRE. Banded rows the width of the hole read as sand
+          // dunes lit orange. Fire is a row of TONGUES: narrow columns
+          // that taper to a point and are each a different height on
+          // every frame. ----
+          const base = gy + gh - 2;
+          const nt = 7;
+          for (let k = 0; k < nt; k++) {
+            const tx = gx + 3 + k * ((gw - 6) / (nt - 1));
+            const wob = Math.sin(tt * 9 + k * 1.9 + i * 3.1) * 0.5 + 0.5;
+            const th2 = Math.max(3, Math.round(gh * (0.16 + bn * 0.34) * (0.45 + wob * 0.85)));
+            for (let j2 = 0; j2 < th2; j2++) {
+              const q = 1 - j2 / th2;                  // q: 1 at the base
+              const hw2 = Math.max(0.5, 2.6 * Math.pow(q, 0.6));
+              G.Rh(g, tx - hw2 + Math.sin(tt * 6 + j2 * 0.6 + k) * (1 - q) * 2,
+                base - th2 + j2, hw2 * 2, 1,
+                q > 0.9 ? '#ffe6a0' : q > 0.62 ? '#ffc046' : q > 0.28 ? '#ff7a20' : '#a8300c');
+            }
+          }
+          // and a bed of embers along the bottom of the hole
+          for (let k = 0; k < 9; k++)
+            G.Rq(g, gx + 3 + k * ((gw - 6) / 8), base + 0.5,
+              1.5, 1.5, Math.sin(tt * 5 + k * 2) > 0 ? '#ff8a3a' : '#8a2a08');
+          G.glow(g, gx + gw / 2, gy + gh - 8, gw * 1.6, gh * 0.8, '#ff8a3a', 0.34 * bn);
+        }
+      } else {
+        G.R(g, gx, gy, gw, gh, '#101a2a');
+        G.glow(g, gx + gw / 2, gy + gh * 0.5, gw, gh, '#ffd45a', 0.32);
+        // shapes in the window, before it goes
+        for (let k = 0; k < 3; k++) {
+          const sx = gx + 8 + k * 13;
+          G.R(g, sx, gy + gh - 22, 6, 22, '#3a2a30');
+          G.R(g, sx, gy + gh - 26, 6, 5, '#4a3a40');
+        }
+        G.Rh(g, gx + gw / 2 - 0.75, gy, 1.5, gh, '#c8b490');
+        G.Rh(g, gx, gy + gh / 2, gw, 1.5, '#c8b490');
+      }
+    }
+    // ---- the mascot sign, on a post at the kerb ----
+    const spx = 288;
+    G.R(g, spx - 2, GY - 62, 5, 62, '#3a3440');
+    G.hairq(g, spx - 2, GY - 62, 62, '#5c5468');
+    g.save();
+    if (sg > 0) {                                      // it snaps and falls
+      g.translate(spx, GY - 58); g.rotate(sg * 1.5); g.translate(-spx, -(GY - 58));
+    }
+    G.rr2(g, spx - 21, GY - 78, 42, 30, '#c8505c');
+    G.rr2(g, spx - 19, GY - 76, 38, 26, '#f0e2d4');
+    G.text(g, 'BIG MOO', spx, GY - 70, '#8a2f3a', { align: 'center', sc: 0.5 });
+    // its face, in black, the way it is on every one of them: ears out,
+    // a round skull, two dots and a muzzle. It has to be recognisably
+    // the thing you have been playing.
+    for (const sd of [-1, 1]) G.rr2(g, spx + sd * 9 - 3, GY - 62, 6, 4, '#2a2028');
+    G.rr2(g, spx - 9, GY - 64, 18, 13, '#2a2028');
+    for (const sd of [-1, 1]) G.Rq(g, spx + sd * 4 - 1, GY - 61, 2, 2, '#f0e2d4');
+    G.rr2(g, spx - 4, GY - 57, 8, 5, '#f0e2d4');
+    G.Rq(g, spx - 1, GY - 55, 2, 1, '#2a2028');
+    g.restore();
+    return { GY, BX, BW, BT, spx };
+  }
+
   // ------------------------------------------------------------
   // the good years, and the nine days that ended them
   // ------------------------------------------------------------
@@ -509,79 +667,279 @@
         } },
     ],
 
+    // ---------------- the front comes off ----------------
+    // Act one used to end on a darken and a whiteout from inside the
+    // room. That is a fade with a bang on it. So the camera goes out
+    // into the car park and watches the building come apart instead.
+    bomb: [
+      { t: 3.6, who: null, say: 'THEY PUT IT UNDER THE COUNTER AND THEY WALKED OUT.',
+        cam: { z: [1.0, 1.08], x: [160, 168], y: [96, 94] },
+        paint(g, p, tt) {
+          bigmoo(g, tt, {});
+          // the patrol vehicle across the entrance, light bar going
+          const bx = 40, by = 118;
+          G.rr2(g, bx - 26, by - 14, 56, 20, '#0e1626');
+          G.rr2(g, bx - 25, by - 13, 54, 18, '#1b2a48');
+          G.hair(g, bx - 24, by - 13, 52, '#3a5a9a');
+          G.rr2(g, bx - 14, by - 22, 28, 10, '#22386b');
+          G.R(g, bx - 12, by - 20, 24, 6, '#0d1420');
+          const fl = Math.sin(tt * 14) > 0;
+          G.R(g, bx - 10, by - 26, 9, 4, fl ? '#4a9aff' : '#16283f');
+          G.R(g, bx + 2, by - 26, 9, 4, fl ? '#16283f' : '#ff4a4a');
+          G.glow(g, bx, by - 24, 150, 90, fl ? '#4a9aff' : '#ff4a4a', 0.5);
+          for (const sd of [-1, 1]) { G.fc(g, bx + sd * 17, by + 6, 6, '#0b0e14'); G.fc(g, bx + sd * 17, by + 6, 3, '#3a4050'); }
+          // people going the other way, fast
+          for (let i = 0; i < 5; i++) {
+            const rx = 300 - ((tt * 46 + i * 44) % 300);
+            silhouette(g, rx, 132 + (i % 2) * 6, 26 + (i % 3) * 5, '#100e16', false);
+          }
+          rain(g, tt, 110, '#33445f', 0, 320);
+        } },
+      { t: 3.2, who: 'PATROL', say: 'CLEAR THE FLOOR.',
+        cam: { z: [1.5, 1.75], x: [150, 158], y: [98, 96] },
+        paint(g, p, tt) {
+          bigmoo(g, tt, {});
+          const fl = Math.sin(tt * 18) > 0;
+          if (fl) { g.globalAlpha = 0.2; G.R(g, 0, 0, G.W, G.H, '#4a9aff'); g.globalAlpha = 1; }
+          // the last two out of the door, one carrying the other
+          silhouette(g, 96, 134, 30, '#0d0b12', false);
+          silhouette(g, 108, 132, 20, '#0d0b12', false);
+          // and a red light through the glass, where it is counting
+          const pu = Math.sin(tt * 9) > 0;
+          if (pu) G.glow(g, 150, 116, 70, 40, '#ff4a4a', 0.6);
+          G.Rq(g, 150, 116, 3, 3, pu ? '#ff4a4a' : '#5a1a1a');
+          rain(g, tt, 110, '#33445f', 0, 320);
+        } },
+      // ---- THE BLAST ----
+      { t: 2.6, who: null, say: null,
+        cam: { z: [1.35, 1.02], x: [160, 160], y: [96, 92] },
+        paint(g, p, tt) {
+          const e = Math.min(1, p * 2.6);
+          bigmoo(g, tt, { blast: e, burn: Math.max(0, p * 1.6 - 0.5), sign: Math.max(0, p - 0.42) * 2.2 });
+          if (p < 0.1) { G.R(g, 0, 0, G.W, G.H, '#fff6e0'); return; }
+          // ---- THE FIREBALL. Semi-transparent ellipses stacked over
+          // the building turn the whole frame to brown mush - every
+          // other pixel in this game is a hard flat colour, and alpha
+          // is the one tool that cannot survive here. So it is OPAQUE,
+          // with four hard bands, and it SHRINKS: a bloom that fills
+          // the frame and then collapses back into the doorway. ----
+          const fx = 150, fy = 108;
+          const bloom = p < 0.22 ? p / 0.22 : Math.max(0, 1 - (p - 0.22) / 0.3);
+          if (bloom > 0.02) {
+            const R = 22 + Math.pow(bloom, 0.6) * 64;
+            const H = 16 + Math.pow(bloom, 0.6) * 44;
+            const bands = [[1.0, '#8a2408'], [0.82, '#e0561a'], [0.62, '#ff9a30'],
+                           [0.4, '#ffd45a'], [0.2, '#fff6e0']];
+            for (const [k, col] of bands) {
+              // a rough edge, so it is a blast and not a balloon
+              const n = 34;
+              for (let i2 = 0; i2 < n; i2++) {
+                const a2 = (i2 / n) * 6.2832;
+                const wob = 1 + Math.sin(a2 * 3 + p * 9) * 0.1 + Math.sin(a2 * 7) * 0.06;
+                const rx = R * k * wob, ry = H * k * wob;
+                G.R(g, fx - rx, fy + Math.sin(a2) * ry - 1, rx * 2, 3, col);
+              }
+              G.fe(g, fx, fy, R * k * 2, H * k * 2, col);
+            }
+          }
+          // glass and masonry on real arcs
+          for (let i = 0; i < 60; i++) {
+            const a = G.hash(i, 3) * 2.4 - 1.9, sp = 60 + G.hash(i, 7) * 260;
+            const dx = fx + Math.cos(a) * sp * p, dy = fy + Math.sin(a) * sp * p * 0.6 + p * p * 190;
+            if (dy > 176) continue;
+            const big = G.hash(i, 11) > 0.7;
+            G.R(g, dx, dy, big ? 4 : 2, big ? 3 : 2,
+              i % 4 === 0 ? '#bfe4ff' : i % 4 === 1 ? '#c8b490' : i % 4 === 2 ? '#8a2f3a' : '#4a4252');
+            if (big) G.Rq(g, dx, dy, 1, 1, '#ffffff');
+          }
+          // sparks, going up
+          for (let i = 0; i < 30; i++) {
+            const q = ((p * 1.4 + G.hash(i, 19)) % 1);
+            G.Rq(g, fx - 90 + G.hash(i, 23) * 180 + Math.sin(q * 6 + i) * 8,
+              fy - q * 130, 1, 1, q > 0.6 ? '#ff6a2a' : '#ffd45a');
+          }
+          // smoke, rolling out along the ground. Not while the bloom is
+          // still up - a grey alpha ellipse over a hot core is a bruise.
+          for (let i = 0; i < 14 && bloom < 0.25; i++) {
+            const q = ((p + G.hash(i, 29)) % 1);
+            g.globalAlpha = (1 - q) * 0.34;
+            G.fe(g, fx - 60 + G.hash(i, 31) * 200 + q * 70 * (G.hash(i, 37) > 0.5 ? 1 : -1),
+              132 - q * 30, 30 + q * 60, 16 + q * 34, '#2a2430');
+            g.globalAlpha = 1;
+          }
+          rain(g, tt, 60, '#4a5f7f', 0, 320);
+        } },
+      { t: 4.0, who: null, say: 'ELEVEN SECONDS, AND A BIRTHDAY IN IT.',
+        cam: { z: [1.06, 1.2], x: [166, 176], y: [96, 100] },
+        paint(g, p, tt) {
+          bigmoo(g, tt, { blast: 1, burn: 1, sign: 1 });
+          // black smoke off the roof
+          for (let i = 0; i < 20; i++) {
+            const q = ((tt * 0.24 + G.hash(i, 41)) % 1);
+            g.globalAlpha = (1 - q) * 0.4;
+            G.fe(g, 90 + G.hash(i, 43) * 150 + q * 40, 52 - q * 60, 26 + q * 50, 16 + q * 30, '#1a1620');
+            g.globalAlpha = 1;
+          }
+          // rubble across the tarmac, and one shoe
+          for (let i = 0; i < 46; i++) {
+            const rx = 40 + G.hash(i, 47) * 250, ry = 134 + G.hash(i, 53) * 38;
+            const rw = 2 + G.hash(i, 59) * 7;
+            G.R(g, rx, ry, rw, 1.5 + G.hash(i, 61) * 2,
+              ['#4a4252', '#8a2f3a', '#c8b490', '#2a2430'][i % 4]);
+          }
+          G.rr2(g, 214, 154, 12, 5, '#3a2a24');
+          G.rr2(g, 219, 151, 6, 4, '#3a2a24');
+          G.glow(g, 150, 120, 300, 120, '#ff6a2a', 0.3);
+          rain(g, tt, 110, '#4a5f7f', 0, 320);
+        } },
+      { t: 4.2, who: null, say: 'NOBODY CAME BACK FOR THE COW.',
+        cam: { z: [1.9, 2.3], x: [286, 290], y: [140, 142] },
+        paint(g, p, tt) {
+          bigmoo(g, tt, { blast: 1, burn: 1, sign: 1 });
+          // the sign, face up in a puddle, one eye lit by the fire
+          g.globalAlpha = 0.3; G.rr(g, 282, 150, 70, 8, '#4a6a8a'); g.globalAlpha = 1;
+          G.rr2(g, 268, 138, 44, 22, '#8a2f3a');
+          G.rr2(g, 270, 140, 40, 18, '#d8cabc');
+          for (const sd of [-1, 1]) G.rr2(g, 290 + sd * 10 - 3, 145, 6, 4, '#2a2028');
+          G.rr2(g, 281, 143, 18, 13, '#2a2028');
+          const fl = Math.sin(tt * 3.4) * 0.5 + 0.5;
+          G.Rq(g, 285, 147, 2, 2, '#f0e2d4');
+          G.Rq(g, 293, 147, 2, 2, G.mix('#f0e2d4', '#ff9a4a', fl));
+          G.glow(g, 294, 148, 26, 20, '#ff8a3a', 0.3 + fl * 0.3);
+          G.rr2(g, 286, 150, 8, 5, '#f0e2d4');
+          G.Rq(g, 289, 152, 2, 1, '#2a2028');
+          for (let i = 0; i < 8; i++)                  // cracks across the face
+            G.Rh(g, 272 + i * 5, 140 + G.hash(i, 67) * 16, 4, 0.5, '#8a7a6a');
+          rain(g, tt, 90, '#4a5f7f', 240, 320);
+        } },
+    ],
+
     // ---------------- the raid ----------------
+    // The first pass was four still shots: a brown wall, a door plate
+    // rotated forty degrees, and two machines stood in the room not
+    // doing anything. A door coming in at four in the morning is the
+    // loudest thing that happens in this story and it was quieter than
+    // the ice cream lesson. So: six shots, and something moves in
+    // every one of them.
     raid: [
-      { t: 4.2, who: null, say: 'IT WAS A GOOD SIX WEEKS.',
+      { t: 3.8, who: null, say: 'IT WAS A GOOD SIX WEEKS.',
         cam: { z: [1.05, 1.2], x: [160, 150], y: [96, 98] },
         paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#1b1410');
-          for (let x = 0; x < G.W; x += 8) { G.R(g, x, 0, 4, 96, '#2a1e18'); G.R(g, x + 4, 0, 4, 96, '#251a15'); }
-          G.plate(g, -4, 96, G.W + 8, 8, '#5c4028', { r: 1, band: 2, grain: 2 });
-          G.R(g, 0, 104, G.W, 76, '#3a2a1e');
-          G.glow(g, 120, 60, 200, 130, '#ffb26a', 0.5);
-          G.plate(g, 20, 118, 280, 10, '#7a5638', { r: 2, band: 3, grain: 3 });
-          G.drawBot(g, 'player', 96, 118, 0.9, { t: tt, open: 0.1, mood: 'idle', walk: 0 });
-          tracy(g, 188, 128, 0.95, tt, { smile: 1 });
+          room(g, tt, { warm: 1 });
+          G.drawBot(g, 'player', 96, 130, 0.9, { t: tt, open: 0.1, mood: 'idle', walk: 0, clip: 'talk', ct: tt });
+          tracy(g, 188, 132, 0.95, tt, { smile: 1, clip: 'talk', ct: tt });
           G.starburst(g, 234, 100, 7, tt, { talk: Math.sin(tt * 2) > 0 });
           for (let i = 0; i < 4; i++)
-            G.gooScoop(g, 40 + i * 16, 112, 5, { col: ['#f6ecc8', '#e8879a', '#8fd8c0', '#c86a3a'][i], goo: 3 }, { t: tt });
+            G.gooScoop(g, 40 + i * 16, 116, 5, { col: ['#f6ecc8', '#e8879a', '#8fd8c0', '#c86a3a'][i], goo: 3 }, { t: tt });
+          // steam off two mugs on the bench, because it was a good six weeks
+          for (let i = 0; i < 2; i++) for (let k = 0; k < 5; k++) {
+            const q = ((tt * 0.5 + k * 0.2) % 1);
+            g.globalAlpha = (1 - q) * 0.4;
+            G.Rq(g, 148 + i * 14 + Math.sin(q * 6 + i) * 3, 112 - q * 22, 1.5, 1.5, '#e8dcc8');
+            g.globalAlpha = 1;
+          }
         } },
-      { t: 4.0, who: null, say: 'THEN THE DOOR CAME IN AT FOUR IN THE MORNING.',
-        cam: { z: [1.5, 1.9], x: [80, 66], y: [92, 90] },
+      // ---- the door. It happens ON SCREEN. ----
+      { t: 2.4, who: null, say: 'THEN THE DOOR CAME IN AT FOUR IN THE MORNING.',
+        cam: { z: [1.02, 1.32], x: [128, 96], y: [96, 94] },
         paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0d0a10');
-          G.glow(g, 60, 96, 160, 150, '#3a9ad8', 0.6);
-          G.R(g, 0, 104, G.W, 76, '#221a18');
-          // the door, off its hinges, and blue light behind it
-          G.plate(g, 30, 52, 60, 66, '#4a3626', { r: 2, band: 3, grain: 4 });
+          room(g, tt, { dark: 1 });
+          const hit = G.clamp((p - 0.18) / 0.14, 0, 1);
+          // the door, in its frame, then off its hinges and across the room
+          const kick = G.easeOut(hit);
           g.save();
-          g.translate(60, 118); g.rotate(0.4); g.translate(-60, -118);
-          G.plate(g, 30, 52, 60, 66, '#5c4028', { r: 2, band: 3, grain: 4 });
+          g.translate(46, 128);
+          g.rotate(kick * 1.35);
+          g.translate(-46 - kick * 78, -128 + kick * 6);
+          G.rr2(g, 26, 62, 44, 66, '#3a2a1a');
+          G.rr2(g, 28, 64, 40, 62, '#5c4028');
+          G.Rh(g, 30, 66, 36, 3, '#7a5638');
+          for (let i = 0; i < 2; i++) G.rr2(g, 32, 74 + i * 26, 32, 20, '#4a3220');
+          G.fc(g, 62, 100, 2, '#c8a840');
           g.restore();
-          for (let i = 0; i < 26; i++)
-            G.Rh(g, 40 + G.hash(i, 3) * 80, 60 + G.hash(i, 7) * 60, 2, 2, '#6b4a2a');
-          const fl = Math.sin(tt * 16) > 0;
-          G.R(g, 0, 0, G.W, G.H, fl ? '#1a2a4a22' : '#00000000');
-          G.drawBot(g, 'police', 210, 140, 1.3, { t: tt, open: 0.05, mood: 'angry', walk: 0, noBlink: 1 });
-          G.drawBot(g, 'warden', 286, 140, 1.2, { t: tt, open: 0.05, mood: 'angry', walk: 0, noBlink: 1 });
+          // the frame it left behind, and cold light through it
+          G.R(g, 22, 58, 52, 72, '#0a0810');
+          if (hit > 0) {
+            G.glow(g, 48, 96, 190, 170, '#3a9ad8', 0.3 + hit * 0.4);
+            for (let i = 0; i < 22; i++) {             // splinters
+              const a = G.hash(i, 3) * 2 - 1.1, sp = 40 + G.hash(i, 7) * 150;
+              const dx = 48 + Math.cos(a) * sp * hit, dy = 100 + Math.sin(a) * sp * hit * 0.5 + hit * hit * 90;
+              G.R(g, dx, dy, 3, 2, i % 3 ? '#6b4a2a' : '#8a6540');
+            }
+          }
+          // and the shapes coming through it
+          if (p > 0.34) {
+            const w = G.clamp((p - 0.34) / 0.5, 0, 1);
+            silhouette(g, 30 + w * 44, 134, 40, '#07060b', false);
+            silhouette(g, 8 + w * 40, 136, 36, '#07060b', false);
+          }
+          const fl = Math.sin(tt * 22) > 0;
+          if (fl && hit > 0) { g.globalAlpha = 0.22; G.R(g, 0, 0, G.W, G.H, '#2a3a6a'); g.globalAlpha = 1; }
         } },
-      { t: 4.4, who: 'TRACY', say: 'GET UNDER THE BENCH. DO NOT COME OUT.',
-        cam: { z: [1.8, 1.55], x: [190, 176], y: [96, 100] },
+      { t: 3.4, who: 'PATROL', say: 'NOBODY IS ON THE ROLL AT THIS ADDRESS.',
+        cam: { z: [1.4, 1.24], x: [116, 150], y: [94, 98] },
         paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0d0a10');
-          G.glow(g, 200, 96, 190, 150, '#3a9ad8', 0.5);
-          G.R(g, 0, 108, G.W, 72, '#221a18');
-          G.plate(g, 20, 118, 280, 10, '#7a5638', { r: 2, band: 3, grain: 3 });
-          tracy(g, 176, 128, 1.05, tt, {});
-          G.drawBot(g, 'police', 268, 138, 1.25, { t: tt, open: 0.1, mood: 'angry', walk: 0, noBlink: 1 });
-          // she is standing between it and you
-          G.drawBot(g, 'player', 74, 128, 0.8, { t: tt, open: 0.04, mood: 'sick', walk: 0, noBlink: 1 });
-          const fl = Math.sin(tt * 20) > 0.4;
-          if (fl) { G.R(g, 0, 0, G.W, G.H, '#2a3a6a33'); }
+          room(g, tt, { dark: 1, wrecked: p });
+          // two of them, walking in, torches swinging
+          const wx = 40 + p * 46;
+          G.drawBot(g, 'police', wx, 140, 1.25, { t: tt, open: 0.06, mood: 'angry', walk: tt * 3, clip: 'walk', ct: tt, noBlink: 1 });
+          G.drawBot(g, 'warden', wx - 44, 142, 1.15, { t: tt, open: 0.04, mood: 'angry', walk: tt * 3, clip: 'walk', ct: tt, noBlink: 1 });
+          for (const bx of [wx, wx - 44]) {
+            const sw = Math.sin(tt * 2.4 + bx) * 26;
+            g.globalAlpha = 0.1;
+            for (let i = 0; i < 26; i++)
+              G.Rh(g, bx + 12 + i * 4, 116 + sw * (i / 26) + i * 0.3, 5, 2 + i * 0.5, '#cfe4ff');
+            g.globalAlpha = 1;
+          }
+          const fl = Math.sin(tt * 20) > 0.3;
+          if (fl) { g.globalAlpha = 0.16; G.R(g, 0, 0, G.W, G.H, '#2a3a6a'); g.globalAlpha = 1; }
         } },
-      { t: 4.6, who: null, say: 'THEY DID NOT ARREST ANYONE.',
+      // ---- she puts herself in the way, which is where you learnt it ----
+      { t: 4.2, who: 'TRACY', say: 'GET UNDER THE BENCH. DO NOT COME OUT.',
+        cam: { z: [1.8, 1.6], x: [196, 182], y: [96, 100] },
+        paint(g, p, tt) {
+          room(g, tt, { dark: 1, wrecked: 1 });
+          // you, down behind the bench, which is where she put you
+          G.drawBot(g, 'player', 246, 146, 0.6, { t: tt, open: 0.04, mood: 'sick', walk: 0, noBlink: 1, clip: 'slump', ct: tt, p: 1 });
+          G.plate(g, 200, 130, 116, 9, '#4a3324', { r: 2, band: 3, grain: 3 });
+          // her, between it and you, arms out
+          tracy(g, 196, 132, 1.05, tt, { clip: 'reach', ct: tt, p: 1, dir: -1 });
+          G.drawBot(g, 'police', 128, 140, 1.3, { t: tt, open: 0.12, mood: 'angry', walk: 0, noBlink: 1, clip: 'point', ct: tt, p: 1 });
+          const fl = Math.sin(tt * 20) > 0.4;
+          if (fl) { g.globalAlpha = 0.2; G.R(g, 0, 0, G.W, G.H, '#2a3a6a'); g.globalAlpha = 1; }
+          G.glow(g, 128, 120, 200, 150, '#3a9ad8', 0.34);
+        } },
+      { t: 2.2, who: null, say: null,
+        cam: { z: [1.6, 2.1], x: [182, 190], y: [100, 104] },
+        paint(g, p, tt) {
+          room(g, tt, { dark: 1, wrecked: 1 });
+          // one white frame, and then a room with nobody standing in it
+          if (p < 0.14) { G.R(g, 0, 0, G.W, G.H, '#eef4ff'); return; }
+          const f = G.clamp((p - 0.14) / 0.5, 0, 1);
+          g.globalAlpha = 1 - f;
+          G.R(g, 0, 0, G.W, G.H, '#cfe4ff');
+          g.globalAlpha = 1;
+          // her jumper, on the floor, where she was stood
+          G.rr2(g, 186, 138, 30, 9, '#c8785a');
+          G.rr2(g, 194, 135, 14, 5, '#e0947a');
+          G.drawBot(g, 'player', 246, 146, 0.6, { t: tt, open: 0.3, mood: 'sick', walk: 0, noBlink: 1, clip: 'startle', ct: tt, p: 1 });
+          G.plate(g, 200, 130, 116, 9, '#4a3324', { r: 2, band: 3, grain: 3 });
+        } },
+      { t: 4.4, who: null, say: 'THEY DID NOT ARREST ANYONE.',
         cam: { z: [1.2, 1.05], x: [160, 160], y: [96, 96] },
         paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#08070c');
-          // the room after: dark, one bulb swinging
+          room(g, tt, { dark: 1, wrecked: 1, after: 1 });
+          // one bulb, still swinging from it
           const sw = Math.sin(tt * 1.3) * 14;
           G.Rh(g, 160 + sw * 0.4, 0, 1, 28, '#1a1410');
           G.fc(g, 160 + sw, 30, 3, '#ffd08a');
-          G.glow(g, 160 + sw, 34, 150, 110, '#c8783a', 0.4);
-          G.R(g, 0, 112, G.W, 68, '#181210');
-          G.plate(g, 20, 112, 280, 8, '#4a3020', { r: 2, band: 2, grain: 3 });
-          // the tub, tipped over
-          g.save(); g.translate(70, 130); g.rotate(-0.5); g.translate(-70, -130);
-          G.plate(g, 52, 116, 40, 22, '#5c4028', { r: 2, band: 2, grain: 4 });
-          g.restore();
-          for (let i = 0; i < 14; i++)
-            G.Rh(g, 60 + G.hash(i, 5) * 90, 132 + G.hash(i, 9) * 12, 3, 2, '#c8b090');
-          // her jumper on the floor
-          G.Rh(g, 196, 132, 26, 7, '#c8785a');
-          G.Rh(g, 202, 130, 12, 4, '#e0947a');
-          g.globalAlpha = 0.5;
-          G.R(g, 0, 0, G.W, G.H, '#06060a');
-          g.globalAlpha = 1;
+          G.glow(g, 160 + sw, 34, 170, 120, '#c8783a', 0.34);
+          G.rr2(g, 186, 138, 30, 9, '#c8785a');
+          G.rr2(g, 194, 135, 14, 5, '#e0947a');
+          // and you, still under the bench, not coming out
+          G.drawBot(g, 'player', 248, 146, 0.6, { t: tt, open: 0.02, mood: 'sick', walk: 0, noBlink: 1, clip: 'slump', ct: tt, p: 1 });
+          G.plate(g, 200, 130, 116, 9, '#4a3324', { r: 2, band: 3, grain: 3 });
+          g.globalAlpha = 0.4; G.R(g, 0, 0, G.W, G.H, '#06060a'); g.globalAlpha = 1;
         } },
     ],
 

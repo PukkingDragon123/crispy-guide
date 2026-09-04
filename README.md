@@ -138,9 +138,43 @@ the game.
 > **A CHILD:** IT MOVED. IT MOVED FOR ME.
 
 Everybody who can run runs. A small box with a red light on it goes under the
-counter.
+counter, and the thing that put it there walks back out through the hole it
+made.
 
 > **PATROL:** CLEAR THE FLOOR.
+
+### And then the camera leaves the room
+
+![The car park](screenshots/bomb-out.png)
+
+Act one used to end on a darken and a whiteout from *inside*, which is a fade
+with a bang on it. The camera now goes out into the **car park** and watches
+the front of the building come off.
+
+BIG MOO on its corner in the rain: the lit fascia, four glass bays with people
+still moving behind them, the patrol vehicle parked across the entrance with
+its light bar going, and the mascot sign on its post at the kerb. People going
+the other way, fast. A red light counting behind the glass.
+
+![The blast](screenshots/bomb-blast.png)
+
+Then the front goes. The bays blow one after another, left to right; a hard
+fireball core out of the doorway that **shrinks instead of growing**, because a
+ninety-percent-alpha ellipse over the whole frame is a sepia filter with sparks
+in it; sixty pieces of glass, masonry, fascia and brick on their own arcs with
+gravity on them; embers going up; smoke rolling out along the tarmac; and the
+sign snapping off its post and going end over end out of frame.
+
+![Nobody came back](screenshots/bomb-sign.png)
+
+Afterwards, still outside: fire in the four window holes — **tongues**, narrow
+and tapered and a different height every frame, not the banded rows that read
+as sand dunes — black smoke off the roof, rubble across the car park, and one
+shoe. Then a push in on the sign, face up in a puddle, cracked across, with
+one of its eyes lit by the building.
+
+> **ELEVEN SECONDS, AND A BIRTHDAY IN IT.**
+> **NOBODY CAME BACK FOR THE COW.**
 
 ---
 
@@ -225,19 +259,26 @@ going. Rain, embers on the wind, and puddles holding the firelight.
 You are on **one leg and a length of scaffold pipe**, which is why you move at
 about half speed and hop when you walk.
 
-![One shoe](screenshots/wreck-find.png)
+![The long walk](screenshots/wreck-find.png)
 
-**Five things that used to belong to somebody**, laid out along the road where
-they fell. Walk up to each one and you stop and call out. A paper crown, size
-small. A tray from table four. One shoe. A staff badge with the name burnt off
-it. A radio, still on, with nobody on it. The counter at the top fills up, and
-it is not a counter of people.
+**There is nothing out here to collect.** There used to be: five objects laid
+along the apron with a glow on each — a paper crown, a tray from table four,
+one shoe, a badge with the name burnt off, a radio still on — and an objective
+that counted them off, **FIND ANYBODY · 0 / 5**. It turned the worst night of
+this machine's life into a shopping list, and it is gone.
+
+What is left is **a long walk east** and whatever you say to yourself on the
+way, because there is nobody else to say it to.
+
+> **BESSIE:** HELLO?
+> **BESSIE:** THIS IS FINE. THIS IS ALL FINE.
+> **BESSIE:** SAM? KEV?
 
 ![The torch](screenshots/wreck-tracy.png)
 
-When it reads five out of five, a torch comes down the road. She walks to you,
-you walk to her, and she gets down onto the rubble to reach it — which at her
-age is a decision.
+Get far enough down the road and **something turns onto it carrying a light**.
+She walks to you, you walk to her, and she gets down onto the rubble to reach
+it — which at her age is a decision.
 
 > **TRACY:** OH, YOU POOR ARTICLE. YOU ARE THE COW OFF THE SIGN.
 > **TRACY:** RIGHT. HOME. I HAVE GOT A CRATE OF LEGS AND NOTHING ON TONIGHT.
@@ -347,7 +388,36 @@ Poke the tablet and clause introduces itself, badly.
 
 ![The raid](screenshots/raid.png)
 
-It was a good six weeks. They did not arrest anyone.
+The raid used to be four still shots: a brown wall, a door plate rotated forty
+degrees to say it had fallen, and two machines stood in the room not doing
+anything. A door coming in at four in the morning is the loudest thing that
+happens in this story and it was quieter than the ice cream lesson.
+
+It is now **six shots, and something moves in every one of them.**
+
+It was a good six weeks — the two of them talking over the bench, steam off two
+mugs, four flavours out on the counter, clause chattering on the shelf.
+
+Then **the door comes in on screen**: it swings off its hinges in the frame you
+are watching, tumbles across the room, and leaves a black hole with cold blue
+light in it and twenty-two splinters on their own arcs. Two shapes step
+through, torch beams swinging. The shelf of tubs comes down one tub at a time.
+Her tub goes over.
+
+She puts herself between it and you and tells you to get under the bench —
+which, four hours and one whole life earlier, is where you learnt to do the
+thing you do at the end of act one.
+
+> **TRACY:** GET UNDER THE BENCH. DO NOT COME OUT.
+
+One white frame. Then the same room, with nobody standing in it, her jumper on
+the floor where she was, and a mascot still under the bench, not coming out.
+
+> **THEY DID NOT ARREST ANYONE.**
+
+Her front room is built once and drawn in three states — before, during and
+after — so it is demonstrably the same room getting wrecked, rather than three
+paintings of a similar room.
 
 ![The chip](screenshots/chip.png)
 
@@ -654,6 +724,94 @@ come true plays before the doors open.
 
 ---
 
+## 🤖 Everything that is not you
+
+![The cast](screenshots/bots.png)
+
+Eighteen archetypes come out of one frame descriptor — `{base, torso, head,
+arms, prop, emblem}` plus proportions — and for a long time every one of them
+came out looking like a filing cabinet.
+
+That was not a colour problem. It was a **shape** problem, and it was the same
+shape eighteen times: a thirty-by-thirty slab with a grille cut in it, a small
+head perched on the corner of it, five little grey plates stacked in a column
+for each arm, and two posts with flat pads for legs. Recolouring a filing
+cabinet gets you a second filing cabinet. So:
+
+### The shell is a curve now, not a box
+
+Every chassis is a **solid of revolution** — a half-width as a function of how
+far down it you are — and the profile table *is* the cast:
+
+```js
+const PROFILE = {
+  slab:    (p) => 1.0 - Math.pow(p, 2.2) * 0.3 + Math.sin(p * 3.14) * 0.06,
+  boxy:    (p) => 0.88 + Math.sin(p * 3.14) * 0.16 - Math.pow(p, 3) * 0.16,
+  robe:    (p) => 0.6 + Math.pow(p, 1.7) * 0.62,        // shoulders into a skirt
+  violin:  (p) => 0.62 + Math.sin(p * 6.28 - 1.57) * 0.3,  // two bulges, a waist
+  drum:    (p) => 0.72 + Math.sin(p * 3.14) * 0.28,
+  // ...
+};
+```
+
+Read that as a row of silhouettes with every colour switched off and you can
+still tell the siege unit from the priest. That is the job colour was failing
+to do.
+
+### Head-forward, like everything else in the game
+
+The mascot and the people are drawn at cartoon proportions — a big head on a
+short body — and the machines were not. Torso heights came down from 24–32
+units to **17–21**, head scale went up from 0.74–1.06 to **1.18–1.32**, and the
+head became the biggest single mass on the machine.
+
+### An arm has four parts, and they are the parts an arm has
+
+A ball in the shoulder, a tapering upper arm, a ball at the elbow, a tapering
+forearm, and a **mitten** — the same mitten the mascot has, so the whole cast
+came out of one box of parts. Legs got the same treatment: a hip ball, a thigh,
+a knee ball, a shin and a **boot with a toe cap**. The arms also stopped being
+painted in the flat accent colour, which on a near-black chassis is a pair of
+pale bars stood next to the body rather than part of it.
+
+### The eyes were the worst of it
+
+![Optics](screenshots/bots-eyes.png)
+
+The optic was a camera lens drawn in full: a screwed bezel, a saturated iris
+filling three quarters of the glass, a white pupil in the middle of *that*,
+eight radial spokes, a scan line and a hard glow. At eight pixels across all of
+it collapses into **one bright saturated donut with a hole in it** — which
+reads as an inflamed eye, not as a thing that is looking at you. Eighteen of
+them is a shooting gallery.
+
+It is now the same three marks the cow has and the people have: **a dark round,
+one white pip, and the unit's colour as a single crescent of bounce light along
+the bottom of the pupil** — the way a dark eye catches a room. The colour it
+lost lives in the status pip and the chest, where it belongs.
+
+### A face needs something to read against
+
+Half these chassis are near-black, and two dark eyes on a dark skull is a hole
+with a hat on it. So every face now gets an **inset panel** a couple of steps
+off the shell — *recessed* on a light chassis, **lifted** on a dark one, chosen
+off the chassis luminance — and the eyes and the mouth have a value to sit on
+whatever colour the unit came out of the factory.
+
+Along the way: the plinth became a **hover skirt** with a downdraft that stirs
+the dust, because a plinth under a robot reads as a museum exhibit; the wheel
+became a **tyre with tread on it and three spokes that turn** instead of a grey
+ball with four dots; the clerk's spectacles became a **rim and a glint** rather
+than two pale discs over two dark optics, which is a blindfold; the magistrate
+got a **jabot**, because a near-black robe on a dark set is a hole in the
+picture; and the fat one stopped being a rowing boat.
+
+The mascot's own path — the hoof chassis, the milk tank, the scoop arms, the
+cow skull, the dot eyes — is untouched by all of it. It took eleven versions to
+get her right and none of this was allowed near her.
+
+---
+
 ## 🧬 One model
 
 There used to be three cows. The rig drew one, the wasteland hand-drew its own
@@ -945,6 +1103,11 @@ not.
   **half-unit** grid through its own snapper, with half-unit outlines — two
   native pixels of black — so humans carry the same line weight as the plated
   machines standing next to them
+- **Profile-driven machines.** Every robot chassis, and every head that is not
+  the cow's, is a solid of revolution off a half-width curve — one table of
+  profiles, one shell painter, outline pass then fill pass — instead of a
+  rounded box per part. Limbs are ball-joint / taper / ball-joint / taper with
+  a mitten or a boot on the end, out of the same four helpers
 - **One scale table** (`G.SZ`) that every walkable room is built from: an adult
   is 52 units, a door is 78, a counter top is 22
 - A **camera override** on the stage (`S.camAt`): a beat can point the camera
