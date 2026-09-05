@@ -44,6 +44,15 @@
   // the rack without reaching Tracy, and fitted without reaching the switch
   const LEG_LEN = 56;
 
+  // EASIER: the green band on the torque gauge was 0.30 wide and the
+  // pressure band 0.30, both of which want you to let go of a moving
+  // needle inside about a third of a second. Wider, and the needle
+  // climbs slower, so a bolt is something you feel rather than something
+  // you gamble on. One constant each, read by the test AND the gauge, so
+  // the paint can never say green where the code says no.
+  const TQ_LO = 0.46, TQ_HI = 0.98;
+  const PR_LO = 0.44, PR_HI = 0.96;
+
   const LEAD = [
     { id: 'hyd', col: '#e0574a', lit: '#ff8a7a', name: 'HYD' },
     { id: 'pwr', col: '#f0c04a', lit: '#ffe08a', name: 'PWR' },
@@ -237,8 +246,8 @@
         // the bolt: let go inside the band or do it again
         const b = this.bolts[this.bolt];
         this.driving = 0;
-        if (b && b.torque > 0.6 && b.torque < 0.9) {
-          b.seated = 1; b.torque = 0.75;
+        if (b && b.torque > TQ_LO && b.torque < TQ_HI) {
+          b.seated = 1; b.torque = (TQ_LO + TQ_HI) / 2;
           G.audio.sfx('clank'); this.burst(b.x, b.y, 6, '#b6ff3a');
           if (this.bolts.every((q) => q.seated)) this.advance();
         } else if (b) {
@@ -252,12 +261,12 @@
       }
       if (this.pumping) {
         this.pumping = 0;
-        if (this.press > 0.58 && this.press < 0.88) {
+        if (this.press > PR_LO && this.press < PR_HI) {
           this.pumps++; G.audio.sfx('click');
           this.burst(PUMP.x + 12, PUMP.y - 12, 8, '#8fd8c0');
           if (this.pumps >= 3) this.advance();
         } else {
-          this.say(this.press >= 0.88 ? 'TOO HARD. LET IT BREATHE.' : 'NOT ENOUGH IN IT.');
+          this.say(this.press >= PR_HI ? 'TOO HARD. LET IT BREATHE.' : 'NOT ENOUGH IN IT.');
           G.audio.sfx('back');
         }
         this.press = 0;
@@ -273,7 +282,7 @@
       // the bolt in the driver
       if (this.driving && this.bolt >= 0) {
         const b = this.bolts[this.bolt];
-        b.torque += dt * 0.52;
+        b.torque += dt * 0.4;
         b.spin += dt * (3 + b.torque * 9);
         if (b.torque > 1) { b.torque = 1; b.strip = 1; }
         if (Math.random() < dt * 20) this.burst(b.x, b.y, 1, '#8a94a8');
@@ -283,7 +292,7 @@
 
       // the pump
       if (this.pumping) {
-        this.press += dt * 0.72;
+        this.press += dt * 0.56;
         if (this.press > 1) { this.press = 0; this.pumping = 0; this.blow = 1; G.audio.sfx('snap'); G.shake(4, 0.24);
           this.say('SEAL BLEW. START THAT ONE AGAIN.'); }
       } else this.press = Math.max(0, this.press - dt * 0.9);
@@ -589,14 +598,14 @@
         const gx = 26, gy = 108, gw = 78;
         G.plate(g, gx, gy, gw, 12, '#232b38', { r: 1, band: 2, spec: false });
         G.R(g, gx + 2, gy + 2, gw - 4, 8, '#12161f');
-        G.R(g, gx + 2 + (gw - 4) * 0.6, gy + 2, (gw - 4) * 0.3, 8, '#2a4a30');
-        G.R(g, gx + 2 + (gw - 4) * 0.9, gy + 2, (gw - 4) * 0.1, 8, '#4a1c24');
+        G.R(g, gx + 2 + (gw - 4) * TQ_LO, gy + 2, (gw - 4) * (TQ_HI - TQ_LO), 8, '#2a4a30');
+        G.R(g, gx + 2 + (gw - 4) * TQ_HI, gy + 2, (gw - 4) * (1 - TQ_HI), 8, '#4a1c24');
         const f = G.clamp(b.torque, 0, 1);
         G.R(g, gx + 2, gy + 2, Math.max(1, (gw - 4) * f), 8,
-          b.strip ? P.magenta : f > 0.6 && f < 0.9 ? '#b6ff3a' : '#c8a24a');
+          b.strip ? P.magenta : f > TQ_LO && f < TQ_HI ? '#b6ff3a' : '#c8a24a');
         G.Rq(g, gx + 2 + (gw - 4) * f - 0.5, gy, 1, 12, '#ffffff');
-        G.text(g, b.strip ? 'STRIPPED' : f > 0.6 && f < 0.9 ? 'LET GO' : 'TORQUE',
-          gx + gw / 2, gy - 8, b.strip ? P.magentaLt : f > 0.6 && f < 0.9 ? '#dfffcf' : '#8a7458',
+        G.text(g, b.strip ? 'STRIPPED' : f > TQ_LO && f < TQ_HI ? 'LET GO' : 'TORQUE',
+          gx + gw / 2, gy - 8, b.strip ? P.magentaLt : f > TQ_LO && f < TQ_HI ? '#dfffcf' : '#8a7458',
           { align: 'center', sc: 0.5 });
       }
     },
@@ -620,10 +629,10 @@
       const gx = PUMP.x + 20, gy = PUMP.y - 30;
       G.plate(g, gx, gy, 12, 34, '#232b38', { r: 1, band: 1, spec: false });
       G.R(g, gx + 2, gy + 2, 8, 30, '#12161f');
-      G.R(g, gx + 2, gy + 2 + 30 * (1 - 0.88), 8, 30 * 0.3, '#2a4a30');
+      G.R(g, gx + 2, gy + 2 + 30 * (1 - PR_HI), 8, 30 * (PR_HI - PR_LO), '#2a4a30');
       const f = G.clamp(this.press, 0, 1);
       G.R(g, gx + 2, gy + 32 - 30 * f, 8, Math.max(1, 30 * f),
-        this.blow > 0 ? P.magenta : f > 0.58 && f < 0.88 ? '#b6ff3a' : '#3a8ac8');
+        this.blow > 0 ? P.magenta : f > PR_LO && f < PR_HI ? '#b6ff3a' : '#3a8ac8');
       for (let i = 0; i < 3; i++)
         G.Rq(g, gx + 2, gy + 2 + i * 10, 8, 0.5, '#4a5568');
       // how many good strokes

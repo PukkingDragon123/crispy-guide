@@ -24,9 +24,15 @@
   const CONE_ST = 20, CUP_ST = 48;                // base stands on the shelf
   const RACK_S = 128, RACK_T = 172;               // sauce / topping shelf positions
   const JAR_X = 76;                               // the tip jar cat's spot on the shelf
-  const PERFECT_LO = 0.76, PERFECT_HI = 1.16, SLOP = 1.42;
+  // EASIER: the clean-scoop window was 0.40 wide and slop started at
+  // 1.42, so about a third of a sweep landed in the green and it was
+  // very easy to blow straight past it. Half again as wide, and you get
+  // a lot more warning before it turns into a mess.
+  const PERFECT_LO = 0.66, PERFECT_HI = 1.34, SLOP = 1.72;
   const SAUCE_NEED = 12, TOP_NEED = 5;
-  const PATIENCE = 42;
+  // and they wait half again as long, because the shop is a place to
+  // enjoy scooping in, not a queue simulator
+  const PATIENCE = 64;
 
   function pitRect(i) { return { x: PIT_X0 + i * PIT_PITCH, y: DECK_Y + 7, w: PIT_W, h: PIT_H }; }
 
@@ -805,8 +811,10 @@
           G.R(g, RACK_T + i * 14 - 4 + (k % 3) * 3, WORK_Y - 15 + Math.floor(k / 3) * 4, 2, 2, G.topBitCol(tp.id));
         G.R(g, RACK_T + i * 14 - 6, WORK_Y - 22, 12, 3, P.hull);
       }
-      G.text(g, 'SAUCE', RACK_S - 6, WORK_Y - 29, P.cyanLt, { out: OUT });
-      G.text(g, 'TOPS', RACK_T - 6, WORK_Y - 29, P.cyanLt, { out: OUT });
+      // The SAUCE and TOPS headers are gone. They sat exactly where the
+      // order card lands, so half the time they were covered anyway, and
+      // the marks over the caps name each bottle and jar individually
+      // when you point at one - which is more than the header ever did.
 
       // the tip jar cat, sat between the cups and the sauces
       if (G.has('tipjar')) {
@@ -842,6 +850,9 @@
         g.globalAlpha = 1;
       }
 
+      // ---- what is live RIGHT NOW ----
+      this.hots(g, t);
+
       for (const d of this.drops) G.R(g, d.x, d.y, 2, 2, d.col);
       for (const p of this.bits) { if (p.big) { G.R(g, p.x - 1, p.y - 1, 3, 3, OUT); G.R(g, p.x - 1, p.y - 1, 2, 2, p.col); } else G.R(g, p.x, p.y, 2, 2, p.col); }
       for (const p of this.parts) {
@@ -849,7 +860,7 @@
       }
       G.drawSteam(g);
 
-      // ---- the held tool ----
+    // ---- the held tool ----
       this.drawHand(g, t);
 
       // ---- HUD ----
@@ -1012,6 +1023,59 @@
     },
 
     // ---- the ladle, the jar, the ball on its strands ----
+    // ------------------------------------------------------------
+    // WHAT CAN I TOUCH? Every one of these was a hit rectangle nobody
+    // could see: two base stands, six sauce bottles, four topping jars,
+    // three pits and a cat. You either read the source or you tapped
+    // the whole shelf until something happened.
+    //
+    // It does not light everything at once, which would just be a wall
+    // of pips. It lights THE STEP YOU ARE ON - a base, then a scoop,
+    // then whatever you want on top - so the marks double as the recipe.
+    // ------------------------------------------------------------
+    hots(g, t) {
+      if (this.hold || this.reveal || this.endT > 0) return;
+      if (this.shut && this.shut.p > 0.02) return;
+      if (G.clause && G.clause.menu) return;
+      const b = this.build;
+      const noBase = !b || b.base === 'none';
+      const noScoop = !noBase && !b.scoops.length;
+      const dressing = !noBase && b.scoops.length > 0;
+
+      if (noBase) {
+        G.hot(g, CONE_ST - 11, WORK_Y - 26, 22, 30, 'CONE');
+        if (G.unlocked('cup')) G.hot(g, CUP_ST - 11, WORK_Y - 20, 22, 24, 'CUP');
+      }
+      if (noScoop || dressing) {
+        for (let i = 0; i < this.n; i++) {
+          const pit = G.state.pits[i];
+          if (!pit || pit.qty <= 0) continue;
+          const f = G.flavById(pit.fid);
+          if (!f) continue;
+          const r = pitRect(i);
+          G.hot(g, r.x, r.y, r.w, r.h, f.name, { col: f.col, pipY: r.y - 3 });
+        }
+      }
+      if (dressing) {
+        const sl = G.state.sauces;
+        for (let i = 0; i < sl.length; i++) {
+          const sc = G.sauceById(sl[i]);
+          G.hot(g, RACK_S + i * 14 - 6, WORK_Y - 23, 13, 27, sc.name, { col: sc.col, pipY: WORK_Y - 31 });
+        }
+        const tl = G.state.tops;
+        for (let i = 0; i < tl.length; i++) {
+          const tp = G.topById(tl[i]);
+          G.hot(g, RACK_T + i * 14 - 6, WORK_Y - 23, 13, 27, tp.name,
+            { col: G.topBitCol(tp.id), pipY: WORK_Y - 31 });
+        }
+      }
+      // the cat pays out on a timer, so it is only worth pointing at
+      // when there is actually a tip in it
+      if (G.has('tipjar') && this.jar.cool <= 0)
+        G.hot(g, JAR_X - 11, WORK_Y - 30, 22, 34, 'PET THE CAT', { col: P.hazard, pipY: WORK_Y - 38 });
+    },
+
+
     drawHand(g, t) {
       const M = G.mouse, h = this.hold;
       if (!h || M.x < 0) return;
@@ -1284,18 +1348,30 @@
       const cs = this.canServe();
       if (cs) G.drawBtn(g, 200, 152, 44, 16, 'SERVE', { col: '#2f8a48' });
       if (this.build) G.drawBtn(g, 248, 152, 30, 16, 'BIN', { col: '#5c2030' });
-      // always one line of guidance, and it says what is actually useful
+      // ---- ONE line of guidance along the bottom. There used to be
+      // two, at x 6 and x 48, and when neither had anything better to
+      // say they both printed PRESS A PIT AND SWEEP on top of each
+      // other, which came out as PRESS A PIT AND SWEEPS A PIT AND SWEEP.
       const canAsk = G.clause && G.clause.menuItems().length;
-      G.text(g, canAsk ? 'TAP CLAUSE  ·  ' + G.state.calls + ' CALLS'
-        : st.today.closed ? 'GO THROUGH THE BACK' : 'PRESS A PIT AND SWEEP',
-        6, 170, canAsk && G.state.calls > 0 ? P.steel : '#46506b', { sc: 0.5 });
+      if (canAsk)
+        G.text(g, 'TAP CLAUSE  ·  ' + G.state.calls + ' CALLS', 6, 170,
+          G.state.calls > 0 ? P.steel : '#46506b', { sc: 0.5 });
       const h = this.hold;
-      if (h && h.kind === 'sweep')
+      if (h && h.kind === 'sweep') {
         G.text(g, h.fill > SLOP ? 'TOO MUCH - BIN IT' : h.fill >= PERFECT_LO ? 'LET GO NOW' : 'KEEP SWEEPING',
-          100, 170, h.fill > SLOP ? P.magenta : h.fill >= PERFECT_LO ? P.lime : P.hazard, { sc: 0.5 });
-      else if (!(G.clause && G.clause.msg))
-        G.text(g, st.today.closed ? 'SHIFT OVER - GO THROUGH THE BACK'
-          : 'PRESS A PIT AND SWEEP', 48, 170, '#46506b', { sc: 0.5 });
+          canAsk ? 100 : 6, 170,
+          h.fill > SLOP ? P.magenta : h.fill >= PERFECT_LO ? P.lime : P.hazard, { sc: 0.5 });
+      } else if (!(G.clause && G.clause.msg)) {
+        // and it names the step you are actually on, which is the same
+        // step the marks on the shelf are lighting up
+        const b = this.build;
+        const say = st.today.closed ? 'SHIFT OVER - GO THROUGH THE BACK'
+          : !b || b.base === 'none' ? 'TAKE A CONE OR A CUP'
+          : !b.scoops.length ? 'PRESS A PIT AND SWEEP'
+          : this.canServe() ? 'SAUCE AND TOPS, THEN SERVE'
+          : 'SAUCE AND TOPS IF YOU LIKE';
+        G.text(g, say, canAsk ? 100 : 6, 170, '#46506b', { sc: 0.5 });
+      }
     },
   };
 

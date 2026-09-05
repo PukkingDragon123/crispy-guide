@@ -239,9 +239,19 @@
             this.say('IT IS ' + f.def.name + '. USE THE ' + G.toolById(ACT[f.id][0].tool).name, P.lime);
             this.book = false;
           } else {
+            // EASIER: naming a fault is a reading test, not a reflex
+            // test, and it used to cost you money on the first miss.
+            // The first wrong answer on each machine is free and just
+            // tells you warmer or colder; after two the manual starts
+            // pointing at the right line.
             G.audio.sfx('dxWrong');
+            f.wrong = (f.wrong || 0) + 1;
             if (G.hasAlly('a_nurse') && !this.freebie) { this.freebie = 1; this.say('CLOSE. TRY AGAIN, NO CHARGE.', P.hazard); }
-            else { G.state.today.misdx++; G.state.totMisdx++; this.jolt = 0.4; G.shake(2, 0.2); this.say('NO. READ IT AGAIN.', P.magenta); }
+            else if (f.wrong === 1) this.say('NOT THAT ONE. READ THE SIGN AGAIN.', P.hazard);
+            else {
+              G.state.today.misdx++; G.state.totMisdx++; this.jolt = 0.4; G.shake(2, 0.2);
+              this.say('NO. IT IS MARKED IN THE MANUAL NOW.', P.magenta);
+            }
           }
           return;
         }
@@ -290,7 +300,7 @@
     clickAt(x, y, f) {
       const s = f.state, pt = this.parts;
       if (f.id === 'dry') {
-        pt.pivots.forEach((p, i) => { if (!s.lit[i] && G.dist(x, y, p.x, p.y) < 16) { s.lit[i] = true; G.audio.sfx('grit'); } });
+        pt.pivots.forEach((p, i) => { if (!s.lit[i] && G.dist(x, y, p.x, p.y) < 22) { s.lit[i] = true; G.audio.sfx('grit'); } });
         if (s.lit.every(Boolean)) this.advance();
       } else if (f.id === 'out') {
         if (G.dist(x, y, pt.burner.x + pt.burner.w / 2, pt.burner.y + pt.burner.h / 2) < 30) {
@@ -298,20 +308,20 @@
         }
       } else if (f.id === 'cross') {
         const a = pt.nodes[s.a], b = pt.nodes[s.b];
-        if (!s.hitA && G.dist(x, y, a.x, a.y) < 14) { s.hitA = true; G.audio.sfx('probe'); }
-        else if (!s.hitB && G.dist(x, y, b.x, b.y) < 14) { s.hitB = true; G.audio.sfx('probe'); }
+        if (!s.hitA && G.dist(x, y, a.x, a.y) < 20) { s.hitA = true; G.audio.sfx('probe'); }
+        else if (!s.hitB && G.dist(x, y, b.x, b.y) < 20) { s.hitB = true; G.audio.sfx('probe'); }
         if (s.hitA && s.hitB) this.advance();
       } else if (f.id === 'sheared') {
-        pt.holes.forEach((h, i) => { if (!s.holes[i] && G.dist(x, y, h.x, h.y) < 14) { s.holes[i] = true; G.audio.sfx('clank'); } });
+        pt.holes.forEach((h, i) => { if (!s.holes[i] && G.dist(x, y, h.x, h.y) < 20) { s.holes[i] = true; G.audio.sfx('clank'); } });
         if (s.holes.every(Boolean)) this.advance();
       }
     },
     grabAt(x, y, f) {
       const s = f.state, pt = this.parts;
-      if (f.id === 'jam') { const gr = this.gearDebris(); if (G.dist(x, y, gr.x, gr.y) < 16) s.held = true; }
-      if (f.id === 'muted') { if (G.dist(x, y, pt.reed.x, pt.reed.y) < 16) s.held = true; }
-      if (f.id === 'mirror') { if (G.dist(x, y, pt.mirror.x + s.off, pt.mirror.y) < 18) s.held = true; }
-      if (f.id === 'belt') { if (G.dist(x, y, pt.pulleys[1].x, pt.pulleys[1].y + s.off) < 18) s.held = true; }
+      if (f.id === 'jam') { const gr = this.gearDebris(); if (G.dist(x, y, gr.x, gr.y) < 24) s.held = true; }
+      if (f.id === 'muted') { if (G.dist(x, y, pt.reed.x, pt.reed.y) < 24) s.held = true; }
+      if (f.id === 'mirror') { if (G.dist(x, y, pt.mirror.x + s.off, pt.mirror.y) < 26) s.held = true; }
+      if (f.id === 'belt') { if (G.dist(x, y, pt.pulleys[1].x, pt.pulleys[1].y + s.off) < 26) s.held = true; }
       if (!s.held) this.say('GRIP IT PROPERLY', P.warn);
     },
     gearDebris() {
@@ -372,9 +382,13 @@
 
       if (gest === 'hold') {
         const tgt = this.holdTarget(f);
-        if (tgt && G.dist(M.x, M.y, tgt.x, tgt.y) < (tgt.r || 18)) {
+        // EASIER: the target was 18 units and filled in a second and a
+        // half. On a 320-wide screen that is a thumb-sized spot you had
+        // to keep a pointer inside without ever being shown where it
+        // was. Bigger, and quicker to fill.
+        if (tgt && G.dist(M.x, M.y, tgt.x, tgt.y) < (tgt.r || 18) + 8) {
           working = true;
-          f.prog += dt * (G.has('carbide') ? 0.95 : 0.62);
+          f.prog += dt * (G.has('carbide') ? 1.35 : 0.95);
           if (Math.random() < 0.5) this.spit(M.x, M.y, tgt.col || P.hullLt);
           if (f.prog >= 1) { this.applyHold(f); return; }
         }
@@ -384,7 +398,7 @@
         working = moved;
         for (const tg of list) {
           if (tg.o.gone) continue;
-          if (G.dist(M.x, M.y, tg.x, tg.y) < 14) {
+          if (G.dist(M.x, M.y, tg.x, tg.y) < 20) {
             tg.o.gone = true;
             G.audio.sfx('scrape');
             for (let i = 0; i < 3; i++) this.spit(tg.x, tg.y, tg.col);
@@ -402,7 +416,7 @@
             if (Math.abs(d) < 1) { a.turned += Math.abs(d); working = Math.abs(d) > 0.01; }
           }
           a.ang = ang;
-          const need = 10;                            // radians of winding
+          const need = 6;                             // radians of winding
           if (f.id === 'spring' || f.id === 'dry') s.turn = G.clamp(a.turned / need, 0, 1);
           if (f.id === 'fog' || f.id === 'iris') s.turn = G.clamp(a.turned / need, 0, 1);
           if (f.id === 'burnt') s.turn = G.clamp(a.turned / need, 0, 1);
@@ -415,16 +429,16 @@
           working = true;
           if (f.id === 'jam') {
             s.gx = M.x - this.gearDebris().x; s.gy = M.y - this.gearDebris().y;
-            if (Math.hypot(s.gx, s.gy) > 34) { s.out = true; G.audio.sfx('wetPull'); this.advance(); return; }
+            if (Math.hypot(s.gx, s.gy) > 24) { s.out = true; G.audio.sfx('wetPull'); this.advance(); return; }
           } else if (f.id === 'muted') {
             s.gx = M.x - pt.reed.x; s.gy = M.y - pt.reed.y;
-            if (Math.hypot(s.gx, s.gy) > 30) { s.out = true; G.audio.sfx('wetPull'); this.advance(); return; }
+            if (Math.hypot(s.gx, s.gy) > 22) { s.out = true; G.audio.sfx('wetPull'); this.advance(); return; }
           } else if (f.id === 'mirror') {
             s.off = G.clamp(M.x - pt.mirror.x, -4, 22);
-            if (Math.abs(s.off) < 3) { s.off = 0; G.audio.sfx('clank'); this.advance(); return; }
+            if (Math.abs(s.off) < 5) { s.off = 0; G.audio.sfx('clank'); this.advance(); return; }
           } else if (f.id === 'belt') {
             s.off = G.clamp(M.y - pt.pulleys[1].y, -2, 24);
-            if (s.off < 3) { s.off = 0; G.audio.sfx('clank'); this.advance(); return; }
+            if (s.off < 5) { s.off = 0; G.audio.sfx('clank'); this.advance(); return; }
           }
         }
       }
@@ -442,6 +456,37 @@
       if (f.id === 'skip') return { x: pt.encoder.x, y: pt.encoder.y, r: 20, col: P.lime };
       if (f.id === 'buckle' || f.id === 'weldc') return { x: pt.dent.x, y: pt.dent.y, r: 20, col: P.hullLt };
       return null;
+    },
+    // ------------------------------------------------------------
+    // WHERE DOES THE TOOL GO? Every gesture already knows the point it
+    // is testing against; nothing ever drew it. You picked the right
+    // tool off the tray and were then left to find the joint, the
+    // bubble, the four pegs or the one loose bolt by dragging the
+    // cursor over a machine until something crunched.
+    //
+    // This asks each gesture for its live targets and hands them back
+    // as {x, y, r}. The draw ties a ring round every one of them.
+    // ------------------------------------------------------------
+    hintTargets(f) {
+      if (!f || !f.named || f.done) return [];
+      const pt = this.parts, s = f.state, g = this.needGest();
+      if (g === 'hold') { const h = this.holdTarget(f); return h ? [{ x: h.x, y: h.y, r: (h.r || 18) + 6, col: h.col }] : []; }
+      if (g === 'sweep') return this.sweepTargets(f).filter((q) => !q.o.gone)
+        .map((q) => ({ x: q.x, y: q.y, r: 14, col: q.col }));
+      if (g === 'wind') { const c = this.windCentre(f); return c ? [{ x: c.x, y: c.y, r: (c.r || 20) + 6, wind: 1 }] : []; }
+      if (g === 'click') {
+        if (f.id === 'dry') return pt.pivots.filter((q, i) => !s.lit[i]).map((q) => ({ x: q.x, y: q.y, r: 16 }));
+        if (f.id === 'out') return [{ x: pt.burner.x + pt.burner.w / 2, y: pt.burner.y + pt.burner.h / 2, r: 26 }];
+        if (f.id === 'cross') { const n = pt.nodes[s.hitA ? s.b : s.a]; return n ? [{ x: n.x, y: n.y, r: 16 }] : []; }
+        if (f.id === 'sheared') return pt.holes.filter((q, i) => !s.holes[i]).map((q) => ({ x: q.x, y: q.y, r: 16 }));
+      }
+      if (g === 'drag') {
+        if (f.id === 'jam') { const d = this.gearDebris(); return [{ x: d.x + (s.gx || 0), y: d.y + (s.gy || 0), r: 18, drag: 1 }]; }
+        if (f.id === 'muted') return [{ x: pt.reed.x + (s.gx || 0), y: pt.reed.y + (s.gy || 0), r: 18, drag: 1 }];
+        if (f.id === 'mirror') return [{ x: pt.mirror.x + s.off, y: pt.mirror.y, r: 20, drag: 1 }];
+        if (f.id === 'belt') return [{ x: pt.pulleys[1].x, y: pt.pulleys[1].y + s.off, r: 20, drag: 1 }];
+      }
+      return [];
     },
     sweepTargets(f) {
       const pt = this.parts, s = f.state, out = [];
@@ -548,6 +593,38 @@
 
       this.drawSystem(g, t);
 
+      // ---- and a ring round wherever the tool has to go, once you are
+      // holding the right one. Before this you were told WHICH tool and
+      // then left to find the joint by dragging over the machine. ----
+      const cf = this.cur();
+      if (cf && cf.named && !cf.done && this.tool === this.needTool()) {
+        const gest = this.needGest();
+        for (const h of this.hintTargets(cf)) {
+          const col = h.col || P.lime;
+          const pu = ((t * 1.1 + h.x * 0.01) % 1);
+          g.globalAlpha = (1 - pu) * 0.6;
+          G.oc(g, h.x, h.y, h.r * (0.5 + pu * 0.7), col);
+          g.globalAlpha = 0.75;
+          G.oc(g, h.x, h.y, h.r, col);
+          g.globalAlpha = 1;
+          // a hand-off for the gestures where WHERE is not enough:
+          // wind says go round, drag says pull it out
+          if (h.wind) for (let i = 0; i < 3; i++) {
+            const a = t * 2.4 + i * 2.09;
+            G.Rq(g, h.x + Math.cos(a) * h.r - 1, h.y + Math.sin(a) * h.r - 1, 2, 2, col);
+          } else if (h.drag) {
+            const w = Math.sin(t * 3) * 5;
+            for (let i = 0; i < 4; i++) G.Rq(g, h.x + h.r + 3 + i * 3 + w, h.y - 0.5, 2, 1, col);
+          } else if (gest === 'hold') {
+            // above the ring, unless that would put it outside the open
+            // panel and up in the HUD, in which case it goes below
+            const above = h.y - h.r - 8;
+            G.text(g, 'HOLD', h.x, above < BAY.y + 4 ? h.y + h.r + 3 : above, col,
+              { align: 'center', sc: 0.5, out: OUT });
+          }
+        }
+      }
+
       for (const p of this.chips) G.R(g, p.x, p.y, 2, 2, p.col);
       g.restore();
       G.drawSteam(g);
@@ -635,12 +712,21 @@
       const f = this.cur();
       G.text(g, f ? 'YOU SEE: ' + f.def.sign : 'NOTHING SELECTED', 24, 44, P.hazard);
       const list = this.sys.faults;
+      // two wrong guesses and the manual marks the line, because a
+      // reading test you cannot pass is just a wall
+      const give = f && (f.wrong || 0) >= 2;
       for (let i = 0; i < list.length; i++) {
         const ry = 62 + i * 24;
         const hov = G.inRect(G.mouse.x, G.mouse.y, 26, ry, 268, 22);
-        G.plate(g, 26, ry, 268, 22, hov ? P.cyanDk : '#1d2436', { r: 1, band: 1, spec: false });
-        G.R(g, 26, ry, 2, 22, hov ? P.cyanLt : P.plateDk);
-        G.text(g, list[i].name, 32, ry + 3, hov ? '#ffffff' : P.cream);
+        const mark = give && f && list[i].id === f.id;
+        G.plate(g, 26, ry, 268, 22, hov ? P.cyanDk : mark ? '#1e3a20' : '#1d2436',
+          { r: 1, band: 1, spec: false });
+        G.R(g, 26, ry, 2, 22, hov ? P.cyanLt : mark ? P.lime : P.plateDk);
+        if (mark) {
+          G.R(g, 26, ry, 268, 1, P.lime);
+          G.text(g, 'THIS ONE', 288, ry + 3, P.lime, { align: 'right', sc: 0.5 });
+        }
+        G.text(g, list[i].name, 32, ry + 3, hov ? '#ffffff' : mark ? '#dfffcf' : P.cream);
         const known = G.state.seen.indexOf(list[i].id) >= 0;
         G.text(g, known ? list[i].sign : 'NOT YET LOGGED', 32, ry + 13, known ? P.steel2 : P.steel);
         G.text(g, '$' + list[i].pay, 288, ry + 8, P.hazard, { align: 'right' });

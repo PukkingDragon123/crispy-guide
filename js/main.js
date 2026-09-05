@@ -553,6 +553,7 @@
     M.vx = vxs; M.vy = vys;
     lmx = M.x; lmy = M.y;
 
+    G.now += dt;                        // wall clock every scene can read
     updTrans(dt);
     if (trans.phase === 'none' || trans.phase === 'in') {
       if (G.scene && G.scene.update) G.scene.update(dt);

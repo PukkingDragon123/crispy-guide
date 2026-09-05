@@ -32,7 +32,11 @@
   const P = G.PAL;
   const OUT = P.ink;
 
-  const WALK = 46;                    // units per second, an adult
+  // Walking used to be 46 and a room is 700 units wide, which is a lot
+  // of standing about watching a cow cross a floor. Everything in these
+  // scenes is a conversation or a tap; none of it is improved by the
+  // travel time.
+  const WALK = 62;                    // units per second, an adult
   const REACH = 16;                   // how near a spot counts as "at" it
 
   // ------------------------------------------------------------
@@ -180,6 +184,31 @@
     if (a.st >= dur) actorNext(a);
   }
 
+  // A name tab wider than the gap to the edge of the screen gets cut in
+  // half. These are drawn inside the camera transform, so the bounds have
+  // to be pushed into world space or the tab lands at world zero.
+  function clampLabel(x, label) {
+    const half = G.tw(label, 0.5) / 2 + 5;
+    const cam0 = Math.round(G.cam.x + G.cam.sx);
+    return G.clamp(x, cam0 + half + 2, Math.max(cam0 + half + 2, cam0 + G.W - half - 2));
+  }
+
+  // who is under that point? Uses the head top recorded on the last
+  // draw, so a person sat in a booth has a booth-shaped hit box and not
+  // a standing one.
+  function actorAt(S, wx, y) {
+    let best = null, bd = 1e9;
+    for (const a of S.actors) {
+      if (!S.canTalk(a)) continue;
+      const top = a.headTop === undefined ? S.floor - G.SZ.ADULT : a.headTop;
+      const foot = S.floor + (a.dy || 0);
+      if (y < top - 10 || y > foot + 6) continue;
+      const d = Math.abs(wx - a.x);
+      if (d < 16 && d < bd) { bd = d; best = a; }
+    }
+    return best;
+  }
+
   function actorDraw(g, a, S) {
     const fy = S.floor + (a.dy || 0) - Math.max(0, a.hop || 0);
     const o = {
@@ -219,6 +248,7 @@
       flags: {}, over: 0,
       pops: [], sq: 0, sqV: 0, chat: 2.5, land: 0,
       pspeedMul: 1, pdy: 0, camAt: null, hush: 0,
+      hoverK: null, hoverA: null, pendWho: null,
     };
     S.pop = (x, y, kind, col, r, life) => {
       if (S.pops.length > 120) return;
@@ -239,6 +269,26 @@
     S.cheer = (ids, force) => { for (const id of ids) S.jump(id, force); };
 
     S.actor = (id) => S.actors.find((a) => a.id === id);
+    // ---- CLICK TO TALK. Everybody in the room with something to say
+    // is a thing you can walk up to and press. They turn round, they
+    // hop, and they say the next line they have not said yet - so the
+    // cast is something you can go and USE rather than something that
+    // occasionally shouts at you as you pass. ----
+    S.canTalk = (a) => !!(a && a.lines && a.lines.length && !a.noTalk
+      && (!a.hide || !a.hide(S)) && !a.dead);
+    S.talkTo = (a) => {
+      if (!S.canTalk(a)) return false;
+      a.li = ((a.li === undefined ? -1 : a.li) + 1) % a.lines.length;
+      S.say(a.id, a.lines[a.li], 2.8);
+      a.hopV = -26;
+      a.look = Math.sign(S.px - a.x) || 1;
+      a.said = G.rand(7, 12);            // do not also blurt it ambiently
+      a.hold = 1.5; a.holdClip = 'talk';
+      S.chat = G.rand(3, 5);
+      S.pop(a.x, (a.headTop === undefined ? S.floor - G.SZ.ADULT : a.headTop) - 3,
+        'ring', '#ffe6a8', 8, 0.4);
+      return true;
+    };
     S.setObj = (txt) => { S.obj = txt; S.objT = 0; };
     S.say = (id, text, secs) => {
       const life = secs || Math.max(1.6, 1.1 + String(text).length * 0.055);
@@ -289,10 +339,23 @@
           const d = Math.abs(wx - k.x);
           if (d < 26 && d < bd && Math.abs(y - (S.floor - 24)) < 70) { bd = d; best = k; }
         }
-        if (best) { S.goal = best.x + (best.off || 0); S.pending = best; G.audio.sfx('click'); return; }
+        if (best) {
+          S.goal = best.x + (best.off || 0); S.pending = best; S.pendWho = null;
+          G.audio.sfx('click'); return;
+        }
+        // ---- or somebody to talk to. Spots win where they overlap,
+        // because a spot is the plot and a person is a joke. ----
+        const who = actorAt(S, wx, y);
+        if (who) {
+          const side = Math.sign(S.px - who.x) || 1;
+          S.goal = G.clamp(who.x + side * 20, 8, S.w - 8);
+          S.pending = null; S.pendWho = who;
+          G.audio.sfx('click');
+          return;
+        }
         S.goal = G.clamp(wx, def.minX === undefined ? 8 : def.minX,
           def.maxX === undefined ? S.w - 8 : def.maxX);
-        S.pending = null;
+        S.pending = null; S.pendWho = null;
       },
       onMove() {},
       onUp() {},
@@ -342,6 +405,7 @@
                 if (k.on) k.on(S);
               }
             }
+            if (S.pendWho) { const a = S.pendWho; S.pendWho = null; S.talkTo(a); }
           } else {
             if (S.pclip !== 'walk') S.sqV = -30;             // stretch off the mark
             S.px += Math.sign(d) * speed * dt;
@@ -353,6 +417,21 @@
                 S.pop(S.px - S.pdir * 4 + G.rand(-2, 2), S.floor - 1, 'dust', '#b8a890', 3, 0.3);
           }
         } else if (!S.lock) S.pclip = def.pidle || 'idle';
+
+        // ---- what is the pointer on? Recomputed every frame rather
+        // than on pointermove, because the camera moves under a still
+        // mouse all the time and a hover worked out on the last move
+        // event points at whatever used to be there. ----
+        S.hoverK = null; S.hoverA = null;
+        if (!S.lock && !G.mouse.touch && G.mouse.x > -50) {
+          const mwx = G.mouse.x + Math.round(G.cam.x), my = G.mouse.y;
+          for (const k of def.spots || []) {
+            if (k.once && S.done[k.id]) continue;
+            if (k.hidden && k.hidden(S)) continue;
+            if (Math.abs(mwx - k.x) < 26 && Math.abs(my - (S.floor - 24)) < 70) { S.hoverK = k; break; }
+          }
+          if (!S.hoverK) S.hoverA = actorAt(S, mwx, my);
+        }
 
         for (const a of S.actors) actorUpdate(a, dt, S);
         // ---- AMBIENT CHATTER. Walk past somebody with something to
@@ -417,18 +496,24 @@
         if (S.pcrawl) S.pheadTop = S.floor - 26;
         if (def.fore) def.fore(g, S);
         pops(g, S);
-        // the marks over things you can still use
+        // ---- THE MARKS. Green chevrons over things to use, white
+        // speech marks over people to talk to, and both of them get
+        // louder when you are near or pointing at them. Between them
+        // they answer the only question a room like this ever raises,
+        // which is "what in here is actually live?" ----
         for (const k of def.spots || []) {
           if (k.once && S.done[k.id]) continue;
           if (k.hidden && k.hidden(S)) continue;
           const near = Math.abs(S.px - k.x) < 54;
+          const hov = S.hoverK === k;
+          const lit = near || hov;
           const bnc = Math.abs(Math.sin(t * 2.6 + k.x));
-          const kb = -bnc * (near ? 5 : 3);
+          const kb = -bnc * (lit ? 5 : 3);
           const ky = (k.markY === undefined ? S.floor - 40 : k.markY) + kb + 3;
-          G.glow(g, k.x, ky + 4, 22 + bnc * 8, 22, '#b6ff3a', near ? 0.44 : 0.24);
+          G.glow(g, k.x, ky + 4, 22 + bnc * 8, 22, '#b6ff3a', hov ? 0.6 : near ? 0.44 : 0.24);
           // a pulse ring on the ground under it
           const pr2 = ((t * 0.9) % 1);
-          g.globalAlpha = (1 - pr2) * (near ? 0.5 : 0.28);
+          g.globalAlpha = (1 - pr2) * (lit ? 0.5 : 0.28);
           G.oc(g, k.x, S.floor - 2, 3 + pr2 * 12, '#b6ff3a');
           g.globalAlpha = 1;
           // a chevron pointing down at the thing
@@ -436,12 +521,35 @@
             G.Rh(g, k.x - 4 + i - 0.5, ky + i - 0.5, 10 - i * 2, 2, OUT);
             G.Rh(g, k.x - 4 + i, ky + i, 9 - i * 2, 1, i < 1 ? '#dfffcf' : '#8ede3a');
           }
-          if (near && k.label) {
-            const lw = G.tw(k.label, 0.5) + 8;
-            G.R(g, k.x - lw / 2, ky - 11, lw, 9, '#16200f');
-            G.bevelq(g, k.x - lw / 2, ky - 11, lw, 9, '#33501f', '#080c05');
-            G.text(g, k.label, k.x, ky - 9, '#dfffcf', { align: 'center', sc: 0.5 });
-          }
+          if (lit && k.label) G.pill(g, clampLabel(k.x, k.label), ky - 3, k.label, '#dfffcf');
+        }
+        // people you can talk to. A chevron and a speech mark on the
+        // same head is two calls to action fighting for eleven pixels,
+        // so a live spot suppresses the mark under it - go and do the
+        // thing first, chat afterwards.
+        const claimed = (x) => (def.spots || []).some((k) =>
+          !(k.once && S.done[k.id]) && !(k.hidden && k.hidden(S)) && Math.abs(k.x - x) < 18);
+        for (const a of S.actors) {
+          if (!S.canTalk(a) || claimed(a.x)) continue;
+          const top = (a.headTop === undefined ? S.floor - G.SZ.ADULT : a.headTop)
+            - Math.max(0, a.hop || 0);
+          const near = Math.abs(S.px - a.x) < 50;
+          const hov = S.hoverA === a;
+          const lit = near || hov;
+          const bnc = Math.abs(Math.sin(t * 3.1 + a.x * 0.2));
+          const my = top - 7 - bnc * (lit ? 2.5 : 1.5);
+          // the outline goes down at full strength whatever else does,
+          // because a half-alpha shape on a cream wall is a smudge
+          G.rr2(g, a.x - 6, my - 5, 12, 9, OUT);
+          G.Rh(g, a.x - 2.5, my + 4, 3, 1.5, OUT);
+          g.globalAlpha = hov ? 1 : near ? 0.92 : 0.66;
+          G.rr2(g, a.x - 5, my - 4, 10, 7, lit ? '#fdf7ea' : '#d8ccb8');
+          G.Rh(g, a.x - 2, my + 3.5, 2, 1, lit ? '#fdf7ea' : '#d8ccb8');
+          for (let i = 0; i < 3; i++)
+            G.Rq(g, a.x - 3.5 + i * 2.5, my - 1, 1.5, 1.5,
+              lit && ((t * 3) % 3) >= i ? '#c8783a' : '#8a7c68');
+          g.globalAlpha = 1;
+          if (hov && a.name) G.pill(g, clampLabel(a.x, a.name), my - 6, a.name, '#ffe6a8');
         }
         // bubbles
         for (const b of S.bubbles) {
@@ -485,10 +593,18 @@
       G.text(g, S.obj, G.W / 2, y + 6, S.objDone ? '#6b8a4a' : fl ? '#ffffff' : '#dfffcf',
         { align: 'center' });
     }
-    if (S.t < 7 && !S.lock) {
-      const fl = Math.sin(S.t * 4) > 0;
-      G.text(g, 'TAP WHERE YOU WANT TO WALK', G.W / 2, G.H - 7,
-        fl ? '#e8dcc8' : '#8a7c68', { align: 'center', sc: 0.5, out: OUT });
+    // what the pointer is on right now beats a generic nudge, and the
+    // generic nudge sticks around long enough to actually be read
+    if (!S.lock) {
+      let tip = null;
+      if (S.hoverA) tip = 'TAP ' + (S.hoverA.name || 'THEM') + ' TO TALK';
+      else if (S.hoverK) tip = 'TAP TO ' + (S.hoverK.label || 'USE');
+      else if (S.t < 12) tip = 'TAP THE FLOOR TO WALK  ·  TAP ANYONE TO TALK';
+      if (tip) {
+        const fl = S.hoverA || S.hoverK ? true : Math.sin(S.t * 4) > 0;
+        G.text(g, tip, G.W / 2, G.H - 7,
+          fl ? '#e8dcc8' : '#8a7c68', { align: 'center', sc: 0.5, out: OUT });
+      }
     }
   };
 

@@ -17,16 +17,20 @@
   const WALK_LO = 16, WALK_HI = ROOM_W - 16;
 
   // every station: where it is, how close you must be, what it opens
+  // my = where the marker hangs, just clear of the top of that station,
+  // so a chevron points at the thing it means instead of floating in a
+  // tidy row along the ceiling
   const STATIONS = [
-    { id: 'up',    x: 26,  r: 22, name: 'UP TO THE FLOOR', verb: 'CLIMB',    tab: -1 },
-    { id: 'term',  x: 118, r: 26, name: 'THE TERMINAL',    verb: 'ORDER',    tab: 0 },
-    { id: 'mixer', x: 232, r: 30, name: 'THE MIXER',       verb: 'MIX',      tab: 1 },
-    { id: 'cold',  x: 344, r: 28, name: 'THE COLD ROOM',   verb: 'LOAD',     tab: 2 },
-    { id: 'wall',  x: 440, r: 24, name: 'THE WALL',        verb: 'LOOK',     tab: -2 },
-    { id: 'down',  x: 528, r: 30, name: 'DOWN TO THE BENCH', verb: 'GO DOWN', tab: -3 },
+    { id: 'up',    x: 26,  r: 22, my: 88, name: 'UP TO THE FLOOR', verb: 'CLIMB',    tab: -1 },
+    { id: 'term',  x: 118, r: 26, my: 74, name: 'THE TERMINAL',    verb: 'ORDER',    tab: 0 },
+    { id: 'mixer', x: 232, r: 30, my: 60, name: 'THE MIXER',       verb: 'MIX',      tab: 1 },
+    { id: 'cold',  x: 344, r: 28, my: 62, name: 'THE COLD ROOM',   verb: 'LOAD',     tab: 2 },
+    { id: 'wall',  x: 440, r: 24, my: 64, name: 'THE WALL',        verb: 'LOOK',     tab: -2 },
+    { id: 'down',  x: 570, r: 30, my: 92, name: 'DOWN TO THE BENCH', verb: 'GO DOWN', tab: -3 },
   ];
 
   const back = (G.scenes = G.scenes || {}).back = {
+    stations: STATIONS,          // so a harness walks to the real spot
     enter() {
       this.t = 0;
       this.px = 60; this.vx = 0; this.target = null; this.face = 1;
@@ -107,6 +111,7 @@
     },
 
     use(s) {
+      if (!s) return;                    // nothing under you is not a crash
       if (s.tab === -1) { G.audio.sfx('click'); G.go('day', 'THE FLOOR'); return; }
       if (s.tab === -3) { G.audio.sfx('night'); G.save(); G.go('night', 'THE WORKSHOP'); return; }
       if (s.tab === -2) { G.audio.sfx('clack'); this.open = -2; this.sel = 0; return; }
@@ -231,16 +236,42 @@
       this.stairs(g, t);
       this.hatch(g, t);
 
-      // ---- the marker over whatever you are standing at ----
-      const s = this.near();
-      if (s && this.open === null) {
-        const bob = Math.sin(t * 4) * 1.5;
-        for (let i = 0; i < 5; i++)
-          G.Rh(g, s.x - 4 + i, 34 + bob + Math.abs(i - 2), 1, 1, P.lime);
-        // keep the caption inside the viewport even at the ends of the room
-        const half = G.tw(s.name, 0.5) / 2;
-        const lx = G.clamp(s.x, this.cam + half + 6, this.cam + G.W - half - 6);
-        G.text(g, s.name, lx, 26 + bob, P.lime, { align: 'center', sc: 0.5, out: OUT });
+      // ---- WHERE THE ROOM HAS VERBS. This used to mark only the
+      // station you were already standing at, which tells you nothing
+      // you did not already know - a room wider than the screen with no
+      // signposts is a room you find by walking into things. Every live
+      // station is marked now: a quiet chevron down the room, and the
+      // name and the verb on the one you are at. ----
+      if (this.open === null) {
+        const here = this.near();
+        const mwx = G.mouse.x + Math.round(this.cam);
+        for (const st of this.live()) {
+          const at = st === here;
+          const hov = !G.mouse.touch && Math.abs(mwx - st.x) < st.r && G.mouse.y < 150;
+          const lit = at || hov;
+          const bob = Math.abs(Math.sin(t * 2.6 + st.x * 0.05)) * (lit ? 3 : 1.6);
+          const my = (st.my === undefined ? 34 : st.my) - bob;
+          g.globalAlpha = lit ? 1 : 0.42;
+          G.glow(g, st.x, my + 4, 20 + bob * 3, 18, P.lime, lit ? 0.5 : 0.22);
+          for (let i = 0; i < 4; i++) {
+            G.Rh(g, st.x - 4 + i - 0.5, my + i - 0.5, 10 - i * 2, 2, OUT);
+            G.Rh(g, st.x - 4 + i, my + i, 9 - i * 2, 1, i < 1 ? '#dfffcf' : '#8ede3a');
+          }
+          g.globalAlpha = 1;
+          // a ring on the floor, so you can see how far off you are
+          if (!at) {
+            const pr = ((t * 0.9 + st.x * 0.01) % 1);
+            g.globalAlpha = (1 - pr) * (hov ? 0.42 : 0.2);
+            G.oc(g, st.x, FLOOR + 4, 4 + pr * 14, P.lime);
+            g.globalAlpha = 1;
+          }
+          if (lit) {
+            // keep the caption inside the viewport even at the ends
+            const half = G.tw(st.name, 0.5) / 2 + 5;
+            const lx = G.clamp(st.x, this.cam + half + 6, this.cam + G.W - half - 6);
+            G.pill(g, lx, my - 3, st.name, '#dfffcf');
+          }
+        }
       }
     },
 

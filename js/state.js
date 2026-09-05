@@ -407,9 +407,14 @@
   // THE SHIFT. A quota and a number. Miss them and the district
   // notices a café that is not really a café.
   // ------------------------------------------------------------
+  // EASIER: the quota climbed 0.7 a day to nine, and the money target
+  // 26 a day forever, so by the end of the first week you needed a
+  // near-perfect shift to clear a day. It rises half as fast and stops
+  // sooner - the shop should be somewhere you get better, not a bar you
+  // have to clear to be allowed to keep playing.
   G.rollGoal = function (day) {
-    const quota = Math.min(9, 3 + Math.floor((day - 1) * 0.7)) + (G.has('sign') ? 1 : 0);
-    const take = 40 + (day - 1) * 26;
+    const quota = Math.min(7, 2 + Math.floor((day - 1) * 0.45)) + (G.has('sign') ? 1 : 0);
+    const take = 30 + (day - 1) * 16;
     return { quota, take, served: 0, earned: 0 };
   };
   G.goalMet = function () {

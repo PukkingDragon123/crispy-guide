@@ -47,6 +47,39 @@ else.
 
 ---
 
+## 🪶 It is a good deal easier than it was
+
+Every number below moved in the same direction, for the same reason: this is a
+game about scooping ice cream for a robot and having a small cry on a bench,
+and none of it was improved by being difficult.
+
+| | Was | Is |
+|---|---|---|
+| Clean-scoop window | 0.76 – 1.16 | **0.66 – 1.34** |
+| Slop starts at | 1.42 | **1.72** |
+| How long they queue | 42 | **64** |
+| Quota, day *n* | 3 + 0.7*n*, up to 9 | **2 + 0.45*n*, up to 7** |
+| Take, day *n* | 40 + 26*n* | **30 + 16*n*** |
+| Repair hold target | 18 units | **26 units** |
+| Repair hold speed | 1.6 s | **1.05 s** |
+| Repair sweep brush | 14 units | **20 units** |
+| Winding | 10 radians | **6 radians** |
+| First misdiagnosis | costs you | **free, and warns you** |
+| Torque band | 0.30 wide | **0.52 wide**, needle 25% slower |
+| Pressure band | 0.30 wide | **0.52 wide**, needle 25% slower |
+| Walking speed | 46 / s | **62 / s** |
+
+The two bench bands are now **one constant each**, read by the test *and* by
+the gauge that paints it, so the green stripe can never claim a window the code
+does not honour.
+
+Nothing was removed to do this. Every fault is still one of the five gestures,
+every scoop is still a sweep you have to feel, and the one thing you are still
+expected to find for yourself — the tell on a machine that is not a machine —
+is untouched.
+
+---
+
 ## 🕹️ The prologue is a place, not a picture
 
 The first act of this game used to be nine cutscene shots and a two-mile
@@ -206,6 +239,27 @@ you** who has not spoken for a while, hops them, and gives them a line off
 their own pool — then waits two and a half to five seconds and does it again.
 Walk from one end of the floor to the other and you get a different four
 lines every time, and each of them is somebody's, not the room's.
+
+### And now you can just go and ask them
+
+![Click to talk](screenshots/talk.png)
+
+That was the whole of it: the cast talked *at* you on a timer and there was
+nothing you could do about it either way. **Tap anybody and they will talk to
+you.** You walk over, they turn round, they hop, and they say the next line
+they have not used yet — so the cast is something you can *work through*
+rather than something that occasionally shouts as you pass.
+
+Everybody with something to say wears a **little speech mark** over their
+head: outlined at full strength whatever else is going on, filled brighter
+when you are near them, and with their **name on a tab** when the pointer is
+on them. A green chevron over a live spot suppresses the speech mark under it
+— a chevron and a bubble on the same head is two calls to action fighting over
+eleven pixels, and the spot is the plot while the person is the joke.
+
+The line along the bottom of the screen says what the pointer is actually on:
+
+> TAP A MAN IN A COAT TO TALK
 
 ---
 
@@ -512,6 +566,32 @@ One narrow room, and it looks like a room: tiled to shoulder height, a run of
 pipe with a drip coming off it, an extraction fan, a bare bulb on a cable, a
 first-aid box, grime in the corners and flies that will not leave.
 
+### What can I touch?
+
+![The marks](screenshots/marks.png)
+
+Two base stands, six sauce bottles, four topping jars, five pits and a cat, and
+**every one of them used to be an invisible rectangle**. They all did
+something and none of them said so, and a player who has not read the source
+has no way to find that out except by tapping the whole screen.
+
+There is now one mark for *everything you can touch*, in every scene:
+
+| | |
+|---|---|
+| **Resting** | a small chevron, in the thing's own colour, breathing over it |
+| **Pointed at** | brackets round the thing and its **name** on a tab |
+
+It does **not** light everything at once, which would just be a wall of pips.
+It lights **the step you are on** — a base, then a scoop, then whatever you
+want on top — so the marks double as the recipe, and the line along the bottom
+of the screen names the same step in words:
+
+> TAKE A CONE OR A CUP → PRESS A PIT AND SWEEP → SAUCE AND TOPS, THEN SERVE
+
+The one thing it will not point at is **the tell on a disguise**. That is the
+only thing in the game you are meant to spot for yourself.
+
 Along the top: **today's goal**. A row of pips for the quota, a bar for the
 take, both filling as you work, plus the heat on you and a tally of who you have
 got out. Miss the quota and the district notices a café that is not really a
@@ -626,6 +706,13 @@ go there; tap a machine and you walk to it and use it. Breeze block, damp bloom,
 strip lights that flicker, a drain, shelving stacked with stock crates, a
 defaced recruitment poster, a tool board, a mop in a bucket.
 
+**Every live station is marked** — a chevron just above it, hanging where the
+thing actually is rather than in a tidy row along the ceiling, plus a ring
+pulsing on the floor at its feet so you can see how far off you are. It used
+to mark only the station you were *already standing at*, which tells you
+nothing you did not know: a room wider than the screen with no signposts is a
+room you find by walking into things.
+
 **Six things to stand at:**
 
 | Station | What it does |
@@ -696,6 +783,26 @@ mainspring has run down*, *a plate has folded inward* — and the manual offers
 **hold** the tool on the part (12), **sweep** it across (6), **wind** it in
 circles (5), **click** exactly on the thing (4), **drag** it out (4). No timing
 windows, no rhythm games.
+
+### And it shows you where the tool goes
+
+![Where the tool goes](screenshots/where.png)
+
+Picking the right tool told you *which* tool and then left you to find the
+joint. Three identical joints on three identical pipes, one of them leaking,
+and the only way to find out which was to drag the cursor over the machine
+until something crunched.
+
+Every gesture already knew the point it was testing against; nothing ever drew
+it. Now **a ring goes round every live target** the moment you are holding the
+right tool — the leaking joint, all six patches of crust, the four pegs, the
+one loose bolt — and it says what to do with it: `HOLD` over a hold, three
+marks orbiting a wind, an arrow off the side of a drag.
+
+**Naming a fault is a reading test, not a reflex test**, so it stopped
+charging you for the first miss. One wrong answer is free and just says
+*warmer*; after two the manual marks the right line **THIS ONE** in green. A
+reading test you cannot pass is a wall, not a puzzle.
 
 ---
 

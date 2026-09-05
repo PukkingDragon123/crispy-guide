@@ -501,6 +501,7 @@
   // ---------- mouse / pointer ----------
   // x,y are SCREEN coords; wx,wy are WORLD coords (camera applied)
   G.mouse = { x: -99, y: -99, wx: -99, wy: -99, down: false, vx: 0, vy: 0, touch: false, wheel: 0 };
+  G.now = 0;                        // seconds since the page loaded, ticked by the loop
 
   // ---------- global juice ----------
   G.shakeT = 0; G.shakeMag = 0;
@@ -805,6 +806,76 @@
       G.R(g, G.W - inset - 2, 0, 2, G.H, tint || '#000');
       g.globalAlpha = 1;
     }
+  };
+
+  // ---------- CAN I TOUCH THIS? ----------
+  // Half the click targets in this game used to be invisible. The cone
+  // stand, the cup stand, six sauce bottles, four topping jars, the tip
+  // jar cat, the lamp, the tell on a disguise - all of them did
+  // something and none of them said so, and a player who has not read
+  // the source has no way to find out except by tapping the whole
+  // screen. This is the one answer to that, used by every scene.
+  //
+  //   RESTING     a small pip that breathes over the thing, so you can
+  //               see at a glance where the game has verbs
+  //   POINTED AT  brackets round it and a name, so you know what the
+  //               verb is before you commit to it
+  //
+  // Call it in draw, once per thing. It returns whether the pointer is
+  // on it, so a scene can use the same call for the hit test and never
+  // drift between what is drawn and what is clickable.
+  G.hot = function (g, x, y, w, h, label, o) {
+    o = o || {};
+    const pad = o.pad === undefined ? 2 : o.pad;
+    const hov = o.hover !== undefined ? o.hover
+      : G.inRect(G.mouse.x, G.mouse.y, x - pad, y - pad, w + pad * 2, h + pad * 2);
+    if (o.draw === false) return hov;
+    const col = o.col || P.lime || '#b6ff3a';
+    const t = G.now || 0;
+    const br = Math.abs(Math.sin(t * 2.4 + x * 0.11 + y * 0.07));
+    const cx = x + w / 2;
+    if (hov) {
+      // brackets: four corners, so the shape reads at any size and
+      // nothing is hidden behind a filled box
+      const L = Math.max(3, Math.min(7, Math.min(w, h) * 0.4));
+      const bx = x - pad, by = y - pad, bw = w + pad * 2, bh = h + pad * 2;
+      for (const [ox, oy, sx, sy] of [[bx, by, 1, 1], [bx + bw, by, -1, 1],
+                                      [bx, by + bh, 1, -1], [bx + bw, by + bh, -1, -1]]) {
+        G.Rh(g, sx > 0 ? ox : ox - L, sy > 0 ? oy : oy - 1, L, 1, col);
+        G.Rh(g, sx > 0 ? ox : ox - 1, sy > 0 ? oy : oy - L, 1, L, col);
+      }
+      g.globalAlpha = 0.16 + br * 0.1;
+      G.R(g, bx, by, bw, bh, col);
+      g.globalAlpha = 1;
+      if (label) G.pill(g, cx, by - 3, label, col);
+    } else {
+      // resting: a little chevron pointing down at the thing, breathing.
+      // Same shape the walkable scenes use over a spot, so one mark
+      // means one thing everywhere in the game. Loud enough to find,
+      // quiet enough to live under a busy shelf.
+      const py = (o.pipY === undefined ? y - 6 : o.pipY) - br * 1.5;
+      g.globalAlpha = 0.42 + br * 0.28;
+      G.glow(g, cx, py + 2, 14, 12, col, 0.6);
+      for (let i = 0; i < 3; i++) {
+        G.Rh(g, cx - 3 + i - 0.5, py + i - 0.5, 8 - i * 2, 2, P.ink);
+        G.Rh(g, cx - 3 + i, py + i, 7 - i * 2, 1, i < 1 ? '#ffffff' : col);
+      }
+      g.globalAlpha = 1;
+    }
+    return hov;
+  };
+
+  // the little name tag the affordance hangs over things, also used on
+  // its own by the scenes that place their own marks
+  G.pill = function (g, cx, bottomY, label, col, sc) {
+    sc = sc === undefined ? 0.5 : sc;
+    const w = G.tw(label, sc) + 8, h = sc < 1 ? 9 : 12;
+    const x = Math.round(cx - w / 2), y = Math.round(bottomY - h);
+    G.rr2(g, x - 1, y - 1, w + 2, h + 2, P.ink);
+    G.rr2(g, x, y, w, h, '#16200f');
+    G.hairq(g, x + 1, y + 0.5, w - 2, G.shade(col, -0.3));
+    G.text(g, label, x + w / 2, y + (h - 7) / 2 + 0.5, col, { align: 'center', sc });
+    return { x, y, w, h };
   };
 
   // ---------- shared button ----------
