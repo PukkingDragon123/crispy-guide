@@ -19,20 +19,82 @@
   // ------------------------------------------------------------
   // little staging helpers, shared by the shots
   // ------------------------------------------------------------
-  function silhouette(g, x, footY, h, col, rim) {     // her, or anyone
-    const w = Math.round(h * 0.34);
-    if (rim !== false) {                              // a hair of backlight down one side
-      const r = '#6b4a3a';
-      G.vair(g, x + w * 0.5, footY - h * 0.72, h * 0.5, r);
-      G.vair(g, x + w * 0.4, footY - h, h * 0.3, r);
-      G.hair(g, x - w * 0.42, footY - h, w * 0.84, '#8a5c44');
+  // ------------------------------------------------------------
+  // SILHOUETTES, CUT FROM THE REAL SPRITES.
+  //
+  // A cutscene shape used to be six rectangles stacked into a person
+  // shape: a rounded head-and-shoulders, a body, two arms, two legs.
+  // At a glance it passes; next to a scene full of procedurally
+  // generated people with genomes and nervous habits it is a cardboard
+  // cutout, and the cast in a cutscene stops being the cast.
+  //
+  // So a silhouette is now the ACTUAL sprite. It is drawn into a
+  // scratch buffer, the buffer is flooded with one colour through
+  // source-in - which keeps the fill only where there were pixels -
+  // and the result is blitted back. Whatever the rig draws, the
+  // silhouette is exactly that shape: the right hair, the right coat,
+  // the right hat, the right number of legs.
+  // ------------------------------------------------------------
+  let buf = null, bg = null;
+  const BW = 120, BH = 120;                       // logical, plenty for a person
+  function cut(g, col, ox, oy, draw, rim) {
+    if (!buf) {
+      buf = document.createElement('canvas');
+      buf.width = BW * G.PX; buf.height = BH * G.PX;
+      bg = buf.getContext('2d');
+      bg.imageSmoothingEnabled = false;
     }
-    G.rr2(g, x - w * 0.42, footY - h, w * 0.84, h * 0.3, col);      // head+shoulders
-    G.R(g, x - w / 2, footY - h * 0.72, w, h * 0.5, col);           // body
-    G.R(g, x - w * 0.62, footY - h * 0.64, w * 0.2, h * 0.36, col); // arms
-    G.R(g, x + w * 0.42, footY - h * 0.64, w * 0.2, h * 0.36, col);
-    G.R(g, x - w * 0.34, footY - h * 0.24, w * 0.28, h * 0.24, col);
-    G.R(g, x + w * 0.06, footY - h * 0.24, w * 0.28, h * 0.24, col);
+    // re-colours the hardened mask in place; alpha survives, so this can
+    // run twice on one draw and give you a rim pass and a body pass
+    const paint = (c) => {
+      bg.globalCompositeOperation = 'source-in';
+      bg.fillStyle = c;
+      bg.fillRect(0, 0, buf.width, buf.height);
+      bg.globalCompositeOperation = 'source-over';
+    };
+    bg.setTransform(1, 0, 0, 1, 0, 0);
+    bg.clearRect(0, 0, buf.width, buf.height);
+    bg.setTransform(G.PX, 0, 0, G.PX, 0, 0);
+    bg.globalAlpha = 1;
+    draw(bg);
+    bg.setTransform(1, 0, 0, 1, 0, 0);
+    // HARDEN FIRST. The rig lays glows and soft rims down with
+    // globalAlpha, and a mask taken straight off that comes back with a
+    // halo round every character. Compositing the buffer over itself
+    // drives any non-zero alpha toward 1 and leaves true zero at zero,
+    // so five passes turn a soft cloud into a clean cut edge.
+    for (let i = 0; i < 5; i++) bg.drawImage(buf, 0, 0);
+    // A rim is the SAME mask, stamped a pixel toward the light in a
+    // brighter colour and then covered by the dark one. The edge that
+    // survives is the character's own profile, so a hood stays a hood --
+    // a hand-drawn bar down the side never does that.
+    if (rim) { paint(rim.col); g.drawImage(buf, ox + (rim.dx || 0), oy + (rim.dy || 0), BW, BH); }
+    paint(col);
+    g.drawImage(buf, ox, oy, BW, BH);
+  }
+
+  // a person, in one colour. seed picks who; h is head-to-heel.
+  function silhouette(g, x, footY, h, col, rim, o) {
+    o = o || {};
+    const sc = h / G.SZ.ADULT;
+    const bx = Math.round(x - BW / 2), by = Math.round(footY - BH + 8);
+    cut(g, col, bx, by, (gg) => {
+      G.drawFolk(gg, BW / 2, BH - 8, sc, {
+        t: o.t || 0, seed: o.seed === undefined ? x * 0.37 + h : o.seed,
+        clip: o.clip, ct: o.ct === undefined ? o.t : o.ct, dir: o.dir,
+        p: o.p, smile: o.smile, hat: o.hat, noQuirk: o.noQuirk,
+      });
+    }, rim === true ? { col: '#a06a4c', dx: -0.5, dy: -0.5 } : rim || null);
+  }
+  // and the same trick for a machine, so a patrol in a doorway is the
+  // patrol you meet on the floor and not a taller rectangle
+  function botLo(g, id, x, footY, h, col, o) {
+    o = o || {};
+    const sc = h / G.SZ.MASCOT;
+    const bx = Math.round(x - BW / 2), by = Math.round(footY - BH + 8);
+    cut(g, col, bx, by, (gg) => {
+      G.drawBot(gg, id, BW / 2, BH - 8, sc, Object.assign({ t: 0, walk: 0, noBlink: 1, noGlow: 1 }, o));
+    }, o.rim || null);
   }
   function rain(g, t, n, col, x0, x1) {
     for (let i = 0; i < n; i++) {
@@ -184,11 +246,15 @@
       } else {
         G.R(g, gx, gy, gw, gh, '#101a2a');
         G.glow(g, gx + gw / 2, gy + gh * 0.5, gw, gh, '#ffd45a', 0.32);
-        // shapes in the window, before it goes
+        // shapes in the window, before it goes. Real people, cut out of
+        // the warm light - it is a birthday in there.
         for (let k = 0; k < 3; k++) {
           const sx = gx + 8 + k * 13;
-          G.R(g, sx, gy + gh - 22, 6, 22, '#3a2a30');
-          G.R(g, sx, gy + gh - 26, 6, 5, '#4a3a40');
+          const kid = (i + k) % 3 === 1;
+          silhouette(g, sx + 3, gy + gh - 2, kid ? 17 : 26, '#3a2a30', false,
+            { seed: 2.9 + i * 5.3 + k * 11.7, t: tt, ct: tt + k * 1.3,
+              clip: (i + k) % 4 === 0 ? 'talk' : 'idle', dir: k % 2 ? -1 : 1,
+              hat: kid ? 'crown' : undefined });
         }
         G.Rh(g, gx + gw / 2 - 0.75, gy, 1.5, gh, '#c8b490');
         G.Rh(g, gx, gy + gh / 2, gw, 1.5, '#c8b490');
@@ -476,7 +542,8 @@
     if (!wr) for (let i = 0; i < 6; i++) {
       const bx = 44 + i * 32 + (i > 2 ? 40 : 0);
       if (bx > 250) continue;
-      silhouette(g, bx, 102, 15 + (i % 3) * 4, '#9a5a34', false);
+      silhouette(g, bx, 102, 15 + (i % 3) * 4, '#9a5a34', false,
+        { seed: 4.1 + i * 6.7, t: tt, clip: i % 3 === 1 ? 'talk' : 'idle', ct: tt + i, dir: i % 2 ? -1 : 1 });
     }
     // the door, and the light it throws across the wet
     G.R(g, 138, 68, 26, 46, '#141b26');
@@ -691,7 +758,8 @@
           // people going the other way, fast
           for (let i = 0; i < 5; i++) {
             const rx = 300 - ((tt * 46 + i * 44) % 300);
-            silhouette(g, rx, 132 + (i % 2) * 6, 26 + (i % 3) * 5, '#100e16', false);
+            silhouette(g, rx, 132 + (i % 2) * 6, 26 + (i % 3) * 5, '#100e16', false,
+              { seed: 7.3 + i * 9.1, t: tt, clip: 'run', ct: tt + i * 0.4, dir: -1 });
           }
           rain(g, tt, 110, '#33445f', 0, 320);
         } },
@@ -702,8 +770,10 @@
           const fl = Math.sin(tt * 18) > 0;
           if (fl) { g.globalAlpha = 0.2; G.R(g, 0, 0, G.W, G.H, '#4a9aff'); g.globalAlpha = 1; }
           // the last two out of the door, one carrying the other
-          silhouette(g, 96, 134, 30, '#0d0b12', false);
-          silhouette(g, 108, 132, 20, '#0d0b12', false);
+          silhouette(g, 96, 134, 30, '#0d0b12', false,
+            { seed: 12.4, t: tt, clip: 'run', ct: tt, dir: -1 });
+          silhouette(g, 108, 132, 20, '#0d0b12', false,
+            { seed: 33.7, t: tt, clip: 'run', ct: tt + 0.3, dir: -1, hat: 'crown' });
           // and a red light through the glass, where it is counting
           const pu = Math.sin(tt * 9) > 0;
           if (pu) G.glow(g, 150, 116, 70, 40, '#ff4a4a', 0.6);
@@ -870,8 +940,14 @@
           // and the shapes coming through it
           if (p > 0.34) {
             const w = G.clamp((p - 0.34) / 0.5, 0, 1);
-            silhouette(g, 30 + w * 44, 134, 40, '#07060b', false);
-            silhouette(g, 8 + w * 40, 136, 36, '#07060b', false);
+            // the doorway is behind them and to the left, so the rim is
+            // cold and lands on that side. It is what makes the profile
+            // read as a machine and not as a hole in the wall.
+            const dr = { col: '#5a9ed0', dx: -0.75, dy: -0.5 };
+            botLo(g, 'police', 40 + w * 46, 134, 42, '#0b0a12',
+              { t: tt, walk: tt * 3, clip: 'walk', ct: tt, mood: 'angry', rim: dr });
+            botLo(g, 'warden', -8 + w * 40, 137, 37, '#0b0a12',
+              { t: tt, walk: tt * 3, clip: 'walk', ct: tt + 0.4, mood: 'angry', rim: dr });
           }
           const fl = Math.sin(tt * 22) > 0;
           if (fl && hit > 0) { g.globalAlpha = 0.22; G.R(g, 0, 0, G.W, G.H, '#2a3a6a'); g.globalAlpha = 1; }
@@ -1162,7 +1238,8 @@
           G.R(g, 0, 136, G.W, 44, '#1d1a22');
           G.plate(g, 40, 124, 240, 10, '#5c4630', { r: 2, band: 2 });
           G.drawBot(g, 'player', 160, 124, 1.1, { t: tt, open: 0.16, mood: 'idle', walk: 0 });
-          silhouette(g, 66, 134, 54, '#241c28');
+          silhouette(g, 66, 134, 54, '#241c28', true,
+            { seed: 18.3, t: tt, clip: 'idle', ct: tt, dir: 1 });
           G.Rh(g, 250, 118, 22, 6, '#241c28');
         } },
       { t: 6.0, who: null, say: 'SO YOU DECIDED. AND THE BACK ROOM KEEPS FILLING UP.',

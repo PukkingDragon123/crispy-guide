@@ -1138,6 +1138,30 @@
           G.rr2(g, ex - 0.25, dy - 0.25, dd + 0.5, ld + 0.25, '#fdf8ee');
           G.Rh(g, ex, dy + ld - 0.25, dd, 0.75, '#241d2a');
         }
+        // ---- and CRYING, which is a wet lower lid, a track down the
+        // cheek, and a drop that lets go every couple of seconds. ----
+        if (o.cry) {
+          const cr = G.clamp(o.cry, 0, 1);
+          const ecx = ex + dd / 2;
+          // the lid, welling up
+          const wl = Math.max(1, dd * 0.9);
+          G.Rq(g, ecx - wl / 2, dy + dd - 0.5, wl, 1, '#9fd8f0');
+          G.Rq(g, ecx - wl / 2, dy + dd - 0.5, wl, 0.5, '#e8f8ff');
+          // the track it has left down the cheek
+          const tl = dd * (1.6 + cr * 0.9);
+          G.vairq(g, ecx - 0.5, dy + dd, tl, '#8fc8e4');
+          G.vairq(g, ecx - 0.25, dy + dd, tl, '#d8f0ff');
+          // a drop, on its own clock per eye
+          const ph = ((t * 0.62 + (sd < 0 ? 0 : 0.43)) % 1);
+          if (ph > 0.18) {
+            const q = (ph - 0.18) / 0.82;
+            const ty2 = dy + dd + q * (dd * 3.4 + h * 0.2);
+            const dr = Math.max(1, dd * 0.34) * (1 - q * 0.3);
+            G.rr2(g, ecx - dr / 2 - 0.25, ty2 - 0.25, dr + 0.5, dr * 1.5 + 0.5, '#4a8aa8');
+            G.rr2(g, ecx - dr / 2, ty2, dr, dr * 1.5, '#a8e0f8');
+            G.Rq(g, ecx - dr / 2 + 0.25, ty2 + 0.25, dr * 0.4, dr * 0.5, '#ffffff');
+          }
+        }
       }
     } else if (o.shades) {
       // ---- THE SHADES. One wraparound band across the whole face, a

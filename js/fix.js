@@ -22,13 +22,27 @@
   const OUT = P.ink;
 
   const BENCH_Y = 126;                 // the bench surface
-  const HIP = { x: 26, y: 32, w: 78, h: 68 };
-  const SOCK = { x: 104, y: 66, r: 14 };   // where the leg goes
-  const RACK = { x: 226, y: 100 };         // where the leg starts
-  const PORTS_X = 50;                      // the hip's port block
-  const PUMP = { x: 140, y: 116 };
-  const SWITCH = { x: 206, y: 112 };
-  const LEG_LEN = 74;
+  // ---- YOU, on the bench. This used to be an abstract plate stencilled
+  // DAIRY UNIT 4 with a hole cut in it - a diagram of a hip rather than
+  // a hip. It is the whole machine now, sat on the edge of her bench
+  // with one leg gone, and every coordinate below is derived from where
+  // the rig actually puts the socket, not chosen by eye. ----
+  const ME = { cx: 90, footY: 138, sc: 1.5 };
+  const SOCK = { x: 101, y: 118, r: 13 };  // = ME's hip, where the leg goes
+  // the spare, lying on the bench past the switch. It used to float at
+  // 232,96 with its hoof inside Tracy.
+  const RACK = { x: 210, y: 116 };
+  const PORTS_X = 38;                      // the junction box on the bench
+  // The pump hangs on the pegboard directly ABOVE the leg now. It used to
+  // stand on the bench at 140,116 -- which was clear space back when the
+  // socket was a diagram up in the corner, and is the middle of your new
+  // shin now that you are sat on the bench at full size. Its body and
+  // gauge were covering two thirds of the leg, toe lamps and all.
+  const PUMP = { x: 150, y: 78 };
+  const SWITCH = { x: 186, y: 112 };
+  // short enough to lie in a clear stretch of bench at either end -- on
+  // the rack without reaching Tracy, and fitted without reaching the switch
+  const LEG_LEN = 56;
 
   const LEAD = [
     { id: 'hyd', col: '#e0574a', lit: '#ff8a7a', name: 'HYD' },
@@ -54,6 +68,9 @@
   ];
 
   const fix = (G.scenes = G.scenes || {}).legfit = {
+    // the layout, so a harness drives the real geometry instead of
+    // remembering where the socket used to be
+    geom: { ME, SOCK, RACK, PORTS_X, PUMP, SWITCH, BENCH_Y, LEG_LEN },
     enter() {
       this.t = 0;
       this.step = 0;
@@ -70,10 +87,14 @@
         id: L.id, col: L.col, lit: L.lit, name: L.name,
         hx: 0, hy: 0, drag: 0, to: null, i,
       }));
+      // park them on the leg straight away: they used to sit at 0,0 until
+      // the seat stage moved them, so anything that started the scene at a
+      // later step drew three cables into the top corner of the screen
+      for (const L of this.leads) { const h = this.leadHome(L.i); L.hx = h.x; L.hy = h.y; }
       const order = [2, 0, 1];                    // the ports are shuffled
       this.ports = order.map((k, i) => ({
         id: LEAD[k].id, col: LEAD[k].col, lit: LEAD[k].lit, name: LEAD[k].name,
-        x: PORTS_X, y: 48 + i * 16, taken: 0,
+        x: PORTS_X, y: 88 + i * 14, taken: 0,
       }));
 
       // ---- four bolts round the collar ----
@@ -108,8 +129,13 @@
           t: 0, life: G.rand(0.25, 0.7), col });
     },
 
-    // where the leads hang off the seated leg
-    leadHome(i) { return { x: this.leg.x + 14, y: 48 + i * 16 }; },
+    // Where a plug parks when it is not in a port: the clear stretch of
+    // bench face to the right of you. This used to be leg coordinates,
+    // which put three plugs up at head height once the socket moved down
+    // onto the bench and stretched the cables across the room and over
+    // your face. Bench coordinates are safe here because the leads only
+    // exist once the leg is seated.
+    leadHome(i) { return { x: RACK.x + i * 20, y: BENCH_Y + 4 }; },
 
     // ---------------- input ----------------
     onDown(x, y) {
@@ -328,13 +354,6 @@
       G.Rh(g, 262, 52, 8, 6, '#e8828c');
       G.text(g, '1998', 271, 67, '#8a7458', { align: 'center', sc: 0.5 });
 
-      // ===== her =====
-      const wants = st.id === 'done';
-      G.drawTracy(g, 288, BENCH_Y + 2, 1.0, {
-        t, clip: this.stepT * 34 < st.say.length ? 'talk' : (st.id === 'bolts' || st.id === 'lines') ? 'reach' : 'idle',
-        ct: t, dir: -1, smile: wants, p: 0.7,
-      });
-
       // ===== the bench =====
       G.plate(g, -4, BENCH_Y, G.W + 8, 12, '#8a5c3a', { r: 2, band: 3, grain: 4 });
       G.hair(g, -4, BENCH_Y, G.W + 8, '#c8945c');
@@ -352,10 +371,16 @@
         G.Rq(g, 40 + G.hash(i, 3) * 230, BENCH_Y + 3 + G.hash(i, 7) * 6, 2, 1, '#8a94a8');
 
       // ===== YOU. The hip, close up, with the hole in it. =====
-      this.drawHip(g, t);
+      this.drawMe(g, t);
 
       // ===== the leg =====
       this.drawLeg(g, t);
+      // ===== her =====
+      const wants = st.id === 'done';
+      G.drawTracy(g, 288, BENCH_Y + 2, 1.0, {
+        t, clip: this.stepT * 34 < st.say.length ? 'talk' : (st.id === 'bolts' || st.id === 'lines') ? 'reach' : 'idle',
+        ct: t, dir: -1, smile: wants, p: 0.7,
+      });
 
       // ===== the leads =====
       this.drawLeads(g, t);
@@ -379,30 +404,51 @@
       G.grade(g, 1);
     },
 
-    // ---- the hip: your plating, and the socket she cut clean ----
-    drawHip(g, t) {
-      const c = '#f6f0e4', cd = '#c9bfae';
-      G.R(g, HIP.x - 1, HIP.y - 1, HIP.w + 2, HIP.h + 2, OUT);
-      G.R(g, HIP.x, HIP.y, HIP.w, HIP.h, c);
-      G.bevel(g, HIP.x, HIP.y, HIP.w, HIP.h, '#ffffff', cd);
-      G.R(g, HIP.x, HIP.y, HIP.w, 3, '#ffffff');
-      G.R(g, HIP.x, HIP.y + HIP.h - 3, HIP.w, 3, G.shade(cd, -0.2));
-      for (let i = 0; i < 3; i++) G.rivet(g, HIP.x + 6, HIP.y + 12 + i * 20, '#12141c', '#ffffff');
-      G.text(g, 'DAIRY UNIT 4', HIP.x + HIP.w - 6, HIP.y + HIP.h - 9, '#b8ac98', { align: 'right', sc: 0.5 });
-      // the port recess, sunk into the plate
-      G.R(g, PORTS_X - 14, 38, 30, 60, '#2a3040');
-      G.bevelq(g, PORTS_X - 14, 38, 30, 60, '#12161f', '#5c6470');
+    // ---- YOU. All of you, sat on the edge of her bench with one leg
+    // off, having a cry about it. ----
+    drawMe(g, t) {
+      // where you are sat, so you are on the bench and not hovering
+      g.globalAlpha = 0.34;
+      G.fe(g, ME.cx + 2, BENCH_Y + 1, 26, 4, '#1a1008');
+      g.globalAlpha = 1;
+
+      const done = this.cur().id === 'done';
+      // the crying eases off once the leg is in, and stops when it works
+      const cry = done ? 0 : this.step >= 4 ? 0.4 : 1;
+      G.drawBot(g, 'player', ME.cx, ME.footY, ME.sc, {
+        t, walk: 0, noBlink: done ? 0 : 1,
+        // the socket stays empty the whole way through: the leg you are
+        // fitting IS the leg, so the rig must not draw a second one over it
+        legOff: 1,
+        mood: done ? 'idle' : 'sick',
+        open: done ? 0.1 : 0.24 + Math.sin(t * 1.3) * 0.06,
+        clip: done ? 'idle' : 'slump', ct: t, p: 1,
+        cry,
+      });
+
+      // ---- the junction box on the bench, and the loom out of it ----
+      const bx = PORTS_X - 15, by = 80;
+      G.plate(g, bx, by, 30, 52, '#2a3040', { r: 2, band: 2, bolts: 1 });
+      G.R(g, bx + 3, by + 4, 24, 44, '#141a24');
+      G.bevelq(g, bx + 3, by + 4, 24, 44, '#0b0e14', '#4a5468');
+      G.text(g, 'LOOM', bx + 15, by - 7, '#6b7f96', { align: 'center', sc: 0.5 });
       for (const pt of this.ports) {
         G.oc(g, pt.x, pt.y, 6, '#12161f');
         G.fc(g, pt.x, pt.y, 4, pt.taken ? pt.col : G.shade(pt.col, -0.55));
         G.fc(g, pt.x, pt.y, 2, '#12161f');
         if (pt.taken) G.glow(g, pt.x, pt.y, 22, 16, pt.lit, 0.4);
-        G.text(g, pt.name, pt.x + 8, pt.y - 3, pt.taken ? pt.lit : '#8fa0bc', { sc: 0.5 });
+        G.text(g, pt.name, pt.x + 9, pt.y - 3, pt.taken ? pt.lit : '#8fa0bc', { sc: 0.5 });
       }
-      // the socket: a machined collar cut into the right face
-      G.oc(g, SOCK.x, SOCK.y, SOCK.r + 2, OUT);
-      G.fc(g, SOCK.x, SOCK.y, SOCK.r, '#5c6470');
-      G.fc(g, SOCK.x, SOCK.y, SOCK.r - 3, '#232b38');
+      // a fat cable from the box up to the bench edge, because it is
+      // plugged into something
+      G.loom(g, bx + 15, by, bx + 26, by - 14, 5, '#1a1f2e', '#5c6470');
+
+      // ---- the socket she cut clean, right where the leg came off ----
+      G.fc(g, SOCK.x, SOCK.y, SOCK.r + 2, OUT);
+      G.fc(g, SOCK.x, SOCK.y, SOCK.r + 1, '#a8b4c8');
+      G.fc(g, SOCK.x, SOCK.y, SOCK.r - 1, '#6b7788');
+      G.oc(g, SOCK.x, SOCK.y, SOCK.r, '#d8e4f0');
+      G.fc(g, SOCK.x, SOCK.y, SOCK.r - 4, '#232b38');
       G.fc(g, SOCK.x, SOCK.y, SOCK.r - 6, this.leg.seated ? '#3a4250' : '#0d1118');
       for (let i = 0; i < 10; i++) {
         const a2 = i * 0.628;
@@ -478,37 +524,46 @@
     },
 
     // ---- three leads, and the sag in them ----
+    // Each lead is ROOTED in the new leg and its free end is either
+    // parked on the bench, in your hand, or in a port. It used to be the
+    // other way round -- rooted at the parking spot with nothing joining
+    // it to you -- and three unattached blocks on a bench read as litter,
+    // not as something to pick up.
+    leadRoot(i) { return { x: SOCK.x + 11 + i * 5, y: SOCK.y + 3 }; },
     drawLeads(g, t) {
       if (this.step < 1) return;
       for (const L of this.leads) {
-        const h = this.leadHome(L.i);
-        const ex = L.drag || L.to ? L.hx : h.x, ey = L.drag || L.to ? L.hy : h.y;
-        // the run, with a sag in the middle
+        const r = this.leadRoot(L.i);
+        const ex = L.hx, ey = L.hy;
+        const sag = 3 + Math.abs(ex - r.x) * 0.05 + Math.max(0, r.y - ey) * 0.2;
         const n = 44;
+        const at = (q) => [G.lerp(r.x, ex, q),
+          G.lerp(r.y, ey, q) + Math.sin(q * Math.PI) * sag];
+        for (let i = 0; i <= n; i++) { const c = at(i / n); G.Rh(g, c[0] - 1, c[1] - 1, 3, 3, OUT); }
         for (let i = 0; i <= n; i++) {
-          const q = i / n;
-          const cx = G.lerp(h.x, ex, q);
-          const cy = G.lerp(h.y, ey, q) + Math.sin(q * Math.PI) * (3 + Math.abs(ex - h.x) * 0.06);
-          G.Rh(g, cx - 1, cy - 1, 3, 3, OUT);
+          const c = at(i / n);
+          G.Rh(g, c[0] - 0.5, c[1] - 0.5, 2, 2, L.col);
+          G.Rq(g, c[0] - 0.5, c[1] - 0.5, 1, 1, L.lit);
         }
-        for (let i = 0; i <= n; i++) {
-          const q = i / n;
-          const cx = G.lerp(h.x, ex, q);
-          const cy = G.lerp(h.y, ey, q) + Math.sin(q * Math.PI) * (3 + Math.abs(ex - h.x) * 0.06);
-          G.Rh(g, cx - 0.5, cy - 0.5, 2, 2, L.col);
-          G.Rq(g, cx - 0.5, cy - 0.5, 1, 1, L.lit);
-        }
-        // the plug on the end
-        G.R(g, ex - 4, ey - 4, 9, 9, OUT);
+        // the collar it comes out of your leg through
+        G.R(g, r.x - 3, r.y - 4, 5, 8, '#4a5568');
+        G.hairq(g, r.x - 3, r.y - 4, 5, '#8a94a8');
+        // the plug on the end. A loose one is lit and breathing, because
+        // it is the thing the stage is asking you to find.
+        const loose = !L.to && !L.drag;
+        if (loose) G.glow(g, ex, ey, 24, 20, L.lit, 0.24 + Math.sin(t * 4 + L.i) * 0.16);
+        G.R(g, ex - 5, ey - 5, 11, 11, OUT);
+        G.R(g, ex - 4, ey - 4, 9, 9, loose ? L.lit : L.col);
         G.R(g, ex - 3, ey - 3, 7, 7, L.col);
         G.hairq(g, ex - 3, ey - 3, 7, L.lit);
         G.Rq(g, ex - 1, ey - 1, 2, 2, '#12161f');
-        if (!L.to && !L.drag && Math.sin(t * 4 + L.i) > 0.4)
-          G.glow(g, ex, ey, 20, 16, L.lit, 0.4);
-        // the collar it comes out of
-        G.R(g, h.x - 3, h.y - 4, 5, 8, '#4a5568');
-        G.hairq(g, h.x - 3, h.y - 4, 5, '#8a94a8');
+        if (loose) G.text(g, L.name, ex, ey - 11, L.lit, { align: 'center', sc: 0.5 });
       }
+      // and the port names again on top: every run into the box crosses
+      // the label it is aimed at, so drawing them once under the cables
+      // left you plugging leads into words you could not read
+      for (const pt of this.ports)
+        G.text(g, pt.name, pt.x + 9, pt.y - 3, pt.taken ? pt.lit : '#8fa0bc', { sc: 0.5 });
     },
 
     // ---- four bolts, and a needle that says when to stop ----

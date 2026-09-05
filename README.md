@@ -333,10 +333,12 @@ where it goes, a keyway to line up, and it goes home with a clank you can feel.
 
 ![Three leads](screenshots/bench-lines.png)
 
-**LINES.** Three leads come out of the leg — hydraulic, power, signal — and three
-ports go into your hip, **and they are not in the same order**. Drag each one
-across; the cable sags under its own weight as you move it. Put a lead in the
-wrong hole and it says so and springs back.
+**LINES.** Three leads come out of the new leg — hydraulic, power, signal — and
+three ports wait in the loom box bolted to the bench, **and they are not in the
+same order**. Every lead is rooted in your leg and its loose end lies lit on the
+bench until you pick it up, so the cable is attached to you the whole way across
+and sags under its own weight as you move it. Put a lead in the wrong hole and it
+says so and springs back.
 
 ![Torque](screenshots/bench-bolts.png)
 
@@ -345,9 +347,10 @@ wrong hole and it says so and springs back.
 Let go early and it is not tight. Hold past the end of the gauge and you strip
 the thread and start that one again.
 
-**PRIME.** A hydraulic pump on a hose to the joint. Hold to build pressure and
-release inside the band, three good strokes, not four — go over the top and the
-seal blows and that stroke does not count.
+**PRIME.** A hydraulic pump, hung on the pegboard right above the leg with its
+hose draped down to the joint. Hold to build pressure and release inside the
+band, three good strokes, not four — go over the top and the seal blows and that
+stroke does not count.
 
 ![Toes](screenshots/bench-on.png)
 
@@ -358,6 +361,29 @@ you tap each one as it comes up, because she wants to see it work.
 
 From here on, **every scene in the game draws that leg** — it is a different
 colour to the rest of you and it always will be.
+
+### And it is you on the bench, not a diagram of you
+
+![Crying](screenshots/bench-cry.png)
+
+The whole sequence used to be worked on an abstract plate stencilled
+**DAIRY UNIT 4** with a hole cut in it. A diagram of a hip rather than a
+hip. It is the whole machine now, sat on the edge of her bench with one
+leg gone — and **every coordinate in the minigame is derived from where
+the rig actually puts the socket**, rather than chosen by eye, so the
+collar she cut is on the hip it came off.
+
+Putting you on the bench at full size meant restaging the bench around
+you. The pump went up onto the pegboard and the spare went along to the
+clear stretch past the switch, because at this size your new shin lies
+straight through where both of them used to stand — the leg was being
+drawn correctly and then covered up, toe lamps and all, by a pressure
+gauge.
+
+And you are crying about it. A wet lower lid, a track down each cheek,
+and a drop that lets go every couple of seconds, each eye on its own
+clock. It eases off once the leg is in and stops the moment it works,
+which is the only thing in this game that measures how you are doing.
 
 ---
 
@@ -418,6 +444,36 @@ the floor where she was, and a mascot still under the bench, not coming out.
 Her front room is built once and drawn in three states — before, during and
 after — so it is demonstrably the same room getting wrecked, rather than three
 paintings of a similar room.
+
+### Every shape in a cutscene is a real character
+
+![Silhouettes](screenshots/silhouettes.png)
+
+A cutscene silhouette used to be six rectangles stacked into a person
+shape — a rounded head-and-shoulders, a body, two arms, two legs. At a
+glance it passes. Next to a game full of procedurally generated people
+with genomes and nervous habits, it is a cardboard cutout, and the cast in
+a cutscene stops being the cast.
+
+So a silhouette is now **the actual sprite**. It is drawn into a scratch
+buffer, the buffer's alpha is hardened by compositing it over itself five
+times — the rig lays glows down with `globalAlpha` and a mask taken
+straight off that comes back with a halo round everybody — and then it is
+flooded with one colour through `source-in`, which keeps the fill only
+where there were pixels.
+
+A rim light is the same mask again, stamped one pixel toward whatever is
+behind them in a brighter colour and then covered by the dark one, so the
+edge that survives is the character's own profile. The two machines in her
+doorway are lit cold down their left side because that is where the
+doorway is.
+
+Whatever the rig draws, the silhouette is exactly that: the right hair,
+the right coat, the right hat, the right number of legs. The two shapes
+coming through her door are **the patrol and the warden**, walking, with
+their real chassis. The people in the windows of BIG MOO minutes before it
+goes are twelve different people, one of them a four-year-old in a paper
+crown.
 
 ![The chip](screenshots/chip.png)
 
@@ -537,6 +593,27 @@ clause.ai names it out loud and flies over to point at it.
 When the queue is done the shutters come down and you get the day scored:
 served, take, tips, rescued, let through. **Only then does the back room
 open** — the floor is the floor, and you work it until it closes.
+
+---
+
+## ⏳ The card between two places
+
+![Loading](screenshots/card-clause.png)
+
+Every scene change goes through a card, and the card used to show one of
+four stock icons picked off a regex against the label: a scoop, a door, a
+hand, a starburst.
+
+It is now **clause**, every time. It flies in from the left on an arc,
+trailing ten sparks that fade behind it, spins its rays up, throws two
+rings out from itself like a heartbeat, and blinks three dots underneath
+because it is thinking about it.
+
+![A new day](screenshots/card-day.png)
+
+Unless a day is starting. Then it is a **sunrise**: a disc coming up over
+a horizon line with twelve rays turning around it, and a clock beside it
+with its hands coming round to opening time.
 
 ---
 

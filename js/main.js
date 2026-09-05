@@ -89,6 +89,7 @@
   og.imageSmoothingEnabled = false;
   og.setTransform(G.PX, 0, 0, G.PX, 0, 0);       // same logical space as the main target
   const trans = { phase: 'none', t: 0, next: null, label: null, hold: 0 };
+  G.__trans = trans;                            // so a harness can hold a card open
   const MAXR = Math.hypot(G.W / 2, G.H / 2) + 10;
 
   G.go = function (name, label) {
@@ -134,32 +135,91 @@
     if (trans.phase === 'label' && trans.label) {
       const a = Math.min(1, trans.hold * 4);
       gg.globalAlpha = a;
-      const work = /WORKSHOP|BOOKS|ARMOURY/.test(trans.label);
-      const room = /BACK ROOM|LAB|TRACY/.test(trans.label);
-      const pit = /PIT/.test(trans.label);
       const cx = G.W / 2;
-      if (pit) {
-        // a hand reaching up out of the dark
-        G.Rh(gg, cx - 3, G.H / 2 - 34, 6, 14, '#8a94a8');
-        for (let i = 0; i < 3; i++) G.Rh(gg, cx + 2, G.H / 2 - 36 + i * 3, 5, 2, '#c8d8e8');
-        G.Rh(gg, cx - 7, G.H / 2 - 26, 4, 3, '#6b7f96');
-      } else if (work) {
-        G.starburst(gg, cx, G.H / 2 - 26, 11, trans.hold * 2, { talk: 1, noGlow: 1 });
-      } else if (room) {
-        // a door standing open, with light behind it
-        G.plate(gg, cx - 15, G.H / 2 - 42, 30, 30, '#39465c', { r: 2, band: 2, bolts: 1 });
-        G.R(gg, cx - 11, G.H / 2 - 38, 22, 22, '#0e1620');
-        gg.globalAlpha = a * 0.55;
-        G.R(gg, cx - 9, G.H / 2 - 36, 18, 18, '#ffd47a');
+      const hd = trans.hold;
+      // ---- IS THIS THE START OF A DAY? Then it is a sunrise and a
+      // clock, and not a small orange robot. ----
+      const dawn = /^DAY /.test(trans.label);
+      if (dawn) {
+        const rise = G.easeOut(G.clamp(hd * 1.5, 0, 1));
+        const sy = G.H / 2 - 20 - rise * 14;
+        G.glow(gg, cx, sy, 120, 90, '#ffb24a', 0.5 * a);
+        // rays, turning
+        for (let i = 0; i < 12; i++) {
+          const an = hd * 0.5 + i * 0.5236;
+          const ln = 13 + (i % 2 ? 4 : 9) + Math.sin(hd * 3 + i) * 2;
+          for (let k = 4; k < ln; k++) {
+            const ry = sy + Math.sin(an) * k;
+            if (ry > G.H / 2 - 18) break;            // nothing shines below the horizon
+            G.Rq(gg, cx + Math.cos(an) * k - 0.5, ry - 0.5, 1.5, 1.5,
+              k > ln - 3 ? '#c87a2a' : '#ffb24a');
+          }
+        }
+        // the disc
+        G.fc(gg, cx, sy, 9, '#c8862a');
+        G.fc(gg, cx, sy, 8, '#ffc04a');
+        G.fc(gg, cx, sy, 5, '#ffe6a8');
+        G.Rq(gg, cx - 3, sy - 4, 3, 2, '#fff8e0');
+        // the horizon LAST, so it cuts the rays off and the sun reads as
+        // coming up from behind the world instead of floating on it
+        G.R(gg, cx - 70, G.H / 2 - 18, 140, 1, '#5c4a3a');
+        gg.globalAlpha = a * 0.5;
+        G.R(gg, cx - 70, G.H / 2 - 17, 140, 3, '#2a2018');
         gg.globalAlpha = a;
-        G.Rh(gg, cx + 8, G.H / 2 - 30, 3, 8, P.chrome);
+        // and the clock: a shift is twelve hours and it starts now
+        const ck = cx + 46, cy2 = G.H / 2 - 32;        // clear of the horizon
+        G.oc(gg, ck, cy2, 12, '#2a2018');
+        G.fc(gg, ck, cy2, 11, '#f2e4d0');
+        G.oc(gg, ck, cy2, 11, '#8a6a44');
+        G.fc(gg, ck, cy2, 9, '#fff8ec');
+        for (let i = 0; i < 12; i++) {                 // a mark an hour
+          const an = i * 0.5236, q = i % 3 === 0;
+          G.Rq(gg, ck + Math.cos(an) * 8 - 0.5, cy2 + Math.sin(an) * 8 - 0.5,
+            q ? 1.5 : 1, q ? 1.5 : 1, q ? '#3a2a20' : '#a08a70');
+        }
+        const hh = -1.9 + hd * 0.6;                    // the hands, coming round to open
+        G.line(gg, ck, cy2, ck + Math.cos(hh) * 5, cy2 + Math.sin(hh) * 5, '#2a2018');
+        G.line(gg, ck, cy2, ck + Math.cos(hh + 0.12) * 5, cy2 + Math.sin(hh + 0.12) * 5, '#2a2018');
+        const mm = hd * 4 - 1.6;
+        G.line(gg, ck, cy2, ck + Math.cos(mm) * 8, cy2 + Math.sin(mm) * 8, '#c8383a');
+        G.fc(gg, ck, cy2, 1.5, '#2a2018');
       } else {
-        const f = G.pitFlav(0) || (G.state.flavours && G.state.flavours[0]);
-        if (f) G.gooScoop(gg, cx, G.H / 2 - 24, 10, f, {});
+        // ---- EVERY OTHER LOAD: clause, coming to find you. It flies in
+        // from the left on an arc, trailing sparks, spinning up its rays,
+        // and blinks a little "working on it" under itself. ----
+        const fly = G.easeOut(G.clamp(hd * 2.1, 0, 1));
+        const bx = G.lerp(cx - 62, cx, fly);
+        const by = G.H / 2 - 26 + Math.sin(hd * 4.2) * 2.6 - (1 - fly) * 10;
+        // the trail it came in on
+        for (let i = 1; i < 11; i++) {
+          const q = i / 11;
+          const tx = G.lerp(cx - 62, bx, 1 - q * 0.5);
+          const ty = G.H / 2 - 26 + Math.sin((hd - q * 0.18) * 4.2) * 2.6 - (1 - fly) * 10;
+          gg.globalAlpha = a * (1 - q) * 0.75;
+          const r2 = Math.max(0.5, 3 - q * 2.6);
+          G.Rq(gg, tx - r2 / 2, ty - r2 / 2, r2, r2, q < 0.4 ? '#ffc9a8' : '#f0794f');
+          gg.globalAlpha = a;
+        }
+        const talk = Math.sin(hd * 7) > -0.2;
+        // a ring going out from it, so the card has a heartbeat
+        for (let i = 0; i < 2; i++) {
+          const q = ((hd * 0.9 + i * 0.5) % 1);
+          gg.globalAlpha = a * (1 - q) * 0.4;
+          G.oc(gg, bx, by, 12 + q * 22, '#ff9a6a');
+          gg.globalAlpha = a;
+        }
+        G.starburst(gg, bx, by, 16 + Math.sin(hd * 5) * 1.2, hd * 1.6,
+          { talk, col: '#f0794f', lit: '#ffc9a8' });
+        // three dots, filling one at a time, because it is thinking
+        for (let i = 0; i < 3; i++) {
+          const on = ((hd * 3) % 3) >= i;
+          const r2 = on ? 2.5 : 1.5;
+          G.Rq(gg, cx - 7 + i * 7 - r2 / 2, G.H / 2 - 9 - r2 / 2, r2, r2,
+            on ? '#ffc9a8' : '#4a3230');
+        }
       }
       G.text(gg, trans.label, cx, G.H / 2 - 2,
-        work ? P.cyanLt : room ? P.violetLt : pit ? '#8a94a8' : P.hazard,
-        { align: 'center', out: P.ink });
+        dawn ? '#ffd48a' : P.hazard, { align: 'center', out: P.ink });
       // the chapter, underneath, so the story is always visible
       if (G.state && G.state.chapters)
         G.text(gg, G.chapterName(), cx, G.H / 2 + 10, '#5a6480', { align: 'center', sc: 0.5 });
