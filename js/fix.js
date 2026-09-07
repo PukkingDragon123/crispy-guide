@@ -9,12 +9,11 @@
 //   SEAT   drag the leg into the socket until it goes home
 //   LINES  three leads, three ports, and they are not in the same order
 //   BOLTS  tap a bolt, hold to torque, let go inside the green
-//   PRIME  pump the hydraulics up into the band without blowing the seal
+//   PRIME  hold the pump twice, and it stops itself at the top
 //   POWER  throw the switch
-//   TOES   wiggle them, one at a time, because she wants to see it work
+//   TOES   wiggle all three, in any order, because she wants to see it work
 //
-// Nothing here can be failed permanently. A stripped bolt is a bolt you
-// do again. That is the whole difficulty curve.
+// Nothing here can be failed at all. See the note above the constants.
 // ============================================================
 (function () {
   const G = window.GAME;
@@ -44,14 +43,35 @@
   // the rack without reaching Tracy, and fitted without reaching the switch
   const LEG_LEN = 56;
 
-  // EASIER: the green band on the torque gauge was 0.30 wide and the
-  // pressure band 0.30, both of which want you to let go of a moving
-  // needle inside about a third of a second. Wider, and the needle
-  // climbs slower, so a bolt is something you feel rather than something
-  // you gamble on. One constant each, read by the test AND the gauge, so
-  // the paint can never say green where the code says no.
-  const TQ_LO = 0.46, TQ_HI = 0.98;
-  const PR_LO = 0.44, PR_HI = 0.96;
+  // ---- HOW HARD THIS IS ALLOWED TO BE ----
+  // It was a reaction test in five parts. The needle climbed, you had a
+  // third of a second to let go inside a narrow band, and if you were
+  // slow the bolt stripped and you did it again. That is a fine minigame
+  // and a terrible thing to put between a player and the rest of the
+  // story, ten minutes in, while a woman waits to teach you the game.
+  //
+  // So the timing came out of it. The green band now runs all the way to
+  // the top of the gauge and the needle CLAMPS there instead of stripping,
+  // which means holding the driver down and letting go whenever you like
+  // always seats the bolt. The only way to get it wrong is to let go
+  // almost immediately, which is not a thing anybody does by accident.
+  // Same for the pump: it fills, it stops at the top, the seal never
+  // blows. Everything you can touch got a bigger hit box, the leads snap
+  // from twice as far, and the toes take any order.
+  //
+  // Nothing here can be failed. What is left is the FEEL of it -- the
+  // needle, the clunk, the sparks, her leaning in - which is the part
+  // that was ever worth having.
+  const TQ_LO = 0.3;                    // past here the bolt bites, full stop
+  const PR_LO = 0.28;
+  const PUMPS = 2;                      // was three good strokes
+  // hit boxes, all of them generous. A finger on a phone is about 8
+  // logical units across and every one of these used to be smaller.
+  const R_LEG = 52, R_SEAT = 40, R_LEAD = 17, R_PORT = 24,
+        R_BOLT = 17, R_PUMP = 34, R_TOE = 16;
+  // how long you can be stuck on a step before the scene points at the
+  // answer rather than letting you hunt for it
+  const NUDGE = 7;
 
   const LEAD = [
     { id: 'hyd', col: '#e0574a', lit: '#ff8a7a', name: 'HYD' },
@@ -64,14 +84,14 @@
       say: "RIGHT. IT'S A LEG. LINE IT UP AND PUSH IT HOME." },
     { id: 'lines', hint: 'MATCH EACH LEAD TO ITS PORT',
       say: "THREE LEADS. RED TO RED. DO NOT GUESS AT IT." },
-    { id: 'bolts', hint: 'TAP A BOLT, HOLD TO TORQUE',
-      say: "FOUR BOLTS. HOLD TILL THE NEEDLE SITS IN THE GREEN." },
-    { id: 'prime', hint: 'HOLD THE PUMP, LET GO IN THE GREEN',
-      say: "NOW PRIME IT. THREE GOOD STROKES, NOT FOUR." },
+    { id: 'bolts', hint: 'HOLD EACH BOLT UNTIL IT GOES GREEN',
+      say: "FOUR BOLTS. HOLD THE DRIVER ON TILL IT BITES. TAKE YOUR TIME." },
+    { id: 'prime', hint: 'HOLD THE PUMP, TWICE',
+      say: "NOW PRIME IT. TWO GOOD LONG PULLS." },
     { id: 'power', hint: 'THROW THE SWITCH',
       say: "GO ON THEN. WAKE IT UP." },
-    { id: 'toes',  hint: 'TAP EACH TOE AS IT LIGHTS',
-      say: "WIGGLE THEM FOR ME. ALL THREE. HUMOUR AN OLD WOMAN." },
+    { id: 'toes',  hint: 'TAP ALL THREE TOES',
+      say: "WIGGLE THEM FOR ME. ANY ORDER. HUMOUR AN OLD WOMAN." },
     { id: 'done',  hint: null,
       say: "THERE. YOU'VE GOT A LEG. TRY NOT TO LOSE THIS ONE." },
   ];
@@ -89,7 +109,8 @@
       this.shakeT = 0;
 
       // ---- the leg, on the rack ----
-      this.leg = { x: RACK.x, y: RACK.y, drag: 0, seated: 0, tilt: 0.5, glow: 0 };
+      this.leg = { x: RACK.x, y: RACK.y, drag: 0, seated: 0, tilt: 0.5, glow: 0, gx: -26, gy: 0 };
+      this.lit = [0, 0, 0];                       // which toes have wiggled
 
       // ---- the leads, and the ports they do not line up with ----
       this.leads = LEAD.map((L, i) => ({
@@ -111,13 +132,13 @@
       for (let i = 0; i < 4; i++) {
         const a = Math.PI * 0.25 + i * Math.PI * 0.5;
         this.bolts.push({ a, x: SOCK.x + Math.cos(a) * 20, y: SOCK.y + Math.sin(a) * 20,
-          seated: 0, torque: 0, spin: 0, strip: 0 });
+          seated: 0, torque: 0, spin: 0 });
       }
       this.bolt = -1;                             // the one in the driver
       this.driving = 0;
 
       // ---- the prime ----
-      this.press = 0; this.pumps = 0; this.pumping = 0; this.blow = 0;
+      this.press = 0; this.pumps = 0; this.pumping = 0;
 
       // ---- the wake-up ----
       this.power = 0; this.toe = 0; this.toeT = 0;
@@ -152,31 +173,40 @@
       if (st.id === 'done') { if (this.stepT > 0.6) this.finish(); return; }
 
       if (st.id === 'seat') {
-        if (G.dist(x, y, this.leg.x + 26, this.leg.y) < 34) {
-          this.leg.drag = 1; G.audio.sfx('grab');
+        // anywhere on the leg picks it up, and it keeps the grip you took
+        // it by so it does not jump out from under the pointer
+        if (G.dist(x, y, this.leg.x + LEG_LEN / 2, this.leg.y) < R_LEG) {
+          this.leg.drag = 1;
+          this.leg.gx = this.leg.x - x; this.leg.gy = this.leg.y - y;
+          G.audio.sfx('grab');
         }
         return;
       }
       if (st.id === 'lines') {
+        // the nearest loose plug wins, so two plugs parked close together
+        // cannot fight over a tap
+        let best = null, bd = R_LEAD;
         for (const L of this.leads) {
           if (L.to) continue;
-          if (G.dist(x, y, L.hx, L.hy) < 9) { L.drag = 1; G.audio.sfx('grab'); return; }
+          const d = G.dist(x, y, L.hx, L.hy);
+          if (d < bd) { bd = d; best = L; }
         }
+        if (best) { best.drag = 1; G.audio.sfx('grab'); }
         return;
       }
       if (st.id === 'bolts') {
+        let best = -1, bd = R_BOLT;
         for (let i = 0; i < 4; i++) {
           const b = this.bolts[i];
           if (b.seated) continue;
-          if (G.dist(x, y, b.x, b.y) < 10) {
-            this.bolt = i; this.driving = 1; G.audio.sfx('grab');
-            return;
-          }
+          const d = G.dist(x, y, b.x, b.y);
+          if (d < bd) { bd = d; best = i; }
         }
+        if (best >= 0) { this.bolt = best; this.driving = 1; G.audio.sfx('grab'); }
         return;
       }
       if (st.id === 'prime') {
-        if (G.dist(x, y, PUMP.x, PUMP.y - 8) < 24) { this.pumping = 1; G.audio.sfx('grab'); }
+        if (G.dist(x, y, PUMP.x, PUMP.y - 8) < R_PUMP) { this.pumping = 1; G.audio.sfx('grab'); }
         return;
       }
       if (st.id === 'power') {
@@ -189,23 +219,27 @@
         return;
       }
       if (st.id === 'toes') {
+        // ANY ORDER. It used to insist on left-to-right and tell you off
+        // for wiggling the wrong toe, which is a memory test bolted onto
+        // the one beat in the scene that is pure delight.
+        this.lit = this.lit || [0, 0, 0];
         for (let i = 0; i < 3; i++) {
           const tx = this.leg.x + LEG_LEN - 2, ty = this.leg.y - 12 + i * 12;
-          if (G.dist(x, y, tx, ty) < 10) {
-            if (i === this.toe) {
-              this.toe++; this.toeT = 0;
-              G.audio.sfx('click'); this.burst(tx, ty, 7, '#b6ff3a');
-              if (this.toe >= 3) { this.advance(); G.audio.sfx('unlock'); }
-            } else { G.audio.sfx('back'); this.say('NOT THAT ONE.'); }
-            return;
-          }
+          if (G.dist(x, y, tx, ty) >= R_TOE || this.lit[i]) continue;
+          this.lit[i] = 1; this.toe++; this.toeT = 0;
+          G.audio.sfx('click'); this.burst(tx, ty, 7, '#b6ff3a');
+          if (this.toe >= 3) { this.advance(); G.audio.sfx('unlock'); }
+          return;
         }
         return;
       }
     },
 
     onMove(x, y) {
-      if (this.leg.drag) { this.leg.x = x - 26; this.leg.y = y; }
+      if (this.leg.drag) {
+        this.leg.x = x + (this.leg.gx === undefined ? -26 : this.leg.gx);
+        this.leg.y = y + (this.leg.gy || 0);
+      }
       for (const L of this.leads) if (L.drag) { L.hx = x; L.hy = y; }
     },
 
@@ -213,7 +247,7 @@
       const st = this.cur();
       if (this.leg.drag) {
         this.leg.drag = 0;
-        if (G.dist(this.leg.x, this.leg.y, SOCK.x + 8, SOCK.y) < 22) {
+        if (G.dist(this.leg.x, this.leg.y, SOCK.x + 8, SOCK.y) < R_SEAT) {
           this.leg.x = SOCK.x + 8; this.leg.y = SOCK.y; this.leg.seated = 1;
           this.leg.tilt = 0;
           G.audio.sfx('clank'); G.shake(2.6, 0.2);
@@ -228,16 +262,24 @@
       for (const L of this.leads) {
         if (!L.drag) continue;
         L.drag = 0;
-        let hit = null;
-        for (const pt of this.ports)
-          if (!pt.taken && G.dist(L.hx, L.hy, pt.x, pt.y) < 12) hit = pt;
+        // the plug goes to whichever free port is nearest, from a long way
+        // off, so this is aiming at a colour and not threading a needle
+        let hit = null, hd = R_PORT;
+        for (const pt of this.ports) {
+          if (pt.taken) continue;
+          const d = G.dist(L.hx, L.hy, pt.x, pt.y);
+          if (d < hd) { hd = d; hit = pt; }
+        }
         if (hit && hit.id === L.id) {
           hit.taken = 1; L.to = hit;
           L.hx = hit.x; L.hy = hit.y;
           G.audio.sfx('click'); this.burst(hit.x, hit.y, 6, L.lit);
           if (this.leads.every((q) => q.to)) this.advance();
         } else {
-          if (hit) { this.say(hit.name + ' IS NOT ' + L.name + '.'); G.audio.sfx('snap'); G.shake(2, 0.14); }
+          // wrong hole: she says so, and that is the whole punishment.
+          // It used to snap the lead back across the bench and shake the
+          // screen, which reads as a mistake you have to undo.
+          if (hit) { this.say("THAT HOLE'S " + hit.name + '. YOU HAVE GOT ' + L.name + '.'); G.audio.sfx('back'); }
           const h = this.leadHome(L.i);
           L.hx = h.x; L.hy = h.y;
         }
@@ -246,27 +288,26 @@
         // the bolt: let go inside the band or do it again
         const b = this.bolts[this.bolt];
         this.driving = 0;
-        if (b && b.torque > TQ_LO && b.torque < TQ_HI) {
-          b.seated = 1; b.torque = (TQ_LO + TQ_HI) / 2;
+        if (b && b.torque > TQ_LO) {
+          b.seated = 1; b.torque = 0.8;
           G.audio.sfx('clank'); this.burst(b.x, b.y, 6, '#b6ff3a');
           if (this.bolts.every((q) => q.seated)) this.advance();
         } else if (b) {
+          // the only failure left: letting go before the needle moved
           b.torque = 0;
-          if (b.strip) { this.say('YOU STRIPPED IT. GO AGAIN.'); G.shake(3, 0.2); }
-          else this.say('NOT TIGHT ENOUGH.');
-          b.strip = 0;
+          this.say('HOLD IT DOWN, LOVE. GIVE IT A SECOND.');
           G.audio.sfx('back');
         }
         this.bolt = -1;
       }
       if (this.pumping) {
         this.pumping = 0;
-        if (this.press > PR_LO && this.press < PR_HI) {
+        if (this.press > PR_LO) {
           this.pumps++; G.audio.sfx('click');
           this.burst(PUMP.x + 12, PUMP.y - 12, 8, '#8fd8c0');
-          if (this.pumps >= 3) this.advance();
+          if (this.pumps >= PUMPS) this.advance();
         } else {
-          this.say(this.press >= PR_HI ? 'TOO HARD. LET IT BREATHE.' : 'NOT ENOUGH IN IT.');
+          this.say('LONGER. LEAN ON IT.');
           G.audio.sfx('back');
         }
         this.press = 0;
@@ -279,24 +320,22 @@
       this.t += dt; this.stepT += dt; this.msgT += dt;
       const st = this.cur();
 
-      // the bolt in the driver
+      // the bolt in the driver. It climbs and then it SITS at the top -
+      // it used to strip at 1.0 and throw the whole bolt away, which
+      // punished the one thing a first-time player does, which is hold on
+      // and watch what happens.
       if (this.driving && this.bolt >= 0) {
         const b = this.bolts[this.bolt];
-        b.torque += dt * 0.4;
+        b.torque = Math.min(1, b.torque + dt * 0.62);
         b.spin += dt * (3 + b.torque * 9);
-        if (b.torque > 1) { b.torque = 1; b.strip = 1; }
         if (Math.random() < dt * 20) this.burst(b.x, b.y, 1, '#8a94a8');
       }
       for (const b of this.bolts) if (!b.seated && !(this.driving && this.bolts[this.bolt] === b))
         b.torque = Math.max(0, b.torque - dt * 1.6);
 
-      // the pump
-      if (this.pumping) {
-        this.press += dt * 0.56;
-        if (this.press > 1) { this.press = 0; this.pumping = 0; this.blow = 1; G.audio.sfx('snap'); G.shake(4, 0.24);
-          this.say('SEAL BLEW. START THAT ONE AGAIN.'); }
-      } else this.press = Math.max(0, this.press - dt * 0.9);
-      this.blow = Math.max(0, this.blow - dt * 2);
+      // the pump, same deal: it fills and it stops. No blown seal.
+      if (this.pumping) this.press = Math.min(1, this.press + dt * 0.8);
+      else this.press = Math.max(0, this.press - dt * 0.9);
 
       // it wakes up
       if (this.power > 0) this.power = Math.min(1, this.power + dt * 1.4);
@@ -400,6 +439,9 @@
       // ===== the pump and the switch =====
       this.drawPump(g, t);
       this.drawSwitch(g, t);
+
+      // ===== stuck? then stop being coy about where the thing is =====
+      this.nudge(g, t);
 
       // ===== sparks =====
       for (const s of this.spark) {
@@ -511,11 +553,14 @@
       G.R(g, x + LEG_LEN - 15, y - 10, 16, 20, '#4a3f56');
       G.hair(g, x + LEG_LEN - 15, y - 10, 16, '#7a6a88');
       G.R(g, x + LEG_LEN - 15, y + 8, 16, 2, '#221a2c');
-      // three toe lamps, which is what she is going to make you wiggle
+      // three toe lamps, which is what she is going to make you wiggle.
+      // Any of them, in any order, so every unlit one is breathing at you
+      // at once rather than queueing up.
+      const lt = this.lit || [0, 0, 0];
       for (let i = 0; i < 3; i++) {
         const tx = x + LEG_LEN - 2, ty = y - 12 + i * 12;
-        const on = this.step >= 5 && i < this.toe;
-        const nxt = this.step === 5 && i === this.toe && Math.sin(t * 6) > -0.2;
+        const on = this.step >= 5 && lt[i];
+        const nxt = this.step === 5 && !lt[i] && Math.sin(t * 6 + i * 1.1) > -0.2;
         G.oc(g, tx, ty, 4, '#12161f');
         G.fc(g, tx, ty, 3, on ? '#b6ff3a' : nxt ? '#7fd8ff' : '#2a3a2a');
         if (on || nxt) G.glow(g, tx, ty, 20, 16, on ? '#b6ff3a' : '#7fd8ff', 0.5);
@@ -575,6 +620,40 @@
         G.text(g, pt.name, pt.x + 9, pt.y - 3, pt.taken ? pt.lit : '#8fa0bc', { sc: 0.5 });
     },
 
+    // ---- WHERE THE THING IS ----
+    // Every stage lights its own target already, but quietly, in the way
+    // a thing you have found is lit. If you have been on a step for a
+    // while without solving it the scene stops being subtle: a ring lands
+    // on exactly what to touch, and it stays until you touch it. Nobody
+    // should be stuck in the tutorial hunting for a pump.
+    nudge(g, t) {
+      if (this.stepT < NUDGE) return;
+      const st = this.cur();
+      let p = null;
+      if (st.id === 'seat') p = { x: SOCK.x + 8, y: SOCK.y, r: 18 };
+      else if (st.id === 'lines') {
+        const L = this.leads.find((q) => !q.to);
+        if (L) p = { x: L.hx, y: L.hy, r: 12 };
+      } else if (st.id === 'bolts') {
+        const b = this.bolts.find((q) => !q.seated);
+        if (b) p = { x: b.x, y: b.y, r: 11 };
+      } else if (st.id === 'prime') p = { x: PUMP.x, y: PUMP.y - 8, r: 20 };
+      else if (st.id === 'power') p = { x: SWITCH.x, y: SWITCH.y - 4, r: 18 };
+      else if (st.id === 'toes') {
+        const i = this.lit.indexOf(0);
+        if (i >= 0) p = { x: this.leg.x + LEG_LEN - 2, y: this.leg.y - 12 + i * 12, r: 10 };
+      }
+      if (!p) return;
+      // two rings running outward, so it reads as "here" and not as decor
+      for (let k = 0; k < 2; k++) {
+        const q = ((t * 0.9 + k * 0.5) % 1);
+        g.globalAlpha = (1 - q) * 0.85;
+        G.oc(g, p.x, p.y, p.r + q * 12, '#b6ff3a');
+        g.globalAlpha = 1;
+      }
+      G.pill(g, p.x, p.y - p.r - 5, 'HERE', '#b6ff3a');
+    },
+
     // ---- four bolts, and a needle that says when to stop ----
     drawBolts(g, t) {
       for (let i = 0; i < 4; i++) {
@@ -592,21 +671,26 @@
         else if (this.step === 2 && Math.sin(t * 5 + i) > 0.3)
           G.glow(g, b.x, b.y, 18, 14, '#ffd47a', 0.35);
       }
-      // the torque gauge on the bench
+      // The torque gauge, on the pegboard. It used to sit at 26,108 --
+      // which is the bench, which is where YOU are: a 78-unit bar right
+      // across your face, the socket, the bolts you were driving and the
+      // three port labels. A gauge you have to look through the readout
+      // to read. It lives on the empty board above the loom now, in the
+      // one big clear rectangle in the room.
       if (this.bolt >= 0) {
         const b = this.bolts[this.bolt];
-        const gx = 26, gy = 108, gw = 78;
+        const gx = 14, gy = 44, gw = 78;
         G.plate(g, gx, gy, gw, 12, '#232b38', { r: 1, band: 2, spec: false });
         G.R(g, gx + 2, gy + 2, gw - 4, 8, '#12161f');
-        G.R(g, gx + 2 + (gw - 4) * TQ_LO, gy + 2, (gw - 4) * (TQ_HI - TQ_LO), 8, '#2a4a30');
-        G.R(g, gx + 2 + (gw - 4) * TQ_HI, gy + 2, (gw - 4) * (1 - TQ_HI), 8, '#4a1c24');
+        // the green runs to the end of the gauge, because the end of the
+        // gauge is where it stops. There is no red any more.
+        G.R(g, gx + 2 + (gw - 4) * TQ_LO, gy + 2, (gw - 4) * (1 - TQ_LO), 8, '#2a4a30');
         const f = G.clamp(b.torque, 0, 1);
-        G.R(g, gx + 2, gy + 2, Math.max(1, (gw - 4) * f), 8,
-          b.strip ? P.magenta : f > TQ_LO && f < TQ_HI ? '#b6ff3a' : '#c8a24a');
+        const ok = f > TQ_LO;
+        G.R(g, gx + 2, gy + 2, Math.max(1, (gw - 4) * f), 8, ok ? '#b6ff3a' : '#c8a24a');
         G.Rq(g, gx + 2 + (gw - 4) * f - 0.5, gy, 1, 12, '#ffffff');
-        G.text(g, b.strip ? 'STRIPPED' : f > TQ_LO && f < TQ_HI ? 'LET GO' : 'TORQUE',
-          gx + gw / 2, gy - 8, b.strip ? P.magentaLt : f > TQ_LO && f < TQ_HI ? '#dfffcf' : '#8a7458',
-          { align: 'center', sc: 0.5 });
+        G.text(g, ok ? 'LET GO ANY TIME' : 'HOLD IT', gx + gw / 2, gy - 8,
+          ok ? '#dfffcf' : '#8a7458', { align: 'center', sc: 0.5 });
       }
     },
 
@@ -629,14 +713,15 @@
       const gx = PUMP.x + 20, gy = PUMP.y - 30;
       G.plate(g, gx, gy, 12, 34, '#232b38', { r: 1, band: 1, spec: false });
       G.R(g, gx + 2, gy + 2, 8, 30, '#12161f');
-      G.R(g, gx + 2, gy + 2 + 30 * (1 - PR_HI), 8, 30 * (PR_HI - PR_LO), '#2a4a30');
+      // green from the low mark to the top, and the top is where it stops
+      G.R(g, gx + 2, gy + 2, 8, 30 * (1 - PR_LO), '#2a4a30');
       const f = G.clamp(this.press, 0, 1);
       G.R(g, gx + 2, gy + 32 - 30 * f, 8, Math.max(1, 30 * f),
-        this.blow > 0 ? P.magenta : f > PR_LO && f < PR_HI ? '#b6ff3a' : '#3a8ac8');
+        f > PR_LO ? '#b6ff3a' : '#3a8ac8');
       for (let i = 0; i < 3; i++)
         G.Rq(g, gx + 2, gy + 2 + i * 10, 8, 0.5, '#4a5568');
       // how many good strokes
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < PUMPS; i++) {
         G.R(g, PUMP.x - 12 + i * 9, PUMP.y + 10, 7, 5, i < this.pumps ? '#2a4a30' : '#232b38');
         G.bevelq(g, PUMP.x - 12 + i * 9, PUMP.y + 10, 7, 5, i < this.pumps ? '#6bbf7a' : '#3a4250', '#0e0c14');
       }

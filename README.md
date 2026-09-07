@@ -377,8 +377,8 @@ to *you*.
 ## 🔩 The crate marked SPARES
 
 She puts you under the good lamp and goes and gets the crate. **Six stages, six
-different verbs**, and none of them can be failed permanently — a stripped bolt
-is a bolt you do again.
+different verbs**, and **not one of them can be failed** — see the table at the
+end of this section.
 
 ![Seat it](screenshots/bench-seat.png)
 
@@ -397,19 +397,17 @@ says so and springs back.
 ![Torque](screenshots/bench-bolts.png)
 
 **BOLTS.** Four of them round the collar. Tap one to get the driver on it, then
-**hold** — the head turns, the needle climbs — and let go inside the green band.
-Let go early and it is not tight. Hold past the end of the gauge and you strip
-the thread and start that one again.
+**hold** — the head turns, the needle climbs, and the needle stops at the top of
+the gauge. Let go whenever you like and it bites.
 
 **PRIME.** A hydraulic pump, hung on the pegboard right above the leg with its
-hose draped down to the joint. Hold to build pressure and release inside the
-band, three good strokes, not four — go over the top and the seal blows and that
-stroke does not count.
+hose draped down to the joint. Hold to build pressure; it fills and it stops.
+Two good long pulls.
 
 ![Toes](screenshots/bench-on.png)
 
-**POWER**, and then **TOES** — three lamps down the hoof light one at a time and
-you tap each one as it comes up, because she wants to see it work.
+**POWER**, and then **TOES** — three lamps down the hoof, all three breathing at
+once, and you tap them **in any order**, because she wants to see it work.
 
 > **TRACY:** THERE. YOU'VE GOT A LEG. TRY NOT TO LOSE THIS ONE.
 
@@ -439,65 +437,114 @@ and a drop that lets go every couple of seconds, each eye on its own
 clock. It eases off once the leg is in and stops the moment it works,
 which is the only thing in this game that measures how you are doing.
 
+### Nothing on this bench can be failed
+
+The bench used to be a reaction test in five parts. A needle climbed, you had
+about a third of a second to let go inside a narrow green band, and if you were
+slow the bolt **stripped** and you did it again. That is a perfectly good
+minigame, and a terrible thing to put between a first-time player and the rest
+of the story — ten minutes in, on one leg, while a woman waits to teach you the
+only thing worth knowing.
+
+So the timing came out of it. **Nothing on the bench can be failed any more.**
+
+| | Before | Now |
+|---|---|---|
+| Torque band | `0.46 – 0.98`, and past it the bolt stripped | `0.30 –` **the top of the gauge**, and the needle clamps there |
+| Pressure band | `0.44 – 0.96`, and past it the seal blew | `0.28 –` **the top**, and it stops itself |
+| Good strokes | three | **two** |
+| Toes | left to right, and it told you off | **any order** |
+| Leg grab / seat | 34 / 22 units | **52 / 40** |
+| Plug grab / port snap | 9 / 12 units | **17 / 24** |
+| Bolt | 10 units | **17** |
+| Pump | 24 units | **34** |
+
+The needle, the clunk, the sparks and her leaning in are all still there — the
+gauge just runs green to the end of its travel, so **holding the driver down
+and letting go whenever you like always seats the bolt**. The only way left to
+get a bolt wrong is to let go before the needle moved, which is not a thing
+anybody does by accident. A plug in the wrong hole gets told what it is and
+put back, with no screen shake and no lecture.
+
+And if you have been on one step for **seven seconds**, the scene stops being
+subtle: two rings run outward from exactly the thing to touch, with `HERE` over
+it, and they stay until you touch it. Nobody should be stuck in a tutorial
+hunting for a pump.
+
+*(The torque gauge also moved. It used to be drawn at 26,108 — which is the
+bench, which is where you are: a 78-unit bar straight across your face, the
+socket, the four bolts you were driving and all three port labels. It is on the
+empty pegboard above the loom now.)*
+
 ---
 
 ## 🏠 Her front room, which she calls the shop
 
-![Tracy's kitchen](screenshots/tracy.png)
+![Tracy's front room](screenshots/tracy-room.png)
 
-Mint and cream stripes, a rose border, bunting on a string that sags properly,
-gingham curtains and a box of geraniums in the window, three framed photographs
-of a shop that is not there any more, a shelf of jars in colours she chose to
-look at rather than to sell, a spider plant she talks to, and a cat asleep on the
-warm end of the counter.
+Mint and cream stripes, a rose border, bunting she put up when you woke up and
+never took down, five jars in colours she chose to look at rather than to sell,
+two photographs of a shop that is not there any more, a cat asleep on the warm
+end of the counter, and a tub of gelato with `GELATO DELLA CASA` chalked on the
+board.
 
-It is also the tutorial. One tub of gelato, one cone, one very patient human, and
-her AI on a cracked tablet. Every step is gated, so you cannot get it wrong — you
-can only not have done it yet. Take a cone. Press into the gelato and sweep,
-*don't stab it*. Put it on the cone. Give it here then, she's been up since four.
+**One painter draws this room in every state the story needs it in** —
+`G.tracyRoom(g, t, o)`, with `dark`, `wrecked`, `doorOff` and a `back` hook for
+anybody standing behind the counter. So the warm version and the wrecked
+version cannot drift apart, because they are the same function.
 
-![The first one](screenshots/tracy-taste.png)
+It also has **a front door** now. It never did: the room simply had no way in,
+which is fine for a tutorial and useless the moment somebody has to come
+through it. Panelled, with a bit of glass, a sign turned round to `CLOSED`
+hours ago, and a brass shop bell on a curl of wire over the top.
 
-> *OH. OH, THAT'S PROPER. YOU'RE GOING TO BE FINE.*
+### The break-in is not a cutscene any more
 
-Poke the tablet and clause introduces itself, badly.
+It used to be six shots of a **brown workshop that appears nowhere else in the
+game** — a second, worse copy of her room, built by a different file, in
+different colours. Both are gone. The raid happens **here**, in the room you
+have been standing in for the whole lesson, straight after you hand her the
+cone, with no cut and no camera move.
+
+Nine beats:
+
+| | |
+|---|---|
+| `quiet` | *"Sit yourself down. I'll put the kettle on and we'll do sauces."* |
+| `bang` | Three bangs on the door. The bell goes each time. The lamps go down. |
+| `hide` | **"Get behind the counter. Go on. Now, love."** — and this beat waits for you |
+| `door` | It comes off its hinges and across the room, with the glass |
+| `in` | Two machines walk in, torches sweeping. *"Nobody is on the roll at this address."* |
+| `her` | She puts herself between them and the counter |
+| `white` | One white frame |
+| `gone` | *"They did not arrest anyone."* |
+| `out` | *"The tablet was still warm."* |
+
+### And you have to go and hide
+
+There is a missing board at the far end of the counter, and the dark under it.
+It is scenery for the entire lesson, and then it is the only thing in the room
+that matters. When she tells you to hide it gets **the loudest mark the game
+owns** — brackets, a name tab reading `GET UNDER HERE`, and two rings running
+outward — and you tap it.
+
+The view goes with you. The near edge of the counter rises across the bottom of
+the frame, the room darkens and a hard vignette closes in, and **your own head
+comes up over the lip**: both eyes, both ears, watching. She goes round the
+counter to meet them, on the back plane, where the counter cuts her off at the
+knee — the same two-plane trick the walkable scenes use, so she is *in* the room
+rather than in front of it.
+
+Nothing here can be failed either. If you sit there being told to hide for
+thirteen seconds, she picks you up and puts you in the gap herself.
+
+Afterwards the room is the same room, wrecked: the shelf down, three jars on
+the counter, a pane out of the window, the tub over on its side with its hoops
+and staves showing, the cones out, the bunting hanging off one end, her pot
+plant flat and its soil across the counter. The cat comes back. And on the
+counter where she was standing: **her cardigan, and her glasses.**
 
 ---
-
-## 🚨 Then the door came in
-
-![The raid](screenshots/raid.png)
-
-The raid used to be four still shots: a brown wall, a door plate rotated forty
-degrees to say it had fallen, and two machines stood in the room not doing
-anything. A door coming in at four in the morning is the loudest thing that
-happens in this story and it was quieter than the ice cream lesson.
-
-It is now **six shots, and something moves in every one of them.**
-
-It was a good six weeks — the two of them talking over the bench, steam off two
-mugs, four flavours out on the counter, clause chattering on the shelf.
-
-Then **the door comes in on screen**: it swings off its hinges in the frame you
-are watching, tumbles across the room, and leaves a black hole with cold blue
-light in it and twenty-two splinters on their own arcs. Two shapes step
-through, torch beams swinging. The shelf of tubs comes down one tub at a time.
-Her tub goes over.
-
-She puts herself between it and you and tells you to get under the bench —
-which, four hours and one whole life earlier, is where you learnt to do the
-thing you do at the end of act one.
-
-> **TRACY:** GET UNDER THE BENCH. DO NOT COME OUT.
-
-One white frame. Then the same room, with nobody standing in it, her jumper on
-the floor where she was, and a mascot still under the bench, not coming out.
-
-> **THEY DID NOT ARREST ANYONE.**
-
-Her front room is built once and drawn in three states — before, during and
-after — so it is demonstrably the same room getting wrecked, rather than three
-paintings of a similar room.
 
 ### Every shape in a cutscene is a real character
 
@@ -516,18 +563,16 @@ straight off that comes back with a halo round everybody — and then it is
 flooded with one colour through `source-in`, which keeps the fill only
 where there were pixels.
 
-A rim light is the same mask again, stamped one pixel toward whatever is
-behind them in a brighter colour and then covered by the dark one, so the
-edge that survives is the character's own profile. The two machines in her
-doorway are lit cold down their left side because that is where the
-doorway is.
+A rim light is the same mask again, stamped one pixel toward the light in a
+brighter colour and then covered by the dark one, so the edge that
+survives is the character's own profile — a hood stays a hood, which a
+hand-drawn bar down the side never does.
 
 Whatever the rig draws, the silhouette is exactly that: the right hair,
-the right coat, the right hat, the right number of legs. The two shapes
-coming through her door are **the patrol and the warden**, walking, with
-their real chassis. The people in the windows of BIG MOO minutes before it
-goes are twelve different people, one of them a four-year-old in a paper
-crown.
+the right coat, the right hat, the right number of legs. The people in the
+windows of BIG MOO minutes before it goes are twelve different people, one
+of them a four-year-old in a paper crown, and the two running out of the
+door as the counter starts counting are a grown adult carrying a child.
 
 ![The chip](screenshots/chip.png)
 

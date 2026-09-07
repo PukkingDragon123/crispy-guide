@@ -86,16 +86,6 @@
       });
     }, rim === true ? { col: '#a06a4c', dx: -0.5, dy: -0.5 } : rim || null);
   }
-  // and the same trick for a machine, so a patrol in a doorway is the
-  // patrol you meet on the floor and not a taller rectangle
-  function botLo(g, id, x, footY, h, col, o) {
-    o = o || {};
-    const sc = h / G.SZ.MASCOT;
-    const bx = Math.round(x - BW / 2), by = Math.round(footY - BH + 8);
-    cut(g, col, bx, by, (gg) => {
-      G.drawBot(gg, id, BW / 2, BH - 8, sc, Object.assign({ t: 0, walk: 0, noBlink: 1, noGlow: 1 }, o));
-    }, o.rim || null);
-  }
   function rain(g, t, n, col, x0, x1) {
     for (let i = 0; i < n; i++) {
       const s = G.hash(i * 3.1, 7.7);
@@ -123,61 +113,10 @@
 
 
 
-  // ------------------------------------------------------------
-  // HER FRONT ROOM, which she calls the shop. One builder in three
-  // states so the raid is the same room before, during and after.
-  //   o.warm     lamps on, the good six weeks
-  //   o.dark     four in the morning
-  //   o.wrecked  0..1  the tub over, the shelf down
-  // ------------------------------------------------------------
-  function room(g, tt, o) {
-    o = o || {};
-    const wr = o.wrecked || 0;
-    const wall = o.warm ? '#2a1e18' : '#150f14';
-    G.R(g, 0, 0, G.W, G.H, o.warm ? '#1b1410' : '#0b090e');
-    for (let x = 0; x < G.W; x += 8) {
-      G.R(g, x, 0, 4, 104, wall);
-      G.R(g, x + 4, 0, 4, 104, G.shade(wall, -0.14));
-    }
-    G.plate(g, -4, 100, G.W + 8, 8, o.warm ? '#5c4028' : '#33241a', { r: 1, band: 2, grain: 2 });
-    G.R(g, 0, 108, G.W, 72, o.warm ? '#3a2a1e' : '#1c1512');
-    if (o.warm) G.glow(g, 120, 60, 220, 140, '#ffb26a', 0.45);
-    // the long bench she works at
-    G.plate(g, 20, 118, 280, 10, o.warm ? '#7a5638' : '#4a3324', { r: 2, band: 3, grain: 3 });
-    G.hair(g, 22, 118, 276, o.warm ? '#a8794f' : '#6b4a34');
-    // the shelf of tubs above it, which comes down when they come in
-    for (let i = 0; i < 6; i++) {
-      const sx = 34 + i * 42;
-      const down = wr > 0.2 + i * 0.1;
-      if (down) {
-        G.rr2(g, sx - 6 + (i % 2 ? 8 : -6), 138 + (i % 3) * 4, 14, 9, '#4a3628');
-        G.rr2(g, sx - 5 + (i % 2 ? 8 : -6), 139 + (i % 3) * 4, 12, 7, '#8a6a4a');
-      } else {
-        G.rr2(g, sx - 8, 76, 18, 12, '#4a3628');
-        G.rr2(g, sx - 7, 77, 16, 10, o.warm ? '#c8a878' : '#7a6448');
-        G.hair(g, sx - 6, 77, 14, o.warm ? '#e8d0a8' : '#8a7458');
-      }
-    }
-    if (wr < 0.3) { G.R(g, 20, 88, 280, 3, '#3a2a1c'); G.hair(g, 20, 88, 280, '#5c4028'); }
-    else for (let i = 0; i < 3; i++) G.R(g, 24 + i * 96, 88 + i * 2, 60 - i * 12, 3, '#3a2a1c');
-    // the tub, upright or tipped
-    if (wr > 0.4) {
-      g.save(); g.translate(70, 132); g.rotate(-0.6); g.translate(-70, -132);
-      G.plate(g, 52, 118, 40, 20, '#5c4028', { r: 2, band: 2, grain: 4 });
-      g.restore();
-      for (let i = 0; i < 16; i++)
-        G.Rh(g, 56 + G.hash(i, 5) * 90, 134 + G.hash(i, 9) * 12, 3, 2, '#c8b090');
-    } else {
-      G.plate(g, 52, 108, 40, 20, '#5c4028', { r: 2, band: 2, grain: 4 });
-      G.rr2(g, 54, 106, 36, 5, '#8a6a4a');
-    }
-    if (o.after) {                                     // rain on the broken window
-      for (let i = 0; i < 24; i++) {
-        const s2 = G.hash(i * 3.1, 7.7);
-        G.Rh(g, 26 + ((s2 * 44 + tt * 20) % 44), ((G.hash(i, 2) * 120 + tt * 130) % 130) + 40, 0.5, 3, '#33445f');
-      }
-    }
-  }
+  // HER FRONT ROOM was built here too, in browns, for those shots. One
+  // room, drawn twice, by two files, that had already drifted apart --
+  // hers has mint stripes and bunting and a cat. G.tracyRoom in tracy.js
+  // is the only copy there is now, and the raid uses that one.
 
   // ------------------------------------------------------------
   // THE OUTSIDE OF BIG MOO. Act one ends inside the room with a
@@ -444,14 +383,6 @@
       G.R(g, 0, 0, G.W, G.H, '#ffd9a0');
       g.globalAlpha = 1;
     }
-  }
-
-  // Tracy, drawn small for the cutscenes. Her sprite lives in her own
-  // scene; this is the version that fits in a shot.
-  // she is one model now, the same one the kitchen and the bench use
-  function tracy(g, x, footY, sc, t, o) {
-    o = o || {};
-    return G.drawTracy(g, x, footY, sc, Object.assign({ t }, o));
   }
 
   // ------------------------------------------------------------
@@ -884,140 +815,10 @@
         } },
     ],
 
-    // ---------------- the raid ----------------
-    // The first pass was four still shots: a brown wall, a door plate
-    // rotated forty degrees, and two machines stood in the room not
-    // doing anything. A door coming in at four in the morning is the
-    // loudest thing that happens in this story and it was quieter than
-    // the ice cream lesson. So: six shots, and something moves in
-    // every one of them.
-    raid: [
-      { t: 3.8, who: null, say: 'IT WAS A GOOD SIX WEEKS.',
-        cam: { z: [1.05, 1.2], x: [160, 150], y: [96, 98] },
-        paint(g, p, tt) {
-          room(g, tt, { warm: 1 });
-          G.drawBot(g, 'player', 96, 130, 0.9, { t: tt, open: 0.1, mood: 'idle', walk: 0, clip: 'talk', ct: tt });
-          tracy(g, 188, 132, 0.95, tt, { smile: 1, clip: 'talk', ct: tt });
-          G.starburst(g, 234, 100, 7, tt, { talk: Math.sin(tt * 2) > 0 });
-          for (let i = 0; i < 4; i++)
-            G.gooScoop(g, 40 + i * 16, 116, 5, { col: ['#f6ecc8', '#e8879a', '#8fd8c0', '#c86a3a'][i], goo: 3 }, { t: tt });
-          // steam off two mugs on the bench, because it was a good six weeks
-          for (let i = 0; i < 2; i++) for (let k = 0; k < 5; k++) {
-            const q = ((tt * 0.5 + k * 0.2) % 1);
-            g.globalAlpha = (1 - q) * 0.4;
-            G.Rq(g, 148 + i * 14 + Math.sin(q * 6 + i) * 3, 112 - q * 22, 1.5, 1.5, '#e8dcc8');
-            g.globalAlpha = 1;
-          }
-        } },
-      // ---- the door. It happens ON SCREEN. ----
-      { t: 2.4, who: null, say: 'THEN THE DOOR CAME IN AT FOUR IN THE MORNING.',
-        cam: { z: [1.02, 1.32], x: [128, 96], y: [96, 94] },
-        paint(g, p, tt) {
-          room(g, tt, { dark: 1 });
-          const hit = G.clamp((p - 0.18) / 0.14, 0, 1);
-          // the door, in its frame, then off its hinges and across the room
-          const kick = G.easeOut(hit);
-          g.save();
-          g.translate(46, 128);
-          g.rotate(kick * 1.35);
-          g.translate(-46 - kick * 78, -128 + kick * 6);
-          G.rr2(g, 26, 62, 44, 66, '#3a2a1a');
-          G.rr2(g, 28, 64, 40, 62, '#5c4028');
-          G.Rh(g, 30, 66, 36, 3, '#7a5638');
-          for (let i = 0; i < 2; i++) G.rr2(g, 32, 74 + i * 26, 32, 20, '#4a3220');
-          G.fc(g, 62, 100, 2, '#c8a840');
-          g.restore();
-          // the frame it left behind, and cold light through it
-          G.R(g, 22, 58, 52, 72, '#0a0810');
-          if (hit > 0) {
-            G.glow(g, 48, 96, 190, 170, '#3a9ad8', 0.3 + hit * 0.4);
-            for (let i = 0; i < 22; i++) {             // splinters
-              const a = G.hash(i, 3) * 2 - 1.1, sp = 40 + G.hash(i, 7) * 150;
-              const dx = 48 + Math.cos(a) * sp * hit, dy = 100 + Math.sin(a) * sp * hit * 0.5 + hit * hit * 90;
-              G.R(g, dx, dy, 3, 2, i % 3 ? '#6b4a2a' : '#8a6540');
-            }
-          }
-          // and the shapes coming through it
-          if (p > 0.34) {
-            const w = G.clamp((p - 0.34) / 0.5, 0, 1);
-            // the doorway is behind them and to the left, so the rim is
-            // cold and lands on that side. It is what makes the profile
-            // read as a machine and not as a hole in the wall.
-            const dr = { col: '#5a9ed0', dx: -0.75, dy: -0.5 };
-            botLo(g, 'police', 40 + w * 46, 134, 42, '#0b0a12',
-              { t: tt, walk: tt * 3, clip: 'walk', ct: tt, mood: 'angry', rim: dr });
-            botLo(g, 'warden', -8 + w * 40, 137, 37, '#0b0a12',
-              { t: tt, walk: tt * 3, clip: 'walk', ct: tt + 0.4, mood: 'angry', rim: dr });
-          }
-          const fl = Math.sin(tt * 22) > 0;
-          if (fl && hit > 0) { g.globalAlpha = 0.22; G.R(g, 0, 0, G.W, G.H, '#2a3a6a'); g.globalAlpha = 1; }
-        } },
-      { t: 3.4, who: 'PATROL', say: 'NOBODY IS ON THE ROLL AT THIS ADDRESS.',
-        cam: { z: [1.4, 1.24], x: [116, 150], y: [94, 98] },
-        paint(g, p, tt) {
-          room(g, tt, { dark: 1, wrecked: p });
-          // two of them, walking in, torches swinging
-          const wx = 40 + p * 46;
-          G.drawBot(g, 'police', wx, 140, 1.25, { t: tt, open: 0.06, mood: 'angry', walk: tt * 3, clip: 'walk', ct: tt, noBlink: 1 });
-          G.drawBot(g, 'warden', wx - 44, 142, 1.15, { t: tt, open: 0.04, mood: 'angry', walk: tt * 3, clip: 'walk', ct: tt, noBlink: 1 });
-          for (const bx of [wx, wx - 44]) {
-            const sw = Math.sin(tt * 2.4 + bx) * 26;
-            g.globalAlpha = 0.1;
-            for (let i = 0; i < 26; i++)
-              G.Rh(g, bx + 12 + i * 4, 116 + sw * (i / 26) + i * 0.3, 5, 2 + i * 0.5, '#cfe4ff');
-            g.globalAlpha = 1;
-          }
-          const fl = Math.sin(tt * 20) > 0.3;
-          if (fl) { g.globalAlpha = 0.16; G.R(g, 0, 0, G.W, G.H, '#2a3a6a'); g.globalAlpha = 1; }
-        } },
-      // ---- she puts herself in the way, which is where you learnt it ----
-      { t: 4.2, who: 'TRACY', say: 'GET UNDER THE BENCH. DO NOT COME OUT.',
-        cam: { z: [1.8, 1.6], x: [196, 182], y: [96, 100] },
-        paint(g, p, tt) {
-          room(g, tt, { dark: 1, wrecked: 1 });
-          // you, down behind the bench, which is where she put you
-          G.drawBot(g, 'player', 246, 146, 0.6, { t: tt, open: 0.04, mood: 'sick', walk: 0, noBlink: 1, clip: 'slump', ct: tt, p: 1 });
-          G.plate(g, 200, 130, 116, 9, '#4a3324', { r: 2, band: 3, grain: 3 });
-          // her, between it and you, arms out
-          tracy(g, 196, 132, 1.05, tt, { clip: 'reach', ct: tt, p: 1, dir: -1 });
-          G.drawBot(g, 'police', 128, 140, 1.3, { t: tt, open: 0.12, mood: 'angry', walk: 0, noBlink: 1, clip: 'point', ct: tt, p: 1 });
-          const fl = Math.sin(tt * 20) > 0.4;
-          if (fl) { g.globalAlpha = 0.2; G.R(g, 0, 0, G.W, G.H, '#2a3a6a'); g.globalAlpha = 1; }
-          G.glow(g, 128, 120, 200, 150, '#3a9ad8', 0.34);
-        } },
-      { t: 2.2, who: null, say: null,
-        cam: { z: [1.6, 2.1], x: [182, 190], y: [100, 104] },
-        paint(g, p, tt) {
-          room(g, tt, { dark: 1, wrecked: 1 });
-          // one white frame, and then a room with nobody standing in it
-          if (p < 0.14) { G.R(g, 0, 0, G.W, G.H, '#eef4ff'); return; }
-          const f = G.clamp((p - 0.14) / 0.5, 0, 1);
-          g.globalAlpha = 1 - f;
-          G.R(g, 0, 0, G.W, G.H, '#cfe4ff');
-          g.globalAlpha = 1;
-          // her jumper, on the floor, where she was stood
-          G.rr2(g, 186, 138, 30, 9, '#c8785a');
-          G.rr2(g, 194, 135, 14, 5, '#e0947a');
-          G.drawBot(g, 'player', 246, 146, 0.6, { t: tt, open: 0.3, mood: 'sick', walk: 0, noBlink: 1, clip: 'startle', ct: tt, p: 1 });
-          G.plate(g, 200, 130, 116, 9, '#4a3324', { r: 2, band: 3, grain: 3 });
-        } },
-      { t: 4.4, who: null, say: 'THEY DID NOT ARREST ANYONE.',
-        cam: { z: [1.2, 1.05], x: [160, 160], y: [96, 96] },
-        paint(g, p, tt) {
-          room(g, tt, { dark: 1, wrecked: 1, after: 1 });
-          // one bulb, still swinging from it
-          const sw = Math.sin(tt * 1.3) * 14;
-          G.Rh(g, 160 + sw * 0.4, 0, 1, 28, '#1a1410');
-          G.fc(g, 160 + sw, 30, 3, '#ffd08a');
-          G.glow(g, 160 + sw, 34, 170, 120, '#c8783a', 0.34);
-          G.rr2(g, 186, 138, 30, 9, '#c8785a');
-          G.rr2(g, 194, 135, 14, 5, '#e0947a');
-          // and you, still under the bench, not coming out
-          G.drawBot(g, 'player', 248, 146, 0.6, { t: tt, open: 0.02, mood: 'sick', walk: 0, noBlink: 1, clip: 'slump', ct: tt, p: 1 });
-          G.plate(g, 200, 130, 116, 9, '#4a3324', { r: 2, band: 3, grain: 3 });
-          g.globalAlpha = 0.4; G.R(g, 0, 0, G.W, G.H, '#06060a'); g.globalAlpha = 1;
-        } },
-    ],
+    // The raid used to live here, as six shots of a brown workshop that
+    // appears nowhere else in the game. It is a scene now, not a film:
+    // it plays in her actual front room the moment you hand her the cone,
+    // and you are in it. See tracy.js.
 
     // ---------------- saving clause ----------------
     chip: [
