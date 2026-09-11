@@ -251,18 +251,31 @@
           const lit = at || hov;
           const bob = Math.abs(Math.sin(t * 2.6 + st.x * 0.05)) * (lit ? 3 : 1.6);
           const my = (st.my === undefined ? 34 : st.my) - bob;
-          g.globalAlpha = lit ? 1 : 0.42;
-          G.glow(g, st.x, my + 4, 20 + bob * 3, 18, P.lime, lit ? 0.5 : 0.22);
-          for (let i = 0; i < 4; i++) {
-            G.Rh(g, st.x - 4 + i - 0.5, my + i - 0.5, 10 - i * 2, 2, OUT);
-            G.Rh(g, st.x - 4 + i, my + i, 9 - i * 2, 1, i < 1 ? '#dfffcf' : '#8ede3a');
-          }
+          // the same pin the walkable scenes and the shop hang over
+          // anything you can use -- this room used to draw its own
+          // chevron, which meant two different marks for one idea
+          g.globalAlpha = lit ? 1 : 0.5;
+          G.glow(g, st.x, my - 6, 24 + bob * 2, 24, P.lime, lit ? 0.5 : 0.22);
+          G.questPin(g, st.x, my + 5, { col: lit ? '#b6ff3a' : '#7fc832' });
           g.globalAlpha = 1;
-          // a ring on the floor, so you can see how far off you are
+          // and a ring on the floor, so you can see how far off you are.
+          // Flat, because it is lying on the ground: a true circle down
+          // there reads as a bubble hanging in front of the room.
           if (!at) {
             const pr = ((t * 0.9 + st.x * 0.01) % 1);
-            g.globalAlpha = (1 - pr) * (hov ? 0.42 : 0.2);
-            G.oc(g, st.x, FLOOR + 4, 4 + pr * 14, P.lime);
+            const rx = 5 + pr * 14;
+            g.globalAlpha = (1 - pr) * (hov ? 0.6 : 0.32);
+            let prev = -1;
+            for (let dy = -Math.ceil(rx * 0.34); dy <= Math.ceil(rx * 0.34); dy++) {
+              const tt = 1 - (dy * dy) / (rx * 0.34 * rx * 0.34);
+              if (tt < 0) continue;
+              const w = Math.floor(rx * Math.sqrt(tt));
+              const th = prev < 0 ? w * 2 + 1 : Math.max(1, prev - w + 1);
+              if (prev < 0) G.R(g, st.x - w, FLOOR + 4 + dy, w * 2 + 1, 1, P.lime);
+              else { G.R(g, st.x - w, FLOOR + 4 + dy, th, 1, P.lime);
+                     G.R(g, st.x + w - th + 1, FLOOR + 4 + dy, th, 1, P.lime); }
+              prev = w;
+            }
             g.globalAlpha = 1;
           }
           if (lit) {

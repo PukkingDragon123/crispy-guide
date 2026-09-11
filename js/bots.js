@@ -40,7 +40,12 @@
     // YOU. A dairy unit. Built to stand in a field of nothing and turn
     // out gelato, and given a face soft enough that the children would
     // come up to it. Tracy kept the face and rebuilt everything under it.
-    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.04, h: 0.9,  hs: 1.36, soft: 2, cow: 1, shades: 1, mascot: 1, beach: 1 },
+    // THE MASCOT. Narrow body, big head -- the costume proportion. It was
+    // w 1.04 / hs 1.36, which put a 35-wide torso under a 32-wide head: a
+    // barrel with a cow balanced on it. The body is 24 now and the head is
+    // wider than it is, which is the whole difference between a mascot and
+    // a water tank.
+    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 0.80, h: 1.06, hs: 1.42, soft: 2, cow: 1, shades: 1, mascot: 1, beach: 1 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -489,14 +494,21 @@
       // squash reaches the legs too, or the body gives while the feet
       // stay bolted to the floor and the whole bounce reads as a glitch
       const sq = (bo && bo.sq) || 0;
-      const lw = Math.max(4, Math.round(u(mas ? 7.4 : 9) * (1 - sq * 0.4)));
-      const lh = Math.max(4, Math.round(u(mas ? 15 : 16) * (1 + sq * 0.7)));
-      const hf = Math.max(3, u(mas ? 4.5 : 5));
+      // LONG AND THIN AND SET APART. Two 7-wide columns 4 units from each
+      // other under a 35-wide body is a filing cabinet on castors; the
+      // gap between the legs is what makes a silhouette read as a figure.
+      // 18 + 16 - 1 + 19 = 52, which is G.SZ.MASCOT and therefore an adult
+      // head to heel. Long legs and a short body inside that budget, rather
+      // than the other way round.
+      const lw = Math.max(3, Math.round(u(mas ? 5.6 : 9) * (1 - sq * 0.4)));
+      const lh = Math.max(4, Math.round(u(mas ? 18 : 16) * (1 + sq * 0.7)));
+      const hf = Math.max(3, u(mas ? 4 : 5));
+      const spread = mas ? 0.28 : 0.24;
       // ---- the tail. It goes down first so the body covers the root.
       // One tapering rope: every outline in one pass, every fill in the
       // next, or each segment paints over the one before it. ----
       const tw2 = Math.sin(t * 1.15);
-      const tx0 = cx + Math.round(bw * 0.3), ty0 = footY - lh - u(4);
+      const tx0 = cx + Math.round(bw * (mas ? 0.44 : 0.3)), ty0 = footY - lh - u(4);
       const NS = 13, seg = [];
       for (let i = 0; i < NS; i++) {
         const p = i / (NS - 1);
@@ -529,7 +541,7 @@
           // The socket it came out of. It sits UP at the hip and it is
           // wider than the leg was, because a small dark box down at
           // ankle height just reads as a second short foot.
-          const hx2 = cx + Math.round(bw * 0.24);
+          const hx2 = cx + Math.round(bw * spread);
           const sy = footY - lh - u(2);
           G.R(g, hx2 - lw / 2 - 2, sy - 1, lw + 4, u(8) + 2, OUT);
           G.R(g, hx2 - lw / 2 - 1, sy, lw + 2, u(8), '#2a3040');
@@ -547,7 +559,7 @@
         const off = (s < 0 ? sw : -sw);
         const isSpare = spare && s > 0;
         const c = isSpare ? '#bcc0c6' : b.col;
-        const lx = cx + s * Math.round(bw * 0.24) - lw / 2;
+        const lx = cx + s * Math.round(bw * spread) - lw / 2;
         const ly = footY - lh + off;
         // the shank, all the way down to the cuff
         const cuffY = footY - hf - u(3.5) + off;
@@ -558,16 +570,17 @@
         G.hairq(g, lx + 0.5, kny + 0.5, lw - 1, G.shade(c, 0.3));
         // the boot cuff: a fat white ring that overhangs the shank, so
         // the black below it reads as a sock and not as the leg ending
-        const cw = lw + u(2.2);
-        G.rr2(g, lx - u(1.1) - 1, cuffY - 1, cw + 2, u(2.6) + 2, OUT);
-        G.rr2(g, lx - u(1.1), cuffY, cw, u(2.6), G.shade(c, 0.2));
-        G.hairq(g, lx - u(1.1) + 0.5, cuffY, cw - 1, '#ffffff');
-        G.hairq(g, lx - u(1.1) + 0.5, cuffY + u(2.6) - 0.25, cw - 1, G.shade(c, -0.26));
+        const cw = lw + u(mas ? 1.6 : 2.2);
+        const cox = u(mas ? 0.8 : 1.1);
+        G.rr2(g, lx - cox - 1, cuffY - 1, cw + 2, u(2.6) + 2, OUT);
+        G.rr2(g, lx - cox, cuffY, cw, u(mas ? 2.1 : 2.6), G.shade(c, 0.2));
+        G.hairq(g, lx - cox + 0.5, cuffY, cw - 1, '#ffffff');
+        G.hairq(g, lx - cox + 0.5, cuffY + u(2.6) - 0.25, cw - 1, G.shade(c, -0.26));
         // the black stocking
         G.R(g, lx - 0.5, cuffY + u(2.6), lw + 1, u(1.6) + 1, '#2a2230');
         G.hairq(g, lx - 0.5, cuffY + u(2.6), lw + 1, '#4c3f56');
         // the hoof: split, planted, with a lit toe cap
-        const fy = footY - hf + off, fw = lw + u(2.4), fx = lx - u(1.2);
+        const fy = footY - hf + off, fw = lw + u(mas ? 1.8 : 2.4), fx = lx - u(mas ? 0.9 : 1.2);
         G.rr2(g, fx - 1, fy - 1, fw + 2, hf + 2, OUT);
         G.rr2(g, fx, fy, fw, hf, '#463a52');
         G.hairq(g, fx + 0.5, fy, fw - 1, '#8b7899');
@@ -707,7 +720,7 @@
     let w = bw, h = u(TORSO_H[kind] === undefined ? 18 : TORSO_H[kind]);
     if (kind === 'slab')    w = Math.round(bw * 1.12);
     if (kind === 'narrow')  w = Math.round(bw * 0.78);
-    if (kind === 'barrel')  { w = Math.round(bw * 1.12); h = u(mascot ? 18 : 19); }
+    if (kind === 'barrel')  { w = Math.round(bw * (mascot ? 0.90 : 1.12)); h = u(mascot ? 16 : 19); }
     if (kind === 'violin')  w = Math.round(bw * 0.9);
     if (kind === 'robe')    w = Math.round(bw * 0.96);
     if (kind === 'filing')  w = Math.round(bw * 0.96);
@@ -719,22 +732,71 @@
     const y = baseTop - h;
 
     if (kind === 'barrel' && mascot) {
-      // a bulging tank: rows widening then narrowing
+      // ---- A COSTUME, NOT A BARREL ----
+      // The old profile was one sine bulge: widest across the middle,
+      // level with the shoulders, as wide as the head. That single curve
+      // is the entire reason this thing read as fat. What a suit actually
+      // does is TAPER -- narrow at the neck, out to the shoulders, in to
+      // a waist, and a small flare at the hip.
+      const KEY = (o && o.cow)
+        ? [[0, 0.64], [0.14, 1.00], [0.34, 0.92], [0.72, 0.66], [1, 0.60]]
+        : [[0, 0.80], [0.15, 1.00], [0.50, 0.96], [1, 0.86]];
+      const profAt = (p) => {
+        for (let i = 1; i < KEY.length; i++) {
+          if (p > KEY[i][0]) continue;
+          const a = KEY[i - 1], z = KEY[i];
+          const q = (p - a[0]) / (z[0] - a[0]);
+          return G.lerp(a[1], z[1], q * q * (3 - 2 * q));   // smoothstep, so no corners
+        }
+        return KEY[KEY.length - 1][1];
+      };
+      const hwAt = (p) => Math.max(2, Math.round((w / 2) * profAt(p)));
       for (let j = 0; j < h; j++) {
         const p = j / (h - 1);
-        const bulge = Math.sin(p * Math.PI) * 0.22 + 0.78;
-        const hw = Math.round((w / 2) * bulge);
+        const hw = hwAt(p);
         G.R(g, cx - hw - 1, y + j, hw * 2 + 2, 1, OUT);
         G.R(g, cx - hw, y + j, hw * 2, 1,
           j < 3 ? G.shade(c, 0.28) : p > (o && o.cow ? 0.93 : 0.82) ? G.shade(c, o && o.cow ? -0.2 : -0.4) : c);
       }
-      // hoop bands, each with a lit crown, a shadow and riveted laps.
-      // The mascot gets one broad belt instead of three hoops - fewer
-      // lines, bigger shapes, which is the whole difference.
-      const bands = (o && o.cow) ? [2] : [1, 2, 3];
-      for (const k of bands) {
-        const j = Math.round(h * k / 4), p = j / (h - 1);
-        const hw = Math.round((w / 2) * (Math.sin(p * Math.PI) * 0.22 + 0.78));
+      // ---- THE MARKINGS ----
+      // A cream body with a badge on it is a fridge. A cow has patches, so
+      // the suit has two: one over the hip and a small one off the far
+      // shoulder, clipped to the profile so neither runs off the edge.
+      if (o && o.cow) {
+        const blot = (ox, oy, rx, ry, sd2) => {
+          for (let j = 0; j < h; j++) {
+            const dy = (j - oy) / ry;
+            if (Math.abs(dy) > 1) continue;
+            const wob = 1 + Math.sin(j * 0.9 + sd2) * 0.2 + Math.sin(j * 2.3 + sd2 * 3) * 0.12;
+            const half = Math.round(rx * Math.sqrt(1 - dy * dy) * wob);
+            if (half < 1) continue;
+            const lim = hwAt(j / (h - 1)) - 1;
+            const x0 = Math.max(cx - lim, Math.round(cx + ox - half));
+            const x1 = Math.min(cx + lim, Math.round(cx + ox + half));
+            if (x1 <= x0) continue;
+            G.R(g, x0, y + j, x1 - x0, 1,
+              j < oy - ry * 0.45 ? '#4c4256' : j > oy + ry * 0.6 ? '#1d1826' : '#2f2839');
+          }
+        };
+        // ONE patch, on the hip, well clear of the roundel. A second on
+        // the shoulder lands under the lei, and anything nearer the middle
+        // merges with the badge's own black ring into a smudge -- a
+        // 22-by-16 chest holds one mark and one marking, and no more.
+        blot(-w * 0.30, h * 0.84, w * 0.17, h * 0.15, 1.7);
+      }
+      // ---- and the shading that makes a taper read as a body ----
+      // A flat cream column is a flat cream column whatever shape you cut
+      // it in, so the far side turns and the near side catches the light.
+      if (o && o.cow) for (let j = 2; j < h - 1; j++) {
+        const hw = hwAt(j / (h - 1));
+        G.Rh(g, cx + hw - 2, y + j, 2, 1, G.shade(c, -0.18));
+        G.vairq(g, cx - hw, y + j, 1, G.shade(c, 0.22));
+      }
+      // the belt sits at the WAIST, which is the narrowest row, because
+      // that is where a belt goes and it is the row that sells the taper
+      const bands = (o && o.cow) ? [0.90] : [0.25, 0.5, 0.75];
+      for (const bp of bands) {
+        const j = Math.round(h * bp), hw = hwAt(j / (h - 1));
         G.R(g, cx - hw, y + j, hw * 2, 2, G.shade(c, -0.3));
         G.hair(g, cx - hw, y + j, hw * 2, G.shade(c, 0.34));
         G.hair(g, cx - hw, y + j + 2, hw * 2, G.shade(c, -0.55));
@@ -742,6 +804,7 @@
           G.rivet(g, cx - hw + 1 + i * ((hw * 2 - 3) / 3), y + j + 0.5, G.shade(c, -0.6), G.shade(c, 0.5));
       }
       // vertical weld seam down the belly
+      if (!(kind === 'barrel' && mascot && o && o.cow))
       G.vseam(g, cx + u(4), y + 2, h - 4, G.shade(c, -0.5), G.shade(c, 0.2));
       if (o && o.cow) {
         // ---- THE BADGE. The chain's mark, stamped on the tank. It
@@ -749,8 +812,11 @@
         // its own cow - which is the third separate cow in this codebase
         // and the only one nobody could see next to the other two. It is
         // G.mooLogo now, the same call the pole sign makes. ----
-        const bx2 = cx, by2 = y + Math.round(h * 0.66);
-        G.mooLogo(g, bx2, by2, Math.max(6, Math.round(w * 0.185)), { word: false });
+        // the chest carries ONE mark, under the lei and clear of it. It
+        // used to be at 0.185 of a 35-wide barrel, which is a dinner
+        // plate across the belly.
+        const bx2 = cx, by2 = y + Math.round(h * 0.60);
+        G.mooLogo(g, bx2, by2, Math.max(4, Math.round(w * 0.22)), { word: false });
         return { y, w, h, top: y };
       }
       // a full-belly gauge in a machined bezel
@@ -906,14 +972,21 @@
     if (kind === 'lamp')    { w = hw * 1.6; h = u(18); }
     if (kind === 'wedge')   { w = hw * 2.1; h = u(17); }
     if (kind === 'crt')     { w = hw * 2.1; h = u(20); }
-    if (kind === 'cow')     { w = hw * 2.16; h = u(19); }
+    if (kind === 'cow')     { w = hw * 1.88; h = u(19); }
     const cow = kind === 'cow';
     const prof = [];
     const y = neckY - h;
 
-    // neck
-    G.R(g, cx - u(4), neckY - 2, u(8), u(5), P.plateDk);
-    G.R(g, cx - u(3), neckY - 1, u(6), u(3), P.plate);
+    // neck. On the mascot it is part of the suit, so it is cut from the
+    // hide -- chassis grey there is a square hole between a cream head and
+    // a cream body.
+    if (cow) {
+      G.R(g, cx - u(4), neckY - 2, u(8), u(5), G.shade(c, -0.34));
+      G.R(g, cx - u(3), neckY - 1, u(6), u(3), G.shade(c, -0.16));
+    } else {
+      G.R(g, cx - u(4), neckY - 2, u(8), u(5), P.plateDk);
+      G.R(g, cx - u(3), neckY - 1, u(6), u(3), P.plate);
+    }
 
 
     // ---- ears first, so the skull tucks over where they attach.
@@ -923,17 +996,21 @@
     if (cow) {
       const flick = Math.sin(t * 1.7) * 0.5 + Math.sin(t * 0.63) * 0.5;
       for (const sd of [-1, 1]) {
-        const ew2 = Math.max(5, Math.round(w * 0.4));      // how far it reaches out
-        const eh2 = Math.max(5, Math.round(h * 0.4));      // how far it hangs
-        const ax = cx + sd * Math.round(w * 0.54);
-        const ay = y + Math.round(h * 0.26);
+        // TALLER THAN WIDE, AND LOW. At 0.4 of the head's width by 0.4 of
+        // its height, attached level with the eyes, it is a horizontal
+        // ellipse sticking straight out of the skull -- a fin. Narrower,
+        // longer, and pinned below the eyeline, it hangs.
+        const ew2 = Math.max(4, Math.round(w * 0.28));     // how far it reaches out
+        const eh2 = Math.max(6, Math.round(h * 0.54));     // how far it hangs
+        const ax = cx + sd * Math.round(w * 0.48);
+        const ay = y + Math.round(h * 0.40);
         const drop = (sd > 0 ? flick : -flick) * Math.max(1, u(1.5));
         // an ellipse, tilted down and out, drawn row by row
         const rows = [];
         for (let j2 = 0; j2 < eh2; j2++) {
           const q = (j2 / Math.max(1, eh2 - 1) - 0.42) * 2;
           const hw = Math.max(0, (ew2 / 2) * Math.sqrt(Math.max(0, 1 - q * q * 0.92)));
-          const off = sd * (j2 / eh2) * ew2 * 0.4;
+          const off = sd * (j2 / eh2) * ew2 * 0.55;
           rows.push([ax + off - hw, hw * 2, ay + j2 + drop * (j2 / eh2)]);
         }
         for (const r of rows) if (r[1] >= 1)
@@ -1416,7 +1493,7 @@
     // separates a friendly machine from a piece of plant equipment.
     function softLimb(s, len, wd, col) {
       const base = col || c;
-      const x = cx + s * (tw / 2 + wd / 2 - u(3.5));
+      const x = cx + s * (tw / 2 + wd / 2 - u(o.mascot ? 0.6 : 3.5));
       const top = sy - u(2), cap = Math.max(3, u(6));
       for (let j = 0; j < cap; j++) {
         const p = j / (cap - 1);
@@ -1459,7 +1536,7 @@
 
     // a mitten: a rounded pad with a thumb on the inside and two creases
     function mitten(e, s, col) {
-      const mw = Math.max(4, u(6.4)), mh = Math.max(4, u(5.6));
+      const mw = Math.max(4, u(o.mascot ? 5.4 : 6.4)), mh = Math.max(4, u(o.mascot ? 4.8 : 5.6));
       const rows = ballRows(mw, mh);
       const tw3 = Math.max(3, u(3)), th3 = Math.max(3, u(4));
       const tx = Math.round(e.x + s * (mw * 0.4)), ty2 = e.y + Math.round(mh * 0.2);
@@ -1479,7 +1556,9 @@
     if (kind === 'scoop') {
       // the near arm is hers. She had it in a crate with a label on it
       // that said SPARES and she never told you whose it had been.
-      const aw2 = Math.max(3, u(4.6));
+      // thin. A 4.6-wide tube either side of a body that was already as
+      // wide as the head is two more units of bulk in the silhouette.
+      const aw2 = Math.max(3, u(o.mascot ? 3.4 : 4.6));
       // A mascot's sleeves are part of the costume, so they are cut
       // from the body tone, not from the chassis grey. Grey limbs on a
       // cream suit read as machinery somebody bolted on.
@@ -1499,10 +1578,12 @@
         }
       } else {
       const swL = (o.swingL || 0) * u(4), swR = (o.swingR || 0) * u(4);
-      const l = softLimb(-1, Math.round(th * 0.5) + sway + swL, aw2, G.shade(c, -0.07));
-      mitten(l, -1, G.shade(c, -0.02));
-      const r = softLimb(1, Math.round(th * 0.44) - sway + swR, aw2, G.shade(c, -0.04));
-      mitten(r, 1, c);
+      const L = o.mascot ? 0.84 : 0.5, R = o.mascot ? 0.78 : 0.44;
+      const sl = o.mascot ? -0.17 : -0.07, sr = o.mascot ? -0.11 : -0.04;
+      const l = softLimb(-1, Math.round(th * L) + sway + swL, aw2, G.shade(c, sl));
+      mitten(l, -1, G.shade(c, sl + 0.05));
+      const r = softLimb(1, Math.round(th * R) - sway + swR, aw2, G.shade(c, sr));
+      mitten(r, 1, G.shade(c, sr + 0.04));
       }
     } else if (kind === 'heavy') {
       for (const s of [-1, 1]) {
@@ -1883,7 +1964,11 @@
     // a collar with a bell on it. She found it in a box of things that
     // used to belong to animals, and she said it suited you. Drawn after
     // the head so nothing hides it.
-    if ((fr.soft || 0) > 1) {
+    // A cowbell on a strap and a lei are two necklaces on one neck, and on
+    // a 16-unit chest the bell hung straight down through the middle of
+    // the flowers and out the other side into the badge. The lei IS the
+    // necklace now; the bell comes back off the beach.
+    if ((fr.soft || 0) > 1 && !fr.beach) {
       const ty2 = hd.y + hd.h - u(2), cw = Math.round(torso.w * 0.38), ch = Math.max(2, u(3));
       for (let j = 0; j < ch; j++) {
         const pinch = Math.abs(j / (ch - 1) - 0.5) * 2;
@@ -1920,10 +2005,13 @@
     // it -- the first pass put it at the same height, where the collar and
     // the bell covered all but two petals of it.
     if (fr.beach) {
-      const ly = torso.y + u(1), lw = Math.round(torso.w * 0.86);
-      const dip = u(3.5);
+      // Eleven flowers at 1.7 radius across 86% of the chest is a bouquet,
+      // and on a slim body it is most of the body. Seven small ones on a
+      // shorter string: a necklace, which is what a lei is.
+      const ly = torso.y + u(1.5), lw = Math.round(torso.w * 0.80);
+      const dip = u(2.4);
       const PET = ['#ff8ab0', '#ffd45a', '#8fd8c0', '#fffaf0', '#ff9a5a', '#b48ae0'];
-      const n = 11;
+      const n = 7;
       // the string first, so every flower sits on top of it
       for (let i = 0; i <= n * 3; i++) {
         const q = i / (n * 3);
@@ -1934,7 +2022,7 @@
         const fx = cxl - lw / 2 + q * lw;
         const fy = ly + Math.sin(q * Math.PI) * dip;
         const col = PET[i % PET.length];
-        const rr = Math.max(1, u(1.7));
+        const rr = Math.max(1, u(1.2));
         // a leaf tucked behind each, on alternating sides
         G.Rq(g, fx + (i % 2 ? rr * 0.6 : -rr * 1.4), fy + rr * 0.4, rr * 0.9, rr * 0.5, '#4a8a3a');
         G.fc(g, fx, fy, rr + 0.5, OUT);

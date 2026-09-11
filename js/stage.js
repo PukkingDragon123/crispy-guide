@@ -496,8 +496,6 @@
         if (S.pcrawl) S.pheadTop = S.floor - 26;
         if (def.fore) def.fore(g, S);
         pops(g, S);
-        // ---- THE TRAIL. Where to go, laid on the floor. ----
-        trail(g, S, def, t);
         // ---- THE MARKS. Green chevrons over things to use, white
         // speech marks over people to talk to, and both of them get
         // louder when you are near or pointing at them. Between them
@@ -509,22 +507,23 @@
           const near = Math.abs(S.px - k.x) < 54;
           const hov = S.hoverK === k;
           const lit = near || hov;
-          const bnc = Math.abs(Math.sin(t * 2.6 + k.x));
-          const kb = -bnc * (lit ? 5 : 3);
-          const ky = (k.markY === undefined ? S.floor - 40 : k.markY) + kb + 3;
-          G.glow(g, k.x, ky + 4, 22 + bnc * 8, 22, '#b6ff3a', hov ? 0.6 : near ? 0.44 : 0.24);
-          // a pulse ring on the ground under it
-          const pr2 = ((t * 0.9) % 1);
-          g.globalAlpha = (1 - pr2) * (lit ? 0.5 : 0.28);
-          G.oc(g, k.x, S.floor - 2, 3 + pr2 * 12, '#b6ff3a');
-          g.globalAlpha = 1;
-          // a chevron pointing down at the thing
-          for (let i = 0; i < 4; i++) {
-            G.Rh(g, k.x - 4 + i - 0.5, ky + i - 0.5, 10 - i * 2, 2, OUT);
-            G.Rh(g, k.x - 4 + i, ky + i, 9 - i * 2, 1, i < 1 ? '#dfffcf' : '#8ede3a');
-          }
-          if (lit && k.label) G.pill(g, clampLabel(k.x, k.label), ky - 3, k.label, '#dfffcf');
+          // a ring on the floor: where to stand. A pin in the air above
+          // it: what to use. Between them they are the whole instruction.
+          groundRing(g, k.x, S.floor - 1, t, lit);
+          // the SPIKE points at the thing and the disc rides well above it.
+          // At markY + 3 the disc sat down among the party hats it was
+          // supposed to be singling out.
+          const tip = (k.markY === undefined ? S.floor - 40 : k.markY) - 5
+            + Math.round(Math.sin(t * 2.2 + k.x * 0.03) * 1.6);
+          G.glow(g, k.x, tip - 7, 26, 26, '#b6ff3a', hov ? 0.5 : near ? 0.34 : 0.18);
+          G.questPin(g, k.x, tip, { col: lit ? '#b6ff3a' : '#7fc832' });
+          // the name only when you are actually pointing at it. Lit on
+          // proximity it printed a caption over everything in the room
+          // you happened to be walking past.
+          if (hov && k.label) G.pill(g, clampLabel(k.x, k.label), tip - 16, k.label, '#dfffcf');
         }
+        // and if the live one is off the frame, an arrow rides the edge
+        edgeMark(g, S, def, t);
         // people you can talk to. A chevron and a speech mark on the
         // same head is two calls to action fighting for eleven pixels,
         // so a live spot suppresses the mark under it - go and do the
@@ -587,13 +586,49 @@
   // world, it never says WHERE table four is, and once you have read it
   // it just sits there.
   //
-  // So the floor does the work instead. A line of your own hoof prints
-  // walks away from you toward whatever is live, scrolling as it goes,
-  // fading out at the far end. If the thing is off screen, a chevron
-  // rides the edge of the frame with the distance under it. Everything
-  // here is IN the room, at the scale of the room, and it points at
-  // something you can actually see once you get near it.
+  // Then it was steered by a line of your own hoof prints walking away
+  // from you across the floor, which is worse: on a patterned floor,
+  // eight little green marks scattered over the tiles read as litter.
+  //
+  // It is a QUEST MARKER now. A pin hanging in the air with its point on
+  // the thing, a ring pulsing on the floor underneath it where you have
+  // to stand, and an arrow on the frame edge when it is off screen. Three
+  // shapes, no text on any of them unless you point at one. The pin
+  // itself is G.questPin in util.js, because the shop and the back room
+  // hang the same mark over everything you can touch.
   // ------------------------------------------------------------
+  // ---- THE RING ON THE FLOOR UNDER IT ----
+  // Where to stand, drawn flat on the ground in perspective, pulsing
+  // outward.
+  function groundRing(g, x, y, t, lit) {
+    // each ring goes down twice: a dark one a pixel wider, then the lime
+    // one inside it. A single bright hairline at half alpha over a
+    // two-tone checker floor is invisible on the light tiles.
+    const ell = (cx, cy, rx, ry, col) => {
+      let prev = -1;
+      for (let dy = -Math.ceil(ry); dy <= Math.ceil(ry); dy++) {
+        const tt = 1 - (dy * dy) / (ry * ry);
+        if (tt < 0) continue;
+        const w = Math.floor(rx * Math.sqrt(tt));
+        const th = prev < 0 ? w * 2 + 1 : Math.max(1, prev - w + 1);
+        if (prev < 0) G.R(g, cx - w, cy + dy, w * 2 + 1, 1, col);
+        else { G.R(g, cx - w, cy + dy, th, 1, col); G.R(g, cx + w - th + 1, cy + dy, th, 1, col); }
+        prev = w;
+      }
+    };
+    const q = (t * 0.8) % 1;
+    for (const ph of [q, (q + 0.5) % 1]) {
+      const rx = 5 + ph * 13, ry = rx * 0.34;
+      const a = (1 - ph) * (lit ? 0.9 : 0.5);
+      g.globalAlpha = a * 0.7;
+      ell(x, y, rx + 1, ry + 1, '#14210a');
+      g.globalAlpha = a;
+      ell(x, y, rx, ry, lit ? '#b6ff3a' : '#7fc832');
+      g.globalAlpha = 1;
+    }
+  }
+
+  // the nearest thing still to do
   function liveSpot(S, def) {
     let best = null, bd = 1e9;
     for (const k of def.spots || []) {
@@ -604,69 +639,35 @@
     }
     return best;
   }
-  function hoof(g, x, y, dir, col, a) {
-    // a cloven print: two toes and a heel, the shape your own foot leaves.
-    // The first pass drew it 1.5 units across at a third alpha, which on a
-    // busy checker floor is a green speck you would never read as a print.
-    g.globalAlpha = a;
-    const toe = 2;
-    G.Rh(g, x - 2.5, y, toe, 3, OUT);
-    G.Rh(g, x + 0.5, y, toe, 3, OUT);
-    G.Rh(g, x - 2, y + 0.5, toe - 0.5, 2, col);
-    G.Rh(g, x + 1, y + 0.5, toe - 0.5, 2, col);
-    G.Rh(g, x - 2, y + 3, 4.5, 1.5, OUT);
-    G.Rh(g, x - 1.5, y + 3, 3.5, 1, G.shade(col, -0.25));
-    g.globalAlpha = 1;
-  }
-  function trail(g, S, def, t) {
+
+  // ---- OFF SCREEN ----
+  // One arrow on the frame edge, bright at the tip. No label and no
+  // distance: the first pass printed "348M", which is the width of the
+  // room in logical units with a unit stuck on the end of it.
+  function edgeMark(g, S, def, t) {
     if (S.lock || def.noTrail) return;
     const k = liveSpot(S, def);
     if (!k) return;
-    const dx = k.x - S.px;
-    const dir = Math.sign(dx) || 1;
-    const far = Math.abs(dx);
-    if (far < 26) return;                     // you are there; the chevron has it
-    // prints every 18 units, scrolling toward the thing, the near ones
-    // brightest. They stop short of the target so they never sit under
-    // the chevron.
-    const gap = 18;
-    const n = Math.min(9, Math.floor((far - 20) / gap));
-    const roll = (t * 26) % gap;
-    for (let i = 0; i < n; i++) {
-      const d = 16 + i * gap + roll;
-      if (d > far - 16) break;
-      const x = S.px + dir * d;
-      const q = i / Math.max(1, n - 1);
-      const a = (1 - q * 0.55) * (0.55 + Math.abs(Math.sin(t * 2 + i * 0.7)) * 0.3);
-      hoof(g, x, S.floor - 2 + (i % 2 ? 2 : 0), dir, '#b6ff3a', a);
-    }
-    // and if it is off screen, an arrow riding the edge of the frame
     const sx = k.x - G.cam.x;
-    if (sx > 10 && sx < G.W - 10) return;
-    const ex = sx <= 10 ? G.cam.x + 14 : G.cam.x + G.W - 14;
-    const ey = S.floor - 46 + Math.sin(t * 3) * 2;
-    // A TRIANGLE. The first pass stacked vertical bars at increasing x,
-    // which renders as a green slab with a notch in it and points nowhere.
-    // outline pass, then fill pass. Per-column outlines overlap into a
-    // set of black bars and the whole thing reads as venetian blinds.
+    if (sx > 12 && sx < G.W - 12) return;
+    const dir = sx <= 12 ? -1 : 1;
+    const ex = G.cam.x + (dir < 0 ? 16 : G.W - 16);
+    const ey = S.floor - 48 + Math.round(Math.sin(t * 2.6) * 2);
+    G.glow(g, ex, ey, 30, 30, '#b6ff3a', 0.5);
     const L = 9, H = 13;
-    const colx = (i) => ex - dir * (L / 2 - i);
+    const colx = (i) => ex + dir * (i - L / 2);
     const colh = (i) => Math.round(H * (1 - i / L));
     for (let i = 0; i <= L; i++) {
-      const h = colh(i); if (h <= 0) continue;
+      const h = colh(i);
+      if (h <= 0) continue;
       G.Rh(g, colx(i) - 0.5, ey - h / 2 - 0.5, 2, h + 1, OUT);
     }
     for (let i = 0; i <= L; i++) {
-      const h = colh(i); if (h <= 0) continue;
-      // the TIP is the bright end. It was lit at the base, which points
-      // the eye at the wrong end of the arrow.
-      G.Rh(g, colx(i), ey - h / 2, 1, h, i > L * 0.6 ? '#ffffff' : i > L * 0.3 ? '#dfffcf' : '#8ede3a');
+      const h = colh(i);
+      if (h <= 0) continue;
+      G.Rh(g, colx(i), ey - h / 2, 1, h,
+        i > L * 0.6 ? '#f2ffe0' : i > L * 0.3 ? '#b6ff3a' : '#7fc832');
     }
-    G.glow(g, ex, ey, 30, 30, '#b6ff3a', 0.55);
-    // no distance readout. It was drawn as "348M", which is the width of
-    // the room in logical units with a unit stuck on the end of it, and a
-    // number on the HUD is the exact thing the floor marks replaced.
-    if (k.label) G.pill(g, G.clamp(ex, G.cam.x + 30, G.cam.x + G.W - 30), ey - 10, k.label, '#dfffcf');
   }
 
   // ------------------------------------------------------------
@@ -695,15 +696,16 @@
         { align: 'center' });
       g.globalAlpha = 1;
     }
-    // what the pointer is on right now beats a generic nudge, and the
-    // generic nudge sticks around long enough to actually be read
+    // ONE short line, and only when it is telling you something the
+    // marks are not. Pointing at a spot already puts its name on a tab
+    // over the pin, so a second caption at the bottom of the frame
+    // saying TAP TO <that same name> is the same sentence twice.
     if (!S.lock) {
       let tip = null;
-      if (S.hoverA) tip = 'TAP ' + (S.hoverA.name || 'THEM') + ' TO TALK';
-      else if (S.hoverK) tip = 'TAP TO ' + (S.hoverK.label || 'USE');
-      else if (S.t < 12) tip = 'TAP THE FLOOR TO WALK  ·  TAP ANYONE TO TALK';
+      if (S.hoverA) tip = 'TAP TO TALK';
+      else if (!S.hoverK && S.t < 9) tip = 'TAP TO WALK';
       if (tip) {
-        const fl = S.hoverA || S.hoverK ? true : Math.sin(S.t * 4) > 0;
+        const fl = S.hoverA ? true : Math.sin(S.t * 4) > 0;
         G.text(g, tip, G.W / 2, G.H - 7,
           fl ? '#e8dcc8' : '#8a7c68', { align: 'center', sc: 0.5, out: OUT });
       }

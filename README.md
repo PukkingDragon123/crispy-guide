@@ -2,11 +2,11 @@
 
 **They took the world. You have gelato.**
 
-A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: two dot
-eyes, one smile, a cream hide, two black patches, a cowbell, a pair of black
-shades and a flower lei, with the BIG MOO roundel stamped on your belly. For six
-years you were the face of BIG MOO, a beachfront burger chain with a cow on the
-sign, open twenty-four hours.
+A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: a big
+cream head with two dot eyes and one smile behind a pair of black shades, ears
+that hang, a slim body with the BIG MOO roundel on the chest, a flower lei, and
+long legs with daylight between them. For six years you were the face of BIG
+MOO, a beachfront burger chain with a cow on the sign, open twenty-four hours.
 
 Then a patrol machine walked in through the front door, put **six rounds** into
 you, and left a charge under the counter. Your legs still work. Almost nothing
@@ -88,7 +88,7 @@ is untouched.
 The first act of this game used to be nine cutscene shots and a two-mile
 crawl — a camera looking at things while you waited. It is now **two rooms you
 walk around in**. Tap where you want to go and the mascot walks there. Tap the
-green chevron over something and it walks over and uses it.
+green pin over something and it walks over and uses it.
 
 Everything in them runs off `stage.js`: a floor line, a scrolling camera, a
 cast of people each running their own **script of intentions**, places you can
@@ -103,20 +103,31 @@ permanent instruction over a room built to be looked at, in a game whose
 whole first act is *go and look at this place before it stops existing*.
 
 The banner now **says its piece and leaves** — 3.4 seconds up, 0.7 fading
-out — and the job of pointing is handed to the room:
+out — and the job of pointing is handed to a **quest marker**, in three parts:
 
-- **A trail of hoof prints** across the floor from where you are standing to
-  wherever you are wanted, cloven, outlined, one every eighteen units, scrolling
-  gently along the line so it reads as a direction rather than a decal. It is
-  laid down by `trail()` in `stage.js` and it is drawn *in the world*, under
-  everybody's feet, not over the frame.
-- **A chevron at the edge of the screen** when the thing you want is off it,
-  bright at the tip and dark at the base, so it points instead of just sitting
-  there.
-- **The mark on the thing itself**, which every scene in the game already has.
+- **A pin in the air**, hanging with its point on the thing. A disc with a hole
+  punched through it and a spike under it, bobbing. `G.questPin()` in `util.js`.
+- **A ring pulsing on the floor** underneath it, flat and in perspective, where
+  you have to stand.
+- **An arrow on the frame edge** when the thing is off screen, bright at the tip
+  and dark at the base, so it points instead of just sitting there.
 
-It does not print a distance. The first pass did: `348M`, which is the width
-of the room in logical units with a unit stuck on the end of it.
+**No text on any of them** unless you point at one, and then it is the thing's
+name and nothing else.
+
+### Two things it was, before it was that
+
+It was a **green banner** pinned to the top of the frame reading
+`SAY HELLO TO TABLE FOUR`, which is a quest log bolted over a restaurant: it
+never says *where* table four is, and once you have read it it just sits there.
+
+Then it was a **line of your own hoof prints** walking away from you across the
+floor toward whatever was live — in the world, at the scale of the room, and on
+a two-tone checker floor, eight small green marks scattered over the tiles read
+as litter. That went too.
+
+It never printed a distance. The first pass did: `348M`, which is the width of
+the room in logical units with a unit stuck on the end of it.
 
 ![The floor of BIG MOO](screenshots/floor.png)
 
@@ -357,8 +368,8 @@ rather than something that occasionally shouts as you pass.
 Everybody with something to say wears a **little speech mark** over their
 head: outlined at full strength whatever else is going on, filled brighter
 when you are near them, and with their **name on a tab** when the pointer is
-on them. A green chevron over a live spot suppresses the speech mark under it
-— a chevron and a bubble on the same head is two calls to action fighting over
+on them. A green pin over a live spot suppresses the speech mark under it
+— a pin and a bubble on the same head is two calls to action fighting over
 eleven pixels, and the spot is the plot while the person is the joke.
 
 The line along the bottom of the screen says what the pointer is actually on:
@@ -729,12 +740,17 @@ Two base stands, six sauce bottles, four topping jars, five pits and a cat, and
 something and none of them said so, and a player who has not read the source
 has no way to find that out except by tapping the whole screen.
 
-There is now one mark for *everything you can touch*, in every scene:
+There is now one mark for *everything you can touch*, in every scene — and it
+is the **same pin** the walkable rooms hang over an objective, at a third the
+size, so one mark means one thing everywhere in the game:
 
 | | |
 |---|---|
-| **Resting** | a small chevron, in the thing's own colour, breathing over it |
+| **Resting** | a small pin, in the thing's own colour, hanging over it and breathing |
 | **Pointed at** | brackets round the thing and its **name** on a tab |
+
+The back room drew its own chevron for four versions, which meant two different
+marks for one idea. It draws `G.questPin` now, like everything else.
 
 It does **not** light everything at once, which would just be a wall of pips.
 It lights **the step you are on** — a base, then a scoop, then whatever you
@@ -860,7 +876,7 @@ go there; tap a machine and you walk to it and use it. Breeze block, damp bloom,
 strip lights that flicker, a drain, shelving stacked with stock crates, a
 defaced recruitment poster, a tool board, a mop in a bucket.
 
-**Every live station is marked** — a chevron just above it, hanging where the
+**Every live station is marked** — a pin just above it, hanging where the
 thing actually is rather than in a tidy row along the ceiling, plus a ring
 pulsing on the floor at its feet so you can see how far off you are. It used
 to mark only the station you were *already standing at*, which tells you
@@ -1169,9 +1185,46 @@ your **body**, your legs stay on, and what you carry out of BIG MOO is damage
 rather than a missing part.
 
 **And the proportions are a costume's.** The head is half again the size it was,
-the body is a third shorter, the arms are cream instead of steel and the feet
-are far too big. It is not a machine that happens to look friendly; it is
-somebody in a suit, which is what a mascot is.
+the arms are cream instead of steel and the feet are far too big. It is not a
+machine that happens to look friendly; it is somebody in a suit, which is what a
+mascot is.
+
+### It was a barrel with a cow balanced on it
+
+The body was `w 1.04` against a head of `hs 1.36`: a **35-unit torso under a
+32-unit head**, bulging outward on a single sine curve so the widest row was
+level with the shoulders. Two 7-wide legs stood 4 units apart underneath it.
+That silhouette is a filing cabinet on castors, and no amount of detail on top
+fixes it.
+
+| | Was | Is |
+|---|---|---|
+| Torso width | 35 | **22** — narrower than the head, which is 30 |
+| Torso profile | one sine bulge | **a taper**: neck, out to the shoulders, in to a waist, no hip flare |
+| Torso height | 18 | **16** |
+| Legs | 7 wide, 15 long, 4 apart | **6 wide, 18 long, 14 apart** |
+| Arms | 4.6 wide, to mid-body | **3.4 wide, to the hip**, and a tone darker than the body |
+| Head | 32 × 19, ears out sideways at eye level | **30 × 19, ears narrow and long, pinned below the eyeline so they hang** |
+
+It still totals **52 units head to heel**, which is `G.SZ.MASCOT`, which is an
+adult — the budget just went into legs instead of belly. The first pass at this
+forgot that and came out 63 units tall, standing a head over everybody in the
+room.
+
+Two more things that only showed up once it was slim. The **arms are drawn in
+the same cream as the body over the body**, so at the same tone they merged into
+one wide mass and the waist counted for nothing; they are a shade darker now.
+And a cream body with a badge on it is a fridge, so the suit got **one black
+patch, on the hip** — one, because a 22-by-16 chest with a roundel on it has
+room for exactly one marking and a second lands under the lei.
+
+### One necklace
+
+The collar and the cowbell went round the same neck as the lei, and on a chest
+this short the bell hung straight down through the middle of the flowers and out
+the other side into the badge. **The lei is the necklace now** — seven small
+blooms on a short string at the throat, rather than eleven big ones across the
+whole chest — and the bell comes back off the beach.
 
 The legs took two goes. Stubby ones came out as a **pair of dark blocks side by
 side**, which does not read as legs — it reads as a filing cabinet with a cow

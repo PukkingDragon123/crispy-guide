@@ -849,20 +849,59 @@
       g.globalAlpha = 1;
       if (label) G.pill(g, cx, by - 3, label, col);
     } else {
-      // resting: a little chevron pointing down at the thing, breathing.
-      // Same shape the walkable scenes use over a spot, so one mark
-      // means one thing everywhere in the game. Loud enough to find,
-      // quiet enough to live under a busy shelf.
-      const py = (o.pipY === undefined ? y - 6 : o.pipY) - br * 1.5;
-      g.globalAlpha = 0.42 + br * 0.28;
-      G.glow(g, cx, py + 2, 14, 12, col, 0.6);
-      for (let i = 0; i < 3; i++) {
-        G.Rh(g, cx - 3 + i - 0.5, py + i - 0.5, 8 - i * 2, 2, P.ink);
-        G.Rh(g, cx - 3 + i, py + i, 7 - i * 2, 1, i < 1 ? '#ffffff' : col);
-      }
+      // resting: a small pin hanging over the thing, breathing. Same
+      // shape the walkable scenes put over an objective, at a third the
+      // size -- so one mark means one thing everywhere in the game.
+      const py = (o.pipY === undefined ? y - 4 : o.pipY + 2) - br * 1.5;
+      g.globalAlpha = 0.5 + br * 0.3;
+      G.glow(g, cx, py - 5, 14, 14, col, 0.6);
+      G.questPin(g, cx, py, { r: 4, spike: 5, col });
       g.globalAlpha = 1;
     }
     return hov;
+  };
+
+  // ---------- THE QUEST PIN ----------
+  // ONE mark for "this is the thing": a disc with a hole punched through
+  // it and a spike under it, hanging in the air with its point on the
+  // target. Big over an objective in a walkable room, small over a sauce
+  // bottle -- the same shape either way, so one mark means one thing
+  // everywhere in the game.
+  //
+  // It replaced a four-row chevron, which at ten pixels across is an
+  // arrowhead: it reads as a piece of UI laid over the picture rather
+  // than as an object hanging in the room.
+  G.questPin = function (g, x, tipY, o) {
+    o = o || {};
+    const R = o.r === undefined ? 4.5 : o.r;
+    const SPIKE = o.spike === undefined ? Math.round(R * 1.8) : o.spike;
+    const col = o.col || '#b6ff3a';
+    const lit = G.mix(col, '#ffffff', 0.75), dk = G.shade(col, -0.42);
+    const cy = tipY - SPIKE - R;
+    const rows = [];
+    for (let j = -Math.round(R); j <= Math.round(R); j++) {
+      const t2 = 1 - (j * j) / (R * R);
+      if (t2 < 0) continue;
+      rows.push([cy + j, Math.max(0.6, Math.sqrt(t2) * R)]);
+    }
+    for (let j = 1; j <= SPIKE; j++)
+      rows.push([cy + R + j, Math.max(0.4, R * (1 - j / SPIKE) * 0.8)]);
+    // every outline first, then every fill, or each row's black lands on
+    // the row above it
+    for (const r of rows) G.R(g, x - r[1] - 1, r[0], r[1] * 2 + 2, 1, P.ink);
+    const span = 2 * R + SPIKE;
+    for (const r of rows) {
+      const p = (r[0] - (cy - R)) / span;
+      G.R(g, x - r[1], r[0], r[1] * 2, 1, p < 0.09 ? lit : p > 0.58 ? dk : col);
+    }
+    // THE HOLE, which is the whole read: a disc with a spike on it is a
+    // leaf, and a disc with a hole in it is a pin
+    // the hole has to leave a ring of colour round it. At half the radius
+    // on a small pin it ate the disc and what was left was three green
+    // hairlines stacked up: a hamburger, not a pin.
+    if (R >= 3.5) { G.fc(g, x, cy, R * 0.56, P.ink); G.fc(g, x, cy, R * 0.40, '#16250e'); }
+    else G.fc(g, x, cy, Math.max(0.8, R * 0.34), P.ink);
+    return { cy, top: cy - R };
   };
 
   // the little name tag the affordance hangs over things, also used on
