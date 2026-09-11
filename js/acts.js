@@ -33,20 +33,104 @@
   // ------------------------------------------------------------
   const FB = F - 18;                  // the back floor
 
-  function tiledWall(g, x0, x1, dim) {
+  // ---- THE ROOM ITSELF ----
+  // It was a flat cream wall with a stripe of tiles glued across it. A
+  // chain does not build a room like that: it builds a LIT SOFFIT, a
+  // house-colour band you can see from the road, a tiled service height
+  // and a stainless kick rail, and every one of those lines runs the
+  // whole length of the building.
+  function tiledWall(g, x0, x1, dim, t) {
     const M = (c) => G.mix(c, '#241018', dim || 0);
-    G.R(g, x0, 0, x1 - x0, FB, M('#f6e8d4'));
-    G.R(g, x0, 0, x1 - x0, 20, M('#8a2f3a'));           // the fascia band inside
-    G.hairq(g, x0, 20, x1 - x0, M('#c8505c'));
-    for (let x = x0; x < x1; x += 17) {                  // glazed tiles to shoulder height
-      G.Rh(g, x + 1, FB - 64, 15, 14, M('#eddcc4'));
-      G.hairq(g, x + 1, FB - 64, 15, M('#fff6ea'));
-      G.Rh(g, x + 1, FB - 49, 15, 14, M('#e6d3b8'));
-      G.hairq(g, x + 1, FB - 49, 15, M('#f6ead8'));
+    const w = x1 - x0;
+    G.R(g, x0, 0, w, FB, M('#f6e8d4'));
+    // ---- the soffit, and the lights in it ----
+    G.R(g, x0, 0, w, 15, M('#6b1d26'));
+    G.R(g, x0, 13, w, 3, M('#8a2f3a'));
+    G.hairq(g, x0, 16, w, M('#c8505c'));
+    for (let lx = x0 + 34; lx < x1; lx += 68) {
+      G.R(g, lx - 9, 10, 18, 5, M('#2a1218'));
+      G.R(g, lx - 8, 11, 16, 3, M(dim ? '#6b5a48' : '#ffeac0'));
+      G.hairq(g, lx - 8, 11, 16, M(dim ? '#8a7458' : '#fffaf0'));
+      if (!dim) G.glow(g, lx, 22, 70, 46, '#ffd9a0', 0.16);
     }
-    G.R(g, x0, FB - 68, x1 - x0, 3, M('#c8505c'));
-    G.R(g, x0, FB - 8, x1 - x0, 8, M('#b39ea2'));        // skirting
-    G.hairq(g, x0, FB - 8, x1 - x0, M('#d8c4c8'));
+    // ---- the house band: cream over red, the two colours on the sign ----
+    G.R(g, x0, 24, w, 7, M('#c8383a'));
+    G.hairq(g, x0, 24, w, M('#e8585a'));
+    G.hairq(g, x0, 30.5, w, M('#8a2022'));
+    // ---- tiles to service height, with grout you can see ----
+    const TT = FB - 66;
+    G.R(g, x0, TT, w, 58, M('#efe1cb'));
+    for (let x = x0 - (x0 % 14); x < x1; x += 14) {
+      G.Rh(g, x, TT, 13, 13, M('#f6ead8'));
+      G.Rh(g, x, TT + 14.5, 13, 13, M('#e8d8bf'));
+      G.Rh(g, x + 7, TT + 29, 13, 13, M('#f2e4ce'));
+      G.Rh(g, x + 7, TT + 43.5, 13, 13, M('#e8d8bf'));
+      G.hairq(g, x, TT, 13, M('#fffaf0'));
+      G.hairq(g, x, TT + 14.5, 13, M('#fffaf0'));
+    }
+    // the capping rail over them, and the stainless kick rail under
+    G.R(g, x0, TT - 4, w, 4, M('#c8383a'));
+    G.hairq(g, x0, TT - 4, w, M('#e8585a'));
+    G.R(g, x0, FB - 10, w, 10, M('#9aa4b4'));
+    G.hairq(g, x0, FB - 10, w, M('#d4dce8'));
+    G.hairq(g, x0, FB - 1, w, M('#5c6472'));
+    for (let x = x0 - (x0 % 40); x < x1; x += 40) G.vairq(g, x, FB - 9, 8, M('#7a8494'));
+  }
+
+  // ---- THE SERVICE LINE ----
+  // What is actually behind a fast food counter: a drinks fountain with
+  // its nozzles and its drip tray, a fry station under a heat lamp, and
+  // a stack of cups. The wall back there used to be bare cream.
+  function serviceLine(g, dim, t) {
+    const M = (c) => G.mix(c, '#241018', dim || 0);
+    const y0 = FB - 66, y1 = FB - 12;
+    G.R(g, 338, y0, 164, y1 - y0, M('#8a94a4'));
+    G.hairq(g, 338, y0, 164, M('#cdd6e2'));
+    for (let x = 338; x < 502; x += 12) G.vairq(g, x, y0 + 1, y1 - y0 - 2, M('#6b7484'));
+    G.R(g, 338, y1 - 3, 164, 3, M('#5c6472'));
+
+    // ---- the drinks fountain ----
+    G.R(g, 344, y0 + 6, 52, 34, M('#2a3040'));
+    G.bevelq(g, 344, y0 + 6, 52, 34, M('#556074'), M('#141a26'));
+    for (let i = 0; i < 4; i++) {                        // the flavour plates
+      const bx = 347 + i * 12;
+      G.R(g, bx, y0 + 9, 10, 12, M(['#c8383a', '#e8853a', '#3a7a5c', '#4a5a8a'][i]));
+      G.hairq(g, bx, y0 + 9, 10, M('#ffffff'));
+      G.R(g, bx + 3, y0 + 22, 4, 4, M('#8a94a8'));       // the nozzle
+      G.Rq(g, bx + 4, y0 + 26, 2, 2, M('#3a4250'));
+    }
+    G.R(g, 344, y0 + 32, 52, 5, M('#454e60'));           // the drip tray
+    for (let i = 0; i < 12; i++) G.vairq(g, 347 + i * 4, y0 + 33, 3, M('#232a38'));
+    if (!dim) G.glow(g, 370, y0 + 18, 56, 40, '#8fd8c0', 0.1);
+
+    // ---- the fry station, under its lamp ----
+    G.R(g, 406, y0 + 8, 32, 5, M('#3a2418'));            // the heat lamp housing
+    G.R(g, 407, y0 + 11, 30, 1.5, M(dim ? '#6b4a30' : '#ff9a3a'));
+    if (!dim) G.glow(g, 422, y0 + 20, 42, 26, '#ff9a3a', 0.26);
+    G.R(g, 408, y0 + 22, 28, 13, M('#c9a45c'));          // the bin of fries
+    G.bevelq(g, 408, y0 + 22, 28, 13, M('#e8c890'), M('#6b5228'));
+    for (let i = 0; i < 14; i++) {
+      const fx = 410 + G.hash(i, 3) * 24, fy = y0 + 23 + G.hash(i, 7) * 4;
+      G.Rh(g, fx, fy, 1, 2.5 + G.hash(i, 11) * 2.5, M(i % 3 ? '#ffd45a' : '#f0b83a'));
+    }
+    G.R(g, 404, y0 + 35, 36, 3, M('#5c6472'));
+    // two baskets hanging on the rail beside it
+    for (let i = 0; i < 2; i++) {
+      const bx2 = 442 + i * 9;
+      G.R(g, bx2, y0 + 18, 7, 10, M('#6b7484'));
+      G.hairq(g, bx2, y0 + 18, 7, M('#b4bcc8'));
+      for (let k = 1; k < 4; k++) G.hairq(g, bx2 + 0.5, y0 + 19 + k * 2.2, 6, M('#454e60'));
+    }
+
+    // ---- and a stack of cups, three sizes ----
+    for (let i = 0; i < 3; i++) {
+      const cxx = 466 + i * 12, ch = 13 + i * 4;
+      for (let k = 0; k < 4; k++) {
+        G.R(g, cxx - 5, y0 + 38 - ch - k * 3, 10, 4, M('#f0e2d4'));
+        G.hairq(g, cxx - 5, y0 + 38 - ch - k * 3, 10, M('#ffffff'));
+        G.hairq(g, cxx - 5, y0 + 41 - ch - k * 3, 10, M('#c8383a'));
+      }
+    }
   }
   // the floor: a checker on the back plane, bigger tiles at the front
   function checkerFloor(g, x0, x1, dim) {
@@ -56,7 +140,7 @@
       const tw = 9 + j * 1.6;
       for (let i = Math.floor(x0 / tw) - 1; i < x1 / tw + 1; i++)
         G.Rh(g, i * tw, y, tw + 0.5, h + 0.5,
-          (i + j) % 2 ? M('#ecdfcc') : M('#c4767c'));
+          (i + j) % 2 ? M('#e9ddc9') : M('#bf858a'));
       y += h; h += 1.1;
     }
     g.globalAlpha = 0.2; G.R(g, x0, FB, x1 - x0, 8, '#3a1a20'); g.globalAlpha = 1;
@@ -93,19 +177,40 @@
     const w = 84, y = FB - 100, h = 46;
     G.plate(g, x, y, w, h, M('#e8c8a0'), { r: 2, band: 2 });
     G.R(g, x + 4, y + 4, w - 8, h - 8, M('#101c2a'));
-    // sky, the far kerb, and the sign's glow off the wet
-    for (let j = 0; j < h - 8; j++)
-      G.Rh(g, x + 4, y + 4 + j, w - 8, 1, M(G.mix('#1a2740', '#0c141f', j / (h - 8))));
-    G.R(g, x + 4, y + h - 20, w - 8, 16, M('#0e1622'));
-    G.hairq(g, x + 4, y + h - 20, w - 8, M('#2c3a4e'));
+    // ---- THE SEAFRONT ----
+    // It looked out on a car park with six parked cars in it, in a game
+    // whose whole first line is that this is a chain on a promenade.
+    const HZ = y + h - 26;
+    // it is raining at night, but a window you cannot see anything
+    // through is a black rectangle with a frame round it
+    for (let j = 0; j < HZ - (y + 4); j++)                // sky
+      G.Rh(g, x + 4, y + 4 + j, w - 8, 1,
+        M(G.mix('#4a628f', '#26395c', j / Math.max(1, HZ - y - 4))));
+    // a pier out on the water, because a promenade has one
+    G.R(g, x + w * 0.58, HZ - 5, w * 0.30, 4, M('#1a2438'));
+    for (let i = 0; i < 4; i++) G.Rh(g, x + w * 0.62 + i * w * 0.07, HZ - 2, 1, 3, M('#1a2438'));
+    G.hairq(g, x + 4, HZ - 0.5, w - 8, M('#93b7d8'));     // the horizon
+    for (let j = 0; j < 14; j++)                          // the sea, banded
+      G.Rh(g, x + 4, HZ + j, w - 8, 1, M(G.mix('#3d7ba0', '#1d4160', j / 14)));
+    for (let i = 0; i < 18; i++) {                        // and the light on it
+      const q = G.hash(i, 5);
+      G.Rh(g, x + 6 + q * (w - 14), HZ + 2 + G.hash(i, 9) * 10,
+        2 + G.hash(i, 3) * 4, 0.5, M(i % 3 ? '#43769c' : '#7fb0cc'));
+    }
+    G.R(g, x + 4, y + h - 12, w - 8, 8, M('#2e3c50'));    // the promenade
+    G.hairq(g, x + 4, y + h - 12, w - 8, M('#556680'));
+    // the railing along it: posts and a top rail
+    G.R(g, x + 4, y + h - 17, w - 8, 1.5, M('#4a5c74'));
+    for (let i = 0; i * 9 < w - 10; i++)
+      G.Rh(g, x + 7 + i * 9, y + h - 17, 1, 6, M('#3d4c62'));
+    // a lamp on the prom, and what it does to the wet
+    if (!dim) {
+      G.fc(g, x + w * 0.24, y + h - 22, 1.6, '#ffe6a8');
+      G.glow(g, x + w * 0.24, y + h - 16, 34, 22, '#ffd9a0', 0.4);
+    }
     if (!dim) {
       G.glow(g, x + w * 0.66, y + h - 14, 60, 30, '#ff8ab0', 0.3);
       G.glow(g, x + w * 0.3, y + h - 12, 40, 20, '#ffd45a', 0.2);
-    }
-    for (let i = 0; i < 6; i++) {                        // parked cars, tiny
-      const cx = x + 8 + i * 13;
-      G.R(g, cx, y + h - 16, 9, 4, M('#1c2a3c'));
-      G.Rq(g, cx + 1, y + h - 17, 3, 1, M('#3f5a7a'));
     }
     for (let i = 0; i < 14; i++) {                       // rain on the glass
       const sd = G.hash(i + x, 3);
@@ -138,21 +243,28 @@
     paint(g, S) {
       const dim = S.flags.dark || 0;
       const M = (c) => G.mix(c, '#241018', dim);
-      tiledWall(g, 0, 580, dim);
+      tiledWall(g, 0, 580, dim, S.t);
       checkerFloor(g, 0, 580, dim);
+      serviceLine(g, dim, S.t);
       // bunting on a string right across the room
       if (!S.flags.blown) {
+        // under the house band, not across it -- strung over the red
+        // stripe it read as one more line in a stack of them
         for (let x = 0; x < 580; x += 2) {
           const q = (x % 90) / 90;
-          G.Rq(g, x, 24 + Math.sin(q * Math.PI) * 3, 2, 1, M('#c8a884'));
+          G.Rq(g, x, 38 + Math.sin(q * Math.PI) * 3, 2, 1, M('#c8a884'));
         }
         for (let i = 0; i < 20; i++) {
           const bx = 12 + i * 29, sag = Math.sin(((bx % 90) / 90) * Math.PI) * 3;
           const col = ['#ffd45a', '#8fd8c0', '#ff8ab0', '#7fd8ff'][i % 4];
           for (let j = 0; j < 5; j++)
-            G.Rh(g, bx - 4 + j, 25 + sag + j, 9 - j * 2, 1, M(j < 1 ? G.shade(col, 0.3) : col));
+            G.Rh(g, bx - 4 + j, 39 + sag + j, 9 - j * 2, 1, M(j < 1 ? G.shade(col, 0.3) : col));
         }
       }
+      // what the soffit lights do to the floor, which is the thing that
+      // ties a ceiling to a room
+      if (!dim) for (let lx = 34; lx < 580; lx += 68)
+        G.glow(g, lx, F - 6, 82, 28, '#ffd9a0', 0.11);
       window7(g, 20, S, dim);
       window7(g, 138, S, dim);
       // a clock nobody has looked at since four
@@ -163,7 +275,7 @@
       // the menu board over the counter, with the mark on the end of it
       G.R(g, 352, FB - 106, 136, 28, M('#1a1216'));
       G.bevelq(g, 352, FB - 106, 136, 28, M('#3a2a2e'), '#0a0608');
-      G.mooLogo(g, 370, FB - 92, 13, { tone: M('#f6ecd6') });
+      G.mooLogo(g, 370, FB - 92, 13, { tone: M('#c8383a') });
       G.text(g, 'BURGER   SWIRL   FRIES', 438, FB - 102, M('#ffd45a'), { align: 'center', sc: 0.5 });
       G.text(g, 'ASK ABOUT THE BIG MOO MEAL', 438, FB - 94, M('#f0e2d4'), { align: 'center', sc: 0.5 });
       G.text(g, 'NOW WITH FREE CROWNS', 438, FB - 86, M('#8fd8c0'), { align: 'center', sc: 0.5 });
@@ -174,7 +286,7 @@
       // very top of the wall and the far right of the room -- half of it
       // hung off the edge of the frame. The pier between the two windows
       // is the one piece of bare wall at eye height.
-      G.mooLogo(g, 121, FB - 76, 14, { tone: M('#f6ecd6') });
+      G.mooLogo(g, 121, FB - 76, 14, { tone: M('#c8383a') });
       if (!dim) G.glow(g, 121, FB - 76, 52, 52, '#ffd45a', 0.22);
       // the front door, on the back wall, one you could walk through
       const bust = S.flags.busted;
@@ -200,6 +312,32 @@
             dy0 + ((G.hash(i, 17) * Z.DOOR_H + S.t * 160) % Z.DOOR_H), 0.5, 4, '#6b90b8');
         }
       }
+      // ---- THE BITS OF FURNITURE A CHAIN LEAVES STANDING ABOUT ----
+      // a condiment and napkin stand, and a swing-flap bin beside it, on
+      // the back plane between the last booth and the counter
+      if (!S.flags.blown) {
+        G.R(g, 258, FB - 26, 30, 26, M('#b08050'));
+        G.bevelq(g, 258, FB - 26, 30, 26, M('#d8a870'), M('#6b4a28'));
+        G.R(g, 258, FB - 29, 30, 4, M('#9aa4b4'));
+        G.hairq(g, 258, FB - 29, 30, M('#d4dce8'));
+        for (let i = 0; i < 3; i++) {                    // pumps
+          G.R(g, 262 + i * 9, FB - 37, 6, 8, M(['#c8383a', '#e8c840', '#8a5c3a'][i]));
+          G.hairq(g, 262 + i * 9, FB - 37, 6, M('#ffffff'));
+          G.Rq(g, 264 + i * 9, FB - 40, 2, 3, M('#5c6472'));
+        }
+        G.R(g, 292, FB - 34, 22, 34, M('#3a4250'));      // the bin
+        G.bevelq(g, 292, FB - 34, 22, 34, M('#6b7484'), M('#1a2028'));
+        G.R(g, 292, FB - 37, 22, 4, M('#9aa4b4'));
+        G.R(g, 298, FB - 36, 10, 2, M('#141a22'));       // the flap
+        G.text(g, 'TRAYS', 303, FB - 24, M('#8a94a8'), { align: 'center', sc: 0.5 });
+      }
+      // a poster stand by the door, the meal deal nobody reads
+      G.R(g, 500, FB - 52, 20, 44, M('#8a2f3a'));
+      G.bevelq(g, 500, FB - 52, 20, 44, M('#c8505c'), M('#4a1620'));
+      G.R(g, 502, FB - 50, 16, 30, M('#f6ecd6'));
+      G.mooLogo(g, 510, FB - 42, 6, { word: false, tone: M('#c8383a') });
+      G.text(g, 'MEAL', 510, FB - 32, M('#8a2f3a'), { align: 'center', sc: 0.5 });
+      G.text(g, 'DEAL', 510, FB - 25, M('#8a2f3a'), { align: 'center', sc: 0.5 });
       // the little stage, on the near floor, with a light on it
       G.fe(g, STAGE_X, F + 1, 36, 7, M('#7a262f'));
       G.fe(g, STAGE_X, F - 2, 34, 6, M('#c8505c'));
@@ -224,15 +362,23 @@
       for (let k = 0; k < 3; k++) G.hairq(g, 350, CNT_TOP - 7 + k * 2, 20, M('#e8828c'));
       G.plate(g, 382, CNT_TOP - 16, 18, 16, M('#3a4250'), { r: 1, band: 1, spec: false });
       G.Rh(g, 385, CNT_TOP - 13, 12, 4, M('#8fd8c0'));
-      // the counter itself
-      G.R(g, CNT_X0 - 1, CNT_TOP - 1, CNT_X1 - CNT_X0 + 2, 34, OUT);
-      G.R(g, CNT_X0, CNT_TOP, CNT_X1 - CNT_X0, 5, M('#e8d6b8'));
-      G.hairq(g, CNT_X0, CNT_TOP, CNT_X1 - CNT_X0, M('#fff6ea'));
-      G.R(g, CNT_X0, CNT_TOP + 5, CNT_X1 - CNT_X0, 27, M('#8a5c3a'));
-      G.bevelq(g, CNT_X0, CNT_TOP + 5, CNT_X1 - CNT_X0, 27, M('#b07a4a'), M('#4a2c18'));
-      for (let i = 0; i * 22 < CNT_X1 - CNT_X0; i++)
-        G.vseam(g, CNT_X0 + 8 + i * 22, CNT_TOP + 8, 21, M('#3a2418'), M('#b07a4a'));
-      G.R(g, CNT_X0, CNT_TOP + 30, CNT_X1 - CNT_X0, 3, M('#4a2c18'));
+      // ---- the counter: stainless top, brand front ----
+      // It was a slab of brown wood, which is a pub bar. A chain's
+      // service counter is a steel top with a tray rail on the lip and
+      // the house colours down the front of it.
+      const CW = CNT_X1 - CNT_X0;
+      G.R(g, CNT_X0 - 1, CNT_TOP - 1, CW + 2, 34, OUT);
+      G.R(g, CNT_X0, CNT_TOP, CW, 4, M('#c8ccd4'));
+      G.hairq(g, CNT_X0, CNT_TOP, CW, M('#eef2f8'));
+      G.R(g, CNT_X0, CNT_TOP + 4, CW, 2, M('#7a8494'));
+      G.R(g, CNT_X0, CNT_TOP + 6, CW, 26, M('#a8262e'));
+      G.bevelq(g, CNT_X0, CNT_TOP + 6, CW, 26, M('#c8383a'), M('#5c1418'));
+      G.R(g, CNT_X0, CNT_TOP + 14, CW, 4, M('#f6ecd6'));          // the house stripe
+      G.hairq(g, CNT_X0, CNT_TOP + 14, CW, M('#ffffff'));
+      G.hairq(g, CNT_X0, CNT_TOP + 17.5, CW, M('#c8b89c'));
+      for (let i = 0; i * 26 < CW; i++)
+        G.vseam(g, CNT_X0 + 10 + i * 26, CNT_TOP + 7, 24, M('#5c1418'), M('#e8585a'));
+      G.R(g, CNT_X0, CNT_TOP + 30, CW, 3, M('#4a1014'));
       g.globalAlpha = 0.24;
       G.R(g, CNT_X0 - 4, CNT_TOP + 33, CNT_X1 - CNT_X0 + 8, 5, '#000000');
       g.globalAlpha = 1;

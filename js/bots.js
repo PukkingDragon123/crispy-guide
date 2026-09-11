@@ -1051,12 +1051,22 @@
         G.R(g, cx - hh, y + j, hh * 2, 1, j < 2 ? G.shade(c, 0.3) : p > 0.86 ? G.shade(c, -0.38) : c);
       }
     } else if (cow) {
-      // a broad rounded skull that narrows a little into the jaw
+      // ---- THE SKULL ----
+      // A dome that opens out to the cheekbones and then narrows into a
+      // jaw. It used to start at 52% of its own width at the crown, which
+      // is not a dome: it is a slab with the corners knocked off, and the
+      // flat top was the single worst thing about this face.
+      // A circular arc has infinite slope at its pole, so in a 19-row head
+      // it spends one row at 26% and is at 71% by the next: one narrow
+      // row and then a flat top. A quarter-sine off a BROAD crown climbs
+      // evenly instead, which is also what a cow's forehead does.
+      const skull = (p) => p < 0.42
+        ? 0.44 + 0.56 * Math.sin((p / 0.42) * Math.PI / 2)
+        : p < 0.60 ? 1
+        : 1 - Math.pow((p - 0.60) / 0.40, 1.7) * 0.30;
       for (let j = 0; j < h; j++) {
         const p = j / (h - 1);
-        const cap = p < 0.4 ? Math.sqrt(Math.max(0, 1 - Math.pow(1 - p / 0.4, 2))) : 1;
-        const jaw = p > 0.72 ? 1 - Math.pow((p - 0.72) / 0.28, 2) * 0.22 : 1;
-        const hh = Math.max(1, Math.round((w / 2) * (0.52 + 0.48 * cap) * jaw));
+        const hh = Math.max(1, Math.round((w / 2) * skull(p)));
         prof[j] = hh;
         G.R(g, cx - hh - 1, y + j, hh * 2 + 2, 1, OUT);
         G.R(g, cx - hh, y + j, hh * 2, 1,
@@ -1067,6 +1077,9 @@
         G.Rh(g, cx + prof[j] - 2, y + j, 2, 1, G.shade(c, -0.2));
         G.Rh(g, cx - prof[j], y + j, 1, 1, G.shade(c, 0.18));
       }
+      // a brow shelf, so the shades have something to sit on
+      G.hairq(g, cx - prof[Math.round(h * 0.22)] + 1, y + Math.round(h * 0.22),
+        prof[Math.round(h * 0.22)] * 2 - 2, G.shade(c, 0.22));
       // ---- the markings. One big patch over an eye, one on the jaw ----
       const patch = (ox, oy, rx, ry, sd2) => {
         for (let j = 0; j < h; j++) {
@@ -1085,27 +1098,36 @@
       // The patches go on the TEMPLE and the JAW, not over an eye. A
       // black patch ringing a black dot merges into one dark mass at
       // game scale, and then the cow has no eyes.
-      patch(-w * 0.36, h * 0.46, w * 0.2, h * 0.28, 1.7);
-      // ---- horn nubs: light, dark-tipped, small enough to stay cute ----
-      // ---- HORNS: two rounded NUBS on top of the skull. The version
-      // before this had tapered spikes leaning outward with a stepped
-      // dark curl between them - which is a goat with a mohawk, not a
-      // cow. A nub is a dome two or three pixels high and that is all. ----
+      // ON THE CHEEK, under the eyeline. At h*0.46 it ran up into the
+      // left lens and the two merged into one black mass with a cow
+      // behind it.
+      patch(-w * 0.31, h * 0.60, w * 0.16, h * 0.17, 1.7);
+      // ---- HORNS ----
+      // They GROW OUT of the skull now: a short tapering curve off the
+      // top corner, out and up and curling back in, with a dark collar
+      // where it meets the hide. They were two beige domes sitting on the
+      // roof with their own black outlines, which reads as a pair of
+      // little hats balanced on a cow rather than as horns.
       for (const sd of [-1, 1]) {
-        const nb = Math.max(2, Math.round(h * 0.13));       // radius
-        const nx = cx + sd * Math.round(w * 0.26);
-        const ny = y + 1;
-        const rows2 = [];
-        for (let j2 = 0; j2 < nb + 1; j2++) {
-          const q = (nb - j2) / nb;
-          rows2.push(Math.max(1, Math.round(nb * Math.sqrt(Math.max(0, 1 - q * q * 0.86)))));
+        const N = 8;
+        const bx = cx + sd * Math.round(w * 0.33), by = y + Math.round(h * 0.16);
+        const seg2 = [];
+        for (let i2 = 0; i2 <= N; i2++) {
+          const q = i2 / N;
+          seg2.push([bx + sd * (q * w * 0.15 + Math.sin(q * 2.4) * w * 0.035),
+                     by - q * h * 0.27 - Math.sin(q * 1.5) * h * 0.05,
+                     Math.max(0.6, h * 0.095 * (1 - q * 0.74))]);
         }
-        for (let j2 = 0; j2 < rows2.length; j2++)
-          G.R(g, nx - rows2[j2] - 1, ny - nb + j2 - 1, rows2[j2] * 2 + 2, 3, OUT);
-        for (let j2 = 0; j2 < rows2.length; j2++)
-          G.R(g, nx - rows2[j2], ny - nb + j2, rows2[j2] * 2, 1,
-            j2 < 1 ? '#f6ead0' : j2 < rows2.length * 0.5 ? '#e6d5ae' : '#c9ab7c');
-        G.pip(g, nx - rows2[1] * 0.5, ny - nb + 1, '#fffbe8');
+        for (const q of seg2) G.R(g, q[0] - q[2] - 1, q[1] - q[2] - 1, q[2] * 2 + 2, q[2] * 2 + 2, OUT);
+        for (let i2 = 0; i2 <= N; i2++) {
+          const q = seg2[i2], p2 = i2 / N;
+          G.R(g, q[0] - q[2], q[1] - q[2], q[2] * 2, q[2] * 2,
+            p2 < 0.2 ? '#c9ab7c' : p2 > 0.72 ? '#f6ead0' : '#e6d5ae');
+          G.Rq(g, q[0] - q[2] * 0.6, q[1] - q[2] * 0.9, Math.max(0.5, q[2] * 0.6), 0.75, '#fffbe8');
+        }
+        // the collar at the root, which is what seats it in the hide
+        G.Rh(g, bx - h * 0.10, by - 1, h * 0.20, 1.5, G.shade(c, -0.3));
+        G.hairq(g, bx - h * 0.09, by - 1, h * 0.18, G.shade(c, 0.2));
       }
     } else {
       const hp = HEAD_PROFILE[kind] || HEAD_PROFILE.boxy;
@@ -1208,48 +1230,56 @@
         }
       }
     } else if (o.shades) {
-      // ---- THE SHADES. One wraparound band across the whole face, a
-      // hot specular streak across the glass, and the optics burning
-      // behind it. This is the single thing that makes it a mascot and
-      // not a farm animal. ----
-      const gw = Math.round(w * 0.94), gh = Math.max(5, Math.round(h * 0.3));
-      const gx = cx - gw / 2, gy = ey - Math.max(1, u(1));
-      // the arms, going back past the cheeks to the ears
+      // ---- THE SHADES ----
+      // TWO LENSES AND A BRIDGE, sitting on a face. What was here before
+      // was one wraparound band 94% of the head wide with a notch cut in
+      // the middle -- at this size that is not a pair of glasses, it is a
+      // letterbox slot across a wall, and it took the whole head with it.
+      // These are narrower than the skull, so cream shows either side and
+      // the head stays a head.
+      const lw = Math.max(5, Math.round(w * 0.31));       // one lens
+      const lh = Math.max(5, Math.round(h * 0.27));
+      const sp3 = Math.round(w * 0.20);                    // centre of each
+      const gy = ey - Math.max(1, u(1));
+      // the arms, going back over the cheek to the ear
       for (const sd of [-1, 1]) {
-        G.R(g, cx + sd * (gw / 2) - (sd > 0 ? 0 : u(3)), gy + gh * 0.24 - 1, u(4) + 1, u(3) + 2, OUT);
-        G.Rh(g, cx + sd * (gw / 2) - (sd > 0 ? -0.5 : u(3)), gy + gh * 0.28, u(4), u(2), '#2a2434');
-        G.hairq(g, cx + sd * (gw / 2) - (sd > 0 ? -0.5 : u(3)), gy + gh * 0.28, u(4), '#6b5f7a');
+        const ax2 = cx + sd * (sp3 + lw / 2);
+        // it runs to the EDGE OF THE SKULL and stops. Given a fixed
+        // length it overshot into open air, and two black tabs floating
+        // either side of the head is not a pair of arms.
+        const edge = prof[G.clamp(Math.round(h * 0.30), 0, h - 1)] || Math.round(w * 0.46);
+        const run = Math.max(u(2), cx + sd * edge - ax2 * sd * 0 - (sd > 0 ? ax2 - cx : cx - ax2) - 0);
+        const L2 = Math.max(u(2), edge - (sp3 + lw / 2));
+        G.R(g, sd > 0 ? ax2 : ax2 - L2, gy + lh * 0.2 - 1, L2 + 1, u(2) + 2, OUT);
+        G.Rh(g, sd > 0 ? ax2 : ax2 - L2, gy + lh * 0.24, L2, u(1.5), '#2a2434');
+        G.hairq(g, sd > 0 ? ax2 : ax2 - L2, gy + lh * 0.24, L2, '#6b5f7a');
       }
-      // the frame
-      G.R(g, gx - 1, gy - 1, gw + 2, gh + 2, OUT);
-      // the glass: two lozenges over a bridge, one dark mass
-      for (let j = 0; j < gh; j++) {
-        const q = j / Math.max(1, gh - 1);
-        const inset = Math.round(Math.pow(Math.abs(q - 0.42) * 2.1, 2.4) * gw * 0.06);
-        const yy = gy + j;
-        G.R(g, gx + inset, yy, gw - inset * 2, 1,
-          j === 0 ? '#5c5270' : q > 0.86 ? '#0e0a14' : q > 0.6 ? '#161022' : '#1f1730');
-      }
-      // the bridge notch over the muzzle
-      G.R(g, cx - u(1.5), gy + gh * 0.34, u(3), gh * 0.66, c);
-      G.hairq(g, cx - u(1.5), gy + gh * 0.34, u(3), G.shade(c, 0.4));
-      // the optics behind the glass, two hot coals
+      // the bridge, a bar between the two, high on the muzzle
+      G.R(g, cx - sp3, gy + lh * 0.14 - 1, sp3 * 2, u(2) + 2, OUT);
+      G.Rh(g, cx - sp3, gy + lh * 0.18, sp3 * 2, u(1.5), '#2a2434');
+      G.hairq(g, cx - sp3, gy + lh * 0.18, sp3 * 2, '#6b5f7a');
+      // and the lenses: a rounded block of dark glass each, with the
+      // optic burning behind it
       for (const sd of [-1, 1]) {
-        const lx = cx + sd * Math.round(w * 0.26);
+        const lx0 = cx + sd * sp3 - lw / 2;
+        G.rr2(g, lx0 - 1, gy - 1, lw + 2, lh + 2, OUT);
+        for (let j = 0; j < lh; j++) {
+          const q = j / Math.max(1, lh - 1);
+          const inset = j === 0 || j === lh - 1 ? 1 : 0;
+          G.R(g, lx0 + inset, gy + j, lw - inset * 2, 1,
+            j === 0 ? '#5c5270' : q > 0.86 ? '#0e0a14' : q > 0.58 ? '#161022' : '#1f1730');
+        }
+        const lcx = cx + sd * sp3;
         const look = Math.sin(t * 0.6) * u(1);
         if (!blink && !o.dead) {
-          G.Rh(g, lx - u(1.5) + look, gy + gh * 0.4, u(3), Math.max(1, gh * 0.3), G.shade(hue, -0.3));
-          G.Rq(g, lx - u(0.75) + look, gy + gh * 0.44, u(1.5), Math.max(0.5, gh * 0.2), hue);
-          G.glow(g, lx + look, gy + gh * 0.52, u(9), gh, hue, 0.4);
+          G.Rh(g, lcx - u(1.5) + look, gy + lh * 0.38, u(3), Math.max(1, lh * 0.3), G.shade(hue, -0.3));
+          G.Rq(g, lcx - u(0.75) + look, gy + lh * 0.42, u(1.5), Math.max(0.5, lh * 0.2), hue);
+          G.glow(g, lcx + look, gy + lh * 0.5, u(8), lh, hue, 0.4);
         }
+        // the light on the glass: a streak low-left, a pip high-right
+        G.Rq(g, lx0 + lw * 0.12, gy + lh * 0.66, lw * 0.4, 0.25, '#8a94b8');
+        G.Rq(g, lx0 + lw * 0.62, gy + lh * 0.16, lw * 0.22, 0.25, '#b4bcd8');
       }
-      // the specular: one long streak low-left, one short pip high-right
-      G.Rq(g, gx + gw * 0.08, gy + gh * 0.62, gw * 0.3, 0.25, '#8a94b8');
-      G.Rq(g, gx + gw * 0.1, gy + gh * 0.7, gw * 0.2, 0.25, '#5c6480');
-      for (let k = 0; k < 3; k++)
-        G.Rq(g, gx + gw * 0.7 + k * 0.5, gy + gh * 0.2 + k * 0.25, gw * (0.1 - k * 0.02), 0.25, '#cfd8f0');
-      // and a hairline of sky along the top of the frame
-      G.hairq(g, gx, gy - 0.25, gw, '#6b7f96');
     } else {
       const sp = Math.round(w * (cow ? 0.25 : 0.27));
       for (const s of [-1, 1]) {
@@ -1284,17 +1314,54 @@
       mzH = Math.max(4, Math.round(h * (tight ? 0.26 : 0.42)));
       mzT = y + Math.round(h * (tight ? 0.6 : 0.5));
       if (tight) {
+        // ---- A MUZZLE WITH A SHAPE ----
+        // A pale snout block that sits PROUD of the face, with the pink
+        // nose pad on the top half of it and the mouth under. It was a
+        // flat pink lozenge stuck on the jaw, which at this size is a
+        // sticker rather than a snout.
+        mzW = Math.round(w * 0.52);
+        mzH = Math.max(5, Math.round(h * 0.30));
+        mzT = y + Math.round(h * 0.58);
+        const snout = (q) => Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.4)), 1 / 2.2);
+        // no outline on it: a row-by-row border round a shape this small
+        // comes out as a dotted stitch running round the jaw. It is a
+        // TONE instead -- lit along the top, shaded underneath, which is
+        // what a block sitting proud of a face actually looks like.
         for (let j2 = 0; j2 < mzH; j2++) {
-          const q = (j2 / (mzH - 1) - 0.5) * 2;
-          const hh = Math.max(1, Math.round((mzW / 2) *
-            Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.6)), 1 / 2.4)));
-          G.R(g, cx - hh, mzT + j2, hh * 2, 1, j2 < 1 ? '#ffe0e6' : '#f6c6d0');
+          const q = (j2 / (mzH - 1) - 0.42) * 2;
+          const hh = Math.max(1, Math.round((mzW / 2) * snout(q)));
+          G.R(g, cx - hh, mzT + j2, hh * 2, 1,
+            j2 < 1 ? '#ffffff' : j2 > mzH - 2 ? G.shade(c, -0.2) : G.shade(c, 0.24));
+          G.Rq(g, cx - hh, mzT + j2, 0.75, 1, G.shade(c, 0.42));
+          G.Rq(g, cx + hh - 0.75, mzT + j2, 0.75, 1, G.shade(c, -0.16));
         }
-        // nostrils: two pixels each, and that is all a nostril needs
+
+        // the nose pad, on the upper half of the snout
+        const npW = Math.round(mzW * 0.56), npH = Math.max(4, Math.round(mzH * 0.62));
+        const npT = mzT + Math.max(1, Math.round(mzH * 0.10));
+        for (let j2 = 0; j2 < npH; j2++) {
+          const q = (j2 / Math.max(1, npH - 1) - 0.4) * 2;
+          const hh = Math.max(1, Math.round((npW / 2) * snout(q)));
+          G.R(g, cx - hh, npT + j2, hh * 2, 1,
+            j2 < 1 ? '#ffd2dc' : j2 > npH - 2 ? '#d489a0' : '#f6aebe');
+        }
+        // two nostrils, breathing
         const br = Math.sin(t * 1.5) > 0 ? 0.25 : 0;
-        for (const sd of [-1, 1])
-          G.Rq(g, cx + sd * Math.round(mzW * 0.26) - 0.5, mzT + Math.max(1, Math.round(mzH * 0.16)),
-            1, 1 + br, '#d489a0');
+        for (const sd of [-1, 1]) {
+          const nx2 = cx + sd * Math.round(npW * 0.26), ny2 = npT + Math.max(1, Math.round(npH * 0.42));
+          G.Rh(g, nx2 - 1, ny2, 2, 1.5 + br, '#8a4560');
+          G.hairq(g, nx2 - 1, ny2, 2, '#6b2f48');
+        }
+        // and the mouth, under the pad, on the pale part of the snout
+        if (!o.open) {
+          const my2 = npT + npH + Math.max(0.5, u(0.5));
+          const mw2 = Math.round(mzW * 0.34);
+          for (let i2 = 0; i2 <= mw2; i2++) {
+            const q = i2 / mw2 - 0.5;
+            G.Rq(g, cx - mw2 / 2 + i2, my2 + Math.round(Math.pow(Math.abs(q) * 2, 1.8) * -0.9) + 0.75,
+              1, 0.75, G.shade(c, -0.5));
+          }
+        }
       } else {
         for (let j2 = 0; j2 < mzH; j2++) {
           const q = (j2 / (mzH - 1) - 0.5) * 2;

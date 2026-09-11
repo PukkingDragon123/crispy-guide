@@ -310,7 +310,7 @@
     // the lit box it sits in
     G.rr2(g, spx - 24, GY - 88, 48, 46, '#8a2f3a');
     G.rr2(g, spx - 22, GY - 86, 44, 42, sg > 0 ? '#4a3a38' : '#f6ecd6');
-    G.mooLogo(g, spx, GY - 65, 19, { flat: 1, tone: sg > 0 ? '#4a3a38' : '#f6ecd6' });
+    G.mooLogo(g, spx, GY - 65, 19, { tone: sg > 0 ? '#6b4a48' : '#c8383a' });
     if (!sg) G.glow(g, spx, GY - 65, 78, 74, '#ffd45a', 0.42);
     g.restore();
     return { GY, BX, BW, BT, spx };

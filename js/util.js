@@ -794,19 +794,54 @@
   // vignette + scanline grade, drawn last for the grimy look
   // At 320x180 a scanline grade eats the image. Just a soft corner
   // darkening so the frame holds together.
+  // A VIGNETTE, not four bars. The old one laid the same alpha down each
+  // edge at a constant strength, which leaves the CORNERS -- the part of
+  // a frame a vignette exists to close -- lighter than the sides, and
+  // reads as a drawn border rather than as fall-off.
+  // It is the same picture every frame, so it is drawn once into a
+  // buffer and blitted after that: ~370 rects with fifty alpha changes
+  // per frame is a lot to pay for something that never changes.
+  const gradeBuf = {};
+  let gradeN = 0;
   G.grade = function (g, strength, tint) {
     strength = strength === undefined ? 1 : strength;
     if (strength <= 0) return;
-    for (let i = 0; i < 4; i++) {
-      g.globalAlpha = 0.07 * strength;
-      const inset = i * 4;
-      G.R(g, 0, inset, G.W, 2, tint || '#000');
-      G.R(g, 0, G.H - inset - 2, G.W, 2, tint || '#000');
-      G.R(g, inset, 0, 2, G.H, tint || '#000');
-      G.R(g, G.W - inset - 2, 0, 2, G.H, tint || '#000');
+    const col = tint || '#000';
+    const key = Math.round(strength * 20) / 20 + '|' + col;
+    let buf = gradeBuf[key];
+    if (!buf) {
+      if (gradeN > 12) { for (const k in gradeBuf) delete gradeBuf[k]; gradeN = 0; }
+      buf = document.createElement('canvas');
+      buf.width = G.W; buf.height = G.H;
+      paintGrade(buf.getContext('2d'), Math.round(strength * 20) / 20, col);
+      gradeBuf[key] = buf; gradeN++;
+    }
+    g.drawImage(buf, 0, 0);
+  };
+  function paintGrade(g, strength, col) {
+    const N = 7;
+    for (let i = 0; i < N; i++) {
+      const inset = i * 3;
+      g.globalAlpha = 0.05 * strength * (1 - i / N);
+      G.R(g, 0, inset, G.W, 3, col);
+      G.R(g, 0, G.H - inset - 3, G.W, 3, col);
+      G.R(g, inset, 0, 3, G.H, col);
+      G.R(g, G.W - inset - 3, 0, 3, G.H, col);
       g.globalAlpha = 1;
     }
-  };
+    // and a quarter-disc of shade into each corner, which is where a
+    // lens actually falls off
+    const R2 = 44;
+    for (const sy of [-1, 1]) for (const sx of [-1, 1]) {
+      for (let j = 0; j < R2; j++) {
+        const len = Math.round(Math.sqrt(Math.max(0, R2 * R2 - j * j)));
+        if (len <= 0) continue;
+        g.globalAlpha = 0.04 * strength * (1 - j / R2);
+        G.R(g, sx < 0 ? 0 : G.W - len, sy < 0 ? j : G.H - j - 1, len, 1, col);
+      }
+    }
+    g.globalAlpha = 1;
+  }
 
   // ---------- CAN I TOUCH THIS? ----------
   // Half the click targets in this game used to be invisible. The cone

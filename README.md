@@ -138,6 +138,26 @@ who will not sit down.
 
 ![The brand mark](screenshots/bigmoo-logo.png)
 
+### The mark is cream on red now
+
+![The brand mark](screenshots/bigmoo-logo.png)
+
+It was a black cow on a cream field, and a solid black shape twelve pixels
+across is not a cow, it is a blob — at badge size it read as a moustache
+and in one colour it was a shield. **The head is the light shape and the
+disc is the dark one**, which is how every mark that has to survive being
+printed on a cup is built.
+
+The head is a cream silhouette on red enamel: a domed skull, ears that
+*start inside the skull* and taper outward, short thick horns, two ink
+eyes, a pink muzzle and a patch on the forehead. Floated off at 1.22 of the
+head's width as two horizontal bars, the ears read as antenna paddles and
+the whole mark came out an insect; thin horns read as feelers.
+
+Detail drops out in order as the radius falls: the date, the wordmark, the
+nostrils, the patch, the muzzle, the eyes. Under about six units what is
+left is a cream head with two horns on a red disc, which still says COW.
+
 The sign is a real one. `G.mooLogo()` draws **one brand mark** — a red enamel
 disc with a highlight arc on the rim, a cream field, the cow in shades, and
 `BIG MOO` under it with `SINCE 1971` below that when there is room — and it
@@ -152,6 +172,31 @@ a back floor eighteen units further away, so you walk *in front* of the
 furniture instead of standing in it, and anyone sat in a booth is cut off at
 the chest by the bench in front of them — which is what sitting down looks
 like from the side.
+
+### It is built like a chain now
+
+The room used to be a flat cream wall with a stripe of tiles glued across
+it, a slab of brown wood for a counter, and a window onto a car park with
+six parked cars in it. A chain does not build a room like that.
+
+| | |
+|---|---|
+| **A lit soffit** | a deep-red ceiling band with downlights in it every 68 units, and **warm pools on the floor underneath them** — which is the thing that ties a ceiling to a room |
+| **The house band** | cream over red, the two colours off the sign, running the whole length of the building |
+| **Tiles to service height** | offset courses with grout you can see, a capping rail over them and a **stainless kick rail** under |
+| **The service line** | a drinks fountain with four flavour plates, nozzles and a drip tray; a fry station under its heat lamp with two baskets on the rail; three stacks of cups in three sizes |
+| **The counter** | a steel top with a tray rail on the lip and the house colours down the front. The brown slab it replaced is a pub bar |
+| **The floor** | a condiment stand with three pumps, a swing-flap bin, and a MEAL DEAL poster stand by the door |
+
+![The seafront](screenshots/floor.png)
+
+And the windows look at **the sea**, because the first line of this game is
+that BIG MOO is a chain on a promenade: a night sky, a pier out on the
+water, a lit horizon, the sea catching light, a promenade railing and one
+lamp on it — all of it behind rain running down the glass.
+
+*(It was all there before at half the brightness, which in a window framed
+by a cream wall is a black rectangle.)*
 
 ![Table four](screenshots/floor-party.png)
 
@@ -1218,6 +1263,42 @@ And a cream body with a badge on it is a fridge, so the suit got **one black
 patch, on the hip** — one, because a 22-by-16 chest with a roundel on it has
 room for exactly one marking and a second lands under the lei.
 
+### A new head
+
+The old one was a flat-topped slab with a letterbox of black glass across
+it, two beige domes balanced on the roof, and a face crammed into the
+bottom third. Everything above the muzzle has been rebuilt.
+
+**A skull that domes.** The crown used to be a circular arc, and a circle
+has infinite slope at its pole — squeezed into a nineteen-row head it
+spends one row at 26% of its width and is at 71% by the next, which is one
+narrow row and then a dead flat top. It is a quarter-sine off a broad
+forehead now, which climbs evenly, and is also what a cow's forehead
+actually does.
+
+**Horns that grow out of it.** A short tapering curve off each top corner,
+out and up and curling back, bone-coloured with a dark collar where it
+meets the hide. And set *wide*: at 0.27 of the head's width they sat
+exactly on the dome's shoulders and hid the only part of the crown that
+curves.
+
+**Two lenses and a bridge.** The shades were one wraparound band 94% of
+the head across with a notch cut in the middle, which at this size is not
+a pair of glasses, it is a letterbox slot across a wall. They are narrower
+than the skull now, so cream shows either side, and the arms run back to
+the *edge of the skull* and stop — given a fixed length they overshot into
+open air, and two black tabs floating beside a head is not a pair of arms.
+
+**A muzzle with a shape.** A pale snout block sitting proud of the face,
+lit along the top and shaded underneath, with the pink nose pad on its
+upper half, two nostrils that widen when it breathes, and the mouth below.
+No outline: a row-by-row border round a shape that small comes out as a
+dotted stitch running round the jaw.
+
+And **one black patch, on the cheek**. Level with the eyeline it ran up
+into the left lens and the two merged into a single dark mass with a cow
+somewhere behind it.
+
 ### One necklace
 
 The collar and the cowbell went round the same neck as the lei, and on a chest
@@ -1467,6 +1548,13 @@ not.
 
 ## Tech
 
+- **A real vignette.** The grade was four bars of constant alpha down the
+  edges, which leaves the *corners* — the part of a frame a vignette exists
+  to close — lighter than the sides, and reads as a drawn border. It is
+  seven nested frames falling off toward the edge plus a quarter-disc of
+  shade into each corner, and because it is the same picture every frame it
+  is painted once into a buffer and blitted after that: 370 rects with
+  fifty alpha changes is a lot to pay for something that never changes
 - **1280×720** raster, snapped to whole native pixels on upscale
 - **Three grids.** Everything is authored in one **320×180 logical** space drawn
   through a 4× transform, so a logical 1 is four hard pixels, and the same

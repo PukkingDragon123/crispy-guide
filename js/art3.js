@@ -586,21 +586,30 @@
   G.mooLogo = function (g, cx, cy, r, o) {
     o = o || {};
     const mono = o.mono || null;
-    const bg = o.bg || null;                 // punch-through colour for a stamp
-    const ink = mono || '#241d2a';
-    const field = o.tone || '#f6ecd6';
-    const pink = mono ? (bg || mono) : '#f0a8b4';
+    const flat = !!o.flat;
+    const CREAM = '#f6ecd6', INK = '#241d2a';
+    const red = o.tone || '#c8383a';
+    // THE HEAD IS THE LIGHT SHAPE AND THE DISC IS THE DARK ONE.
+    // It used to be a black cow on a cream field, and a solid black shape
+    // twelve pixels across is not a cow, it is a blob -- at badge size it
+    // read as a moustache and in mono it was a shield. Cream on red gives
+    // the mark a silhouette that still says COW at six pixels, which is
+    // the whole job of a mark that has to go on a cup.
+    const body = mono || (flat ? red : CREAM);
+    const dark = mono ? red : INK;
+    const pink = mono || '#f2b4be';
     const word = o.word === undefined ? r >= 12 : o.word;
+
     const disc = (rr, col) => {
-      for (let j = -rr; j <= rr; j++) {
+      const ir = Math.round(rr);
+      for (let j = -ir; j <= ir; j++) {
         const hw = Math.round(Math.sqrt(Math.max(0, rr * rr - j * j)));
         G.R(g, cx - hw, cy + j, hw * 2 + 1, 1, col);
       }
     };
-    // a run of pixels along the rim, for the enamel highlight. Drawn on
-    // the circle itself -- the first pass laid a flat hairline across the
-    // top of the badge, where the disc is one pixel wide, so the logo had
-    // a loose horizontal stroke floating above it.
+    // a run of pixels along the rim, for the light on the enamel. Kept
+    // inside the quadrants: run to the poles and the bright pips at dead
+    // top and bottom read as registration crosses.
     const arc = (rr, a0, a1, col) => {
       const n = Math.max(4, Math.round(rr * 2));
       for (let i = 0; i <= n; i++) {
@@ -608,61 +617,101 @@
         G.pip(g, cx + Math.cos(a2) * rr, cy + Math.sin(a2) * rr, col);
       }
     };
+
     // ---- the badge ----
-    if (!o.flat && !mono) {
+    if (!flat && !mono) {
       disc(r + 1, OUT);
-      disc(r, '#c8383a');
-      disc(Math.round(r * 0.84), field);
-      // kept inside the quadrants -- running them to the poles put a
-      // bright pip at dead top and dead bottom, which reads as a pair of
-      // registration crosses rather than as light on enamel
-      arc(r * 0.93, Math.PI * 1.16, Math.PI * 1.40, '#ff8a8c');
-      arc(r * 0.93, Math.PI * 0.16, Math.PI * 0.40, '#8a2022');
+      disc(r, G.shade(red, -0.38));
+      disc(Math.round(r * 0.86), red);
+      arc(r * 0.94, Math.PI * 1.14, Math.PI * 1.42, G.mix(red, '#ffffff', 0.5));
+      arc(r * 0.94, Math.PI * 0.14, Math.PI * 0.42, G.shade(red, -0.6));
     }
-    // ---- the head. Big shapes only: horns, ears, skull, muzzle. ----
-    // It sat at 0.52r with the wordmark under it, which filled the field
-    // corner to corner and left the badge no air at all.
-    const hy = word ? cy - r * 0.2 : cy;
-    const h = r * (word ? 0.38 : 0.40);
-    const ear = h * 0.52;
-    G.Rh(g, cx - h * 1.34, hy - h * 0.5, ear, ear, ink);                 // ears, out past
-    G.Rh(g, cx + h * 0.82, hy - h * 0.5, ear, ear, ink);                 // the skull edge
-    G.Rh(g, cx - h * 0.84, hy - h * 1.14, h * 0.42, h * 0.48, ink);      // horn nubs
-    G.Rh(g, cx + h * 0.42, hy - h * 1.14, h * 0.42, h * 0.48, ink);
-    G.rr2(g, cx - h * 0.8, hy - h * 0.78, h * 1.6, h * 1.4, ink);        // skull
-    // THE SHADES, in the mark as well as on the suit. A brand whose
-    // mascot wears sunglasses and whose logo does not is two brands.
-    // Below r 11 they merge with the skull into one black lump, so under
-    // that the face is just a muzzle and the silhouette does the work.
-    if (r >= 11 && (!mono || bg)) {
-      const gw = h * 1.66, gh = Math.max(1, h * 0.34);
-      G.Rh(g, cx - gw / 2, hy - h * 0.42, gw, gh, bg || '#0e0a14');
-      if (!mono) {
-        G.hairq(g, cx - gw / 2 + h * 0.12, hy - h * 0.42, gw * 0.34, '#7a6e8c');
-        G.Rq(g, cx - gw / 2 - h * 0.14, hy - h * 0.34, h * 0.16, gh * 0.6, '#0e0a14');
-        G.Rq(g, cx + gw / 2 - h * 0.02, hy - h * 0.34, h * 0.16, gh * 0.6, '#0e0a14');
+
+    // ---- the head ----
+    const hy = Math.round(word ? cy - r * 0.20 : cy);
+    const H = r * (word ? 0.40 : 0.48);            // half the skull
+    const n = Math.max(5, Math.round(H * 1.5));
+    const sTop = Math.round(hy - H * 0.80);
+    const skull = (p) => p < 0.34 ? 0.60 + 0.40 * Math.sin((p / 0.34) * Math.PI / 2)
+                       : p < 0.62 ? 1
+                       : 1 - Math.pow((p - 0.62) / 0.38, 1.6) * 0.34;
+
+    // ears first, so the skull tucks over where they join. They START
+    // inside the skull and taper outward: floated off at H*1.22 as two
+    // horizontal bars they read as antenna paddles, and the whole mark
+    // came out an insect.
+    for (const sd of [-1, 1]) {
+      const L = Math.max(2, Math.round(H * 0.80));
+      for (let k = 0; k < L; k++) {
+        const q = k / Math.max(1, L - 1);
+        const hh = Math.max(1, Math.round(H * 0.32 * (1 - q * 0.5)));
+        G.R(g, cx + sd * (Math.round(H * 0.70) + k), hy - hh + Math.round(q * H * 0.16),
+          1, hh * 2, body);
+      }
+      if (r >= 13 && !mono)
+        G.R(g, cx + sd * Math.round(H * 0.96), hy - Math.round(H * 0.12), 1,
+          Math.max(1, Math.round(H * 0.3)), pink);
+    }
+    // horns: short and THICK, out of the skull's top corners. Thin ones
+    // are feelers.
+    for (const sd of [-1, 1]) {
+      const K = Math.max(2, Math.round(H * 0.38));
+      for (let k = 0; k < K; k++) {
+        const q = k / Math.max(1, K - 1);
+        const ww = Math.max(2, Math.round(H * 0.46 * (1 - q * 0.28)));
+        G.R(g, cx + sd * Math.round(H * 0.46 + q * H * 0.26) - ww / 2, sTop - 1 - k, ww, 1, body);
       }
     }
-    // the muzzle is its own colour, or it is a hole in the badge
-    G.rr2(g, cx - h * 0.56, hy + h * 0.24, h * 1.12, h * 0.64, pink);
-    if (r >= 13 && !mono) {
-      G.Rq(g, cx - h * 0.3, hy + h * 0.42, h * 0.18, h * 0.22, ink);     // nostrils
-      G.Rq(g, cx + h * 0.12, hy + h * 0.42, h * 0.18, h * 0.22, ink);
+    // the skull
+    const rows = [];
+    for (let j = 0; j < n; j++) {
+      const hw = Math.max(1, Math.round(H * skull(j / (n - 1))));
+      rows.push(hw);
+      G.R(g, cx - hw, sTop + j, hw * 2, 1, body);
     }
-    // ---- the wordmark, sized to the field it has to live inside ----
+    // ---- and then the detail, in the order it drops out as r shrinks ----
+    // one patch, like the suit, on the FOREHEAD above the eyeline. Level
+    // with the eyes it swallowed one and the cow came out wearing an
+    // eyepatch.
+    if (r >= 16 && !mono) {
+      for (let j = Math.round(n * 0.04); j < Math.round(n * 0.30); j++) {
+        const q = (j - n * 0.17) / (n * 0.15);
+        const hw = Math.round(H * 0.40 * Math.sqrt(Math.max(0, 1 - q * q)));
+        if (hw < 1) continue;
+        const x0 = Math.max(cx - rows[j], cx - Math.round(H * 0.42) - hw);
+        const x1 = Math.min(cx + rows[j], cx - Math.round(H * 0.42) + hw);
+        if (x1 > x0) G.R(g, x0, sTop + j, x1 - x0, 1, dark);
+      }
+    }
+    if (r >= 8 && !mono) {                          // eyes
+      const ed = Math.max(1, Math.round(H * 0.30));
+      for (const sd of [-1, 1])
+        G.R(g, cx + sd * Math.round(H * 0.44) - ed / 2, sTop + Math.round(n * 0.34), ed, ed, dark);
+    }
+    if (r >= 10) {                                  // and a muzzle
+      const mw = Math.max(2, Math.round(H * 1.0)), mh = Math.max(2, Math.round(n * 0.28));
+      const mt = sTop + n - mh - Math.max(0, Math.round(n * 0.04));
+      for (let j = 0; j < mh; j++) {
+        const q = (j / Math.max(1, mh - 1) - 0.4) * 2;
+        const hw = Math.max(1, Math.round((mw / 2) *
+          Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.4)), 1 / 2.2)));
+        G.R(g, cx - hw, mt + j, hw * 2, 1, pink);
+      }
+      if (r >= 15 && !mono) for (const sd of [-1, 1])
+        G.Rq(g, cx + sd * Math.round(mw * 0.22) - 0.5, mt + Math.round(mh * 0.4), 1, 1, dark);
+    }
+
+    // ---- the wordmark, cream on the red, sized to the disc ----
     if (word) {
-      // the cream field is r*1.68 across; leave 2 units of it either side.
-      // Sized to r*1.62 the wordmark filled the field edge to edge and at
-      // r=13 the small cut crossed onto the red rim.
-      const avail = o.flat || mono ? r * 2.6 : r * 1.68 - 4;
+      const avail = flat || mono ? r * 2.6 : r * 1.7 - 3;
       const sc = G.tw('BIG MOO', 1) <= avail ? 1 : 0.5;
-      // if even the small cut spills past the badge, the mark is better
-      // off with no wordmark than with one hanging over the rim
+      // no wordmark beats one hanging over the rim
       if (G.tw('BIG MOO', sc) > avail) return { r };
-      G.text(g, 'BIG MOO', cx, cy + r * (o.flat || mono ? 0.5 : 0.3),
-        mono || '#c8383a', { align: 'center', sc });
-      if (!mono && !o.flat && r >= 26 && G.tw('SINCE 1971', 0.5) <= avail)
-        G.text(g, 'SINCE 1971', cx, cy + r * 0.58, '#8a7458', { align: 'center', sc: 0.5 });
+      const wc = mono || (flat ? red : CREAM);
+      G.text(g, 'BIG MOO', cx, cy + r * (flat || mono ? 0.5 : 0.28), wc, { align: 'center', sc });
+      if (!mono && !flat && r >= 24 && G.tw('SINCE 1971', 0.5) <= avail)
+        G.text(g, 'SINCE 1971', cx, cy + r * 0.60, G.mix(red, '#ffffff', 0.55),
+          { align: 'center', sc: 0.5 });
     }
     return { r };
   };
