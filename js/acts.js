@@ -160,13 +160,22 @@
       G.fc(g, 262, FB - 92, 8, M('#f6ead8'));
       G.Rh(g, 262 - 0.5, FB - 97, 1, 5, M('#3a2a2e'));
       G.Rh(g, 262, FB - 92.5, 4, 1, M('#8a2f3a'));
-      // the menu board over the counter
-      G.R(g, 358, FB - 104, 124, 24, M('#1a1216'));
-      G.bevelq(g, 358, FB - 104, 124, 24, M('#3a2a2e'), '#0a0608');
-      G.text(g, 'BURGER   SWIRL   FRIES', 420, FB - 100, M('#ffd45a'), { align: 'center', sc: 0.5 });
-      G.text(g, 'ASK ABOUT THE BIG MOO MEAL', 420, FB - 92, M('#f0e2d4'), { align: 'center', sc: 0.5 });
-      G.text(g, 'NOW WITH FREE CROWNS', 420, FB - 84, M('#8fd8c0'), { align: 'center', sc: 0.5 });
-      if (!dim) G.glow(g, 420, FB - 94, 138, 28, '#ffd45a', 0.14);
+      // the menu board over the counter, with the mark on the end of it
+      G.R(g, 352, FB - 106, 136, 28, M('#1a1216'));
+      G.bevelq(g, 352, FB - 106, 136, 28, M('#3a2a2e'), '#0a0608');
+      G.mooLogo(g, 370, FB - 92, 13, { tone: M('#f6ecd6') });
+      G.text(g, 'BURGER   SWIRL   FRIES', 438, FB - 102, M('#ffd45a'), { align: 'center', sc: 0.5 });
+      G.text(g, 'ASK ABOUT THE BIG MOO MEAL', 438, FB - 94, M('#f0e2d4'), { align: 'center', sc: 0.5 });
+      G.text(g, 'NOW WITH FREE CROWNS', 438, FB - 86, M('#8fd8c0'), { align: 'center', sc: 0.5 });
+      if (!dim) G.glow(g, 430, FB - 94, 150, 30, '#ffd45a', 0.14);
+      // and a proper backlit roundel on the wall between the windows,
+      // because a chain puts its mark where you cannot miss it
+      // It went up at 310, FB-116 first, which is the fascia band at the
+      // very top of the wall and the far right of the room -- half of it
+      // hung off the edge of the frame. The pier between the two windows
+      // is the one piece of bare wall at eye height.
+      G.mooLogo(g, 121, FB - 76, 14, { tone: M('#f6ecd6') });
+      if (!dim) G.glow(g, 121, FB - 76, 52, 52, '#ffd45a', 0.22);
       // the front door, on the back wall, one you could walk through
       const bust = S.flags.busted;
       const dy0 = FB - Z.DOOR_H;
@@ -317,25 +326,62 @@
         G.Rq(g, bx - 1, CNT_TOP - 9, 2, 2, tick ? '#ff4a4a' : '#5a1a1a');
         if (tick) G.glow(g, bx, CNT_TOP - 8, 36, 26, '#ff4a4a', 0.5);
       }
-      // ---- your leg, going the other way ----
-      if (S.flags.leg) {
-        const p = S.flags.leg;
-        const lx = S.px - 6 - p * 96, ly = F - 44 + Math.sin(p * 3.1) * 24 + p * p * 50;
-        g.save();
-        g.translate(lx, ly + 13); g.rotate(-p * 6.2); g.translate(-lx, -(ly + 13));
-        G.R(g, lx - 5, ly - 1, 11, 20, OUT);                  // shank
-        G.R(g, lx - 4, ly, 9, 18, '#efe7d8');
-        G.Rh(g, lx - 4, ly, 2, 18, '#ffffff');
-        G.Rh(g, lx + 3, ly, 2, 18, '#c8bfae');
-        G.R(g, lx - 4, ly, 9, 3, '#8f8474');                  // where it tore
-        G.Rq(g, lx - 3, ly + 1, 2, 1, '#ff7a6a');
-        G.Rq(g, lx + 1, ly, 1, 2, '#ffb04a');
-        G.R(g, lx - 7, ly + 17, 15, 7, OUT);                  // the boot cuff
-        G.R(g, lx - 6, ly + 18, 13, 5, '#fbf8f2');
-        G.R(g, lx - 6, ly + 23, 13, 7, OUT);                  // and the hoof
-        G.R(g, lx - 5, ly + 24, 11, 5, '#1a1620');
-        G.Rh(g, lx, ly + 24, 1, 5, '#3a3448');
-        g.restore();
+      // ---- WHAT IT PUT IN YOU ----
+      // Your leg used to cartwheel across the room here. It stays on now;
+      // what leaves instead is a piece of you per round. Each hole is
+      // punched where the round landed, still glowing at the rim, venting.
+      if (S.flags.hits) {
+        // once you are on your front the whole body is down at floor
+        // level, so the holes come down with it -- they were drawn at
+        // standing height and ended up hanging over your own head.
+        const fl = S.pcrawl ? 1 : 0;
+        let glows = 0;
+        for (const h of S.flags.hits) {
+          // On your front the body is long and low, so the axes swap: how
+          // HIGH a round landed on your chest is now how far FORWARD it is.
+          // Scaling both axes down instead packed all six into one 12x6
+          // box and they read as a single black smudge.
+          const hx = S.px + (fl ? h.x * 0.8 - (h.y + 25) * 0.55 : h.x);
+          const hy = F + (fl ? -13 + h.x * 0.35 : h.y);
+          const r = h.r * (fl ? 0.78 : 1);
+          const cool = G.clamp(1 - h.t * 0.7, 0, 1);
+          G.fc(g, hx, hy, r + 1, '#1a1218');
+          G.fc(g, hx, hy, r, '#0b0810');
+          // Only the two freshest rims are still hot. Six glows at half
+          // strength stack into one orange mass with a cow behind it.
+          if (cool > 0.02) {
+            g.globalAlpha = cool;
+            G.oc(g, hx, hy, r + 0.5, '#ff8a3a');
+            if (glows++ < 2) G.glow(g, hx, hy, r * 4, r * 4, '#ff6a2a', 0.45 * cool);
+            g.globalAlpha = 1;
+          }
+          // torn shell round the edge, and something leaking out of it
+          for (let i = 0; i < 5; i++) {
+            const a2 = h.seed + i * 1.257;
+            G.Rq(g, hx + Math.cos(a2) * (r + 0.6), hy + Math.sin(a2) * (r + 0.6),
+              1.25, 1.25, i % 2 ? '#c8bfae' : '#8f8474');
+          }
+          if (Math.sin(S.t * 6 + h.seed) > 0.4)
+            G.Rq(g, hx + G.rand(-1, 1), hy + r, 1, 2, '#3affd0');
+        }
+      }
+      // ---- AND THE ROOM STOPS BEING A RESTAURANT ----
+      // It carried on being bright, pink and cheerful all the way through
+      // the shooting, which is a tonal problem you can see from the back
+      // of the room. The colour drains out of everything but the muzzle.
+      if (S.flags.hits && S.flags.hits.length) {
+        const d = G.clamp(S.flags.hits.length / ROUNDS, 0, 1);
+        // 0.3 was not enough to see: the floor still read bright pink with
+        // six holes in you.
+        g.globalAlpha = 0.52 * d;
+        G.R(g, G.cam.x - 4, 0, G.W + 8, G.H, '#241018');
+        g.globalAlpha = 1;
+        for (let i = 0; i < 5; i++) {
+          g.globalAlpha = 0.16 * d;
+          G.R(g, G.cam.x - 4, 0, G.W + 8, 4 + i * 4, '#0a0206');
+          G.R(g, G.cam.x - 4, G.H - 4 - i * 4, G.W + 8, 4 + i * 4, '#0a0206');
+          g.globalAlpha = 1;
+        }
       }
       if (S.flags.flash) {
         g.globalAlpha = S.flags.flash;
@@ -511,7 +557,8 @@
       if (S.flags.beam) S.flags.beam = Math.max(0, S.flags.beam - dt * 2.6);
       if (S.flags.flash) S.flags.flash = Math.max(0, S.flags.flash - dt * 3.2);
       if (S.flags.shards) S.flags.shards = Math.min(1, S.flags.shards + dt * 1.1);
-      if (S.flags.leg) S.flags.leg = Math.min(1, S.flags.leg + dt * 0.9);
+      if (S.flags.hits) for (const h of S.flags.hits) h.t += dt;
+      if (S.pknock) S.pknock = Math.max(0, S.pknock - dt * 9);
     },
 
     after(g, S) {
@@ -600,10 +647,27 @@
     S.play(SHOT(earned, S.px));
   }
 
-  // ---- and it goes into you instead ----
+  // ------------------------------------------------------------
+  // AND IT GOES INTO YOU INSTEAD.
+  //
+  // It used to be one shot. A single beam, a white frame, your leg
+  // cartwheeling off across the room, and then you on the floor. One
+  // trigger pull for the loudest thing that happens to this character.
+  //
+  // It empties the magazine now. SIX rounds, on a rhythm, each one
+  // landing somewhere different on you, each one knocking you back a
+  // little further and leaving a hole that stays. It keeps firing after
+  // you have stopped moving, because it is not checking.
+  //
+  // Your leg stays on. You are simply wrecked: scorched, holed, one
+  // horn off, the badge cracked across, and both arms are what you have
+  // left to get out of the building with.
+  // ------------------------------------------------------------
+  const ROUNDS = 6;
+
   function SHOT(earned, x0) {
-    return [
-      { d: 0.55,
+    const beats = [
+      { d: 0.5,
         go(S) {
           S.pclip = 'reach'; S.pp = 1;
           G.audio.sfx('swish');
@@ -617,20 +681,49 @@
           if (Math.random() < 0.5)
             S.pop(S.px + G.rand(-8, 8), F - 2, 'dust', '#b8a890', 4, 0.35);
         } },
-      { d: 1.0,
+    ];
+    // ---- the burst ----
+    for (let i = 0; i < ROUNDS; i++) {
+      const first = i === 0, last = i === ROUNDS - 1;
+      beats.push({
+        d: first ? 0.62 : last ? 1.15 : 0.34,
         go(S) {
-          S.px = TARGET_X + 26; S.pdy = 0; S.pdir = 1;
-          const kid = S.actor('run'); if (kid) { kid.x = TARGET_X - 14; kid.hopV = -26; }
-          S.flags.aim = 0; S.flags.beam = 1; S.flags.flash = 0.8; S.flags.leg = 0.01;
-          S.plegOff = 1; S.pmood = 'sick'; S.pnoBlink = 1;
-          S.pclip = 'slump'; S.pp = 1; S.popen = 0.5;
-          G.audio.sfx('zap'); G.shake(6, 0.6);
-          S.bang(S.px, F - 34, '#ff8a4a', 16, 3);
-          S.mine("I'M - I'M STILL UNDER WARRA-", 2.2);
-        } },
-      { d: 2.2,
+          if (first) {
+            S.px = TARGET_X + 26; S.pdy = 0; S.pdir = 1;
+            S.hush = 1; S.bubbles.length = 0;      // nobody is taking orders
+            const kid = S.actor('run'); if (kid) { kid.x = TARGET_X - 14; kid.hopV = -26; }
+            S.flags.aim = 0;
+            S.pmood = 'sick'; S.pnoBlink = 1; S.pclip = 'startle'; S.pp = 0;
+          }
+          // each round lands somewhere else on you and stays there
+          S.flags.hits = (S.flags.hits || []);
+          S.flags.hits.push({
+            x: G.rand(-9, 9), y: -14 - G.rand(0, 22),
+            r: G.rand(2.2, 4.4), t: 0, seed: G.rand(0, 9),
+          });
+          S.flags.beam = 1;
+          S.flags.flash = first ? 0.85 : 0.34;
+          S.pdmg = Math.min(1, (i + 1) / ROUNDS);
+          S.pknock = (S.pknock || 0) + (first ? 7 : 3.5);
+          G.audio.sfx(first ? 'zap' : 'snap');
+          G.shake(first ? 6 : 3.4, first ? 0.5 : 0.22);
+          S.bang(S.px + G.rand(-6, 6), F - 26 - G.rand(0, 18), '#ff8a4a', first ? 16 : 9, first ? 3 : 2);
+          if (first) S.mine("I'M - I'M STILL UNDER WARRA-", 1.8);
+          if (i === 3) S.say('mum', 'STOP IT. STOP IT, IT IS NOT DOING ANYTHING.', 2.2);
+          if (last) {
+            S.pclip = 'slump'; S.pp = 1; S.popen = 0.42;
+            G.screenFlash('#ffb060', 0.3);
+          }
+        },
+        tick(S, p) {
+          // you go back with every one of them and never quite recover
+          S.pdy = -Math.sin(G.clamp(p * 3, 0, Math.PI)) * 2;
+        } });
+    }
+    beats.push(
+      { d: 2.3,
         go(S) {
-          S.pcrawl = 1; S.popen = 0.2;
+          S.pcrawl = 1; S.popen = 0.18; S.pclip = 'slump';
           S.phands = [{ x: S.px - 22, y: F - 12 }, { x: S.px + 22, y: F - 8 }];
           S.say('run', 'IT MOVED. IT MOVED FOR ME.', 2.2);
           // everybody who can run, runs
@@ -656,8 +749,8 @@
       // bomb go off from under it; you watch the front of the building
       // come off from the car park, which is where it can be seen. ----
       { d: 0.8, go(S) { S.flags.white = 0; }, tick(S, p) { S.flags.white = p * 0.7; } },
-      { d: 0.4, go(S) { S.finish(() => G.playCine('bomb', () => G.go('wreck', 'FOUR HOURS LATER'))); } },
-    ];
+      { d: 0.4, go(S) { S.finish(() => G.playCine('bomb', () => G.go('wreck', 'FOUR HOURS LATER'))); } });
+    return beats;
   }
 
   (G.scenes = G.scenes || {}).floor = G.makeStage(floorDef);
@@ -879,9 +972,28 @@
         on(S) { S.play(RESCUE); } },
     ],
 
-    enter(S) { S.plegOff = 1; S.pmood = 'sick'; S.mut = 4; },
+    // YOU CRAWL OUT. Both legs are still attached -- they simply are not
+    // carrying you any more. The first pass walked you out of a bombed
+    // building on a crutch, upright, four hours after being shot.
+    enter(S) {
+      S.pmood = 'sick'; S.pnoBlink = 1; S.mut = 4;
+      S.pcrawl = 1; S.popen = 0.14; S.pclip = 'slump'; S.pp = 1;
+      S.flags.hits = S.flags.hits || [];
+      // the rounds are still in you, cold now
+      for (let i = 0; i < 6; i++)
+        S.flags.hits.push({ x: G.rand(-9, 9), y: -10 - G.rand(0, 14),
+          r: G.rand(2, 4), t: 99, seed: G.rand(0, 9) });
+    },
 
     update(S, dt) {
+      // the hands plant and pull, so the crawl has a rhythm to it
+      const ph = S.t * 3.4;
+      S.phands = [
+        { x: S.px - 20 + Math.sin(ph) * 7, y: F - 10 + Math.abs(Math.cos(ph)) * 3 },
+        { x: S.px + 20 - Math.sin(ph) * 7, y: F - 7 + Math.abs(Math.sin(ph)) * 3 },
+      ];
+      if (S.goal !== null && Math.random() < dt * 9)
+        S.pop(S.px - 14, F - 2, 'dust', '#5a4a44', 4, 0.4);
       // walk far enough east and something turns onto the road
       if (!S.flags.torch && S.px > 372) {
         S.flags.torch = 0.01;
@@ -912,15 +1024,28 @@
     },
 
     after(g, S) {
-      // the crutch, so the missing leg reads at a glance
+      // THE DRAG MARK. There used to be a crutch here, propping up a
+      // mascot with one leg walking out of a bombed building. You are on
+      // your front now, so what the scene owes you is the smear you leave
+      // in the wet behind you, and the holes that are still in you.
       G.cam.push(g);
-      const cx = S.px + 13, top = F - 34 + (S.pdy || 0), bot = F - 1;
-      G.R(g, cx - 2, top - 1, 5, bot - top + 2, OUT);
-      G.R(g, cx - 1, top, 3, bot - top, '#8a94a8');
-      G.vairq(g, cx - 1, top, bot - top, '#d8e4f0');
-      G.R(g, cx - 5, top - 3, 11, 4, '#5c6470');
-      G.hairq(g, cx - 5, top - 3, 11, '#a8b0bc');
-      G.R(g, cx - 4, bot - 1, 9, 3, '#3a2a24');
+      const back = S.px - 60;
+      for (let i = 0; i < 26; i++) {
+        const x = back + i * 2.4;
+        if (x > S.px - 12) break;
+        const q = i / 26;
+        g.globalAlpha = q * 0.34;
+        G.Rh(g, x, F - 2 + Math.sin(i * 0.7) * 0.5, 3, 2, '#1a1218');
+        g.globalAlpha = 1;
+      }
+      // the rounds, still in you
+      for (const h of S.flags.hits || []) {
+        const hx = S.px + h.x * 0.6, hy = F - 6 + h.y * 0.22;
+        G.fc(g, hx, hy, h.r * 0.7 + 0.5, '#120d14');
+        G.fc(g, hx, hy, h.r * 0.7, '#060409');
+        if (Math.sin(S.t * 4 + h.seed) > 0.75)
+          G.Rq(g, hx, hy - h.r, 1, 2, '#3affd0');
+      }
       G.cam.pop(g);
       if (S.flags.white) {
         g.globalAlpha = S.flags.white; G.R(g, 0, 0, G.W, G.H, '#f6ecd8'); g.globalAlpha = 1;
@@ -932,9 +1057,13 @@
     { d: 0.6, go(S) { S.lock = 1; S.flags.met = 1; } },
     { d: 2.8, go(S) { S.say('tracy', 'OH, YOU POOR ARTICLE. YOU ARE THE COW OFF THE SIGN.', 2.8); const tr = S.actor('tracy'); if (tr) { tr.hold = 3; tr.holdClip = 'talk'; } } },
     { d: 2.4, go(S) { const tr = S.actor('tracy'); if (tr) { tr.hold = 2.6; tr.holdClip = 'reach'; tr.p = 1; } S.pclip = 'slump'; } },
-    { d: 3.0, go(S) { S.say('tracy', 'RIGHT. HOME. I HAVE GOT A CRATE OF LEGS AND NOTHING ON TONIGHT.', 3); const tr = S.actor('tracy'); if (tr) { tr.hold = 3; tr.holdClip = 'talk'; } } },
+    { d: 3.0, go(S) { S.say('tracy', "RIGHT. HOME. I AM NOT LEAVING YOU IN A CAR PARK.", 3); const tr = S.actor('tracy'); if (tr) { tr.hold = 3; tr.holdClip = 'talk'; } } },
     { d: 1.6, go(S) { S.flags.white = 0; G.audio.sfx('unlock'); }, tick(S, p) { S.flags.white = p; } },
-    { d: 0.5, go(S) { S.finish(() => G.go('legfit', 'THE BENCH')); } },
+    // SHE ACTUALLY TAKES YOU HOME, and you watch her do it. It used to
+    // white out here and cut straight to her bench, with the entire
+    // journey -- the one thing in the story that is purely her deciding
+    // to bother -- happening in the gap between two scenes.
+    { d: 0.5, go(S) { S.finish(() => G.playCine('home', () => G.go('legfit', "TRACY'S"))); } },
   ];
 
   (G.scenes = G.scenes || {}).wreck = G.makeStage(wreckDef);

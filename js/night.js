@@ -64,11 +64,12 @@
       this.winT = 0;
       G.steam.length = 0;
       const src = (G.state.today.jobs || []).slice();
-      this.queue = src.length ? src
-        : [{ id: 'police', name: 'PC-44', sys: 'optical', volt: 5, faults: ['fog', 'mirror'] }];
-      G.audio.music('night');
+      this.queue = this.jobs ? this.jobs() : (src.length ? src
+        : [{ id: 'police', name: 'PC-44', sys: 'optical', volt: 5, faults: ['fog', 'mirror'] }]);
+      G.audio.music(this.tut ? 'title' : 'night');
       this.next();
-      if (G.state.tut < 8) { this.say('READ THE SIGN, NAME THE FAULT, THEN PICK THE TOOL.', P.cyanLt); this.msgT = 5; }
+      if (this.onEnter) this.onEnter();
+      else if (G.state.tut < 8) { this.say('READ THE SIGN, NAME THE FAULT, THEN PICK THE TOOL.', P.cyanLt); this.msgT = 5; }
     },
 
     // ---------------- setup ----------------
@@ -99,8 +100,12 @@
       this.sel = 0;
       this.mood = 'sick';
       G.audio.sfx('boot');
-      this.say(this.faults.length + ' FAULT' + (this.faults.length > 1 ? 'S' : '')
-        + ' IN THE ' + this.sys.name + '.', P.cyanLt);
+      // in the tutorial clause announces the board, so the workshop keeps
+      // quiet -- otherwise the same fact arrives twice, in two different
+      // boxes, stacked on top of each other at the bottom of the frame
+      if (!this.tut)
+        this.say(this.faults.length + ' FAULT' + (this.faults.length > 1 ? 'S' : '')
+          + ' IN THE ' + this.sys.name + '.', P.cyanLt);
     },
 
     // fixed furniture for each system, laid out inside BAY
@@ -187,6 +192,7 @@
     needTool() { const f = this.cur(); return f && f.named && !f.done ? ACT[f.id][f.step].tool : null; },
     needGest() { const f = this.cur(); return f && f.named && !f.done ? ACT[f.id][f.step].g : null; },
     pay(amt, x, y, label) {
+      if (this.tut) return;                        // nobody is billing you for this
       let a = amt;
       if (G.has('railspk')) a = Math.round(a * 1.4);
       else if (G.has('emp')) a = Math.round(a * 1.2);
@@ -281,7 +287,10 @@
 
       const f = this.cur();
       if (!f || f.done) return;
-      if (!f.named) { this.book = true; G.audio.sfx('bookOpen'); return; }
+      if (!f.named) {
+        if (this.tut) { f.named = true; }          // clause already told you
+        else { this.book = true; G.audio.sfx('bookOpen'); return; }
+      }
       const need = this.needTool();
       if (this.tool !== need) { G.audio.sfx('denied'); this.say('NEEDS THE ' + G.toolById(need).name, P.warn); return; }
       this.act = { g: this.needGest(), sx: x, sy: y, ang: null, turned: 0 };
@@ -330,6 +339,7 @@
     },
 
     finish() {
+      if (this.tut) { G.audio.sfx('perfect'); this.winT = 0.01; return; }
       let bonus = 10;
       if (G.state.today.misdx === 0) bonus += 6;
       this.pay(bonus, 160, 70, 'SIGNED OFF');
@@ -343,7 +353,7 @@
     // ---------------- update ----------------
     update(dt) {
       this.t += dt;
-      if (this.doneAll) { G.audio.stopAllLoops(); G.save(); G.go('summary', 'BOOKS CLOSED'); return; }
+      if (this.doneAll) { G.audio.stopAllLoops(); G.save(); G.go(this.outScene || 'summary', this.outLabel || 'BOOKS CLOSED'); return; }
       const M = G.mouse;
       if (this.msgT > 0) this.msgT -= dt;
       if (this.jolt > 0) this.jolt -= dt;
@@ -531,8 +541,14 @@
       G.toastY = -40; G.toastCX = 0;
       if (!this.faults) return;
       G.R(g, 0, 0, G.W, G.H, P.cityDk);
-      G.cityWall(g, 0, 0, G.W, G.H, t);
-      g.globalAlpha = 0.4; G.R(g, 0, 0, G.W, G.H, '#0a0c14'); g.globalAlpha = 1;
+      // her front room instead of a lock-up, when it is you on the bench
+      if (this.tut) {
+        G.tracyRoom(g, t, { dark: 0.26, surf: null, motes: this.motes });
+        g.globalAlpha = 0.62; G.R(g, 0, 0, G.W, G.H, '#0e1018'); g.globalAlpha = 1;
+      } else {
+        G.cityWall(g, 0, 0, G.W, G.H, t);
+        g.globalAlpha = 0.4; G.R(g, 0, 0, G.W, G.H, '#0a0c14'); g.globalAlpha = 1;
+      }
       // the inspection lamp: a stem, a shade, a hot tube and a cage
       G.R(g, 156, 0, 3, 8, P.plateDk);
       G.vair(g, 157, 0, 8, P.chrome);
@@ -630,9 +646,13 @@
       G.drawSteam(g);
 
       // ---- HUD ----
-      G.cosy(g, 2, 2, 54, 12, { lamp: false });
-      G.R(g, 6, 6, 4, 5, P.lampLt);
-      G.text(g, '$' + Math.round(G.state.money), 13, 4, P.hazard);
+      // no money on the board when it is you on the bench and the person
+      // holding the screwdriver has never been paid for anything
+      if (!this.tut) {
+        G.cosy(g, 2, 2, 54, 12, { lamp: false });
+        G.R(g, 6, 6, 4, 5, P.lampLt);
+        G.text(g, '$' + Math.round(G.state.money), 13, 4, P.hazard);
+      }
       G.plate(g, 60, 2, 46, 12, P.ink2, { r: 1, band: 1, spec: false });
       G.text(g, (this.pi + 1) + '/' + this.queue.length, 64, 4, P.cyanLt);
       // two plates, so neither name gets cut in half
@@ -666,7 +686,10 @@
           G.R(g, Math.round(100 + 120 * G.clamp(f.prog, 0, 1)) - 1, 137, 2, 6, '#ffffff');
         }
       }
-      if (this.msgT > 0) {
+      // clause and the workshop share one band. When clause is mid-sentence
+      // in the tutorial it holds the band alone -- two plates in the same
+      // strip overlap and you read neither.
+      if (this.msgT > 0 && !(this.tut && G.clause && G.clause.msg)) {
         const w = G.tw(this.msg) + 10;
         g.globalAlpha = Math.min(1, this.msgT * 2);
         G.plate(g, 160 - w / 2, 139, w, 11, '#140f22', { r: 1, band: 1, spec: false });

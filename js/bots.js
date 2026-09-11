@@ -40,7 +40,7 @@
     // YOU. A dairy unit. Built to stand in a field of nothing and turn
     // out gelato, and given a face soft enough that the children would
     // come up to it. Tracy kept the face and rebuilt everything under it.
-    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.04, h: 0.9,  hs: 1.36, soft: 2, cow: 1, dots: 1, mascot: 1 },
+    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 1.04, h: 0.9,  hs: 1.36, soft: 2, cow: 1, shades: 1, mascot: 1, beach: 1 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -518,9 +518,11 @@
         G.R(g, txx - hw, tyy + j, hw * 2, 1, p < 0.24 ? '#57495f' : p > 0.74 ? '#241d2a' : '#3d3444');
       }
       G.Rq(g, txx - tr * 0.5, tyy + 0.5, tr * 0.5, 1, '#6f6178');
-      // the right leg is the one she found in a crate marked SPARES.
-      // It is a different colour and it always will be.
-      const spare = bo && (bo.spare === undefined ? (G.state && G.state.legFixed) : bo.spare);
+      // a mismatched right leg, out of a crate marked SPARES. It is opt-in
+      // per draw now: the prologue stopped taking a leg off you in v23 --
+      // the patrol puts six rounds into your body instead -- so the save
+      // flag that used to turn this on for the whole game went with it.
+      const spare = bo && !!bo.spare;
       const legOff = bo && bo.legOff;
       for (const s of [-1, 1]) {
         if (legOff && s > 0) {
@@ -742,48 +744,13 @@
       // vertical weld seam down the belly
       G.vseam(g, cx + u(4), y + 2, h - 4, G.shade(c, -0.5), G.shade(c, 0.2));
       if (o && o.cow) {
-        // ---- THE BADGE. A brand roundel stamped on the tank: a red
-        // ring, a cream field, a cow's head in silhouette and a cone.
-        // Every mascot has one and it is always on the chest. ----
-        const bx2 = cx, by2 = y + Math.round(h * 0.6);
-        const br3 = Math.max(6, Math.round(w * 0.185));
-        const ring = (r, col) => {
-          for (let j = -r; j <= r; j++) {
-            const hw = Math.round(Math.sqrt(Math.max(0, r * r - j * j)));
-            G.R(g, bx2 - hw, by2 + j, hw * 2 + 1, 1, col);
-          }
-        };
-        ring(br3 + 1, OUT);
-        ring(br3, '#c8383a');
-        ring(Math.round(br3 * 0.82), '#f4ead2');
-        // ---- the icon: its own face, in black on the cream field. A
-        // mascot's badge is always the mascot. Big shapes only - horns,
-        // ears, skull, muzzle - and the eyes drop out entirely once the
-        // roundel is too small to hold them, because four grey pixels
-        // fighting for room is what turns a badge into a smudge. ----
-        const hr = br3 * 0.5;
-        const IN = '#241d2a';
-        G.Rh(g, bx2 - hr * 1.2, by2 - hr * 0.5, hr * 0.5, hr * 0.5, IN);         // ears
-        G.Rh(g, bx2 + hr * 0.7, by2 - hr * 0.5, hr * 0.5, hr * 0.5, IN);
-        G.Rh(g, bx2 - hr * 0.8, by2 - hr * 1.1, hr * 0.4, hr * 0.45, IN);        // horn nubs
-        G.Rh(g, bx2 + hr * 0.4, by2 - hr * 1.1, hr * 0.4, hr * 0.45, IN);
-        G.rr2(g, bx2 - hr * 0.8, by2 - hr * 0.75, hr * 1.6, hr * 1.35, IN);      // skull
-        // the muzzle is its own colour or it is not a muzzle, it is a
-        // hole in the badge where the field shows through
-        G.rr2(g, bx2 - hr * 0.55, by2 + hr * 0.2, hr * 1.1, hr * 0.62, '#f0a8b4');
-        if (br3 >= 8) {
-          G.Rq(g, bx2 - hr * 0.3, by2 + hr * 0.38, hr * 0.18, hr * 0.22, IN);    // nostrils
-          G.Rq(g, bx2 + hr * 0.12, by2 + hr * 0.38, hr * 0.18, hr * 0.22, IN);
-          G.Rq(g, bx2 - hr * 0.5, by2 - hr * 0.4, hr * 0.3, hr * 0.3, '#f4ead2'); // eyes
-          G.Rq(g, bx2 + hr * 0.2, by2 - hr * 0.4, hr * 0.3, hr * 0.3, '#f4ead2');
-        }
-        // the ring highlight and a machined bevel, on the quarter grid
-        G.hairq(g, bx2 - br3 * 0.5, by2 - br3 + 0.25, br3, '#ff8a8c');
-        G.hairq(g, bx2 - br3 * 0.4, by2 + br3 - 0.5, br3 * 0.8, '#7a1c1e');
-        for (let k = 0; k < 4; k++) {
-          const a2 = Math.PI * 0.25 + k * Math.PI * 0.5;
-          G.pip(g, bx2 + Math.cos(a2) * br3 * 0.92, by2 + Math.sin(a2) * br3 * 0.92, '#f0b0b0');
-        }
+        // ---- THE BADGE. The chain's mark, stamped on the tank. It
+        // used to be drawn here by hand - a red ring, a cream field and
+        // its own cow - which is the third separate cow in this codebase
+        // and the only one nobody could see next to the other two. It is
+        // G.mooLogo now, the same call the pole sign makes. ----
+        const bx2 = cx, by2 = y + Math.round(h * 0.66);
+        G.mooLogo(g, bx2, by2, Math.max(6, Math.round(w * 0.185)), { word: false });
         return { y, w, h, top: y };
       }
       // a full-belly gauge in a machined bezel
@@ -1943,6 +1910,38 @@
       G.Rh(g, bx - bwd * 0.3, by + bh - 2, bwd * 0.6, 1, '#3a2a06');
       G.Rh(g, bx - bwd * 0.28, by + 1.5, bwd * 0.22, bh * 0.44, '#fff6cc');
       G.Rh(g, bx - 0.5, by + bh - 1, 1, 1, '#2a1e04');
+    }
+
+    // ---- THE LEI ----
+    // It worked a seafront pier for six years, which the lore has always
+    // said and the suit has never once shown. A ring of flowers in the
+    // colours the chain printed on its cups, over the shoulders and down
+    // onto the chest. It sits BELOW the collar and a good deal wider than
+    // it -- the first pass put it at the same height, where the collar and
+    // the bell covered all but two petals of it.
+    if (fr.beach) {
+      const ly = torso.y + u(1), lw = Math.round(torso.w * 0.86);
+      const dip = u(3.5);
+      const PET = ['#ff8ab0', '#ffd45a', '#8fd8c0', '#fffaf0', '#ff9a5a', '#b48ae0'];
+      const n = 11;
+      // the string first, so every flower sits on top of it
+      for (let i = 0; i <= n * 3; i++) {
+        const q = i / (n * 3);
+        G.Rq(g, cxl - lw / 2 + q * lw, ly + Math.sin(q * Math.PI) * dip, 1, 0.5, '#3f7a32');
+      }
+      for (let i = 0; i <= n; i++) {
+        const q = i / n;
+        const fx = cxl - lw / 2 + q * lw;
+        const fy = ly + Math.sin(q * Math.PI) * dip;
+        const col = PET[i % PET.length];
+        const rr = Math.max(1, u(1.7));
+        // a leaf tucked behind each, on alternating sides
+        G.Rq(g, fx + (i % 2 ? rr * 0.6 : -rr * 1.4), fy + rr * 0.4, rr * 0.9, rr * 0.5, '#4a8a3a');
+        G.fc(g, fx, fy, rr + 0.5, OUT);
+        G.fc(g, fx, fy, rr, col);
+        G.Rq(g, fx - rr * 0.35, fy - rr * 0.35, rr * 0.5, rr * 0.5, '#fffaf0');
+        if (rr >= 2) G.Rq(g, fx - rr * 0.15, fy - rr * 0.15, rr * 0.3, rr * 0.3, '#ffe08a');
+      }
     }
 
     // the tell, if this one is not really a machine. Drawn last so it

@@ -562,4 +562,108 @@
   G.drawDrips = function (g) {
     for (const d of G.drips) { G.R(g, d.x, d.y, 1, 3, '#6b9450'); G.R(g, d.x, d.y, 1, 1, '#a8d47a'); }
   };
+
+  // ============================================================
+  // BIG MOO.  ONE LOGO, DRAWN ONCE.
+  //
+  // The chain's mark existed three separate times and no two of them
+  // agreed: a neon tube cow on the pole sign, a red roundel stamped on
+  // the mascot's chest, and a black cow face on the plastic sign in the
+  // car park. Three artists' worth of cow for one brand.
+  //
+  // This is the mark. A rounded badge, a cow's head in the middle of it
+  // wearing the shades, and the wordmark under it. Everything that
+  // carries the brand calls this: the sign, the chest, the menu board,
+  // the paper crowns, the cups, the wrapper on the floor of the ruins.
+  //
+  //   r        the badge radius. Detail drops out as it shrinks, in
+  //            this order: wordmark, nostrils, eyes, muzzle.
+  //   o.flat   no badge behind it - just the head, for stamping on a cup
+  //   o.mono   one colour, for a silhouette or a dark stamp
+  //   o.word   draw the wordmark under the head (default at r >= 13)
+  //   o.tone   the badge field, if not the house cream
+  // ============================================================
+  G.mooLogo = function (g, cx, cy, r, o) {
+    o = o || {};
+    const mono = o.mono || null;
+    const bg = o.bg || null;                 // punch-through colour for a stamp
+    const ink = mono || '#241d2a';
+    const field = o.tone || '#f6ecd6';
+    const pink = mono ? (bg || mono) : '#f0a8b4';
+    const word = o.word === undefined ? r >= 12 : o.word;
+    const disc = (rr, col) => {
+      for (let j = -rr; j <= rr; j++) {
+        const hw = Math.round(Math.sqrt(Math.max(0, rr * rr - j * j)));
+        G.R(g, cx - hw, cy + j, hw * 2 + 1, 1, col);
+      }
+    };
+    // a run of pixels along the rim, for the enamel highlight. Drawn on
+    // the circle itself -- the first pass laid a flat hairline across the
+    // top of the badge, where the disc is one pixel wide, so the logo had
+    // a loose horizontal stroke floating above it.
+    const arc = (rr, a0, a1, col) => {
+      const n = Math.max(4, Math.round(rr * 2));
+      for (let i = 0; i <= n; i++) {
+        const a2 = a0 + (a1 - a0) * (i / n);
+        G.pip(g, cx + Math.cos(a2) * rr, cy + Math.sin(a2) * rr, col);
+      }
+    };
+    // ---- the badge ----
+    if (!o.flat && !mono) {
+      disc(r + 1, OUT);
+      disc(r, '#c8383a');
+      disc(Math.round(r * 0.84), field);
+      // kept inside the quadrants -- running them to the poles put a
+      // bright pip at dead top and dead bottom, which reads as a pair of
+      // registration crosses rather than as light on enamel
+      arc(r * 0.93, Math.PI * 1.16, Math.PI * 1.40, '#ff8a8c');
+      arc(r * 0.93, Math.PI * 0.16, Math.PI * 0.40, '#8a2022');
+    }
+    // ---- the head. Big shapes only: horns, ears, skull, muzzle. ----
+    // It sat at 0.52r with the wordmark under it, which filled the field
+    // corner to corner and left the badge no air at all.
+    const hy = word ? cy - r * 0.2 : cy;
+    const h = r * (word ? 0.38 : 0.40);
+    const ear = h * 0.52;
+    G.Rh(g, cx - h * 1.34, hy - h * 0.5, ear, ear, ink);                 // ears, out past
+    G.Rh(g, cx + h * 0.82, hy - h * 0.5, ear, ear, ink);                 // the skull edge
+    G.Rh(g, cx - h * 0.84, hy - h * 1.14, h * 0.42, h * 0.48, ink);      // horn nubs
+    G.Rh(g, cx + h * 0.42, hy - h * 1.14, h * 0.42, h * 0.48, ink);
+    G.rr2(g, cx - h * 0.8, hy - h * 0.78, h * 1.6, h * 1.4, ink);        // skull
+    // THE SHADES, in the mark as well as on the suit. A brand whose
+    // mascot wears sunglasses and whose logo does not is two brands.
+    // Below r 11 they merge with the skull into one black lump, so under
+    // that the face is just a muzzle and the silhouette does the work.
+    if (r >= 11 && (!mono || bg)) {
+      const gw = h * 1.66, gh = Math.max(1, h * 0.34);
+      G.Rh(g, cx - gw / 2, hy - h * 0.42, gw, gh, bg || '#0e0a14');
+      if (!mono) {
+        G.hairq(g, cx - gw / 2 + h * 0.12, hy - h * 0.42, gw * 0.34, '#7a6e8c');
+        G.Rq(g, cx - gw / 2 - h * 0.14, hy - h * 0.34, h * 0.16, gh * 0.6, '#0e0a14');
+        G.Rq(g, cx + gw / 2 - h * 0.02, hy - h * 0.34, h * 0.16, gh * 0.6, '#0e0a14');
+      }
+    }
+    // the muzzle is its own colour, or it is a hole in the badge
+    G.rr2(g, cx - h * 0.56, hy + h * 0.24, h * 1.12, h * 0.64, pink);
+    if (r >= 13 && !mono) {
+      G.Rq(g, cx - h * 0.3, hy + h * 0.42, h * 0.18, h * 0.22, ink);     // nostrils
+      G.Rq(g, cx + h * 0.12, hy + h * 0.42, h * 0.18, h * 0.22, ink);
+    }
+    // ---- the wordmark, sized to the field it has to live inside ----
+    if (word) {
+      // the cream field is r*1.68 across; leave 2 units of it either side.
+      // Sized to r*1.62 the wordmark filled the field edge to edge and at
+      // r=13 the small cut crossed onto the red rim.
+      const avail = o.flat || mono ? r * 2.6 : r * 1.68 - 4;
+      const sc = G.tw('BIG MOO', 1) <= avail ? 1 : 0.5;
+      // if even the small cut spills past the badge, the mark is better
+      // off with no wordmark than with one hanging over the rim
+      if (G.tw('BIG MOO', sc) > avail) return { r };
+      G.text(g, 'BIG MOO', cx, cy + r * (o.flat || mono ? 0.5 : 0.3),
+        mono || '#c8383a', { align: 'center', sc });
+      if (!mono && !o.flat && r >= 26 && G.tw('SINCE 1971', 0.5) <= avail)
+        G.text(g, 'SINCE 1971', cx, cy + r * 0.58, '#8a7458', { align: 'center', sc: 0.5 });
+    }
+    return { r };
+  };
 })();

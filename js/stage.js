@@ -496,6 +496,8 @@
         if (S.pcrawl) S.pheadTop = S.floor - 26;
         if (def.fore) def.fore(g, S);
         pops(g, S);
+        // ---- THE TRAIL. Where to go, laid on the floor. ----
+        trail(g, S, def, t);
         // ---- THE MARKS. Green chevrons over things to use, white
         // speech marks over people to talk to, and both of them get
         // louder when you are near or pointing at them. Between them
@@ -577,21 +579,121 @@
   };
 
   // ------------------------------------------------------------
+  // WHERE TO GO, WITHOUT BEING TOLD.
+  //
+  // A room this size used to be steered by one line of green text pinned
+  // to the top of the screen: SAY HELLO TO TABLE FOUR. That is a quest
+  // log, not a restaurant. It reads as an instruction from outside the
+  // world, it never says WHERE table four is, and once you have read it
+  // it just sits there.
+  //
+  // So the floor does the work instead. A line of your own hoof prints
+  // walks away from you toward whatever is live, scrolling as it goes,
+  // fading out at the far end. If the thing is off screen, a chevron
+  // rides the edge of the frame with the distance under it. Everything
+  // here is IN the room, at the scale of the room, and it points at
+  // something you can actually see once you get near it.
+  // ------------------------------------------------------------
+  function liveSpot(S, def) {
+    let best = null, bd = 1e9;
+    for (const k of def.spots || []) {
+      if (k.once && S.done[k.id]) continue;
+      if (k.hidden && k.hidden(S)) continue;
+      const d = Math.abs(k.x - S.px);
+      if (d < bd) { bd = d; best = k; }
+    }
+    return best;
+  }
+  function hoof(g, x, y, dir, col, a) {
+    // a cloven print: two toes and a heel, the shape your own foot leaves.
+    // The first pass drew it 1.5 units across at a third alpha, which on a
+    // busy checker floor is a green speck you would never read as a print.
+    g.globalAlpha = a;
+    const toe = 2;
+    G.Rh(g, x - 2.5, y, toe, 3, OUT);
+    G.Rh(g, x + 0.5, y, toe, 3, OUT);
+    G.Rh(g, x - 2, y + 0.5, toe - 0.5, 2, col);
+    G.Rh(g, x + 1, y + 0.5, toe - 0.5, 2, col);
+    G.Rh(g, x - 2, y + 3, 4.5, 1.5, OUT);
+    G.Rh(g, x - 1.5, y + 3, 3.5, 1, G.shade(col, -0.25));
+    g.globalAlpha = 1;
+  }
+  function trail(g, S, def, t) {
+    if (S.lock || def.noTrail) return;
+    const k = liveSpot(S, def);
+    if (!k) return;
+    const dx = k.x - S.px;
+    const dir = Math.sign(dx) || 1;
+    const far = Math.abs(dx);
+    if (far < 26) return;                     // you are there; the chevron has it
+    // prints every 18 units, scrolling toward the thing, the near ones
+    // brightest. They stop short of the target so they never sit under
+    // the chevron.
+    const gap = 18;
+    const n = Math.min(9, Math.floor((far - 20) / gap));
+    const roll = (t * 26) % gap;
+    for (let i = 0; i < n; i++) {
+      const d = 16 + i * gap + roll;
+      if (d > far - 16) break;
+      const x = S.px + dir * d;
+      const q = i / Math.max(1, n - 1);
+      const a = (1 - q * 0.55) * (0.55 + Math.abs(Math.sin(t * 2 + i * 0.7)) * 0.3);
+      hoof(g, x, S.floor - 2 + (i % 2 ? 2 : 0), dir, '#b6ff3a', a);
+    }
+    // and if it is off screen, an arrow riding the edge of the frame
+    const sx = k.x - G.cam.x;
+    if (sx > 10 && sx < G.W - 10) return;
+    const ex = sx <= 10 ? G.cam.x + 14 : G.cam.x + G.W - 14;
+    const ey = S.floor - 46 + Math.sin(t * 3) * 2;
+    // A TRIANGLE. The first pass stacked vertical bars at increasing x,
+    // which renders as a green slab with a notch in it and points nowhere.
+    // outline pass, then fill pass. Per-column outlines overlap into a
+    // set of black bars and the whole thing reads as venetian blinds.
+    const L = 9, H = 13;
+    const colx = (i) => ex - dir * (L / 2 - i);
+    const colh = (i) => Math.round(H * (1 - i / L));
+    for (let i = 0; i <= L; i++) {
+      const h = colh(i); if (h <= 0) continue;
+      G.Rh(g, colx(i) - 0.5, ey - h / 2 - 0.5, 2, h + 1, OUT);
+    }
+    for (let i = 0; i <= L; i++) {
+      const h = colh(i); if (h <= 0) continue;
+      // the TIP is the bright end. It was lit at the base, which points
+      // the eye at the wrong end of the arrow.
+      G.Rh(g, colx(i), ey - h / 2, 1, h, i > L * 0.6 ? '#ffffff' : i > L * 0.3 ? '#dfffcf' : '#8ede3a');
+    }
+    G.glow(g, ex, ey, 30, 30, '#b6ff3a', 0.55);
+    // no distance readout. It was drawn as "348M", which is the width of
+    // the room in logical units with a unit stuck on the end of it, and a
+    // number on the HUD is the exact thing the floor marks replaced.
+    if (k.label) G.pill(g, G.clamp(ex, G.cam.x + 30, G.cam.x + G.W - 30), ey - 10, k.label, '#dfffcf');
+  }
+
+  // ------------------------------------------------------------
   // the default chrome: what you are meant to be doing, and a nudge
   // that you can walk
   // ------------------------------------------------------------
   G.stageHud = function (g, S) {
-    if (S.obj) {
+    // WHAT YOU ARE MEANT TO BE DOING, ANNOUNCED AND THEN GONE.
+    // It used to be a green banner pinned to the top of the frame for as
+    // long as the objective stood - a quest log bolted over a
+    // restaurant. It drops in, holds long enough to read twice, and
+    // leaves; the hoof prints on the floor do the actual guiding from
+    // there, and they point at something you can see.
+    const HOLD = 3.4, OUTT = 0.7;
+    if (S.obj && S.objT < HOLD + OUTT) {
       const w = Math.max(110, G.tw(S.obj) + 24);
-      // it drops in and overshoots, and flashes for a moment after
       const e = G.backOut(G.clamp(S.objT * 3.4, 0, 1));
-      const y = -20 + e * 26;
+      const gone = G.clamp((S.objT - HOLD) / OUTT, 0, 1);
+      const y = -20 + e * 26 - gone * gone * 30;
       const fl = S.objT < 0.9 && Math.sin(S.objT * 30) > 0;
+      g.globalAlpha = 1 - gone;
       G.plate(g, G.W / 2 - w / 2, y, w, 18, fl ? '#2e4a1e' : '#1a2418',
         { r: 2, band: 2, spec: false });
       G.R(g, G.W / 2 - w / 2 + 2, y + 2, w - 4, 1, P.lime);
       G.text(g, S.obj, G.W / 2, y + 6, S.objDone ? '#6b8a4a' : fl ? '#ffffff' : '#dfffcf',
         { align: 'center' });
+      g.globalAlpha = 1;
     }
     // what the pointer is on right now beats a generic nudge, and the
     // generic nudge sticks around long enough to actually be read

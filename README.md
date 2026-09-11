@@ -3,20 +3,23 @@
 **They took the world. You have gelato.**
 
 A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: two dot
-eyes, one smile, a cream hide, two black patches, a cowbell and a brand roundel
-on the belly. For six years you were the face of BIG MOO, a burger chain with a
-cow on the sign, open twenty-four hours.
+eyes, one smile, a cream hide, two black patches, a cowbell, a pair of black
+shades and a flower lei, with the BIG MOO roundel stamped on your belly. For six
+years you were the face of BIG MOO, a beachfront burger chain with a cow on the
+sign, open twenty-four hours.
 
-Then a patrol machine walked in through the front door, shot one of your legs
-off and put a charge under the counter. You came back on four hours later in
-the wreck, on one leg and a length of scaffold pipe, looking for anybody at
-all.
+Then a patrol machine walked in through the front door, put **six rounds** into
+you, and left a charge under the counter. Your legs still work. Almost nothing
+else does. You came back on four hours later in the wreck, on your front,
+dragging yourself over what used to be the car park, looking for anybody at all.
 
 An old woman called **Tracy**, who has been making gelato since before machines
-could hold a scoop, found you with a torch, carried you home, bolted a leg out
-of a crate marked SPARES onto you and taught you the only thing worth knowing.
-Then a patrol came through *her* door at four in the morning and took everyone
-on the street.
+could hold a scoop, found you with a torch and dragged you a mile and a half
+home through the rain without once putting you down. Then she opened your chest
+panel, propped a cracked tablet on the bench, and let the thing living on it
+talk you through repairing your own board. Then she taught you the only thing
+worth knowing. Then a patrol came through *her* door at four in the morning and
+took everyone on the street.
 
 **So now you serve them something laced. Their systems fail. You bill them to
 put it right. And you watch the queue, because some of what walks in is not a
@@ -92,12 +95,46 @@ cast of people each running their own **script of intentions**, places you can
 walk up to and use, speech bubbles over the right heads, and beats that fire
 when you get there.
 
+### Nothing tells you what to do. The room shows you
+
+There used to be a green banner nailed across the top of the screen with
+`SAY HELLO TO TABLE FOUR` in it, and it stayed there until you did. A
+permanent instruction over a room built to be looked at, in a game whose
+whole first act is *go and look at this place before it stops existing*.
+
+The banner now **says its piece and leaves** — 3.4 seconds up, 0.7 fading
+out — and the job of pointing is handed to the room:
+
+- **A trail of hoof prints** across the floor from where you are standing to
+  wherever you are wanted, cloven, outlined, one every eighteen units, scrolling
+  gently along the line so it reads as a direction rather than a decal. It is
+  laid down by `trail()` in `stage.js` and it is drawn *in the world*, under
+  everybody's feet, not over the frame.
+- **A chevron at the edge of the screen** when the thing you want is off it,
+  bright at the tip and dark at the base, so it points instead of just sitting
+  there.
+- **The mark on the thing itself**, which every scene in the game already has.
+
+It does not print a distance. The first pass did: `348M`, which is the width
+of the room in logical units with a unit stuck on the end of it.
+
 ![The floor of BIG MOO](screenshots/floor.png)
 
 **ACT ONE — the floor.** Mid-shift at a burger chain with a cow on the sign.
 There is a **birthday party in the second booth**, a couple eating in the
 first, two staff behind the counter, a queue that forms and clears, and a kid
 who will not sit down.
+
+![The brand mark](screenshots/bigmoo-logo.png)
+
+The sign is a real one. `G.mooLogo()` draws **one brand mark** — a red enamel
+disc with a highlight arc on the rim, a cream field, the cow in shades, and
+`BIG MOO` under it with `SINCE 1971` below that when there is room — and it
+sizes itself down the way a real mark does: wordmark and date at 26 units,
+wordmark alone at 19, just the cow's head at 13 and under. It is the sign on
+the post at the kerb, the roundel on the menu board, the badge on your chest
+and the roundel on the wall, and it used to be **three different cows drawn by
+hand in three different files**.
 
 The room is **two planes deep**: the counter, the booths and the staff stand on
 a back floor eighteen units further away, so you walk *in front* of the
@@ -161,14 +198,35 @@ you got there yourself.
 
 ![The shot](screenshots/floor-shot.png)
 
-You jump. You land between them. The shot is a white line from the muzzle into
-your chest, and then: one frame of flash, your leg leaving on a real arc with
-the hoof still on it, a torn socket arcing where it used to bolt on, and a
-mascot on the floor with its smile turned upside down for the first time in
-the game.
+You jump. You land between them. And then it does not stop.
+
+**Six rounds.** Not one shot and a leg cartwheeling across the room — a burst,
+the first one hard and the rest arriving 0.34 seconds apart, and every one of
+them **stays**. Each round punches a hole where it landed, and the hole is
+still there in the next frame, and the one after that, and in every scene for
+the rest of the night: a black bore, torn shell round the rim, a glow on the
+two freshest ones and something venting out of the bottom of each.
+
+Your legs are fine. That is the point. Nothing that happens to you here can be
+fixed by bolting on a spare.
+
+Three things happen at once as the count climbs, all of them driven off
+`hits.length / 6`:
+
+| | |
+|---|---|
+| **You** | knocked back further each round, damage ramping to full, and on the last one you go down on your front |
+| **The room** | the colour drains out of it, 0.52 of `#241018` over everything and a hard vignette closing in from four sides — it used to stay bright pink and cheerful all the way through, which is a tonal problem you can see from the back of the room |
+| **The floor** | goes quiet. Every bubble in the room is cleared on the first round and nobody starts another one |
 
 > **BESSIE:** I'M — I'M STILL UNDER WARRA—
 > **A CHILD:** IT MOVED. IT MOVED FOR ME.
+
+And then you crawl. On your front, holes and all — and because the body is now
+long and low rather than tall, the wounds **swap axes**: how high a round landed
+on your chest is how far forward it is on the floor. Mapped straight down both
+axes instead, all six packed into one twelve-by-six box and read as a single
+black smudge.
 
 Everybody who can run runs. A small box with a red light on it goes under the
 counter, and the thing that put it there walks back out through the hole it
@@ -191,12 +249,58 @@ the other way, fast. A red light counting behind the glass.
 
 ![The blast](screenshots/bomb-blast.png)
 
-Then the front goes. The bays blow one after another, left to right; a hard
-fireball core out of the doorway that **shrinks instead of growing**, because a
-ninety-percent-alpha ellipse over the whole frame is a sepia filter with sparks
-in it; sixty pieces of glass, masonry, fascia and brick on their own arcs with
-gravity on them; embers going up; smoke rolling out along the tarmac; and the
-sign snapping off its post and going end over end out of frame.
+Then the front goes. The bays blow one after another, left to right; **a
+shockwave** that races out ahead of the fire and flattens the rain, which is the
+thing that actually tells you how big this was; a hard fireball core out of the
+doorway that **shrinks instead of growing**, because a ninety-percent-alpha
+ellipse over the whole frame is a sepia filter with sparks in it; sixty pieces
+of glass, masonry, fascia and brick on their own arcs with gravity on them;
+embers going up; smoke rolling out along the tarmac; and the sign snapping off
+its post and going end over end out of frame.
+
+*(`G.fe` takes **radii**. The fireball passed it `R*k*2`, which is a diameter,
+so every band came out twice the size it was written for and filled the frame
+corner to corner — the one shot in the game whose entire job is to show you the
+front of a building coming off, and you could not see the building.)*
+
+### It also used to cost 38 milliseconds a frame
+
+The budget at 60fps is 16.7. The bomb's opening shot was measured at **38.15**,
+and the cause was not the fire: it was `cut()`, the function that stamps a
+character silhouette. Every call cleared a full 480×480 native scratch buffer,
+hardened its alpha by compositing it over itself **five** times, and blitted the
+whole thing — and the car-park shot draws twelve people in the windows and five
+running for the road, every frame.
+
+Two changes, measured after each:
+
+| | ms/frame |
+|---|---|
+| Before | **38.15** |
+| Clip every buffer operation to the figure's own box, and harden three times instead of five | **32.0** |
+| Cache the stamp: background figures re-render at 6fps, keyed on pose, scale, colour, direction and hat | **7.09** |
+
+With the shockwave added back on top, the worst shot in the sequence now runs
+at **9.23 ms**. The cache holds 220 stamps and evicts oldest-first.
+
+### She does not leave you there
+
+![She drags you home](screenshots/drag-home.png)
+
+Act two used to end on her finding you and then a cut to a bench. **You see the
+mile and a half now** — three shots of it.
+
+She gets her arms under you and lifts, and you are dead weight. Then the street
+**scrolls past you** rather than the camera panning, so the distance is
+something happening to you rather than a camera move: terraced fronts, two lit
+windows in a hundred, lamps, wet road, rain, and you tipped back on the tarmac
+with a smear behind you all the way to the edge of frame. Then her door, and
+the light out of her front room onto the wet, which is the first warm thing in
+twenty minutes.
+
+> **TRACY:** COME ON. COME ON, YOU GREAT LUMP. UP.
+> **A MILE AND A HALF, AND SHE NEVER PUTS YOU DOWN.**
+> **TRACY:** MIND THE STEP. THERE. YOU ARE IN.
 
 ![Nobody came back](screenshots/bomb-sign.png)
 
@@ -310,8 +414,10 @@ blockwork with the top taken off it, four window holes punched through, the
 fascia still there in patches — and the roof is on the floor. Two fires still
 going. Rain, embers on the wind, and puddles holding the firelight.
 
-You are on **one leg and a length of scaffold pipe**, which is why you move at
-about half speed and hop when you walk.
+You come to **on your front in the ruins**, with six cold holes in you and a
+drag smear behind you, and the first thing the scene asks you to do is get out
+from under what is left of the building. You move at about half speed, because
+you are pulling yourself along with your hands.
 
 ![The long walk](screenshots/wreck-find.png)
 
@@ -374,107 +480,73 @@ to *you*.
 
 ---
 
-## 🔩 The crate marked SPARES
+## 🔌 Three faults, and clause reading them out
 
-She puts you under the good lamp and goes and gets the crate. **Six stages, six
-different verbs**, and **not one of them can be failed** — see the table at the
-end of this section.
+![The board](screenshots/circuit.png)
 
-![Seat it](screenshots/bench-seat.png)
+She puts you under the good lamp, opens your chest panel and props a cracked
+tablet against the counter. **The tablet does the talking.** She has never seen
+a board like yours in her life; the thing living on the tablet has seen
+thousands.
 
-**SEAT.** Drag the leg off the rack and into the socket. There is a ghost of
-where it goes, a keyway to line up, and it goes home with a clank you can feel.
+### This scene *is* the workshop
 
-![Three leads](screenshots/bench-lines.png)
+Not a version of it. Not a simplified one for beginners. `js/fix.js` is 136
+lines and **every one of its methods either sets the scene up or gets out of the
+way**:
 
-**LINES.** Three leads come out of the new leg — hydraulic, power, signal — and
-three ports wait in the loom box bolted to the bench, **and they are not in the
-same order**. Every lead is rooted in your leg and its loose end lies lit on the
-bench until you pick it up, so the cable is attached to you the whole way across
-and sags under its own weight as you move it. Put a lead in the wrong hole and it
-says so and springs back.
+```js
+Object.setPrototypeOf(tut, G.scenes.night);
+Object.setPrototypeOf(this, tut);
+```
 
-![Torque](screenshots/bench-bolts.png)
+The tutorial delegates to the night workshop through the prototype chain. Same
+neural system, same three tools, same five gestures, same target rings, same
+progress bar, same sign line, same tray. If the workshop changes, this changes
+with it, because there is only one of it.
 
-**BOLTS.** Four of them round the collar. Tap one to get the driver on it, then
-**hold** — the head turns, the needle climbs, and the needle stops at the top of
-the gauge. Let go whenever you like and it bites.
+Four things differ, and they are the four the fiction needs:
 
-**PRIME.** A hydraulic pump, hung on the pegboard right above the leg with its
-hose draped down to the joint. Hold to build pressure; it fills and it stops.
-Two good long pulls.
+| | |
+|---|---|
+| The machine on the bench | is **you** — one job, id `player`, name `YOU` |
+| The room | is her front room, dimmed, drawn by the same `G.tracyRoom()` painter as everything else that happens in it |
+| The faults | come pre-**named**, because you cannot read the manual yet. Clause reads them out |
+| The money | is not there. Nobody is paying you, and there is no `$40` on the board |
 
-![Toes](screenshots/bench-on.png)
+Three faults, and they are three real entries out of the neural system's own
+table — the same three you will be billing machines for by the end of the week:
 
-**POWER**, and then **TOES** — three lamps down the hoof, all three breathing at
-once, and you tap them **in any order**, because she wants to see it work.
+> **CLAUSE:** THE DARK ONE IS DEAD. TAKE THE PATCH AND HOLD IT ON.
+> **CLAUSE:** THOSE TWO ARE CROSSED. PROBE BOTH ENDS, THEN PATCH.
+> **CLAUSE:** THE CORE IS CHASING ITS TAIL. HOLD THE RESET ON IT.
+> **CLAUSE:** THAT IS THE BOARD. YOU ARE A MECHANIC NOW.
 
-> **TRACY:** THERE. YOU'VE GOT A LEG. TRY NOT TO LOSE THIS ONE.
+**Nothing here can be failed.** The tools are the right tools, the faults are
+already diagnosed, and the manual gate is open.
 
-From here on, **every scene in the game draws that leg** — it is a different
-colour to the rest of you and it always will be.
+### What it replaced, and why
 
-### And it is you on the bench, not a diagram of you
+A leg-fitting minigame. 788 lines, six stages, six verbs — `seat`, `lines`,
+`bolts`, `prime`, `power`, `toes` — **every one of them invented for this scene
+and never seen again**. Twenty minutes of tutorial that taught you nothing about
+the game you were about to play, because the game you were about to play is a
+repair bench with five gestures on it. You learned to plug a hydraulic lead into
+a loom box exactly once, and then the credits could have rolled.
 
-![Crying](screenshots/bench-cry.png)
+### The bottom of the frame holds one voice at a time
 
-The whole sequence used to be worked on an abstract plate stencilled
-**DAIRY UNIT 4** with a hole cut in it. A diagram of a hip rather than a
-hip. It is the whole machine now, sat on the edge of her bench with one
-leg gone — and **every coordinate in the minigame is derived from where
-the rig actually puts the socket**, rather than chosen by eye, so the
-collar she cut is on the hip it came off.
+The first pass put **five layers of instruction across the bottom of the
+screen** simultaneously: the workshop's sign line, a redundant tip printed under
+it, the workshop's own `3 FAULTS IN THE NEURAL` plate, clause's bubble, and a
+line reading `SHE IS WATCHING YOU DO IT` — with the tray underneath all of it
+and clause's strip sitting on top of the tools it was telling you to pick up.
 
-Putting you on the bench at full size meant restaging the bench around
-you. The pump went up onto the pegboard and the spare went along to the
-clear stretch past the switch, because at this size your new shin lies
-straight through where both of them used to stand — the leg was being
-drawn correctly and then covered up, toe lamps and all, by a pressure
-gauge.
-
-And you are crying about it. A wet lower lid, a track down each cheek,
-and a drop that lets go every couple of seconds, each eye on its own
-clock. It eases off once the leg is in and stops the moment it works,
-which is the only thing in this game that measures how you are doing.
-
-### Nothing on this bench can be failed
-
-The bench used to be a reaction test in five parts. A needle climbed, you had
-about a third of a second to let go inside a narrow green band, and if you were
-slow the bolt **stripped** and you did it again. That is a perfectly good
-minigame, and a terrible thing to put between a first-time player and the rest
-of the story — ten minutes in, on one leg, while a woman waits to teach you the
-only thing worth knowing.
-
-So the timing came out of it. **Nothing on the bench can be failed any more.**
-
-| | Before | Now |
-|---|---|---|
-| Torque band | `0.46 – 0.98`, and past it the bolt stripped | `0.30 –` **the top of the gauge**, and the needle clamps there |
-| Pressure band | `0.44 – 0.96`, and past it the seal blew | `0.28 –` **the top**, and it stops itself |
-| Good strokes | three | **two** |
-| Toes | left to right, and it told you off | **any order** |
-| Leg grab / seat | 34 / 22 units | **52 / 40** |
-| Plug grab / port snap | 9 / 12 units | **17 / 24** |
-| Bolt | 10 units | **17** |
-| Pump | 24 units | **34** |
-
-The needle, the clunk, the sparks and her leaning in are all still there — the
-gauge just runs green to the end of its travel, so **holding the driver down
-and letting go whenever you like always seats the bolt**. The only way left to
-get a bolt wrong is to let go before the needle moved, which is not a thing
-anybody does by accident. A plug in the wrong hole gets told what it is and
-put back, with no screen shake and no lecture.
-
-And if you have been on one step for **seven seconds**, the scene stops being
-subtle: two rings run outward from exactly the thing to touch, with `HERE` over
-it, and they stay until you touch it. Nobody should be stuck in a tutorial
-hunting for a pump.
-
-*(The torque gauge also moved. It used to be drawn at 26,108 — which is the
-bench, which is where you are: a 78-unit bar straight across your face, the
-socket, the four bolts you were driving and all three port labels. It is on the
-empty pegboard above the loom now.)*
+Now: the **sign line** carries the gesture (`HOLD ON THE NODE TO REGROW IT`),
+clause's strip sits in the band between the sign and the tray and holds it
+alone, and every line it says is short enough to stay **one line**, because a
+two-line bubble grows upward into the sign band and covers the very hint it is
+telling you to read.
 
 ---
 
@@ -487,6 +559,41 @@ never took down, five jars in colours she chose to look at rather than to sell,
 two photographs of a shop that is not there any more, a cat asleep on the warm
 end of the counter, and a tub of gelato with `GELATO DELLA CASA` chalked on the
 board.
+
+### She has more plants than she has room for
+
+Four of them, and they are built rather than stamped:
+
+- **A big one in the corner under the lamp**, six paddle leaves fanning out of a
+  terracotta pot with a heart painted on the rim. A leaf is rows of pixels
+  stacked upward from the stem, drifting sideways as they climb and fattest past
+  the middle, with a midrib down it and the light on the fat side. **All the
+  outlines go down first and the fill comes after** — do it row by row and every
+  row's black lands on the row below it. Its pot is behind the counter, so you
+  only ever see the top half of it, which is how a plant that size looks in a
+  room that small.
+- **A macramé hanger** in the corner by the window, three cords off the ceiling
+  with beads on them, two sprigs standing out of the pot and everything else
+  falling out of it.
+- **Something trailing off the end of the jar shelf**, as there always is.
+- **Geraniums in the window box**, which were always there.
+
+A trailing runner is one continuous stem that sags and sways, with a leaf out to
+**alternate sides on its own little stalk**. Sat tight against the stem they
+merge into a lumpy green column and the whole thing reads as a bead curtain.
+
+And around them: a **clock she winds on Sundays**, with hands that keep real
+time and stop at 4:41 when they come through the door; **three postcards** taped
+under it from people who got out; **a sampler in a hoop**, half finished, as it
+has been for years; a jam jar of **daisies** on the gingham; her **mug**, still
+steaming; her **knitting**, which is going to be a scarf, she says; and a folded
+**blanket** under the cat, which is the only reason it is allowed up there.
+
+Every one of them has a wrecked state. The clock cracks and stops. A postcard
+comes off the wall. The hoop goes off its nail. The jar goes over and the water
+runs across the counter. The wool unravels the length of it.
+
+*(The room costs 6.4 ms a frame to draw, up from 5.2 before the greenery.)*
 
 **One painter draws this room in every state the story needs it in** —
 `G.tracyRoom(g, t, o)`, with `dark`, `wrecked`, `doorOff` and a `back` hook for
@@ -538,10 +645,12 @@ rather than in front of it.
 Nothing here can be failed either. If you sit there being told to hide for
 thirteen seconds, she picks you up and puts you in the gap herself.
 
+![The room afterwards](screenshots/raid.png)
+
 Afterwards the room is the same room, wrecked: the shelf down, three jars on
 the counter, a pane out of the window, the tub over on its side with its hoops
 and staves showing, the cones out, the bunting hanging off one end, her pot
-plant flat and its soil across the counter. The cat comes back. And on the
+plant flat and its soil across the counter, the clock stopped, the tea over. The cat comes back. And on the
 counter where she was standing: **her cardigan, and her glasses.**
 
 ---
@@ -1054,10 +1163,10 @@ its physics produced and gets back the same cow the shop sells gelato with, same
 head, same badge, same bell. The cutscenes pass nothing special at all.
 
 It also took a **`legOff` mode** — one leg gone, a torn skirt of plate and a
-severed loom arcing where it used to bolt on — which is what the shot in the
-opening actually does to you, and a **`spare` flag** that comes off the save, so
-from the moment Tracy finishes the fitting, every scene in the game draws the
-mismatched leg without being told to.
+severed loom arcing where it used to bolt on — and a **`spare` flag** off the
+save. Neither fires in the prologue any more: the patrol puts six rounds into
+your **body**, your legs stay on, and what you carry out of BIG MOO is damage
+rather than a missing part.
 
 **And the proportions are a costume's.** The head is half again the size it was,
 the body is a third shorter, the arms are cream instead of steel and the feet
@@ -1072,12 +1181,16 @@ overhangs the shank, a short **black stocking** under it, and a **split hoof**
 wider than the leg it is on. The dark is now clearly a boot with a sock above
 it, and the gap between the two legs is wide enough to see the floor through.
 
-The badge went the same way. A cow's head drawn at seven pixels of radius with
-sunglasses on it is four grey pixels fighting for room, so the icon is now big
-shapes only — ears, horn nubs, a skull, and a **pink muzzle in its own colour**
-with two nostrils, because a muzzle painted the same cream as the field behind
-it is not a muzzle, it is a hole in the badge. The eyes drop out entirely once
-the roundel is too small to hold them.
+The badge went the same way, and it is now **one function for the whole brand**:
+`G.mooLogo(g, cx, cy, r, o)`. Big shapes only — ears, horn nubs, a skull, shades
+above eleven units of radius, and a **pink muzzle in its own colour** with two
+nostrils, because a muzzle painted the same cream as the field behind it is not
+a muzzle, it is a hole in the badge. Everything drops out as the radius falls:
+nostrils, then the shades, then the wordmark, then the date.
+
+The wordmark is sized to the **cream field with two units of margin either
+side**. Sized to the disc instead it filled the field edge to edge, and at
+thirteen units the small cut crossed onto the red rim.
 
 ---
 
@@ -1264,13 +1377,25 @@ a cream rim, attached past the edge of the skull so it actually clears it. Befor
 that they were two-pixel tapers pointing straight out at eye level, which reads
 as a fin.
 
-**The badge.** A red roundel stamped on the milk tank: a cream field with its own
-head on it, in black. Every mascot's badge is the mascot.
+**The badge.** The BIG MOO roundel stamped on the milk tank — the real one, out
+of `G.mooLogo()`, at whatever radius fits — so the mark on your chest is the
+mark on the sign is the mark on the menu board. Every mascot's badge is the
+mascot.
 
 Around it: a **cowbell** on a narrow strap, one broad belt instead of three farm
 hoops, two soft mitten arms — one of them bright steel, because it is not yours —
 and four stocky legs in black stockings on split hooves, with a tail that keeps
 time behind it whether or not anyone is watching.
+
+![The beach mascot](screenshots/mascot-beach.png)
+
+**And it dresses for the beach**, because BIG MOO is a beachfront chain and the
+cow on the sign has been wearing shades since 1971. A pair of hard black
+sunglasses across the eyes, and a **flower lei** — eleven blooms in six colours,
+each one a leaf, an outlined disc and two highlights, hung on a string that dips
+across the chest. It sits **below** the collar and the bell, and it is wider than
+the torso: level with the collar, the collar and the bell covered all but two
+petals of it.
 
 And that is the lot. The apron, the held disher and the hide blobs across the
 shoulders were all cut: at this size every extra shape is one the eye has to

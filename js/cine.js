@@ -37,23 +37,48 @@
   // ------------------------------------------------------------
   let buf = null, bg = null;
   const BW = 120, BH = 120;                       // logical, plenty for a person
-  function cut(g, col, ox, oy, draw, rim) {
+  // ------------------------------------------------------------
+  // AND IT HAS TO BE CHEAP.
+  //
+  // Every silhouette used to clear, harden and blit the WHOLE scratch
+  // buffer: 120x120 logical is 480x480 native, cleared once, composited
+  // over itself five times and blitted twice. That is about 1.4 million
+  // pixel operations for one twenty-six-unit-tall person.
+  //
+  // The bomb draws twelve of them in the windows of the restaurant plus
+  // five running across the car park, every frame, on top of a full
+  // building rebuild. Measured: 38ms a frame on the opening shot, against
+  // a 16.7ms budget. Less than half of one silhouette's buffer ever had
+  // anything in it.
+  //
+  // So every call now names the box it actually uses and the clear, the
+  // hardening and both blits are clipped to that box. Three hardening
+  // passes instead of five, as well: compositing alpha over itself goes
+  // 0.5 -> 0.75 -> 0.94 -> 0.996, which is a clean edge by the third.
+  // ------------------------------------------------------------
+  function cut(g, col, ox, oy, draw, rim, box, lift) {
     if (!buf) {
       buf = document.createElement('canvas');
       buf.width = BW * G.PX; buf.height = BH * G.PX;
       bg = buf.getContext('2d');
       bg.imageSmoothingEnabled = false;
     }
+    const B = box || { x: 0, y: 0, w: BW, h: BH };
+    const nx = Math.max(0, Math.floor(B.x * G.PX));
+    const ny = Math.max(0, Math.floor(B.y * G.PX));
+    const nw = Math.min(buf.width - nx, Math.ceil(B.w * G.PX));
+    const nh = Math.min(buf.height - ny, Math.ceil(B.h * G.PX));
+    if (nw <= 0 || nh <= 0) return;
     // re-colours the hardened mask in place; alpha survives, so this can
     // run twice on one draw and give you a rim pass and a body pass
     const paint = (c) => {
       bg.globalCompositeOperation = 'source-in';
       bg.fillStyle = c;
-      bg.fillRect(0, 0, buf.width, buf.height);
+      bg.fillRect(nx, ny, nw, nh);
       bg.globalCompositeOperation = 'source-over';
     };
     bg.setTransform(1, 0, 0, 1, 0, 0);
-    bg.clearRect(0, 0, buf.width, buf.height);
+    bg.clearRect(nx, ny, nw, nh);
     bg.setTransform(G.PX, 0, 0, G.PX, 0, 0);
     bg.globalAlpha = 1;
     draw(bg);
@@ -61,16 +86,65 @@
     // HARDEN FIRST. The rig lays glows and soft rims down with
     // globalAlpha, and a mask taken straight off that comes back with a
     // halo round every character. Compositing the buffer over itself
-    // drives any non-zero alpha toward 1 and leaves true zero at zero,
-    // so five passes turn a soft cloud into a clean cut edge.
-    for (let i = 0; i < 5; i++) bg.drawImage(buf, 0, 0);
+    // drives any non-zero alpha toward 1 and leaves true zero at zero.
+    for (let i = 0; i < 3; i++) bg.drawImage(buf, nx, ny, nw, nh, nx, ny, nw, nh);
     // A rim is the SAME mask, stamped a pixel toward the light in a
     // brighter colour and then covered by the dark one. The edge that
     // survives is the character's own profile, so a hood stays a hood --
     // a hand-drawn bar down the side never does that.
-    if (rim) { paint(rim.col); g.drawImage(buf, ox + (rim.dx || 0), oy + (rim.dy || 0), BW, BH); }
+    if (rim) {
+      paint(rim.col);
+      if (lift) lift(buf, nx, ny, nw, nh);
+      else g.drawImage(buf, nx, ny, nw, nh,
+        ox + B.x + (rim.dx || 0), oy + B.y + (rim.dy || 0), nw / G.PX, nh / G.PX);
+    }
     paint(col);
-    g.drawImage(buf, ox, oy, BW, BH);
+    if (lift) { lift(buf, nx, ny, nw, nh); return; }
+    g.drawImage(buf, nx, ny, nw, nh, ox + B.x, oy + B.y, nw / G.PX, nh / G.PX);
+  }
+
+  // the slice of the scratch buffer a figure of height h actually fills,
+  // measured from the feet at BH-8 and the centre line at BW/2
+  function figBox(h, wide) {
+    const halfW = h * (wide || 0.58) + 5;
+    const top = (BH - 8) - h * 1.32 - 6;
+    return { x: BW / 2 - halfW, y: Math.max(0, top), w: halfW * 2, h: (BH - 2) - Math.max(0, top) };
+  }
+
+  // ------------------------------------------------------------
+  // AND THEN CACHE THEM.
+  //
+  // Clipping the buffer took the opening shot from 38ms to 32ms, which
+  // says the buffer was never the whole story: the rest is drawFolk
+  // itself, building a whole procedural person out of quarter-unit rows,
+  // seventeen times a frame, for figures that are twenty pixels tall and
+  // out of focus behind a window.
+  //
+  // A silhouette is a flat stamp, so it can be kept. The finished, hardened,
+  // coloured mask goes in a small canvas of its own under a key that
+  // includes who it is, what it is doing and WHICH SIXTH OF A SECOND it
+  // is -- so a background figure still moves, at six frames a second,
+  // which is what a silhouette twenty pixels tall is worth.
+  // ------------------------------------------------------------
+  const stamps = new Map();
+  const STAMP_CAP = 220;
+  function stamp(g, key, col, ox, oy, draw, rim, box) {
+    let c = stamps.get(key);
+    if (!c) {
+      const nw = Math.ceil(box.w * G.PX), nh = Math.ceil(box.h * G.PX);
+      c = document.createElement('canvas');
+      c.width = Math.max(1, nw); c.height = Math.max(1, nh);
+      const cg = c.getContext('2d');
+      cg.imageSmoothingEnabled = false;
+      // render into the shared scratch, then lift the box out of it
+      cut(null, col, 0, 0, draw, rim, box, (src, sx, sy, sw, sh) => {
+        cg.clearRect(0, 0, c.width, c.height);
+        cg.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
+      });
+      if (stamps.size >= STAMP_CAP) stamps.delete(stamps.keys().next().value);
+      stamps.set(key, c);
+    }
+    g.drawImage(c, ox + box.x, oy + box.y, c.width / G.PX, c.height / G.PX);
   }
 
   // a person, in one colour. seed picks who; h is head-to-heel.
@@ -78,13 +152,27 @@
     o = o || {};
     const sc = h / G.SZ.ADULT;
     const bx = Math.round(x - BW / 2), by = Math.round(footY - BH + 8);
-    cut(g, col, bx, by, (gg) => {
+    const seed = o.seed === undefined ? x * 0.37 + h : o.seed;
+    const ct = o.ct === undefined ? (o.t || 0) : o.ct;
+    const rm = rim === true ? { col: '#a06a4c', dx: -0.5, dy: -0.5 } : rim || null;
+    const box = figBox(h);
+    const draw = (gg) => {
       G.drawFolk(gg, BW / 2, BH - 8, sc, {
-        t: o.t || 0, seed: o.seed === undefined ? x * 0.37 + h : o.seed,
-        clip: o.clip, ct: o.ct === undefined ? o.t : o.ct, dir: o.dir,
+        t: o.t || 0, seed,
+        clip: o.clip, ct, dir: o.dir,
         p: o.p, smile: o.smile, hat: o.hat, noQuirk: o.noQuirk,
       });
-    }, rim === true ? { col: '#a06a4c', dx: -0.5, dy: -0.5 } : rim || null);
+    };
+    // p is a continuous performance value (a reach, a startle), so
+    // anything driving one is drawn live; everybody else is a stamp
+    if (o.p !== undefined || o.live) {
+      cut(g, col, bx, by, draw, rm, box);
+      return;
+    }
+    const key = seed + '|' + Math.round(h) + '|' + col + '|' + (o.clip || 'idle') + '|'
+      + (o.dir || 0) + '|' + (o.hat || '-') + '|' + (o.smile ? 1 : 0) + '|'
+      + (rm ? rm.col : '-') + '|' + Math.floor(ct * 6);
+    stamp(g, key, col, bx, by, draw, rm, box);
   }
   function rain(g, t, n, col, x0, x1) {
     for (let i = 0; i < n; i++) {
@@ -183,8 +271,18 @@
           G.glow(g, gx + gw / 2, gy + gh - 8, gw * 1.6, gh * 0.8, '#ff8a3a', 0.34 * bn);
         }
       } else {
-        G.R(g, gx, gy, gw, gh, '#101a2a');
-        G.glow(g, gx + gw / 2, gy + gh * 0.5, gw, gh, '#ffd45a', 0.32);
+        // IT IS WARM IN THERE. The bays used to be painted a cold navy
+        // with a weak yellow glow over them, so the restaurant looked shut
+        // before anything happened to it and the blackout afterwards cost
+        // nothing. There is a birthday going on behind this glass.
+        G.R(g, gx, gy, gw, gh, '#3a2a20');
+        for (let j = 0; j < gh; j++)
+          G.Rh(g, gx, gy + j, gw, 1, G.mix('#ffcf88', '#c8763a', j / gh));
+        G.glow(g, gx + gw / 2, gy + gh * 0.5, gw * 1.5, gh * 1.6, '#ffbe6a', 0.7);
+        // and it throws light down onto the wet in front of it
+        g.globalAlpha = 0.2;
+        G.rr(g, gx - 4, GY + 2, gw + 8, 5, '#ffbe6a');
+        g.globalAlpha = 1;
         // shapes in the window, before it goes. Real people, cut out of
         // the warm light - it is a birthday in there.
         for (let k = 0; k < 3; k++) {
@@ -200,6 +298,8 @@
       }
     }
     // ---- the mascot sign, on a post at the kerb ----
+    // It used to draw its own cow here -- ears, skull, two dots, muzzle -
+    // which is a third cow in a codebase that now has exactly one.
     const spx = 288;
     G.R(g, spx - 2, GY - 62, 5, 62, '#3a3440');
     G.hairq(g, spx - 2, GY - 62, 62, '#5c5468');
@@ -207,17 +307,11 @@
     if (sg > 0) {                                      // it snaps and falls
       g.translate(spx, GY - 58); g.rotate(sg * 1.5); g.translate(-spx, -(GY - 58));
     }
-    G.rr2(g, spx - 21, GY - 78, 42, 30, '#c8505c');
-    G.rr2(g, spx - 19, GY - 76, 38, 26, '#f0e2d4');
-    G.text(g, 'BIG MOO', spx, GY - 70, '#8a2f3a', { align: 'center', sc: 0.5 });
-    // its face, in black, the way it is on every one of them: ears out,
-    // a round skull, two dots and a muzzle. It has to be recognisably
-    // the thing you have been playing.
-    for (const sd of [-1, 1]) G.rr2(g, spx + sd * 9 - 3, GY - 62, 6, 4, '#2a2028');
-    G.rr2(g, spx - 9, GY - 64, 18, 13, '#2a2028');
-    for (const sd of [-1, 1]) G.Rq(g, spx + sd * 4 - 1, GY - 61, 2, 2, '#f0e2d4');
-    G.rr2(g, spx - 4, GY - 57, 8, 5, '#f0e2d4');
-    G.Rq(g, spx - 1, GY - 55, 2, 1, '#2a2028');
+    // the lit box it sits in
+    G.rr2(g, spx - 24, GY - 88, 48, 46, '#8a2f3a');
+    G.rr2(g, spx - 22, GY - 86, 44, 42, sg > 0 ? '#4a3a38' : '#f6ecd6');
+    G.mooLogo(g, spx, GY - 65, 19, { flat: 1, tone: sg > 0 ? '#4a3a38' : '#f6ecd6' });
+    if (!sg) G.glow(g, spx, GY - 65, 78, 74, '#ffd45a', 0.42);
     g.restore();
     return { GY, BX, BW, BT, spx };
   }
@@ -574,6 +668,63 @@
   }
 
   // ------------------------------------------------------------
+  // THE ROAD HOME. A wet terrace at four in the morning, scrolling if
+  // the shot wants it to, with her shop on the end of it.
+  // ------------------------------------------------------------
+  function street(g, tt, o) {
+    o = o || {};
+    const sc = o.scroll || 0, GY = 152;
+    for (let j = 0; j < GY; j++)
+      G.Rh(g, 0, j, G.W, 1, G.mix('#080b12', '#1c1824', Math.pow(j / GY, 0.8)));
+    // the terrace behind, scrolling
+    for (let i = -1; i < 8; i++) {
+      const x = ((i * 58 - sc) % 464 + 464) % 464 - 72;
+      G.R(g, x, 58, 54, GY - 58, '#231e2a');
+      G.bevelq(g, x, 58, 54, GY - 58, '#332c3c', '#141018');
+      for (let k = 0; k < 3; k++) {
+        const lit = G.hash(i * 3.1 + k, 7) > 0.72;
+        G.R(g, x + 8 + k * 14, 70, 9, 12, lit ? '#c89a4a' : '#151220');
+        if (lit) G.glow(g, x + 12 + k * 14, 76, 26, 24, '#ffbe6a', 0.3);
+      }
+      G.R(g, x + 4, 54, 46, 5, '#2e2634');
+    }
+    // her shop, if this is the end of the road
+    if (o.shop) {
+      G.R(g, 78, 52, 108, GY - 52, '#2a2230');
+      G.bevelq(g, 78, 52, 108, GY - 52, '#463a4e', '#160f1a');
+      G.R(g, 82, 56, 100, 8, '#8a2f4a');
+      G.text(g, "TRACY'S", 132, 57, '#f6ecd6', { align: 'center', sc: 0.5 });
+      // the window with the gingham in it
+      G.R(g, 138, 76, 40, 44, '#141020');
+      for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++)
+        G.Rh(g, 140 + i * 4, 78 + j * 4, 4, 4, (i + j) % 2 ? '#5c4450' : '#3a2c38');
+      G.R(g, 96, 92, 36, 60, '#1a1420');
+      G.bevelq(g, 96, 92, 36, 60, '#3a3040', '#0e0a14');
+      G.Rh(g, 100, 98, 28, 18, '#221a28');
+    }
+    // the road, wet
+    G.R(g, 0, GY, G.W, G.H - GY, '#12101a');
+    G.hairq(g, 0, GY, G.W, '#2e2838');
+    for (let i = 0; i < 16; i++) {
+      const px = ((G.hash(i, 7) * 340 - sc * 0.6) % 360 + 360) % 360 - 20;
+      g.globalAlpha = 0.2;
+      G.rr(g, px, GY + 4 + G.hash(i, 11) * 20, 14 + G.hash(i, 13) * 30, 3, '#3a5a7a');
+      g.globalAlpha = 1;
+    }
+    // a street light every so often, and what it puts on the wet
+    for (let i = 0; i < 3; i++) {
+      const lx = ((i * 118 - sc * 0.9) % 354 + 354) % 354 - 20;
+      G.R(g, lx - 1, 30, 3, GY - 30, '#1a1622');
+      G.R(g, lx - 7, 28, 15, 4, '#2a2432');
+      G.fc(g, lx, 33, 3, '#ffd9a0');
+      G.glow(g, lx, 40, 70, 90, '#ffbe6a', 0.34 + (o.lit || 0) * 0.3);
+      g.globalAlpha = 0.16;
+      G.rr(g, lx - 16, GY + 6, 32, 5, '#ffbe6a');
+      g.globalAlpha = 1;
+    }
+  }
+
+  // ------------------------------------------------------------
   // THE CUTSCENES
   // Each shot: { t, say, who, cam:{x,y,z,sh -> to}, paint(g, p, tt) }
   // p is 0..1 through the shot; tt is absolute time for animation.
@@ -740,8 +891,29 @@
                 const rx = R * k * wob, ry = H * k * wob;
                 G.R(g, fx - rx, fy + Math.sin(a2) * ry - 1, rx * 2, 3, col);
               }
-              G.fe(g, fx, fy, R * k * 2, H * k * 2, col);
+              // G.fe takes RADII. This passed R*k*2, which is the diameter, so
+              // every band came out twice the size it was written for and the
+              // fireball filled the frame corner to corner -- the one shot in
+              // the game whose whole job is to show you the front of the
+              // building coming off, and you could not see the building.
+              G.fe(g, fx, fy, R * k, H * k, col);
             }
+          }
+          // ---- THE SHOCKWAVE ----
+          // It races out ahead of the fire, flattens the rain, and is the
+          // thing that actually tells you how big this was.
+          const sw = G.clamp(p * 2.6, 0, 1);
+          if (sw > 0.02 && sw < 1) {
+            const sr = sw * 230, sh2 = sw * 150;
+            g.globalAlpha = (1 - sw) * 0.85;
+            G.oc(g, fx, fy, sr, '#ffe6a8');
+            g.globalAlpha = (1 - sw) * 0.4;
+            for (let i = 0; i < 20; i++) {
+              const a2 = (i / 20) * 6.2832;
+              G.Rh(g, fx + Math.cos(a2) * sr * 0.94, fy + Math.sin(a2) * sh2 * 0.94 / 1.0,
+                2, 2, '#fff6e0');
+            }
+            g.globalAlpha = 1;
           }
           // glass and masonry on real arcs
           for (let i = 0; i < 60; i++) {
@@ -819,6 +991,100 @@
     // appears nowhere else in the game. It is a scene now, not a film:
     // it plays in her actual front room the moment you hand her the cone,
     // and you are in it. See tracy.js.
+
+    // ---------------- she takes you home ----------------
+    // The rescue used to white out in the car park and come back up on
+    // her bench, with the whole journey -- the one stretch of this story
+    // that is nothing but an old woman deciding to bother -- happening
+    // off screen between two scenes. It is three shots now, and she does
+    // all of the work in every one of them.
+    home: [
+      { t: 4.6, who: 'TRACY', col: '#ffd0dc',
+        say: "COME ON. COME ON, YOU GREAT LUMP. UP.",
+        cam: { z: [1.5, 1.3], x: [150, 158], y: [116, 112] },
+        paint(g, p, tt, talk) {
+          street(g, tt, { lit: 0.2 });
+          // you, dead weight, and her getting her arms under you
+          const lift = G.easeOut(G.clamp(p * 1.3, 0, 1));
+          G.drawBot(g, 'player', 132, 150 - lift * 4, 1.05, {
+            t: tt, mood: 'sick', walk: 0, crawl: 1, noBlink: 1,
+            clip: 'slump', ct: tt, hands: [{ x: 106, y: 140 }, { x: 158, y: 144 }],
+          });
+          G.drawTracy(g, 168, 152, 1.15, {
+            t: tt, clip: talk ? 'talk' : 'reach', ct: tt, dir: -1,
+            p: lift,
+          });
+          // she is straining, and it shows on the ground
+          if (Math.random() < 0.3)
+            G.Rq(g, 150 + G.rand(-16, 16), 149 + G.rand(0, 2), 2, 1, '#3a3038');
+          rain(g, tt, 60, '#33445f', 0, 320);
+        } },
+      { t: 6.0, who: null, say: 'A MILE AND A HALF, AND SHE NEVER PUTS YOU DOWN.',
+        // framed low: at y 104 the road -- and the smear you leave on it --
+        // sat behind the dialogue card, so the one thing this shot is about
+        // was off the bottom of the picture
+        cam: { z: [1.0, 1.14], x: [160, 160], y: [113, 111] },
+        paint(g, p, tt) {
+          // the street scrolls past instead of the camera moving, so the
+          // drag reads as distance rather than as a pan
+          street(g, tt, { lit: 0.3, scroll: p * 300 });
+          const wob = Math.sin(tt * 2.6) * 1.5;
+          // the smear you leave, all the way back to the edge of frame.
+          // It went down at a quarter alpha in near-black on a near-black
+          // road, which is a smear nobody can see.
+          for (let i = 0; i < 44; i++) {
+            g.globalAlpha = G.clamp(0.5 - i * 0.009, 0, 0.5);
+            G.Rh(g, 104 - i * 3.2, 158 + Math.sin(i * 0.6) * 0.5, 4, 2.5, '#5c4a5c');
+            if (i % 3 === 0) G.Rq(g, 104 - i * 3.2, 157.5, 3, 0.75, '#8a7a92');
+            g.globalAlpha = 1;
+          }
+          // YOU, on your back, being towed. The first pass stood the two
+          // of you side by side at the same height, which is two people
+          // out for a walk.
+          // tipped back, because you are being towed rather than walking
+          g.save();
+          g.translate(112, 164); g.rotate(-0.34); g.translate(-112, -164);
+          G.drawBot(g, 'player', 112, 164 + wob * 0.3, 1.0, {
+            t: tt, mood: 'sick', walk: 0, crawl: 1, noBlink: 1,
+            clip: 'slump', ct: tt,
+            hands: [{ x: 82, y: 160 }, { x: 92, y: 163 }],   // trailing behind you
+          });
+          g.restore();
+          // her, above and ahead, bent into it with both arms down on you.
+          // A pair of hand-drawn pink bars used to run between the two of
+          // you here and read as a scaffolding pole through your chest.
+          G.drawTracy(g, 158, 158 + wob * 0.4, 1.22, {
+            t: tt, clip: 'reach', ct: tt, dir: -1, p: 1,
+          });
+          rain(g, tt, 70, '#33445f', 0, 320);
+          G.glow(g, 160, 120, 240, 120, '#2a3a5a', 0.4);
+        } },
+      { t: 5.4, who: 'TRACY', col: '#ffd0dc',
+        say: "MIND THE STEP. THERE. YOU ARE IN.",
+        cam: { z: [1.2, 1.42], x: [160, 150], y: [104, 106] },
+        paint(g, p, tt, talk) {
+          street(g, tt, { lit: 0.35, shop: 1 });
+          // the door comes open and the room throws its light out onto
+          // the wet, which is the first warm thing in twenty minutes
+          const open = G.easeOut(G.clamp((p - 0.15) / 0.4, 0, 1));
+          if (open > 0) {
+            G.R(g, 96, 92, 36 * open, 60, '#ffd9a0');
+            G.glow(g, 114, 122, 130 * open, 120 * open, '#ffbe6a', 0.7 * open);
+            g.globalAlpha = 0.3 * open;
+            G.rr(g, 84, 150, 70, 6, '#ffbe6a');
+            g.globalAlpha = 1;
+          }
+          const inx = G.lerp(150, 112, G.easeInOut(G.clamp((p - 0.4) / 0.5, 0, 1)));
+          G.drawBot(g, 'player', inx, 152, 1.0, {
+            t: tt, mood: 'sick', walk: 0, crawl: 1, noBlink: 1,
+            clip: 'slump', ct: tt, hands: [{ x: inx - 24, y: 146 }, { x: inx + 24, y: 148 }],
+          });
+          G.drawTracy(g, inx + 44, 154, 1.2, {
+            t: tt, clip: talk ? 'talk' : 'reach', ct: tt, dir: -1, p: 1, smile: p > 0.7,
+          });
+          rain(g, tt, 50, '#33445f', 0, 320);
+        } },
+    ],
 
     // ---------------- saving clause ----------------
     chip: [

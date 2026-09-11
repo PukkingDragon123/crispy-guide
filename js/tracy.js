@@ -108,6 +108,228 @@
   //   o.back     drawn after the wall and BEFORE the counter, so anybody
   //              standing on the back plane gets their shins hidden by it
   // ============================================================
+  // ============================================================
+  // GREENERY. She has more plants than she has room for, which is the
+  // whole point of her.
+  //
+  // A leaf is rows of pixels stacked upward from the stem, drifting
+  // sideways as they climb and fattest somewhere past the middle. All the
+  // outlines go down first and the fill comes after -- do it row by row
+  // and every row's black lands on top of the row below it.
+  // ============================================================
+  function leaf(g, x, y, dx, len, wid, col, M) {
+    const prof = (p) => Math.sin(Math.pow(p, 0.8) * Math.PI) * wid;
+    for (let k = 0; k <= len; k++) {
+      const w = prof(k / len);
+      if (w < 0.35) continue;
+      const cx = x + dx * (k / len) * (k / len);
+      G.Rh(g, cx - w - 0.5, y - k - 0.5, w * 2 + 1, 2, OUT);
+    }
+    const fill = M(col), rib = M(G.shade(col, 0.6)), lit = M(G.mix(col, '#ffffff', 0.4));
+    for (let k = 0; k <= len; k++) {
+      const w = prof(k / len);
+      if (w < 0.35) continue;
+      G.Rh(g, x + dx * (k / len) * (k / len) - w, y - k, w * 2, 1, fill);
+    }
+    // the midrib, and the light down the fat side
+    for (let k = 2; k < len; k += 2) {
+      const w = prof(k / len);
+      if (w < 1.2) continue;
+      const cx = x + dx * (k / len) * (k / len);
+      G.vairq(g, cx, y - k, 1, rib);
+      G.Rq(g, cx + w - 1, y - k, 0.75, 1, lit);
+    }
+  }
+
+  // a runner: one continuous stem, sagging and swaying, with little round
+  // leaves paired off alternate sides of it. The first pass hung single
+  // blobs at wide spacing straight down and read as a bead curtain.
+  function runner(g, x, y, n, drop, spread, col, M, t, ph) {
+    const stem = M(G.shade(col, 0.5));
+    const N = n, pts = [];
+    for (let i = 0; i <= N; i++) {
+      const p = i / N;
+      pts.push([x + spread * p * p + Math.sin(t * 0.8 + ph + p * 2.4) * (0.6 + p * 2),
+                y + drop * p]);
+    }
+    for (let i = 1; i <= N; i++) {
+      const a = pts[i - 1], b = pts[i];
+      for (let q = 0; q <= 2; q++)
+        G.Rq(g, G.lerp(a[0], b[0], q / 2) - 0.25, G.lerp(a[1], b[1], q / 2), 0.5, 1.3, stem);
+    }
+    // one leaf per node, out to alternate sides ON ITS OWN STALK. Sat
+    // tight against the stem they merged into a lumpy green column and
+    // the whole thing read as a bead curtain.
+    for (let i = 1; i <= N; i++) {
+      const pt = pts[i], sd = i % 2 ? 1 : -1, r = 2.2 + (i % 3) * 0.5;
+      const lx = pt[0] + sd * (r + 2);
+      G.Rq(g, Math.min(pt[0], lx), pt[1] - 0.375, Math.abs(lx - pt[0]), 0.75, stem);
+      G.fc(g, lx, pt[1], r + 0.5, OUT);
+      G.fc(g, lx, pt[1], r, M(i % 3 ? col : G.mix(col, '#ffffff', 0.28)));
+      G.Rq(g, lx - sd * r * 0.6, pt[1] - 0.25, r * 0.9, 0.5, M(G.shade(col, 0.62)));
+      G.Rq(g, lx - 0.5, pt[1] - r + 0.5, 1, 0.75, M(G.mix(col, '#ffffff', 0.45)));
+    }
+  }
+
+  // the one hanging in the corner, on cords she knotted herself
+  function hanger(g, x, t, M, wr) {
+    const sw = wr > 0.4 ? Math.sin(t * 1.5) * 5 : Math.sin(t * 0.5) * 0.7;
+    const cx = x + sw, py = 36;
+    for (const off of [-6, 0, 6]) {
+      for (let k = 0; k <= 12; k++) {
+        const p = k / 12;
+        G.Rq(g, G.lerp(x, cx + off, p) - 0.25, 13 + (py - 13) * p, 0.75, 1.4, M('#a98a64'));
+      }
+    }
+    for (const off of [-6, 6]) G.fc(g, G.lerp(x, cx + off, 0.6), 13 + (py - 13) * 0.6, 1.3, M('#c8a884'));
+    G.plate(g, cx - 8, py, 16, 11, M('#c8785a'), { r: 1, band: 2 });
+    G.Rh(g, cx - 9, py - 3, 18, 4, M('#e0947a'));
+    G.hair(g, cx - 9, py - 3, 18, M('#f4bc9c'));
+    // two sprigs standing up, and everything else falling out of it
+    leaf(g, cx - 2, py - 3, -5, 13, 2.6, '#7fae54', M);
+    leaf(g, cx + 2, py - 3, 6, 10, 2.2, '#6b9a4a', M);
+    runner(g, cx - 6, py + 9, 7, 26, -5, '#6b9a4a', M, t, 0.4);
+    runner(g, cx + 6, py + 9, 6, 22, 5, '#8fbf7a', M, t, 2.1);
+  }
+
+  // the big one in the corner under the lamp. Its pot is behind the
+  // counter, which means you only ever see the top half of it -- which is
+  // how a plant that size looks in a room that small.
+  function bigPlant(g, t, M, wr) {
+    const bx = 110, by = 99, lean = wr > 0.45 ? 3 : 0;
+    G.plate(g, bx - 11, by, 22, 18, M('#c8785a'), { r: 1, band: 2 });
+    G.Rh(g, bx - 13, by - 3, 26, 4, M('#e0947a'));
+    G.hair(g, bx - 13, by - 3, 26, M('#f4bc9c'));
+    // she painted it. The heart sits on the RIM, because the counter takes
+    // everything from the lip of the pot down.
+    G.Rh(g, bx - 4, by - 2.5, 1.5, 2, M('#e8607a'));
+    G.Rh(g, bx - 1, by - 2.5, 1.5, 2, M('#e8607a'));
+    G.Rh(g, bx - 3.5, by - 1, 4.5, 1, M('#e8607a'));
+    G.Rh(g, bx - 2.5, by - 0.2, 2.5, 1, M('#e8607a'));
+    for (const d of [-9, 7]) G.Rq(g, bx + d, by - 2, 2, 2, M('#f4bc9c'));
+    // dx, length, width -- picked so nothing reaches the clock or the shelf
+    const FR = [[-20, 30, 5], [-13, 38, 5.6], [-5, 44, 6], [4, 41, 5.8],
+                [12, 34, 5.2], [18, 26, 4.4]];
+    for (let i = 0; i < FR.length; i++) {
+      const f = FR[i], sway = Math.sin(t * 0.6 + i * 1.4) * 1.5;
+      leaf(g, bx + (i - 2.5) * 1.6, by - 2, f[0] + sway + lean, f[1], f[2],
+        i % 2 ? '#6b9a4a' : '#7fae54', M);
+    }
+  }
+
+  // ---- the clock she winds on Sundays ----
+  function wallClock(g, t, M, wr) {
+    const cx = 66, cy = 66 + (wr > 0.5 ? 3 : 0), r = 10;
+    G.fc(g, cx, cy, r + 1.5, OUT);
+    G.fc(g, cx, cy, r + 0.5, M('#c8a884'));
+    G.fc(g, cx, cy, r - 1, M('#fbf3e6'));
+    for (let i = 0; i < 12; i++) {
+      const a = i * Math.PI / 6;
+      G.Rq(g, cx + Math.sin(a) * (r - 3) - 0.5, cy - Math.cos(a) * (r - 3) - 0.5,
+        i % 3 ? 1 : 1.5, i % 3 ? 1 : 1.5, M('#8a7458'));
+    }
+    // it stops when they come through the door, and it never goes again
+    const stop = wr > 0.35;
+    const mins = stop ? 41 : (t * 0.9) % 60;
+    const hrs = stop ? 4 : 8 + mins / 60;
+    const hand = (ang, ln, wdt, col) => {
+      for (let k = 2; k <= ln; k++)
+        G.Rh(g, cx + Math.sin(ang) * k - wdt / 2, cy - Math.cos(ang) * k - wdt / 2, wdt, wdt, col);
+    };
+    hand(hrs * Math.PI / 6, r - 5, 1.5, M('#3a2e24'));
+    hand(mins * Math.PI / 30, r - 3, 1, M('#3a2e24'));
+    G.fc(g, cx, cy, 1.2, M('#8a2f3a'));
+    if (stop) for (let i = 0; i < 6; i++)            // and a crack across the glass
+      G.Rq(g, cx - 7 + i * 2.4, cy - 6 + Math.sin(i * 1.6) * 5, 2, 0.75, M('#b0a894'));
+  }
+
+  // ---- a sampler in a hoop, half finished, as it has been for years ----
+  function hoop(g, M, wr) {
+    const cx = 152, cy = 62, r = 11;
+    if (wr > 0.5) return;                            // off its nail and under something
+    G.fc(g, cx, cy, r + 1, OUT);
+    G.fc(g, cx, cy, r, M('#d8b890'));
+    G.fc(g, cx, cy, r - 2, M('#faf2e2'));
+    G.Rh(g, cx - 2, cy - r - 2.5, 4, 3, M('#c8a884'));   // the screw at the top
+    // a heart, in cross stitch, one X at a time
+    const HEART = [[-2, -3], [-1, -4], [0, -3], [1, -4], [2, -3], [-3, -2], [3, -2],
+                   [-3, 0], [3, 0], [-2, 1], [2, 1], [-1, 2], [1, 2], [0, 3],
+                   [-1, -1], [1, -1], [0, 0], [0, -2]];
+    for (const h of HEART) {
+      const x = cx + h[0] * 2 - 1, y = cy + h[1] * 2 - 1;
+      G.Rq(g, x, y, 2, 0.75, M('#e06a80'));
+      G.Rq(g, x + 0.5, y - 0.5, 0.75, 2, M('#e06a80'));
+    }
+    for (let i = 0; i < 3; i++)                      // and the thread still hanging off it
+      G.Rq(g, cx + 5 + i, cy + 7 + i * 1.5, 1, 1, M('#e06a80'));
+  }
+
+  // ---- postcards from people who got out ----
+  function cards(g, M, wr) {
+    // in a row UNDER the clock. They sat at 84..106 to begin with, which
+    // is inside the big plant, so all you saw were three coloured slivers
+    // behind a leaf.
+    const C = [[51, 79, '#8fd8c0', '#ffd45a'], [67, 78, '#9fc4dd', '#f0a8bc'],
+               [83, 80, '#f6c8d2', '#8fbf7a']];
+    for (let i = 0; i < C.length; i++) {
+      const c = C[i];
+      if (wr > 0.4 && i === 1) continue;             // one of them comes off the wall
+      G.plate(g, c[0], c[1], 15, 11, M('#fbf3e6'), { r: 1, band: 1, spec: false });
+      G.R(g, c[0] + 1.5, c[1] + 1.5, 12, 6, M(c[2]));
+      G.Rh(g, c[0] + 1.5, c[1] + 5, 12, 2.5, M(c[3]));
+      G.hairq(g, c[0] + 2, c[1] + 9, 9, M('#b0a08c'));
+      G.hairq(g, c[0] + 2, c[1] + 10, 6, M('#b0a08c'));
+      G.Rq(g, c[0] + 5, c[1] - 1.5, 5, 2, M('#f0e4c8'));    // the tape
+    }
+  }
+
+  // ---- what is on the counter that is not for sale ----
+  function counterCute(g, t, M, wr) {
+    // a jam jar of daisies on the gingham
+    const vx = 201, vy = CNT_Y;
+    if (wr > 0.35) {                                 // over, and the water out of it
+      G.Rh(g, vx - 8, vy - 4, 12, 4, M('#cfe4ec'));
+      G.Rh(g, vx - 12, vy - 1, 20, 1, M('#b8d4e0'));
+      for (let i = 0; i < 4; i++)
+        G.fc(g, vx - 10 + i * 4, vy - 2, 1.6, M('#fbf3e6'));
+    } else {
+      G.plate(g, vx - 5, vy - 10, 10, 10, M('#dcecec'), { r: 1, band: 1 });
+      G.Rh(g, vx - 4, vy - 7, 8, 6, M('#cfe4ec'));
+      for (let i = 0; i < 5; i++) {
+        const a = -1.9 + i * 0.45, sw2 = Math.sin(t * 1.1 + i) * 0.8;
+        const fx = vx + Math.cos(a) * 7 + sw2, fy = vy - 12 + Math.sin(a) * 5;
+        for (let k = 0; k < 6; k++)
+          G.Rq(g, vx + (fx - vx) * (k / 6) - 0.25, vy - 10 - k, 0.5, 1, M('#6b9a4a'));
+        G.fc(g, fx, fy, 2.4, M('#fffaf0'));
+        G.fc(g, fx, fy, 1.1, M('#ffd45a'));
+      }
+    }
+    // her mug, which says nothing on it and never has
+    const mx = 219;
+    G.plate(g, mx, CNT_Y - 8, 8, 8, M('#fbeef0'), { r: 1, band: 1 });
+    G.Rh(g, mx + 1, CNT_Y - 7, 6, 1.5, M('#8a6040'));
+    G.oc(g, mx + 9, CNT_Y - 4, 2.4, M('#fbeef0'));
+    if (wr < 0.35) for (let i = 0; i < 3; i++) {
+      const q = (t * 0.45 + i * 0.34) % 1;
+      g.globalAlpha = 0.3 * (1 - q);
+      G.Rq(g, mx + 4 + Math.sin(q * 6 + i * 2) * 2, CNT_Y - 11 - q * 7, 1, 1, '#ffffff');
+      g.globalAlpha = 1;
+    }
+    // the knitting, which is going to be a scarf, she says
+    const wx = 274;
+    G.fc(g, wx, CNT_Y - 4, 4.5, OUT);
+    G.fc(g, wx, CNT_Y - 4, 4, M('#e8a0b4'));
+    for (let i = 0; i < 4; i++)
+      G.Rq(g, wx - 4 + i * 2.2, CNT_Y - 7 + (i % 2) * 5, 2, 0.75, M('#f4c0cc'));
+    for (const d of [-1, 1]) {                       // two needles through it
+      G.Rh(g, wx - 1, CNT_Y - 10, 1, 8, M('#e8dcc6'));
+      G.fc(g, wx - 0.5 + d * 3, CNT_Y - 10, 1, M('#c8a884'));
+      G.Rh(g, wx - 1 + d * 3, CNT_Y - 9, 1, 7, M('#e8dcc6'));
+    }
+    if (wr > 0.3) for (let i = 0; i < 9; i++)        // and the yarn all over the counter
+      G.Rq(g, wx - 6 - i * 4, CNT_Y - 1 + Math.sin(i * 1.3) * 2, 4, 0.75, M('#e8a0b4'));
+  }
+
   G.tracyRoom = function (g, t, o) {
     o = o || {};
     const dk = o.dark || 0;
@@ -240,6 +462,15 @@
       G.Rh(g, jx + 2, 31, 6, 2, M('#c8a884'));
       G.Rq(g, jx + 3, 30, 4, 1, M('#e8dccb'));
     }
+    // something trailing off the end of the shelf, as there always is.
+    // The left end is inside the big plant, so it hangs off the right.
+    runner(g, 193, 47, 7, 26, 7, '#6b9a4a', M, t, 1.2);
+
+    // ---- the rest of what is on her walls ----
+    wallClock(g, t, M, wr);
+    cards(g, M, wr);
+    hoop(g, M, wr);
+    hanger(g, 300, t, M, wr);
 
     // ---- a pot plant she talks to ----
     // It lived at 8,68 until the door took that wall, then at 292, where
@@ -264,6 +495,9 @@
       G.Rh(g, m.x, m.y, 1, 1, '#ffd9a0');
       g.globalAlpha = 1;
     }
+
+    // ---- the big one in the corner, which people walk in front of ----
+    bigPlant(g, t, M, wr);
 
     // ---- whoever is standing on the back plane, before the counter ----
     if (o.back) o.back(g);
@@ -294,6 +528,9 @@
     for (let i = 0; i < 9; i++) for (let j = 0; j < 3; j++)
       G.Rh(g, 168 + i * 5, CNT_Y - 2 + j * 4, 5, 4, M((i + j) % 2 ? '#f0a8bc' : '#fbeef0'));
 
+    // ---- and the bits of her life she leaves out on it ----
+    counterCute(g, t, M, wr);
+
     // ---- the jars that came off the shelf, on the counter ----
     if (wr > 0.25) for (let i = 0; i < 5; i += 2) {
       const col = ['#f0a8bc', '#8fd8c0', '#ffd45a', '#b48ae0', '#8fbfd8'][i];
@@ -305,6 +542,10 @@
     }
 
     // ---- the cat, asleep on the warm end of the counter ----
+    // on its own folded blanket, which is the only reason it is up there
+    G.Rh(g, 288, CNT_Y - 3, 26, 4, M('#b48ac0'));
+    G.Rh(g, 286, CNT_Y - 1, 30, 3, M('#c8a0d4'));
+    for (let i = 0; i < 7; i++) G.Rq(g, 288 + i * 4, CNT_Y - 2, 2, 1, M('#e0c4e8'));
     if (!o.noCat)
       G.drawCreature(g, 'cat', 298, CNT_Y + 1, 0.6,
         { t, clip: o.catUp ? 'idle' : 'slump', ct: t, fur: M('#e8c8a0') });
