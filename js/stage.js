@@ -767,8 +767,8 @@
     // It used to be a green banner pinned to the top of the frame for as
     // long as the objective stood - a quest log bolted over a
     // restaurant. It drops in, holds long enough to read twice, and
-    // leaves; the hoof prints on the floor do the actual guiding from
-    // there, and they point at something you can see.
+    // leaves; the quest pin over the thing itself does the guiding from
+    // there, and it points at something you can see.
     const HOLD = 3.4, OUTT = 0.7;
     if (S.obj && S.objT < HOLD + OUTT) {
       const w = Math.max(110, G.tw(S.obj) + 24);

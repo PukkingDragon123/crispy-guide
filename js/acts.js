@@ -4,7 +4,7 @@
 // This used to be nine cutscene shots and a two-mile crawl. It is now
 // two rooms you walk around in.
 //
-//   FLOOR   the dining room of BIG MOO, mid-shift. Work the room: say
+//   FLOOR   the dining room of MOO-BOT, mid-shift. Work the room: say
 //           hello to the birthday table, get up on the stage and do
 //           the dance, collect the order, take it over. The restaurant
 //           runs on its own while you do it - people come in, queue,
@@ -277,7 +277,7 @@
       G.bevelq(g, 352, FB - 106, 136, 28, M('#3a2a2e'), '#0a0608');
       G.mooLogo(g, 370, FB - 92, 13, { tone: M('#c8383a') });
       G.text(g, 'BURGER   SWIRL   FRIES', 438, FB - 102, M('#ffd45a'), { align: 'center', sc: 0.5 });
-      G.text(g, 'ASK ABOUT THE BIG MOO MEAL', 438, FB - 94, M('#f0e2d4'), { align: 'center', sc: 0.5 });
+      G.text(g, 'ASK ABOUT THE MOO-BOT MEAL', 438, FB - 94, M('#f0e2d4'), { align: 'center', sc: 0.5 });
       G.text(g, 'NOW WITH FREE CROWNS', 438, FB - 86, M('#8fd8c0'), { align: 'center', sc: 0.5 });
       if (!dim) G.glow(g, 430, FB - 94, 150, 30, '#ffd45a', 0.14);
       // and a proper backlit roundel on the wall between the windows,
@@ -588,7 +588,7 @@
                  { say: 'JUST A SWIRL. NO, TWO.', d: 2.2 }, { wait: 2.6 },
                  { go: 320 }, { go: 268 }, { wait: 1.2 }, { go: 600, sp: 1.1 }, { wait: 5 }] },
       { id: 'q2', name: 'A WOMAN IN A CAP', at: 640, seed: 27.1, hat: 'cap', col: '#8fd8ff',
-        lines: ['WHAT IS IN THE BIG MOO SAUCE', 'DO NOT TELL ME WHAT IS IN THE BIG MOO SAUCE',
+        lines: ['WHAT IS IN THE MOO-BOT SAUCE', 'DO NOT TELL ME WHAT IS IN THE MOO-BOT SAUCE',
                 'I HAVE MADE MY PEACE WITH IT.'],
         script: [{ at: 640 }, { wait: 6 }, { go: 482 }, { wait: 4 },
                  { say: 'ARE YOU STILL DOING THE MEAL DEAL', d: 2.2 }, { wait: 3 },

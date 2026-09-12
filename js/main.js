@@ -272,7 +272,7 @@
       if (this.confirm) {
         if (G.inRect(x, y, 186, 140, 38, 14)) {
           G.audio.sfx('boot'); G.reset(); this.confirm = false;
-          G.go('floor', 'BIG MOO');
+          G.go('floor', 'MOO-BOT');
           return;
         }
         if (G.inRect(x, y, 228, 140, 36, 14)) { this.confirm = false; G.audio.sfx('back'); return; }
@@ -294,7 +294,7 @@
           G.go('day', 'DAY ' + G.state.day);
         } else if (e.id === 'new') {
           if (this.hasSave()) this.confirm = true;
-          else { G.reset(); G.go('floor', 'BIG MOO'); }
+          else { G.reset(); G.go('floor', 'MOO-BOT'); }
         } else {
           if (e.id === 'quests') for (const q of G.checkQuests()) G.toast('QUEST: ' + q.name + '  +$' + q.pay, P.lime);
           G.toasts.length = 0;

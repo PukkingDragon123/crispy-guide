@@ -1962,6 +1962,11 @@
   // o: {t, open, mood, walk, dead, scale, sprinkled, shellBits, shellCoat}
   // ============================================================
   G.drawBot = function (g, id, cx, footY, scale, o) {
+    // THE MASCOT IS NOT ON THIS RIG. It has its own painter, built to a
+    // model sheet rather than bent out of the generic chassis -- see
+    // moobot.js. Everything in the game that draws the player comes
+    // through here, so this one line is the whole handover.
+    if (id === 'player' && G.drawMooBot) return G.drawMooBot(g, cx, footY, scale, o);
     o = o || {};
     const S = scale || 1;
     const u = (v) => Math.max(1, Math.round(v * S));

@@ -207,7 +207,7 @@
   // is the only copy there is now, and the raid uses that one.
 
   // ------------------------------------------------------------
-  // THE OUTSIDE OF BIG MOO. Act one ends inside the room with a
+  // THE OUTSIDE OF MOO-BOT. Act one ends inside the room with a
   // darken and a whiteout, which is a fade, not an explosion. So
   // the camera goes out into the car park instead and watches the
   // front of the building come off. One builder, five states, so
@@ -235,12 +235,15 @@
     // ---- the unit itself: a low box on the corner ----
     const BX = 54, BW = 214, BT = 52;
     G.R(g, BX, BT, BW, GY - BT, '#2a2028');
-    G.R(g, BX, BT, BW, 5, '#8a2f3a');                  // the red fascia band
+    G.R(g, BX, BT, BW, 8, '#8a2f3a');                  // the red fascia band
     G.hair(g, BX, BT, BW, '#c8505c');
-    G.R(g, BX, BT + 5, BW, 3, '#4a3038');
+    G.R(g, BX, BT + 8, BW, 4, '#4a3038');
+    // the chain's name across the front of it, which the fascia never
+    // carried: a burger place with no name on the building
+    G.mooPlaque(g, BX + BW / 2, BT + 8, 128, { maxSc: 1, sub: false, dead: bn > 0 });
     // the glass front: four bays. They go one by one when it blows.
     for (let i = 0; i < 4; i++) {
-      const gx = BX + 10 + i * 50, gw = 42, gy = BT + 14, gh = GY - gy - 8;
+      const gx = BX + 10 + i * 50, gw = 42, gy = BT + 20, gh = GY - gy - 8;
       const gone = bl > 0.1 + i * 0.06;
       G.R(g, gx - 2, gy - 2, gw + 4, gh + 4, '#c8b490');
       if (gone) {
@@ -297,21 +300,18 @@
         G.Rh(g, gx, gy + gh / 2, gw, 1.5, '#c8b490');
       }
     }
-    // ---- the mascot sign, on a post at the kerb ----
-    // It used to draw its own cow here -- ears, skull, two dots, muzzle -
-    // which is a third cow in a codebase that now has exactly one.
-    const spx = 288;
+    // ---- the pole sign at the kerb ----
+    // A roundel in a lit box is the STAMP blown up to sign size, which
+    // is why the front of the building read as a dairy. This is the
+    // chain's sign: the head, the plaque, the line underneath.
+    const spx = 276;                                   // clear of the frame at a 1.08 push
     G.R(g, spx - 2, GY - 62, 5, 62, '#3a3440');
     G.hairq(g, spx - 2, GY - 62, 62, '#5c5468');
     g.save();
     if (sg > 0) {                                      // it snaps and falls
       g.translate(spx, GY - 58); g.rotate(sg * 1.5); g.translate(-spx, -(GY - 58));
     }
-    // the lit box it sits in
-    G.rr2(g, spx - 24, GY - 88, 48, 46, '#8a2f3a');
-    G.rr2(g, spx - 22, GY - 86, 44, 42, sg > 0 ? '#4a3a38' : '#f6ecd6');
-    G.mooLogo(g, spx, GY - 65, 19, { tone: sg > 0 ? '#6b4a48' : '#c8383a' });
-    if (!sg) G.glow(g, spx, GY - 65, 78, 74, '#ffd45a', 0.42);
+    G.mooSign(g, spx, GY - 112, 64, { h: 58, dead: sg > 0 });
     g.restore();
     return { GY, BX, BW, BT, spx };
   }
@@ -480,109 +480,17 @@
   }
 
   // ------------------------------------------------------------
-  // BIG MOO. A burger chain with a cow on the sign, open twenty-four
-  // hours, and for six years you were the cow. Everything in the
-  // opening is built out of these four painters.
+  // MOO-BOT. A burger chain with a cow on the sign, open twenty-four
+  // hours, and for six years you were the cow.
+  //
+  // There used to be a second shop front in here -- mooFront(), a low
+  // box with a window band, a pole with a NEON TUBE COW on it bent out
+  // of little squares, and a strip of wet tarmac of its own. Nothing
+  // has called it since bigmoo() took over the exterior, so the game
+  // shipped a whole spare restaurant with a third cow on the sign that
+  // nobody could ever see. Deleted: there is one front, one sign, and
+  // one mark, and they all come out of G.mooSign now.
   // ------------------------------------------------------------
-  function neonTube(g, pts, col, on, w) {
-    for (const q of pts) G.Rh(g, q[0] - (w || 1), q[1] - (w || 1), (w || 1) * 2, (w || 1) * 2, '#1a1220');
-    for (const q of pts) {
-      G.Rh(g, q[0] - (w || 1) * 0.5, q[1] - (w || 1) * 0.5, (w || 1), (w || 1),
-        on > 0.5 ? col : G.mix(col, '#241826', 0.72));
-    }
-  }
-  function mooSign(g, cx, y, t, o) {
-    o = o || {};
-    const dead = o.dead;
-    const flick = dead ? 0 : (Math.sin(t * 27) > -0.9 && Math.sin(t * 3.1) > -0.95 ? 1 : 0.2);
-    const pink = '#ff8ab0', gold = '#ffd45a';
-    G.rr2(g, cx - 46, y - 1, 92, 42, '#080c14');
-    G.rr2(g, cx - 45, y, 90, 40, '#18202e');
-    G.bevelq(g, cx - 45, y, 90, 40, '#33425a', '#0a0f18');
-    // the cow's head, in tube: a rounded skull, two ears, two eyes
-    const hd = [];
-    for (let i = 0; i <= 22; i++) {
-      const a = (i / 22) * Math.PI * 2;
-      hd.push([cx + Math.cos(a) * 14, y + 13 + Math.sin(a) * 10]);
-    }
-    neonTube(g, hd, pink, flick, 1.5);
-    // ears, drooping off each side
-    neonTube(g, [[cx - 16, y + 12], [cx - 19, y + 14], [cx - 22, y + 15],
-                 [cx + 16, y + 12], [cx + 19, y + 14], [cx + 22, y + 15]], pink, flick, 1.5);
-    // a muzzle across the bottom of the head
-    neonTube(g, [[cx - 6, y + 19], [cx - 3, y + 21], [cx, y + 21.5], [cx + 3, y + 21], [cx + 6, y + 19]],
-      pink, flick, 1.5);
-    neonTube(g, [[cx - 5, y + 10], [cx + 5, y + 10]], flick > 0.5 ? '#ffffff' : pink, flick, 2);
-    neonTube(g, [[cx - 8, y - 1], [cx - 6, y - 3], [cx + 6, y - 3], [cx + 8, y - 1]], gold, flick, 1.5);
-    if (flick > 0.5) G.glow(g, cx, y + 13, 90, 60, pink, 0.4);
-    // the name
-    G.text(g, 'BIG MOO', cx, y + 27, flick > 0.5 ? gold : '#6b5220', { align: 'center' });
-    if (flick > 0.5) G.glow(g, cx, y + 30, 80, 22, gold, 0.35);
-    G.text(g, 'OPEN 24 HRS', cx, y + 35, dead ? '#3a3040' : '#7fd8ff', { align: 'center', sc: 0.5 });
-  }
-  // wet tarmac: a flat dark ground that keeps the light that fell on it
-  function wet(g, y, h, t, lights) {
-    for (let j = 0; j < h; j++)
-      G.Rh(g, 0, y + j, G.W, 1, G.mix('#161d2a', '#0a0e16', j / h));
-    for (const L of lights || []) {
-      g.globalAlpha = 0.24;
-      for (let j = 0; j < 26; j++) {
-        const w = L[2] * (1 - j / 30);
-        G.Rh(g, L[0] - w / 2 + Math.sin(t * 2 + j * 0.7) * (j * 0.12), y + j, w, 1, L[1]);
-      }
-      g.globalAlpha = 1;
-    }
-    for (let i = 0; i < 26; i++) {
-      const px = G.hash(i, 5) * 340 - 10, py = y + G.hash(i, 9) * h;
-      g.globalAlpha = 0.3;
-      G.rr(g, px, py, 6 + G.hash(i, 3) * 16, 2, '#3a4a63');
-      g.globalAlpha = 1;
-    }
-  }
-  // the shop front, seen from the car park
-  function mooFront(g, tt, o) {
-    o = o || {};
-    for (let j = 0; j < 110; j++)
-      G.Rh(g, 0, j, G.W, 1, G.mix('#0a1020', '#22213a', j / 110));
-    skyline(g, 96, 34, 5, '#0a1018', '#2e3c58');
-    // the building: a long low box with a lit window band
-    G.R(g, 26, 62, 236, 52, '#2a3242');
-    G.bevelq(g, 26, 62, 236, 52, '#414f66', '#151b26');
-    G.R(g, 26, 58, 236, 6, '#8a2f3a');                 // the fascia stripe
-    G.hairq(g, 26, 58, 236, '#c8505c');
-    for (let i = 0; i < 12; i++) G.R(g, 30 + i * 20, 58, 10, 6, '#f0e2d4');
-    // the window band, warm inside - or blown out and dark
-    const wr = o.wrecked;
-    G.R(g, 34, 70, 100, 34, wr ? '#0e1420' : '#ffd9a0');
-    G.R(g, 168, 70, 86, 34, wr ? '#0e1420' : '#ffd9a0');
-    for (const wx of [34, 168]) {
-      const ww = wx === 34 ? 100 : 86;
-      G.bevelq(g, wx, 70, ww, 34, wr ? '#2c3a4e' : '#fff2d8', wr ? '#060a10' : '#c89a58');
-      for (let i = 1; i * 24 < ww; i++) G.Rh(g, wx + i * 24, 70, 1.5, 34, '#2a3242');
-      if (!wr) G.glow(g, wx + ww / 2, 88, ww + 40, 70, '#ffbe6a', 0.4);
-      else for (let i = 0; i < 7; i++)                 // the teeth left in the frame
-        G.Rh(g, wx + 4 + i * (ww / 7), 70, 3 + G.hash(i, 3) * 5, 4 + G.hash(i, 9) * 8, '#3a4a63');
-    }
-    // people in the windows, cut out of the warm light
-    if (!wr) for (let i = 0; i < 6; i++) {
-      const bx = 44 + i * 32 + (i > 2 ? 40 : 0);
-      if (bx > 250) continue;
-      silhouette(g, bx, 102, 15 + (i % 3) * 4, '#9a5a34', false,
-        { seed: 4.1 + i * 6.7, t: tt, clip: i % 3 === 1 ? 'talk' : 'idle', ct: tt + i, dir: i % 2 ? -1 : 1 });
-    }
-    // the door, and the light it throws across the wet
-    G.R(g, 138, 68, 26, 46, '#141b26');
-    G.R(g, 141, 71, 20, 40, wr ? '#1a222e' : '#ffe6b8');
-    G.Rh(g, 150, 71, 1.5, 40, '#141b26');
-    if (!wr) G.glow(g, 151, 100, 90, 70, '#ffcf88', 0.45);
-    // the sign, up its pole
-    G.R(g, 272, 50, 5, 64, '#232b38');
-    G.hairq(g, 272, 50, 5, '#465468');
-    if (!o.noSign) mooSign(g, 274, 18, tt, { dead: o.dead });
-    // the car park
-    wet(g, 114, 66, tt, o.wrecked ? [[150, '#ff7a2a', 40]] : [[151, '#ffcf88', 30], [274, '#ff8ab0', 20]]);
-    for (let i = 0; i < 5; i++) G.Rh(g, 20 + i * 62, 148, 34, 1, '#5a6a80');
-  }
   // The dining room, from the stage end. Everything lives between
   // y=28 and y=170 so a 1.06 push still holds the whole set.
   function diner(g, tt, o) {
@@ -609,7 +517,7 @@
     G.R(g, 92, 30, 136, 19, M('#1a1216'));
     G.bevelq(g, 92, 30, 136, 19, M('#3a2a2e'), '#0a0608');
     G.text(g, 'BURGER   SWIRL   FRIES', 160, 33, M('#ffd45a'), { align: 'center', sc: 0.5 });
-    G.text(g, 'ASK ABOUT THE BIG MOO MEAL', 160, 41, M('#f0e2d4'), { align: 'center', sc: 0.5 });
+    G.text(g, 'ASK ABOUT THE MOO-BOT MEAL', 160, 41, M('#f0e2d4'), { align: 'center', sc: 0.5 });
     G.glow(g, 160, 40, 150, 28, '#ffd45a', 0.12 * (1 - dim));
     // the soft serve machine, standing on the counter
     G.plate(g, 246, 54, 24, 24, M('#c8ccd4'), { r: 1, band: 2, bolts: 1 });
@@ -969,20 +877,31 @@
         cam: { z: [1.9, 2.3], x: [286, 290], y: [140, 142] },
         paint(g, p, tt) {
           bigmoo(g, tt, { blast: 1, burn: 1, sign: 1 });
-          // the sign, face up in a puddle, one eye lit by the fire
-          g.globalAlpha = 0.3; G.rr(g, 282, 150, 70, 8, '#4a6a8a'); g.globalAlpha = 1;
-          G.rr2(g, 268, 138, 44, 22, '#8a2f3a');
-          G.rr2(g, 270, 140, 40, 18, '#d8cabc');
-          for (const sd of [-1, 1]) G.rr2(g, 290 + sd * 10 - 3, 145, 6, 4, '#2a2028');
-          G.rr2(g, 281, 143, 18, 13, '#2a2028');
+          // The sign, face up in a puddle, one slit still lit by the fire.
+          // The last shot of act one used to hand-draw a black cow face
+          // here -- two ears, a skull, two dots, a muzzle -- which is the
+          // one frame in the whole game that holds the mark still and
+          // fills the screen with it, and it was a different animal from
+          // the one lying in the rubble behind it.
+          g.globalAlpha = 0.3; G.rr(g, 282, 152, 70, 8, '#4a6a8a'); g.globalAlpha = 1;
+          G.rr2(g, 264, 132, 54, 34, '#8a2f3a');
+          G.rr2(g, 266, 134, 50, 30, '#d8cabc');
+          // and it FILLS the sign. The camera pushes to 2.3 on this shot,
+          // which is the one frame in the game that holds the mark still
+          // and looks at it -- a mark floating in the middle of a slab is
+          // a sticker, not a sign.
+          const m = G.mooLogo(g, 291, 149, 17,
+            { flat: true, word: false, tone: '#a8332f', cold: true });
           const fl = Math.sin(tt * 3.4) * 0.5 + 0.5;
-          G.Rq(g, 285, 147, 2, 2, '#f0e2d4');
-          G.Rq(g, 293, 147, 2, 2, G.mix('#f0e2d4', '#ff9a4a', fl));
-          G.glow(g, 294, 148, 26, 20, '#ff8a3a', 0.3 + fl * 0.3);
-          G.rr2(g, 286, 150, 8, 5, '#f0e2d4');
-          G.Rq(g, 289, 152, 2, 1, '#2a2028');
-          for (let i = 0; i < 8; i++)                  // cracks across the face
-            G.Rh(g, 272 + i * 5, 140 + G.hash(i, 67) * 16, 4, 0.5, '#8a7a6a');
+          if (m.visor) {
+            const v = m.visor;
+            G.R(g, v.x + Math.round(v.w * 0.62), v.y + 0.5,
+              Math.max(1, Math.round(v.w * 0.13)), Math.max(1, v.h - 1),
+              G.mix('#5e3a18', '#ffc046', fl));
+            G.glow(g, v.x + v.w * 0.66, v.y + v.h / 2, 26, 18, '#ff8a3a', 0.24 + fl * 0.34);
+          }
+          for (let i = 0; i < 11; i++)                 // cracks across the face
+            G.Rh(g, 267 + i * 4.6, 135 + G.hash(i, 67) * 28, 5, 0.5, '#8a7a6a');
           rain(g, tt, 90, '#4a5f7f', 240, 320);
         } },
     ],

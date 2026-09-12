@@ -564,29 +564,45 @@
   };
 
   // ============================================================
-  // BIG MOO.  ONE LOGO, DRAWN ONCE.
+  // MOO-BOT.  ONE LOGO, DRAWN ONCE.
+  //
+  // The chain's name lived as a string literal in thirteen places and
+  // renaming it meant finding all thirteen. It is three constants now.
+  // ============================================================
+  G.BRAND = 'MOO-BOT';
+  G.SUB = 'BURGERS & ICE CREAM';
+  G.TAG = 'GOOD FOOD  BRIGHTER DAYS';
+
+  // ============================================================
+  // THE ROUNDEL.  THE STAMP THAT GOES EVERYWHERE.
   //
   // The chain's mark existed three separate times and no two of them
   // agreed: a neon tube cow on the pole sign, a red roundel stamped on
   // the mascot's chest, and a black cow face on the plastic sign in the
   // car park. Three artists' worth of cow for one brand.
   //
-  // This is the mark. A rounded badge, a cow's head in the middle of it
-  // wearing the shades, and the wordmark under it. Everything that
-  // carries the brand calls this: the sign, the chest, the menu board,
-  // the paper crowns, the cups, the wrapper on the floor of the ruins.
+  // This is the mark. A rounded badge with MOO-BOT's head in the middle
+  // of it -- cap, visor, ear cans, snout, the same head the player wears
+  // -- and the wordmark under it. Everything that carries the brand
+  // calls this: the sign, the chest, the menu board, the paper crowns,
+  // the cups, the wrapper on the floor of the ruins.
   //
   //   r        the badge radius. Detail drops out as it shrinks, in
-  //            this order: wordmark, nostrils, eyes, muzzle.
+  //            this order: wordmark, nostrils, snout, gold slits.
   //   o.flat   no badge behind it - just the head, for stamping on a cup
   //   o.mono   one colour, for a silhouette or a dark stamp
   //   o.word   draw the wordmark under the head (default at r >= 13)
   //   o.tone   the badge field, if not the house cream
+  //   o.cold   the power off: no gold in the visor slits
   // ============================================================
+  // the mark on its own, small: the ear cans, the apron badge, a cup
+  G.mooMark = function (g, cx, cy, r) { return G.mooLogo(g, cx, cy, r, { word: false }); };
+
   G.mooLogo = function (g, cx, cy, r, o) {
     o = o || {};
     const mono = o.mono || null;
     const flat = !!o.flat;
+    let vis = null;
     const CREAM = '#f6ecd6', INK = '#241d2a';
     const red = o.tone || '#c8383a';
     // THE HEAD IS THE LIGHT SHAPE AND THE DISC IS THE DARK ONE.
@@ -598,6 +614,8 @@
     const body = mono || (flat ? red : CREAM);
     const dark = mono ? red : INK;
     const pink = mono || '#f2b4be';
+    const horn = mono || (flat ? G.shade(red, -0.34) : '#d9a463');
+    const capC = mono || (flat ? G.shade(red, -0.34) : G.mix(red, '#ffffff', 0.24));
     const word = o.word === undefined ? r >= 12 : o.word;
 
     const disc = (rr, col) => {
@@ -623,96 +641,267 @@
       disc(r + 1, OUT);
       disc(r, G.shade(red, -0.38));
       disc(Math.round(r * 0.86), red);
-      arc(r * 0.94, Math.PI * 1.14, Math.PI * 1.42, G.mix(red, '#ffffff', 0.5));
-      arc(r * 0.94, Math.PI * 0.14, Math.PI * 0.42, G.shade(red, -0.6));
-    }
-
-    // ---- the head ----
-    const hy = Math.round(word ? cy - r * 0.20 : cy);
-    const H = r * (word ? 0.40 : 0.48);            // half the skull
-    const n = Math.max(5, Math.round(H * 1.5));
-    const sTop = Math.round(hy - H * 0.80);
-    const skull = (p) => p < 0.34 ? 0.60 + 0.40 * Math.sin((p / 0.34) * Math.PI / 2)
-                       : p < 0.62 ? 1
-                       : 1 - Math.pow((p - 0.62) / 0.38, 1.6) * 0.34;
-
-    // ears first, so the skull tucks over where they join. They START
-    // inside the skull and taper outward: floated off at H*1.22 as two
-    // horizontal bars they read as antenna paddles, and the whole mark
-    // came out an insect.
-    for (const sd of [-1, 1]) {
-      const L = Math.max(2, Math.round(H * 0.80));
-      for (let k = 0; k < L; k++) {
-        const q = k / Math.max(1, L - 1);
-        const hh = Math.max(1, Math.round(H * 0.32 * (1 - q * 0.5)));
-        G.R(g, cx + sd * (Math.round(H * 0.70) + k), hy - hh + Math.round(q * H * 0.16),
-          1, hh * 2, body);
-      }
-      if (r >= 13 && !mono)
-        G.R(g, cx + sd * Math.round(H * 0.96), hy - Math.round(H * 0.12), 1,
-          Math.max(1, Math.round(H * 0.3)), pink);
-    }
-    // horns: short and THICK, out of the skull's top corners. Thin ones
-    // are feelers.
-    for (const sd of [-1, 1]) {
-      const K = Math.max(2, Math.round(H * 0.38));
-      for (let k = 0; k < K; k++) {
-        const q = k / Math.max(1, K - 1);
-        const ww = Math.max(2, Math.round(H * 0.46 * (1 - q * 0.28)));
-        G.R(g, cx + sd * Math.round(H * 0.46 + q * H * 0.26) - ww / 2, sTop - 1 - k, ww, 1, body);
+      // the enamel highlight, only where there is rim to put it on: a
+      // seventeen-pixel arc round a nine-unit badge is a scratch
+      if (r >= 14) {
+        arc(r * 0.94, Math.PI * 1.14, Math.PI * 1.42, G.mix(red, '#ffffff', 0.5));
+        arc(r * 0.94, Math.PI * 0.14, Math.PI * 0.42, G.shade(red, -0.6));
       }
     }
-    // the skull
-    const rows = [];
+
+    // ---- the head, and it is THE model: cap, visor, cans, snout ----
+    // A cow's head with eyes and ears is not this character any more, and
+    // a mark that does not match the mascot on the sign is two brands.
+    //
+    // The first cut of this scaled every part by a fraction of the skull
+    // and it turned to mud under r=16. A dark cap, a dark peak and a dark
+    // visor each round UP to a whole pixel, so on a nine-row head they
+    // came to seven rows of black and the mark was a smudge with a cream
+    // fringe. So the head is built on a ROW BUDGET instead, and the cream
+    // band between the cap and the visor is spent FIRST, before either of
+    // them -- that one row of nothing is the entire reason the thing
+    // reads as a face rather than a thumbprint.
+    const hy = Math.round(word ? cy - r * 0.18 : cy);
+    const H = r * (word ? 0.44 : 0.52);            // half the skull
+    // A COW'S HEAD IS WIDER THAN IT IS TALL. It was 1.42 rows per unit
+    // of half-width, which is a portrait rectangle, and no amount of
+    // detail inside a portrait rectangle reads as a cow.
+    const n = Math.max(5, Math.round(H * 1.20));
+    const sTop = Math.round(hy - n / 2);
+    // the row budget. The cream band above the visor and the cream chin
+    // below the muzzle are spent FIRST: they are what keeps the parts
+    // apart, and without them the whole face closes up into one lump.
+    const capR = G.clamp(Math.round(n * 0.14), 1, 2);   // brim, on the skull
+    const visR = G.clamp(Math.round(n * 0.26), 1, 4);
+    const snoR = r >= 9 ? G.clamp(Math.round(n * 0.40), 0, n - capR - visR - 3) : 0;
+
+    // the skull: wide cheeks, a rounded crown, a jaw that draws in
+    const skRows = [];
     for (let j = 0; j < n; j++) {
-      const hw = Math.max(1, Math.round(H * skull(j / (n - 1))));
-      rows.push(hw);
-      G.R(g, cx - hw, sTop + j, hw * 2, 1, body);
+      const p = n > 1 ? j / (n - 1) : 0;
+      const crown = 1 - Math.pow(Math.max(0, 0.30 - p) / 0.30, 2) * 0.34;
+      const jaw = 1 - Math.pow(Math.max(0, p - 0.62) / 0.38, 2.1) * 0.30;
+      skRows.push(Math.max(1, Math.round(H * Math.min(crown, jaw))));
     }
-    // ---- and then the detail, in the order it drops out as r shrinks ----
-    // one patch, like the suit, on the FOREHEAD above the eyeline. Level
-    // with the eyes it swallowed one and the cow came out wearing an
-    // eyepatch.
-    if (r >= 16 && !mono) {
-      for (let j = Math.round(n * 0.04); j < Math.round(n * 0.30); j++) {
-        const q = (j - n * 0.17) / (n * 0.15);
-        const hw = Math.round(H * 0.40 * Math.sqrt(Math.max(0, 1 - q * q)));
-        if (hw < 1) continue;
-        const x0 = Math.max(cx - rows[j], cx - Math.round(H * 0.42) - hw);
-        const x1 = Math.min(cx + rows[j], cx - Math.round(H * 0.42) + hw);
-        if (x1 > x0) G.R(g, x0, sTop + j, x1 - x0, 1, dark);
+    // the ear cans, one either side. They ATTACH: set out at 1.34H they
+    // floated clear of the head with a stripe of badge between, which is
+    // two studs beside a face, not a pair of ears.
+    const canW = Math.max(1, Math.round(H * 0.40));
+    const canH = Math.max(2, Math.round(n * 0.44));
+    const canY = sTop + Math.round(n * 0.34);
+    for (const sd of [-1, 1]) {
+      const ccx = cx + sd * Math.round(H * 1.14);
+      if (canW >= 4 && canH >= 4) G.rr(g, ccx - canW / 2, canY, canW, canH, dark);
+      else G.R(g, ccx - canW / 2, canY, canW, canH, dark);
+      // a square pip, not a disc: a round dot inside a four-wide box
+      // comes out a plus sign, which is how the cans became first-aid
+      // crosses on every badge under r=26.
+      if (canW >= 4 && canH >= 5) {
+        const pp = Math.max(1, Math.round(canW * 0.42));
+        G.R(g, ccx - pp / 2, canY + (canH - pp) / 2, pp, pp, body);
       }
     }
-    if (r >= 8 && !mono) {                          // eyes
-      const ed = Math.max(1, Math.round(H * 0.30));
-      for (const sd of [-1, 1])
-        G.R(g, cx + sd * Math.round(H * 0.44) - ed / 2, sTop + Math.round(n * 0.34), ed, ed, dark);
+    // the skull itself
+    for (let j = 0; j < n; j++) G.R(g, cx - skRows[j], sTop + j, skRows[j] * 2, 1, body);
+
+    // the horns: two tan nubs out of the top corners, OUTSIDE the cap
+    // and outlined so they hold against the red field. They used to run
+    // off the top of the cap at forty-five degrees, which turned the
+    // whole mark into a ladybird.
+    const capW = Math.max(2, Math.round(H * 0.92));
+    const peakX = Math.max(1, Math.round(H * 0.18));
+    if (n >= 8) {
+      const K = Math.max(2, Math.round(n * 0.30));
+      const hx = (sd, q) => cx + sd * Math.round(H * (0.74 + q * 0.34));
+      const hw = (q) => Math.max(1, Math.round(H * 0.32 * (1 - q * 0.44)));
+      for (const sd of [-1, 1]) for (let k = 0; k < K; k++)
+        G.R(g, hx(sd, k / K) - hw(k / K) / 2 - 1, sTop - k, hw(k / K) + 2, 2, dark);
+      for (const sd of [-1, 1]) for (let k = 0; k < K; k++)
+        G.R(g, hx(sd, k / K) - hw(k / K) / 2, sTop - k, hw(k / K), 1, horn);
     }
-    if (r >= 10) {                                  // and a muzzle
-      const mw = Math.max(2, Math.round(H * 1.0)), mh = Math.max(2, Math.round(n * 0.28));
-      const mt = sTop + n - mh - Math.max(0, Math.round(n * 0.04));
-      for (let j = 0; j < mh; j++) {
-        const q = (j / Math.max(1, mh - 1) - 0.4) * 2;
-        const hw = Math.max(1, Math.round((mw / 2) *
-          Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.4)), 1 / 2.2)));
-        G.R(g, cx - hw, mt + j, hw * 2, 1, pink);
+    // the cap: a red crown above the skull, a dark brim sitting on it.
+    // A black cap and a black visor on one head is two bands of the same
+    // colour with a stripe of face between them, and that is a beetle.
+    // The cap is the brand colour, the way it is on the sheet.
+    const domeH = G.clamp(Math.round(n * 0.30), 1, 6);
+    const cw = (k) => Math.max(1, Math.round(capW / 2 -
+      (domeH > 2 ? Math.pow(Math.max(0, 1.6 - k) / 1.6, 2) * capW * 0.16 : 0)));
+    for (let k = 0; k < domeH; k++)                    // outlines first
+      G.R(g, cx - cw(k) - 1, sTop - domeH + k - 1, cw(k) * 2 + 2, 2, dark);
+    for (let k = 0; k < domeH; k++)                    // then the fills
+      G.R(g, cx - cw(k), sTop - domeH + k, cw(k) * 2, 1, capC);
+    G.R(g, cx - capW / 2 - peakX, sTop, capW + peakX * 2, capR, dark);
+    if (domeH >= 5 && !mono)
+      G.text(g, 'M', cx, sTop - domeH + 1 + Math.round((domeH - 5) / 2), body,
+        { align: 'center', sc: 0.5 });
+    // the visor, with a clear cream row above it. It runs nearly the
+    // full width of the face: a band that stops short of the cheeks
+    // reads as a moustache, one that spans them reads as goggles.
+    const visY = sTop + capR + 1;
+    const visW = Math.max(2, Math.round(H * 1.70));
+    G.R(g, cx - visW / 2, visY, visW, visR, dark);
+    // where the faceplate ended up, for anything that wants to light it
+    vis = { x: Math.round(cx - visW / 2), y: visY, w: visW, h: visR };
+    if (r >= 14 && !mono && !o.cold) for (const sd of [-1, 1])
+      G.Rh(g, cx + sd * Math.round(visW * 0.22) - 0.5, visY + 0.5,
+        1, Math.max(0.5, visR - 1), '#f5c445');
+    // and the muzzle, big, filling the jaw with a cream chin under it
+    if (snoR >= 1) {
+      const mw2 = Math.max(2, Math.round(H * 1.12));
+      const mt = visY + visR + 1;
+      for (let j = 0; j < snoR; j++) {
+        const q = ((j + 0.5) / snoR - 0.5) * 1.9;
+        const hw2 = Math.max(1, Math.round((mw2 / 2) *
+          Math.pow(Math.max(0, 1 - Math.pow(Math.abs(q), 2.6)), 1 / 2.4)));
+        G.R(g, cx - hw2, mt + j, hw2 * 2, 1, pink);
       }
-      if (r >= 15 && !mono) for (const sd of [-1, 1])
-        G.Rq(g, cx + sd * Math.round(mw * 0.22) - 0.5, mt + Math.round(mh * 0.4), 1, 1, dark);
+      if (snoR >= 3) for (const sd of [-1, 1])
+        G.Rq(g, cx + sd * Math.round(mw2 * 0.22) - 0.25,
+          mt + Math.floor(snoR * 0.45), 0.5, 0.5, dark);
     }
 
     // ---- the wordmark, cream on the red, sized to the disc ----
+    // MOO-BOT is a third wider than the name it replaced, so the old
+    // clearance of r*1.7 threw it away on every badge under r=16 and the
+    // menu board lost its wordmark. The chord across a disc at the height
+    // the text actually sits is nearer r*1.9; 1.84 keeps a margin.
     if (word) {
-      const avail = flat || mono ? r * 2.6 : r * 1.7 - 3;
-      const sc = G.tw('BIG MOO', 1) <= avail ? 1 : 0.5;
+      const avail = flat || mono ? r * 2.6 : r * 1.84 - 2;
+      const sc = G.tw(G.BRAND, 1) <= avail ? 1 : 0.5;
       // no wordmark beats one hanging over the rim
-      if (G.tw('BIG MOO', sc) > avail) return { r };
+      if (G.tw(G.BRAND, sc) > avail) return { r, visor: vis };
       const wc = mono || (flat ? red : CREAM);
-      G.text(g, 'BIG MOO', cx, cy + r * (flat || mono ? 0.5 : 0.28), wc, { align: 'center', sc });
-      if (!mono && !flat && r >= 24 && G.tw('SINCE 1971', 0.5) <= avail)
-        G.text(g, 'SINCE 1971', cx, cy + r * 0.60, G.mix(red, '#ffffff', 0.55),
+      G.text(g, G.BRAND, cx, cy + r * (flat || mono ? 0.5 : 0.28), wc, { align: 'center', sc });
+      if (!mono && !flat && r >= 24 && G.tw(G.TAG, 0.5) <= avail)
+        G.text(g, G.TAG, cx, cy + r * 0.60, G.mix(red, '#ffffff', 0.55),
           { align: 'center', sc: 0.5 });
     }
-    return { r };
+    return { r, visor: vis };
+  };
+
+  // ============================================================
+  // THE PLAQUE.  THE SIGN, OFF THE MODEL SHEET.
+  //
+  // The roundel above is the STAMP: it has to survive being six pixels
+  // across on a paper cup, so it is a head in a circle and nothing else.
+  // It is not the sign, and using it as one is why the chain read as a
+  // dairy co-op instead of a burger place.
+  //
+  // The sign is a plaque. A red slab with a heavy dark keyline, a
+  // lighter red keyline set inside that, MOO-BOT across it in cream
+  // block caps, and BURGERS & ICE CREAM on a strap underneath.
+  //
+  //   w        the slab width. The name sets the type size off it.
+  //   o.tone   the field, if not house red
+  //   o.sub    false to drop the strapline
+  //   o.maxSc  cap the type size, for a slab that has to stay thin
+  //   o.h      force the slab height
+  //   o.measure return the size without drawing anything
+  //   o.dead   the sign with the power off
+  // returns { w, h, top, bot } so a caller can hang a tagline off it
+  // ============================================================
+  G.mooPlaque = function (g, cx, cy, w, o) {
+    o = o || {};
+    const CREAM = '#f6ecd6';
+    const red = o.tone || (o.dead ? '#6b4a48' : '#c8383a');
+    const dk = G.shade(red, -0.62);
+    const lt = G.mix(red, '#ffffff', 0.34);
+    const ink = o.dead ? '#a89890' : (o.ink || CREAM);
+
+    // The NAME sets the size, not the slab. A plaque with the wordmark
+    // shrunk to fit a box somebody else chose is a box with a word in it.
+    const pad = Math.max(3, Math.round(w * 0.07));
+    const hMax = o.h ? o.h - 6 : Infinity;
+    let sc = Math.min(3, o.maxSc || 3);
+    while (sc > 0.5 && (G.tw(G.BRAND, sc) > w - pad * 2 || 7 * sc > hMax)) sc -= 0.5;
+    const nameH = 7 * sc;
+    // the strap runs keyline to keyline, so it gets a tighter margin than
+    // the name does -- otherwise it never fits on anything under 60 wide
+    const sub = o.sub === false ? null
+      : (G.tw(G.SUB, 0.5) <= w - 6 && nameH + 5 <= hMax ? G.SUB : null);
+    const gap = Math.max(1, Math.round(sc));
+    const subH = sub ? 3.5 + gap : 0;
+    // The margin comes off the TYPE SIZE, not the width. Taking it off
+    // the width meant a long thin slab -- a fascia sign, a strip over a
+    // door -- worked out taller than the wall it was screwed to.
+    const vpad = G.clamp(Math.round(sc * 2.2) + 2, 4, 8);
+    const h = o.h || Math.max(9, Math.round(nameH + subH + vpad * 2));
+    const x = Math.round(cx - w / 2), y = Math.round(cy - h / 2);
+    // a caller laying a slab out inside a box needs its height before it
+    // commits to a centre, and the height falls out of the type size
+    if (o.measure) return { w, h, top: y, bot: y + h };
+
+    G.rr2(g, x - 2, y - 2, w + 4, h + 4, dk);              // the keyline
+    G.rr2(g, x, y, w, h, red);                             // the field
+    G.rr2(g, x + 2, y + 2, w - 4, h - 4, lt);              // the inner rule
+    G.rr2(g, x + 3, y + 3, w - 6, h - 6, red);
+    if (!o.dead) G.hairq(g, x + 4, y + 3.25, w - 8, G.mix(red, '#ffffff', 0.5));
+
+    const ty = y + Math.round((h - nameH - subH) / 2);
+    G.text(g, G.BRAND, cx, ty, ink, { align: 'center', sc, out: sc >= 1 ? dk : null });
+    if (sub) G.text(g, sub, cx, ty + nameH + gap, G.mix(ink, red, 0.24),
+      { align: 'center', sc: 0.5 });
+    return { w, h, top: y, bot: y + h };
+  };
+
+  // ============================================================
+  // THE LIT SIGN.  The plaque in its box, with the head over it and the
+  // strapline under, which is the whole composition on the model sheet.
+  // One call, because the pole outside and the card on the television
+  // were drawing two different signs for the same restaurant.
+  //
+  //   w        the box width; everything is a fraction of it
+  //   o.dead   the power off, for after
+  // ============================================================
+  G.mooSign = function (g, cx, topY, w, o) {
+    o = o || {};
+    const dead = !!o.dead;
+    const fl = o.flick === undefined ? 1 : o.flick;
+    const red = dead ? '#6b4a48' : '#c8383a';
+    const tw2 = G.tw(G.TAG, 0.5);
+    const tagOn = o.tag !== false && tw2 <= w - 8;
+    const h = o.h || Math.round(w * (tagOn ? 0.86 : 0.74));
+    // A LANDSCAPE BOX IS A DIFFERENT SIGN. Stacking the head over the
+    // plaque in a box half as tall as it is wide leaves a strip for each
+    // and neither of them reads; on a wide sign the head goes beside the
+    // name, which is the other half of the model sheet anyway.
+    const wide = w > h * 1.5;
+    const face = dead ? '#3a2e2e' : G.mix('#c0ae94', '#f6ecd6', fl);
+    G.rr2(g, cx - w / 2, topY, w, h, dead ? '#4a3a38' : '#8a2f3a');
+    G.rr2(g, cx - w / 2 + 2, topY + 2, w - 4, h - 4, face);
+
+    if (wide) {
+      const hr = Math.round(h * 0.40);
+      const hhw = Math.round(hr * 0.72);              // how far the head runs
+      const hx = cx - w / 2 + 5 + hhw;
+      const px = hx + hhw + 5, pw = Math.round(cx + w / 2 - 7 - px);
+      // measure the slab, then centre it and its tagline in the box
+      const m = G.mooPlaque(g, 0, 0, pw, { measure: true, dead });
+      const tag = tw2 <= pw + 6 && m.h + 10 <= h - 6;
+      const pcy = topY + Math.round((h - m.h - (tag ? 6 : 0)) / 2) + m.h / 2;
+      G.mooLogo(g, hx, topY + Math.round(h * 0.48), hr,
+        { flat: true, word: false, tone: red, cold: dead || fl < 0.5 });
+      const pl = G.mooPlaque(g, px + pw / 2, pcy, pw, { dead });
+      if (tag) G.text(g, G.TAG, px + pw / 2, pl.bot + 2, red, { align: 'center', sc: 0.5 });
+      if (!dead && fl > 0.5) G.glow(g, cx, topY + h * 0.5, w * 1.5, h * 1.7, '#ffd45a', 0.34);
+      return { w, h, bot: topY + h };
+    }
+
+    // the head, flat on the cream, sitting over the top of the plaque
+    G.mooLogo(g, cx, topY + Math.round(h * (tagOn ? 0.29 : 0.33)), Math.round(w * 0.26),
+      { flat: true, word: false, tone: red, cold: dead || fl < 0.5 });
+    const pl = G.mooPlaque(g, cx, topY + Math.round(h * (tagOn ? 0.61 : 0.68)), w - 8, { dead });
+    // GOOD FOOD BRIGHTER DAYS, between two rules, under the slab
+    if (tagOn && pl.bot + 6 <= topY + h - 2) {
+      const tyy = pl.bot + 2;
+      G.text(g, G.TAG, cx, tyy, red, { align: 'center', sc: 0.5 });
+      const dw = Math.max(0, Math.round((w - 10 - tw2) / 2) - 2);
+      if (dw >= 2) {
+        G.Rh(g, cx - tw2 / 2 - 2 - dw, tyy + 1.5, dw, 1, red);
+        G.Rh(g, cx + tw2 / 2 + 2, tyy + 1.5, dw, 1, red);
+      }
+    }
+    if (!dead && fl > 0.5) G.glow(g, cx, topY + h * 0.5, w * 1.4, h * 1.5, '#ffd45a', 0.30);
+    return { w, h, bot: topY + h };
   };
 })();

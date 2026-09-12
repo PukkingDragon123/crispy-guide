@@ -6,7 +6,7 @@ A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: a red
 crew cap with the chain's letter on it, a black visor with two amber slits
 burning behind it, a pair of ear cups with the roundel stamped on them, tan horn
 nubs poking out from under the cap, a pink snout, and the house apron over a
-cream body. For six years you were the face of BIG MOO, a beachfront burger
+cream body. For six years you were the face of MOO-BOT, a beachfront burger
 chain with a cow on the sign, open twenty-four hours.
 
 Then a patrol machine walked in through the front door, put **six rounds** into
@@ -130,43 +130,80 @@ as litter. That went too.
 It never printed a distance. The first pass did: `348M`, which is the width of
 the room in logical units with a unit stuck on the end of it.
 
-![The floor of BIG MOO](screenshots/floor.png)
+![The floor of MOO-BOT](screenshots/floor.png)
 
 **ACT ONE — the floor.** Mid-shift at a burger chain with a cow on the sign.
 There is a **birthday party in the second booth**, a couple eating in the
 first, two staff behind the counter, a queue that forms and clears, and a kid
 who will not sit down.
 
-![The brand mark](screenshots/bigmoo-logo.png)
+### The brand is off the sheet now
 
-### The mark is cream on red now
+![The brand mark](screenshots/moobot-mark.png)
 
-![The brand mark](screenshots/bigmoo-logo.png)
+There is a model sheet for this character, and until this version the game
+only took the *character* off it. The chain was still called something else,
+the sign was the mascot's head blown up to sign size, and the mark on the
+menu board was a cow with eyes and drooping ears — a different animal from
+the one standing in front of it. A restaurant whose sign disagrees with its
+mascot is two brands.
 
-It was a black cow on a cream field, and a solid black shape twelve pixels
-across is not a cow, it is a blob — at badge size it read as a moustache
-and in one colour it was a shield. **The head is the light shape and the
-disc is the dark one**, which is how every mark that has to survive being
-printed on a cup is built.
+So the whole thing came off the sheet. `G.BRAND`, `G.SUB` and `G.TAG` hold
+the name, the strapline and the line under it, and three painters draw
+everything that carries them.
 
-The head is a cream silhouette on red enamel: a domed skull, ears that
-*start inside the skull* and taper outward, short thick horns, two ink
-eyes, a pink muzzle and a patch on the forehead. Floated off at 1.22 of the
-head's width as two horizontal bars, the ears read as antenna paddles and
-the whole mark came out an insect; thin horns read as feelers.
+**`G.mooLogo()` — the roundel.** The stamp, and only the stamp: a red enamel
+disc with a highlight arc on the rim and MOO-BOT's head on it — the cap, the
+visor, the ear cans, the snout, the same head the player wears. It goes on
+the cup, the bib, the menu board, the wall and the poster stand.
 
-Detail drops out in order as the radius falls: the date, the wordmark, the
-nostrils, the patch, the muzzle, the eyes. Under about six units what is
-left is a cream head with two horns on a red disc, which still says COW.
+The head inside it is built on a **row budget**, not on fractions of its own
+size. The first cut scaled every part by a proportion of the skull, and a dark
+cap, a dark peak and a dark visor each round *up* to a whole pixel: on a
+nine-row head that came to seven rows of black, and the mark was a thumbprint
+with a cream fringe. Now the cream band above the visor and the cream chin
+below the muzzle are **spent first**, before either band gets a row, because
+those two gaps are the entire reason it reads as a face.
 
-The sign is a real one. `G.mooLogo()` draws **one brand mark** — a red enamel
-disc with a highlight arc on the rim, a cream field, the cow in shades, and
-`BIG MOO` under it with `SINCE 1971` below that when there is room — and it
-sizes itself down the way a real mark does: wordmark and date at 26 units,
-wordmark alone at 19, just the cow's head at 13 and under. It is the sign on
-the post at the kerb, the roundel on the menu board, the badge on your chest
-and the roundel on the wall, and it used to be **three different cows drawn by
-hand in three different files**.
+Three more things it was, before it was this:
+
+- **A ladybird.** The horns left the top of the cap at forty-five degrees and
+  ran a third of the head's width. Two thin feelers over a round red badge with
+  a black band across it is an insect, every time. They come out of the *top
+  corners of the skull* now, either side of the cap, short and tan and outlined
+  so they hold against the red.
+- **A beetle.** The cap was black and the visor was black, which is two bands
+  of one colour with a stripe of face between them. The cap is the brand red
+  with a dark keyline and a cream M on the crown, and the brim under it is the
+  only black up there.
+- **A pair of first-aid crosses.** The ear cans had a round cream pip in the
+  middle of them, and a disc drawn inside a four-wide box comes out a plus sign.
+  Square pip, and only where there is a box big enough to hold one.
+
+**`G.mooPlaque()` — the wordmark.** The sheet's hero: a red slab with a heavy
+dark keyline, a lighter red rule set inside it, MOO-BOT across it in cream
+block caps and BURGERS & ICE CREAM on a strap underneath. **The name sets the
+size, not the slab** — it picks the largest type that fits the width and the
+height falls out of that, so a fascia sign 128 units long and a plaque 36 units
+long are the same design rather than the same design squashed. (The font had no
+ampersand; the strapline was rendering the missing-glyph block.)
+
+**`G.mooSign()` — the lit box.** The head over the plaque with GOOD FOOD
+BRIGHTER DAYS under it, or — when the box is more than half again as wide as it
+is tall — the head *beside* the plaque, because stacking two things in a
+letterbox gives you a strip each and neither of them reads.
+
+![The sign](screenshots/moobot-sign.png)
+
+The building has its name on it now: a thin plaque across the fascia, which the
+front never carried in any version before this one. The pole sign at the kerb is
+the same painter, and it burns out and falls with the rest of it.
+
+And a whole spare restaurant went in the bin. `mooFront()` — a second shop
+front, with a window band, its own strip of wet tarmac and a **neon tube cow**
+on a pole bent out of little squares — had not been called by anything since the
+exterior was rebuilt. The game was shipping a third cow that nobody could ever
+see.
 
 The room is **two planes deep**: the counter, the booths and the staff stand on
 a back floor eighteen units further away, so you walk *in front* of the
@@ -192,7 +229,7 @@ six parked cars in it. A chain does not build a room like that.
 ![The seafront](screenshots/floor.png)
 
 And the windows look at **the sea**, because the first line of this game is
-that BIG MOO is a chain on a promenade: a night sky, a pier out on the
+that MOO-BOT is a chain on a promenade: a night sky, a pier out on the
 water, a lit horizon, the sea catching light, a promenade railing and one
 lamp on it — all of it behind rain running down the glass.
 
@@ -299,7 +336,7 @@ Act one used to end on a darken and a whiteout from *inside*, which is a fade
 with a bang on it. The camera now goes out into the **car park** and watches
 the front of the building come off.
 
-BIG MOO on its corner in the rain: the lit fascia, four glass bays with people
+MOO-BOT on its corner in the rain: the lit fascia, four glass bays with people
 still moving behind them, the patrol vehicle parked across the entrance with
 its light bar going, and the mascot sign on its post at the kerb. People going
 the other way, fast. A red light counting behind the glass.
@@ -768,7 +805,7 @@ hand-drawn bar down the side never does.
 
 Whatever the rig draws, the silhouette is exactly that: the right hair,
 the right coat, the right hat, the right number of legs. The people in the
-windows of BIG MOO minutes before it goes are twelve different people, one
+windows of MOO-BOT minutes before it goes are twelve different people, one
 of them a four-year-old in a paper crown, and the two running out of the
 door as the counter starts counting are a grown adult carrying a child.
 
@@ -1238,157 +1275,101 @@ than two pale discs over two dark optics, which is a blindfold; the magistrate
 got a **jabot**, because a near-black robe on a dark set is a hole in the
 picture; and the fat one stopped being a rowing boat.
 
-The mascot's own path — the hoof chassis, the milk tank, the scoop arms, the
-cow skull, the dot eyes — is untouched by all of it. It took eleven versions to
-get her right and none of this was allowed near her.
+None of this reaches the mascot, because the mascot is not on this rig at all
+any more — it has its own file, and `G.drawBot` hands the player straight to it.
+That is the next chapter.
 
 ---
 
 ## 🧬 One model
 
-There used to be three cows. The rig drew one, the wasteland hand-drew its own
-head and torso because the player is legless out there, and two cutscene
-close-ups drew a third. Every time the face changed, two of them silently
-stopped matching.
-
-Now there is one. `drawBot` took a **crawl mode**: no legs, a torn hip that
-sparks, and both hands placed by the caller — so the site passes in the positions
-its physics produced and gets back the same cow the shop sells gelato with, same
-head, same badge, same bell. The cutscenes pass nothing special at all.
-
-It also took a **`legOff` mode** — one leg gone, a torn skirt of plate and a
-severed loom arcing where it used to bolt on — and a **`spare` flag** off the
-save. Neither fires in the prologue any more: the patrol puts six rounds into
-your **body**, your legs stay on, and what you carry out of BIG MOO is damage
-rather than a missing part.
-
-**And the proportions are a costume's.** The head is half again the size it was,
-the arms are cream instead of steel and the feet are far too big. It is not a
-machine that happens to look friendly; it is somebody in a suit, which is what a
-mascot is.
-
-### It was a barrel with a cow balanced on it
-
-The body was `w 1.04` against a head of `hs 1.36`: a **35-unit torso under a
-32-unit head**, bulging outward on a single sine curve so the widest row was
-level with the shoulders. Two 7-wide legs stood 4 units apart underneath it.
-That silhouette is a filing cabinet on castors, and no amount of detail on top
-fixes it.
-
-| | Was | Is |
-|---|---|---|
-| Torso width | 35 | **22** — narrower than the head, which is 30 |
-| Torso profile | one sine bulge | **a taper**: neck, out to the shoulders, in to a waist, no hip flare |
-| Torso height | 18 | **16** |
-| Legs | 7 wide, 15 long, 4 apart | **6 wide, 18 long, 14 apart** |
-| Arms | 4.6 wide, to mid-body | **3.4 wide, to the hip**, and a tone darker than the body |
-| Head | 32 × 19, ears out sideways at eye level | **30 × 19, ears narrow and long, pinned below the eyeline so they hang** |
-
-It still totals **52 units head to heel**, which is `G.SZ.MASCOT`, which is an
-adult — the budget just went into legs instead of belly. The first pass at this
-forgot that and came out 63 units tall, standing a head over everybody in the
-room.
-
-Two more things that only showed up once it was slim. The **arms are drawn in
-the same cream as the body over the body**, so at the same tone they merged into
-one wide mass and the waist counted for nothing; they are a shade darker now.
-And a cream body with a badge on it is a fridge, so the suit got **one black
-patch, on the hip** — one, because a 22-by-16 chest with a roundel on it has
-room for exactly one marking and a second lands under the lei.
-
-### The crew uniform
-
 ![The mascot](screenshots/mascot-beach.png)
 
-**A cap.** Red, worn forward, with the chain's letter on the crown and a
-peak that comes toward you. It goes down *after* the horns, so the brim
-cuts their roots and they read as coming out from under it — and the horns
-moved out to 0.33 of the head's width to do that, because at 0.27 they
-were entirely underneath it.
+**The mascot is not on the robot rig any more.** Every version up to this one
+bent the generic chassis into a cow: a procedural skull profile, a snout with a
+mouth line on it, hanging ears, a barrel torso with a bulge parameter, and then
+— once there was a model sheet to hit — a cap bolted on top and a visor swapped
+in for the shades. You can push a rig a long way and it still comes out looking
+like *a rig that has been pushed*, because every shape in it is a curve with a
+name like `skull(p)` rather than a shape somebody drew.
 
-**A visor.** One dark faceplate with **two amber slits** burning behind
-it, which is the whole face. The two separate lenses it replaced are a
-person in sunglasses; a visor is a machine in a cow suit, which is what
-this is. The slits carry the expression on their own: angry pulls the
-inner end down, hurt lifts it, and one row of pixels is the entire range.
+So `js/moobot.js` draws him instead, part by part, straight off the sheet:
 
-**Ear cups.** Not flaps — a pair of padded cans on the sides of the head
-with the chain's roundel stamped on them. They go down before the skull so
-it tucks over the mount, and they sit at 0.50 of the head's width: any
-further in and the skull covers them, and all you see is a dark crescent.
+> a broad cream head, nearly square with the corners knocked off · two black
+> hide patches on it · a red crew cap with the chain's letter, peak forward ·
+> tan horn nubs out from under the peak · **one** black visor with two amber
+> slits · a round pink muzzle, two nostrils, no mouth · ear cans either side
+> with the O roundel on them · a red apron with cream straps over a cream body ·
+> short dark arms, short dark legs, dark feet
 
-**An apron.** A bib on two straps and a skirt under it, in the house red,
-with a hem stripe, a pocket and the mark on the front. The cowbell came
-off with it — a bell on a strap and a lei round the same neck is two
-necklaces, and on a sixteen-unit chest the bell hung straight down through
-the middle of the flowers and out the other side into the badge.
+It is **seven colours** with a light and a dark either side of each, and every
+edge is a hard pixel: shapes are built as rows with a computed inset, the
+outline pass runs over the *whole* shape before any fill starts, and nothing
+anywhere uses alpha. (Stacked semi-transparent ellipses are the one thing this
+style cannot survive — three of them over each other is brown mush.)
 
-And the limbs went dark and stubby to go with it, because the mascot is
-cream, the apron is red, and a cream limb drawn over a cream body is one
-wide shape with no arms in it.
+The handover is **one line** in `bots.js`:
 
-### The head under it
+```js
+if (id === 'player' && G.drawMooBot) return G.drawMooBot(g, cx, footY, scale, o);
+```
 
-The old one was a flat-topped slab with a letterbox of black glass across
-it, two beige domes balanced on the roof, and a face crammed into the
-bottom third. Everything above the muzzle has been rebuilt.
+Everything in the game that draws you goes through `G.drawBot`, so the walkable
+scenes, the cutscene silhouettes, the loading card and the crawl all get the new
+model without knowing anything changed. It returns the same shape the rig does —
+`tellRect`, `headTop`, `mouthY`, `gape`, `torsoY` — so the speech bubbles, the
+aim line and the damage sparks still land where they did.
 
-**A skull that domes.** The crown used to be a circular arc, and a circle
-has infinite slope at its pole — squeezed into a nineteen-row head it
-spends one row at 26% of its width and is at 71% by the next, which is one
-narrow row and then a dead flat top. It is a quarter-sine off a broad
-forehead now, which climbs evenly, and is also what a cow's forehead
-actually does.
+**The markings are fixed, not procedural.** Three hide patches at written-down
+positions on the cheeks and temples, clipped to the head's own rows, so the cow
+has the same face in every frame of every scene. Anything above −0.30 of the
+head's height is under the cap and nobody would ever see it.
 
-**Horns that grow out of it.** A short tapering curve off each top corner,
-out and up and curling back, bone-coloured with a dark collar where it
-meets the hide. And set *wide*: at 0.27 of the head's width they sat
-exactly on the dome's shoulders and hid the only part of the crown that
-curves.
+### It is still 52 units tall
 
-**Two lenses and a bridge.** The shades were one wraparound band 94% of
-the head across with a notch cut in the middle, which at this size is not
-a pair of glasses, it is a letterbox slot across a wall. They are narrower
-than the skull now, so cream shows either side, and the arms run back to
-the *edge of the skull* and stop — given a fixed length they overshot into
-open air, and two black tabs floating beside a head is not a pair of arms.
+| | |
+|---|---|
+| Legs | 12 |
+| Body | 16 |
+| Head | 24 |
 
-**A muzzle with a shape.** A pale snout block sitting proud of the face,
-lit along the top and shaded underneath, with the pink nose pad on its
-upper half, two nostrils that widen when it breathes, and the mouth below.
-No outline: a row-by-row border round a shape that small comes out as a
-dotted stitch running round the jaw.
+12 + 16 + 24 = **52**, which is `G.SZ.MASCOT`, which is an adult. The squash
+budget comes out of the same three numbers — a landing takes height off the legs
+and puts width on the body — so a bounce never changes how tall he is standing
+still. An earlier pass at the proportions forgot the budget entirely and came
+out 63 units, standing a head over everybody in the room.
 
-And **one black patch, on the cheek**. Level with the eyeline it ran up
-into the left lens and the two merged into a single dark mass with a cow
-somewhere behind it.
+### What the sheet fixed that the rig could not
 
-### One necklace
+**The head is nearly square.** The rig's was a portrait rectangle with a domed
+top, because it was a skull function shared with robots that are people-shaped.
+A cow's head is wider than it is tall, and no amount of detail inside a portrait
+rectangle reads as a cow.
 
-The collar and the cowbell went round the same neck as the lei, and on a chest
-this short the bell hung straight down through the middle of the flowers and out
-the other side into the badge. **The lei is the necklace now** — seven small
-blooms on a short string at the throat, rather than eleven big ones across the
-whole chest — and the bell comes back off the beach.
+**There is one visor, and no eyes.** Two separate lenses is a person in
+sunglasses. One faceplate with two amber slits behind it is a machine in a cow
+suit, which is what this is — and the slits carry the whole performance on their
+own: angry pulls the inner end down, hurt lifts it, and one row of pixels is the
+entire range.
 
-The legs took two goes. Stubby ones came out as a **pair of dark blocks side by
-side**, which does not read as legs — it reads as a filing cabinet with a cow
-on top. So the leg got its structure back, in four parts: a long **cream
-shank** with a soft crease where the knee is, a fat **white boot cuff** that
-overhangs the shank, a short **black stocking** under it, and a **split hoof**
-wider than the leg it is on. The dark is now clearly a boot with a sock above
-it, and the gap between the two legs is wide enough to see the floor through.
+**The ear cans are cans.** Padded cylinders on the sides of the head with the
+roundel stamped on them, not flaps. They go down before the skull so it tucks
+over the mount.
 
-The badge went the same way, and it is now **one function for the whole brand**:
-`G.mooLogo(g, cx, cy, r, o)`. Big shapes only — ears, horn nubs, a skull, shades
-above eleven units of radius, and a **pink muzzle in its own colour** with two
-nostrils, because a muzzle painted the same cream as the field behind it is not
-a muzzle, it is a hole in the badge. Everything drops out as the radius falls:
-nostrils, then the shades, then the wordmark, then the date.
+**The muzzle has no mouth on it.** The rig drew a mouth line across the snout
+and it read as a stitch. A pink pad and two nostrils is the whole thing.
 
-The wordmark is sized to the **cream field with two units of margin either
-side**. Sized to the disc instead it filled the field edge to edge, and at
-thirteen units the small cut crossed onto the red rim.
+**And the limbs are dark.** The mascot is cream and the apron is red; a cream
+limb drawn over a cream body is one wide shape with no arms in it. They are
+short, dark and stubby, and the feet are far too big, because that is what
+somebody in a suit looks like.
+
+### The crawl still works
+
+`drawBot` took a **crawl mode** years ago — no legs, both hands placed by the
+caller — and the new painter keeps it, so the wreck passes in the positions its
+physics produced and gets back the same mascot the shop sells gelato with. Same
+head, same badge. The cutscenes pass nothing special at all.
 
 ---
 
@@ -1538,70 +1519,13 @@ radial iris spokes, a bounce catch-light and a scan line crossing the glass.
 ![The mascot](screenshots/cow.png)
 
 You are the nineteenth, and you are not built to be liked — you are built to be
-**recognised**. It is a mascot, and it is drawn like one: few big shapes, hard
-contrast, nothing on the face that is trying to be an instrument.
+**recognised**. Few big shapes, hard contrast, nothing on the face trying to be
+an instrument. Everything above is the rig the other eighteen are drawn on; you
+come off a model sheet instead — see [One model](#-one-model).
 
-**The eyes.** Two dots. That is the whole eye.
-
-The version before this one had a pale field, a brow *and* a blush stacked around
-each dot, in a head nineteen pixels tall — four value blocks fighting over the
-same nine pixels, which is mud, not a face. So it is one dark round, one white
-pip, and a single native pixel of light around the edge: invisible on a white
-face, just enough to keep the eye from vanishing into a marking.
-
-**The mouth.** One curve. A soft upward arc a few pixels wide, one unit thick,
-with a single lighter pixel under it so it sits *in* the snout rather than on it,
-and two pixels at the ends that turn up — which is the entire expression. Open,
-it becomes one small rounded shape with the corners left in place, so it reads as
-an open smile and not a puncture. There used to be a cavity in here with a square
-tooth and a tongue in it; none of that survives the fact that the mouth is six
-pixels across.
-
-**The snout** is a tone, not a sticker: barely pinker than the face, with no
-outline on it at all, and two single pixels for nostrils. Whatever is drawn on
-top of it is the only mark down there.
-
-**The patch.** One, on the cheek, never over an eye. A black patch ringing a
-black dot merges into one dark mass at game scale, and then the cow has no eyes.
-A second patch was tried and dropped: wherever it went it landed on a horn or an
-eye, and one marking reads as a hide anyway.
-
-**The horns are nubs** — two rounded ivory domes three pixels high, sitting on
-top of the skull. They were tapered spikes leaning outward with a stepped dark
-curl between them, which is a goat with a mohawk.
-
-**The ears hang.** A rounded flap that droops down and out with a pink inside and
-a cream rim, attached past the edge of the skull so it actually clears it. Before
-that they were two-pixel tapers pointing straight out at eye level, which reads
-as a fin.
-
-**The badge.** The BIG MOO roundel stamped on the milk tank — the real one, out
-of `G.mooLogo()`, at whatever radius fits — so the mark on your chest is the
-mark on the sign is the mark on the menu board. Every mascot's badge is the
-mascot.
-
-Around it: a **cowbell** on a narrow strap, one broad belt instead of three farm
-hoops, two soft mitten arms — one of them bright steel, because it is not yours —
-and four stocky legs in black stockings on split hooves, with a tail that keeps
-time behind it whether or not anyone is watching.
-
-![The beach mascot](screenshots/mascot-beach.png)
-
-**And it dresses for the beach**, because BIG MOO is a beachfront chain and the
-cow on the sign has been wearing shades since 1971. A pair of hard black
-sunglasses across the eyes, and a **flower lei** — eleven blooms in six colours,
-each one a leaf, an outlined disc and two highlights, hung on a string that dips
-across the chest. It sits **below** the collar and the bell, and it is wider than
-the torso: level with the collar, the collar and the bell covered all but two
-petals of it.
-
-And that is the lot. The apron, the held disher and the hide blobs across the
-shoulders were all cut: at this size every extra shape is one the eye has to
-resolve before it gets to the face, and the badge is the only thing the chest
-needs on it.
-
-`DAIRY UNIT`, filed under `GELATERIA`, and the only thing it ever says is *one
-scoop, always one more*.
+What that section does not say, because it is about the drawing and this is
+about the cast: `DAIRY UNIT`, filed under `GELATERIA`, and the only thing it
+ever says is *one scoop, always one more*.
 
 Eleven of the archetypes carry a lighter version of the same softening — the maid, the chef, the
 nurse, the clerk, the courier, the horticultural unit and the rest get the blush
@@ -1707,13 +1631,16 @@ js/font.js          5×7 bitmap font, standard and fine tiers
 js/audio.js         WebAudio synthesis
 js/state.js         ingredients, systems, 19 frames, disguises, crew, chapters
 js/sprites.js       shared props, cones, cups, city furniture
-js/art3.js          walls, conduit, neon, steam
+js/art3.js          walls, conduit, neon, steam, and the MOO-BOT brand:
+                    the roundel, the plaque and the lit sign
 js/robots.js        legacy chassis helpers still used by the city art
 js/bots.js          the rig: frames, plate detail, optics and dot eyes,
                     posed creatures, tells, the tip jar cat, goo scoops
+js/moobot.js        the mascot, built to the model sheet. Everything that
+                    draws the player comes through here
 js/clause.js        clause.ai — flight, chatter, asks, the books
 js/cine.js          the cutscene camera and every story beat
-js/acts.js          act one, the floor of BIG MOO; act two, the wreck
+js/acts.js          act one, the floor of MOO-BOT; act two, the wreck
 js/tracy.js         her front room, and the lesson
 js/fix.js           the bench: fitting the leg, six stages
 js/day.js           the floor: pits, sweeping, tips, spotting, closing
