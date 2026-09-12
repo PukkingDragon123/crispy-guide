@@ -31,7 +31,93 @@ machine at all — and every one of those you get out is one they do not.**
 **▶ Play it:** open `index.html` in a browser. No build step, no dependencies,
 no asset files — every sprite, sound and note is generated in code.
 
-The menu carries your save, and two logs it opens once you have earned them:
+---
+
+## 🌧️ The menu is a wet road at four in the morning
+
+The title used to be a shop window: a neon sign, a column of buttons beside it,
+and the save shown as a card that said SHIFT 7. It told you the facts. It did
+not tell you anything.
+
+It is a street now. You are stood in the middle of it, alone, in the rain, and
+the whole shot is built out of two straight lines — `q` is depth, lateral scale
+and ground height are both linear in it — so the road, the kerbs, the terraces
+and the lamps all agree about where the horizon is. Roughly two thousand
+vertical strips march down each pavement to lay the terraces in; that happens
+**once**, into a buffer, because the geometry of a street does not change.
+
+What does change is everything you notice: rain in three layers at three speeds
+falling across the whole frame, five lamps a side pooling light onto the wet,
+one of them failing, the drops that pass through a beam coming up bright, water
+shivering in the camber, steam off a grate, a dead traffic light still doing its
+amber at the kerb, and your own reflection under you — broken vertical bars, not
+a mirror, because that is what wet tarmac gives back.
+
+Three rules got this out of the mush it started as:
+
+- **The buildings are silhouettes, the road is the bright thing.** The first
+  pass had a lit grey terrace over black tarmac, which is backwards: at night
+  the wet road is a mirror with a city on it and the buildings are cut-outs with
+  a few warm holes in them. A third of the windows lit is a skyline. Two thirds
+  is a texture.
+- **The horizon had to come up.** It sat at y=100 with the chips over the bottom
+  third, so every lamp, puddle and reflection in the shot was behind the UI. At
+  y=76 there is a street to look at.
+- **A scrim is not a lid.** Board green needs something behind it, but the flat
+  wash that first went under the chips threw away the road and everything in it.
+  It ramps now, and only closes up under the cards themselves.
+
+![The street](screenshots/title-street.png)
+
+## 💾 Your saves are three chips, and one of them goes in your head
+
+There is one save in this game per **chip**, and there are three of them on a
+rail across the bottom of the street. Each is a card of board stock with the
+corners knocked off, a keying notch cut out of the top left so it can only go in
+one way up, gold contact fingers along the bottom lip, a status LED, and the run
+etched on the face: the shift, the money, the chapter, who you have got out, how
+many secrets you have turned up and how hot you are. An unused chip is the same
+card in grey stock with nothing on it but scratches from the drawer.
+
+Pick one up and **PLAY** says CONTINUE or NEW RUN. Pick up the one you are
+already holding and it just goes.
+
+Selecting a chip *loads* it, which costs nothing and commits nothing — the disk
+is only written on the next autosave — so browsing three runs is free, and the
+QUESTS / THE STORY / SECRETS panels are always reading the run you are actually
+looking at. A chip you want rid of has a tab hanging off its top corner; it
+takes a WIPE / KEEP confirm on the card itself.
+
+This replaced a single save key and a **START OVER** button, which meant the only
+way to see how a different run would go was to throw the last one away. An
+existing save is migrated into chip one rather than quietly vanishing behind a
+new key.
+
+### And then it goes in your head
+
+Press PLAY and the chip lifts off the rail, tumbles across the street on an arc
+with a trail behind it, shrinking — width faster than height, so it turns to go
+in rather than sailing past as a billboard — while the panel in his cheek parts
+in two. It seats. The shutter closes, there is a bang, and he comes up: both
+visor slits go from ember to white, a ring goes out across the road, sparks come
+off him, the whole street lights warm and he braces and stretches. Then the
+whiteout, and you are in the game.
+
+![The chip goes in](screenshots/title-boot.png)
+
+Everything this machine has ever been told arrived through that slot. It is
+where the last chip went in.
+
+Four things had to be fixed by looking at it rather than by reading it: the
+panel was drawn on the middle of his face, the lid was a pale slab hanging in
+front of him (it is a two-part shutter now — a lid that lifts off cannot work at
+six pixels), the chip kept its full-size silkscreen all the way in and turned to
+mud, and the surge bar landed on his browline instead of the slits, so his eyes
+never changed.
+
+---
+
+The menu also carries two logs it opens once you have earned them:
 
 ![Quests](screenshots/quests.png)
 
@@ -1629,7 +1715,8 @@ js/folk.js          the people: a genome per seed, and the rig that draws it
 js/stage.js         the walkable stage: floor, camera, actors, spots, beats
 js/font.js          5×7 bitmap font, standard and fine tiers
 js/audio.js         WebAudio synthesis
-js/state.js         ingredients, systems, 19 frames, disguises, crew, chapters
+js/state.js         ingredients, systems, 19 frames, disguises, crew, chapters,
+                    and the three save chips
 js/sprites.js       shared props, cones, cups, city furniture
 js/art3.js          walls, conduit, neon, steam, and the MOO-BOT brand:
                     the roundel, the plaque and the lit sign
@@ -1648,7 +1735,7 @@ js/lab.js           the station panels: order, mixer, the line
 js/back.js          the back room you walk
 js/night.js         the bench: eight systems, 24 faults, five gestures
 js/shop.js          the books and the armoury
-js/main.js          title, transitions, main loop
+js/main.js          the street, the chips, the boot, transitions, main loop
 ```
 
 Made with Claude Code.

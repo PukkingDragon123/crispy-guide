@@ -697,42 +697,153 @@
     };
   }
 
+  // ------------------------------------------------------------
+  // THREE SLOTS.
+  //
+  // There used to be ONE save under one key, which meant "START OVER"
+  // was a destructive act with a confirm strip in front of it: the only
+  // way to see how a different run would go was to throw the last one
+  // away. Three independent slots, and the title hands you all three at
+  // once as chips you can pick up.
+  //
+  // G.slot is which one is live. Everything that calls G.save() keeps
+  // writing wherever the player is, and never has to know about any of
+  // this.
+  // ------------------------------------------------------------
+  const SLOT_KEY = (i) => 'doubleLife.slot.v8.' + i;
+  const LAST_KEY = 'doubleLife.lastSlot.v8';
+  const OLD_KEY = 'doubleLife.save.v7';
+  G.SLOTS = 3;
+  G.slot = 0;
+  G.slots = [null, null, null];
   G.hasSave = false;
+
+  // bring a parsed blob up to the shape the game expects. A save from an
+  // older build is missing whole fields, and half of this codebase reads
+  // them without checking.
+  function hydrate(s) {
+    const st = freshState();
+    for (const k in st) if (s[k] !== undefined) st[k] = s[k];
+    st.moneyShown = st.money;
+    st.today = null;
+    if (!st.flavours || !st.flavours.length) st.flavours = starterFlavours();
+    if (!st.pits || !st.pits.length) st.pits = [{ fid: st.flavours[0].id, qty: 12, max: 12 }];
+    for (const k of ['crew', 'chapters', 'hist', 'questsDone', 'eggs', 'sysDone',
+                     'owned', 'allies', 'seen', 'sauces', 'tops', 'newIds', 'batches'])
+      if (!Array.isArray(st[k])) st[k] = [];
+    for (const k of ['cleanShifts', 'petsTotal', 'spotted', 'missed', 'tips',
+                     'freed', 'suspicion', 'totBots', 'totFixed', 'totMisdx', 'totVolt'])
+      if (typeof st[k] !== 'number') st[k] = 0;
+    return st;
+  }
+
+  // what a chip has printed on its face. Read straight off the blob, so
+  // the title never has to load a run to show you what is in it.
+  function summarise(s) {
+    const chapters = Array.isArray(s.chapters) ? s.chapters : [];
+    let name = CHAPTERS[0].name;
+    for (let i = CHAPTERS.length - 1; i >= 0; i--)
+      if (chapters.indexOf(CHAPTERS[i].id) >= 0) { name = CHAPTERS[i].name; break; }
+    const owned = Array.isArray(s.owned) ? s.owned : [];
+    return {
+      day: s.day || 1,
+      money: Math.round(s.money || 0),
+      chapter: name,
+      crew: (Array.isArray(s.crew) ? s.crew : []).length,
+      freed: s.freed || 0,
+      eggs: (Array.isArray(s.eggs) ? s.eggs : []).length,
+      quests: (Array.isArray(s.questsDone) ? s.questsDone : []).length,
+      heat: Math.round((s.suspicion || 0) * 100),
+      pits: 1 + (owned.indexOf('pit2') >= 0 ? 1 : 0) + (owned.indexOf('pit3') >= 0 ? 1 : 0)
+              + (owned.indexOf('pit4') >= 0 ? 1 : 0) + (owned.indexOf('pit5') >= 0 ? 1 : 0),
+      stamp: s.stamp || 0,
+    };
+  }
+
+  function readRaw(i) {
+    try {
+      const raw = localStorage.getItem(SLOT_KEY(i));
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      return s && s.day ? s : null;
+    } catch (e) { return null; }
+  }
+
+  // scan all three. Called on boot and after any write, so the chips on
+  // the title are never showing a run that is one shift out of date.
+  G.readSlots = function () {
+    // a save from before slots existed becomes slot one, rather than
+    // quietly disappearing behind a new key
+    try {
+      const old = localStorage.getItem(OLD_KEY);
+      if (old && !localStorage.getItem(SLOT_KEY(0))) {
+        localStorage.setItem(SLOT_KEY(0), old);
+        localStorage.removeItem(OLD_KEY);
+      }
+    } catch (e) { /* private mode */ }
+    for (let i = 0; i < G.SLOTS; i++) {
+      const s = readRaw(i);
+      G.slots[i] = s ? summarise(s) : null;
+    }
+    G.hasSave = G.slots.some(Boolean);
+    return G.slots;
+  };
+  G.slotUsed = (i) => !!G.slots[i];
+  G.lastSlot = function () {
+    try {
+      const v = parseInt(localStorage.getItem(LAST_KEY), 10);
+      if (v >= 0 && v < G.SLOTS && G.slots[v]) return v;
+    } catch (e) { /* ignore */ }
+    return G.slots.findIndex(Boolean);
+  };
+
+  // ---------- load / save / wipe ----------
+  // boot: a blank run in memory and the three chips read off the disk.
+  // Nothing is live until the title puts a chip in your head.
   G.load = function () {
     G.state = freshState();
-    try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (raw) {
-        const s = JSON.parse(raw);
-        if (s && s.day) {
-          for (const k in G.state) if (s[k] !== undefined) G.state[k] = s[k];
-          G.state.moneyShown = G.state.money;
-          G.state.today = null;
-          if (!G.state.flavours || !G.state.flavours.length) G.state.flavours = starterFlavours();
-          if (!G.state.pits || !G.state.pits.length)
-            G.state.pits = [{ fid: G.state.flavours[0].id, qty: 12, max: 12 }];
-          for (const k of ['crew', 'chapters', 'hist', 'questsDone', 'eggs', 'sysDone'])
-            if (!G.state[k]) G.state[k] = [];
-          for (const k of ['cleanShifts', 'petsTotal']) if (G.state[k] === undefined) G.state[k] = 0;
-          for (const k of ['spotted', 'missed', 'tips']) if (G.state[k] === undefined) G.state[k] = 0;
-          G.hasSave = true;
-        }
-      }
-    } catch (e) { /* private mode - play unsaved */ }
+    G.readSlots();
+  };
+  G.loadSlot = function (i) {
+    const s = readRaw(i);
+    if (!s) return false;
+    const muted = G.state ? G.state.muted : false;
+    G.state = hydrate(s);
+    if (G.state.muted === undefined) G.state.muted = muted;
+    G.slot = i;
+    try { localStorage.setItem(LAST_KEY, String(i)); } catch (e) {}
+    return true;
+  };
+  G.newSlot = function (i) {
+    const muted = G.state ? G.state.muted : false;
+    G.state = freshState();
+    G.state.muted = muted;
+    G.slot = i;
+    try { localStorage.setItem(LAST_KEY, String(i)); localStorage.removeItem(SLOT_KEY(i)); } catch (e) {}
+    G.readSlots();
+  };
+  G.wipeSlot = function (i) {
+    try { localStorage.removeItem(SLOT_KEY(i)); } catch (e) {}
+    G.readSlots();
   };
   G.save = function () {
     try {
       const s = Object.assign({}, G.state);
       delete s.today;
-      localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+      s.stamp = Date.now();
+      localStorage.setItem(SLOT_KEY(G.slot), JSON.stringify(s));
+      localStorage.setItem(LAST_KEY, String(G.slot));
+      G.slots[G.slot] = summarise(s);
       G.hasSave = true;
     } catch (e) { /* ignore */ }
   };
+  // wipe the run in memory WITHOUT touching the disk: the title calls
+  // this to start a fresh chip, and nothing is committed until the first
+  // autosave, so backing out of a new run costs you nothing.
   G.reset = function () {
     const muted = G.state ? G.state.muted : false;
     G.state = freshState();
     G.state.muted = muted;
-    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
   };
 
   G.flavById = function (id) {
