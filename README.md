@@ -35,6 +35,37 @@ no asset files — every sprite, sound and note is generated in code.
 
 ---
 
+## 💃 The dance is a little game now
+
+Act one has a stage in it, a birthday party at table four, and a mascot whose
+entire job is to get up there and perform. It used to be four scripted beats you
+watched: he waved, he said a line, the room cheered, and the objective advanced.
+
+It is five bars now. A marker sweeps the track once a bar; tap while it is in the
+green and he **snaps** into the pose, tap late and he flops into it. Five poses,
+all arms — up, left, right, clap, big finish — because he grew hands last pass
+and this is the one place in the game that gets to show them off. The kids jump
+on every downbeat. Confetti on every hit.
+
+It cannot be failed: five misses still gets you off the stage and the kids still
+clap, because they are four. But five hits gets you a different line, and the old
+couple in the back booth remember who you used to be.
+
+![The dance](screenshots/dance.png)
+
+Two things it needed. The poses started within a few units of where his arms hang
+anyway, so the whole dance read as a robot standing still — they clear his head
+now. And the read-out was stacked up the middle of the frame, on top of the one
+thing it was asking you to look at; it is a single strip below his feet, pose tab
+left, track middle, one pip a bar on the right.
+
+## 🍦 And you carry the swirls
+
+Sam hands you two of them at the counter and you walk them over to table four.
+They used to hang in the air sixteen units either side of him, keeping station
+while he walked, because he had nothing to hold them with. They are in his
+gloves now, gripped, in front of his chest, all the way across the room.
+
 ## 🧤 He has hands now
 
 They were stubs: two dark rounded bars hung at his sides, and wherever a scene
@@ -83,6 +114,30 @@ cone you let go of two units wide of the holder goes back in the sleeve instead
 of on the floor.
 
 ![Carrying a cone](screenshots/cone-carry.png)
+
+## 🩷 The shop is a shop you would queue at
+
+It used to be the same cold blue as the street outside: navy tiles, a run of
+dripping pipe, an extraction fan, grime in the corners, a first aid box. A
+workshop that happened to sell gelato.
+
+The whole point of the place is that it is the one warm room left in the city,
+and she is the reason. So the inside is a little gelateria — cream and mint
+walls, a pink dado rail, pastel tiles with a hand-painted heart on about one in
+nine, bunting she put up and he never took down, a string of fairy lights, a
+chalkboard reading SCOOPS FROM HER OWN BOOK with a cone drawn on it in chalk, a
+trailing vine, a pot plant, and a photograph of Tracy over the counter.
+
+The counter is wood with a scalloped pink valance hanging off it. The pit deck is
+painted board with a mint edge and sprinkles somebody never wiped up. The wells
+are brass; each flavour gets a little painted tag with a dab of itself on it; a
+pit you have not built yet is a lid with a dust sheet over it rather than a slab
+of battleship plate.
+
+And the cold stays where it belongs — outside, through a window with gingham
+curtains, where you can see it.
+
+![The shop](screenshots/shop-cute.png)
 
 ## 🧭 Clause actually helps now
 
@@ -1840,7 +1895,8 @@ js/moobot.js        the mascot, built to the model sheet, hands and all.
                     Everything that draws the player comes through here
 js/clause.js        clause.ai — flight, chatter, asks, the books
 js/cine.js          the cutscene camera and every story beat
-js/acts.js          act one, the floor of MOO-BOT; act two, the wreck
+js/acts.js          act one, the floor of MOO-BOT and the dance; act two,
+                    the wreck
 js/tracy.js         her front room, and the lesson
 js/fix.js           the bench: fitting the leg, six stages
 js/day.js           the floor: pits, sweeping, tips, spotting, closing

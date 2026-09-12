@@ -581,6 +581,9 @@
             noBlink: S.pnoBlink, sq: G.clamp(S.sq * 0.05, -0.17, 0.22),
           });
         S.pheadTop = pr ? pr.y : S.floor - G.SZ.MASCOT;
+        // where his gloves actually ended up, so a scene that puts
+        // something in them can draw it in the right place
+        S.phandPts = pr ? pr.hands : null;
         if (S.pcrawl) S.pheadTop = S.floor - 26;
         if (def.fore) def.fore(g, S);
         pops(g, S);

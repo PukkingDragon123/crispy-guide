@@ -835,56 +835,169 @@
       G.hangSign(g, 226, 16, 16, 14, P.magenta, t, 0);
       G.hangSign(g, 246, 16, 14, 12, P.cyan, t, 2);
 
-      // ---- the room it actually is: tiles, pipes, a fan, a notice ----
-      // wall tiling behind the shelf, grouted on the fine grid
-      for (let ty = 30; ty < WORK_Y - 4; ty += 8)
-        for (let tx = 0; tx < 220; tx += 12) {
-          const off = (ty / 8) % 2 ? 6 : 0;
-          G.hair(g, tx + off, ty, 11.5, '#232a3a');
-          G.vair(g, tx + off, ty, 7.5, '#1c2230');
-          if (G.hash(tx, ty) > 0.88) G.grain(g, tx + off + 1, ty + 1, 10, 6, '#2e374a', 0.16, tx + ty);
+      // ------------------------------------------------------------
+      // THE ROOM.
+      //
+      // It used to be the same cold blue as the street: navy tiles, a
+      // run of dripping pipe, an extraction fan, grime in the corners
+      // and a first aid box. A workshop that happened to sell gelato.
+      //
+      // The whole point of this place is that it is the one warm room
+      // left in the city, and she is why. So the INSIDE is a little
+      // gelateria - mint and cream tiles, a pink dado, bunting, fairy
+      // lights, plants, a chalkboard - and the cold stays where it
+      // belongs: outside, through the window, where you can see it.
+      // ------------------------------------------------------------
+      // the wall: cream above a mint band, with a pink rail between them
+      // full width: stopping at 224 left a cold navy stripe down the
+      // side of a room whose whole point is that it is warm
+      G.R(g, 0, 12, G.W, WORK_Y - 12, '#f6ece0');
+      G.R(g, 0, 12, G.W, 18, '#bfe4d8');
+      for (let i = 0; i < 34; i++)                      // soft vertical stripes
+        G.Rq(g, i * 9.5, 12, 4, 18, '#cbeade');
+      G.R(g, 0, 30, G.W, 3, '#f0a8b8');
+      G.hairq(g, 0, 30, G.W, '#ffd0dc');
+      G.hairq(g, 0, 32.75, G.W, '#c8788c');
+      // ---- pastel tiles below the rail, with the odd heart in them ----
+      for (let ty = 36; ty < WORK_Y - 4; ty += 9)
+        for (let tx = 0; tx < G.W; tx += 13) {
+          const off = (Math.round((ty - 36) / 9)) % 2 ? 6.5 : 0;
+          const k = G.hash(tx + off, ty);
+          const col = k > 0.86 ? '#ffe2ea' : k > 0.5 ? '#fbf3e8' : '#f2e7da';
+          G.Rh(g, tx + off, ty, 12.5, 8.5, col);
+          G.hairq(g, tx + off, ty, 12.5, '#fffaf2');
+          G.hairq(g, tx + off, ty + 8.25, 12.5, '#dcc9b8');
+          // a hand-painted heart on about one tile in nine
+          if (k > 0.88) {
+            const hx = tx + off + 6, hy = ty + 4;
+            G.Rq(g, hx - 2, hy - 1.5, 1.5, 1.5, '#f0a8b8');
+            G.Rq(g, hx + 0.5, hy - 1.5, 1.5, 1.5, '#f0a8b8');
+            G.Rq(g, hx - 2, hy, 4, 1, '#f0a8b8');
+            G.Rq(g, hx - 1.25, hy + 1, 2.5, 1, '#f0a8b8');
+            G.Rq(g, hx - 0.5, hy + 2, 1, 0.75, '#f0a8b8');
+          }
         }
-      // a run of pipe along the top of the tiles, with brackets and a drip
-      G.Rh(g, 0, 30, 220, 2.5, '#3a4459');
-      G.hair(g, 0, 30, 220, '#5b6a86');
-      G.hair(g, 0, 32, 220, '#1c2230');
-      for (let bx = 14; bx < 216; bx += 34) {
-        G.Rh(g, bx, 29, 3, 5, '#2a3242');
-        G.rivet(g, bx + 1, 31, '#12141c', '#6b7f96');
+
+      // ---- BUNTING, because she put it up and he never took it down ----
+      for (let i = 0; i < 21; i++) {
+        const bx = 4 + i * 15, sag = Math.sin(i * 0.7 + t * 0.5) * 1.6;
+        const py = 34 + sag;                            // under the rail, clear of the HUD
+        G.Rq(g, bx, py - 1, 15, 0.5, '#c8a884');
+        const cols = ['#ffd45a', '#8fd8c0', '#ff9ab8', '#8fc8ff'];
+        for (let r = 0; r < 5; r++)
+          G.Rq(g, bx + 3 + r * 0.5, py + r, 9 - r * 1.8, 1, cols[i % 4]);
+        G.hairq(g, bx + 3, py, 9, '#ffffff');
       }
-      const drip = (t * 0.6) % 1;
-      G.Rh(g, 148, 33 + drip * 18, 0.5, 1.5, '#5fbfd8');
-      // extraction fan, turning - kept left, where the order tag never lands
-      const fx = 26, fy = 54;
-      G.R(g, fx - 12, fy - 12, 24, 24, '#151a26');
-      G.bevel(g, fx - 12, fy - 12, 24, 24, '#2a3242', '#0b0e14');
-      for (let k = 0; k < 4; k++) {
-        const a = t * 3.4 + k * Math.PI / 2;
-        for (let rr = 2; rr < 10; rr += 0.5)
-          G.Rh(g, fx + Math.cos(a) * rr - 0.5, fy + Math.sin(a) * rr * 0.7 - 0.5, 1.5, 1, '#3f4a60');
+
+      // ---- a string of fairy lights along the tiles ----
+      for (let i = 0; i < 17; i++) {
+        // hung on the wall under the bunting. Down at the shelf they sat
+        // behind the sauce bottles and the tip jar and never showed.
+        const lx = 10 + i * 18, ly = 45 + Math.sin(i * 0.9 + 1.3) * 3;
+        G.Rq(g, lx - 9, ly - 2, 18, 0.75, '#a89684');
+        const on = Math.sin(t * 2.2 + i * 0.8) > -0.4;
+        const c2 = ['#ffd45a', '#ff9ab8', '#8fd8c0', '#8fc8ff'][i % 4];
+        G.Rq(g, lx - 1.5, ly - 1.25, 3, 1.25, '#a89684');     // the little cap
+        G.fc(g, lx, ly + 1.5, 2.2, '#6b5a4a');
+        G.fc(g, lx, ly + 1.5, 1.6, on ? c2 : G.mix(c2, '#8a8074', 0.62));
+        if (on) G.glow(g, lx, ly + 1.5, 18, 16, c2, 0.7);
       }
-      G.fc(g, fx, fy, 2, '#6b7f96');
-      for (let i = -1; i < 2; i++) { G.hair(g, fx - 11, fy + i * 7, 22, '#0f131c'); }
-      // a first aid box and a fire bucket, behind where the machine stands
-      G.plate(g, 226, 34, 20, 16, '#d8d0c0', { r: 1, band: 2, spec: false });
-      G.R(g, 233, 38, 6, 2, '#c02020'); G.R(g, 235, 36, 2, 6, '#c02020');
-      G.plate(g, 252, 38, 14, 12, '#8a2f42', { r: 2, band: 2 });
-      G.Rh(g, 253, 40, 12, 2, '#5c2030');
-      G.Rh(g, 258, 34, 2, 4, P.steel);
-      // hanging cable with a bare bulb over the counter
-      G.Rh(g, 76, 30, 0.5, 12, '#1a1f2c');
+
+      // ---- THE CHALKBOARD, where the extraction fan used to be ----
+      // x 8 put it squarely behind the cone sleeve and the cup sleeve.
+      // This is the one strip of wall with nothing on the shelf in front
+      // of it: right of the lamp, left of her photograph, above the
+      // sauce bottles.
+      // and BELOW the order card, which lands at y 16-58 whenever there
+      // is a machine at the counter. The three lines of her handwriting
+      // are what matter; the header can hide behind a customer's head.
+      const CB = { x: 94, y: 48, w: 54, h: 26 };
+      G.R(g, CB.x - 2, CB.y - 2, CB.w + 4, CB.h + 4, '#8a6a48');
+      G.bevelq(g, CB.x - 2, CB.y - 2, CB.w + 4, CB.h + 4, '#c8a070', '#5c4430');
+      G.R(g, CB.x, CB.y, CB.w, CB.h, '#2e3a34');
+      G.grainq(g, CB.x, CB.y, CB.w, CB.h, '#3a4840', 0.05, 3);
+      G.text(g, 'TODAY', CB.x + CB.w / 2, CB.y + 2, '#ffe6a8', { align: 'center', sc: 0.5 });
+      G.Rq(g, CB.x + 12, CB.y + 8.5, CB.w - 24, 0.5, '#8a9a90');
+      // a little cone, drawn in chalk
+      const cnx = CB.x + 11, cny = CB.y + 22;
+      for (let r = 0; r < 8; r++)
+        G.Rq(g, cnx - (8 - r) * 0.5, cny - 8 + r, (8 - r) * 1, 1, '#d8c8a0');
+      G.fc(g, cnx, cny - 9.5, 3.5, '#ffd0dc');
+      G.fc(g, cnx, cny - 10.5, 2, '#fff0f4');
+      // and her handwriting
+      G.text(g, 'SCOOPS', CB.x + 21, CB.y + 11, '#cfe0d4', { sc: 0.5 });
+      G.text(g, 'FROM HER', CB.x + 21, CB.y + 17, '#cfe0d4', { sc: 0.5 });
+      G.text(g, 'OWN BOOK', CB.x + 21, CB.y + 23, '#a8d8c0', { sc: 0.5 });
+
+      // ---- plants. Two pots and a trailing vine, like her front room ----
+      const potX = 196;
+      G.R(g, potX - 7, WORK_Y - 13, 14, 11, '#c8785c');
+      G.bevelq(g, potX - 7, WORK_Y - 13, 14, 11, '#e8a080', '#8a4a34');
+      G.R(g, potX - 8, WORK_Y - 14, 16, 3, '#d88a68');
+      for (let k = 0; k < 7; k++) {
+        const a2 = -1.6 + (k - 3) * 0.36;
+        for (let r = 2; r < 13 - Math.abs(k - 3) * 2; r++)
+          G.Rq(g, potX + Math.cos(a2) * r - 0.75, WORK_Y - 14 + Math.sin(a2) * r - 0.75,
+            1.5, 1.5, k % 2 ? '#5c9a58' : '#78b86a');
+      }
+      // the vine, hooked over the rail, swaying
+      for (let k = 0; k < 11; k++) {
+        const vx = 182 + Math.sin(k * 0.8 + t * 0.6) * 3, vy = 34 + k * 3.4;
+        if (vy > WORK_Y - 6) break;
+        G.Rq(g, vx, vy, 1, 3.5, '#4a8a48');
+        G.fc(g, vx + (k % 2 ? 2.5 : -1.5), vy + 1.5, 2, k % 3 ? '#6bb05c' : '#8fd070');
+      }
+
+      // ---- THE WINDOW. The cold city, kept outside where it lives. ----
+      const W2 = { x: 230, y: 38, w: 62, h: 42 };
+      G.R(g, W2.x - 3, W2.y - 3, W2.w + 6, W2.h + 6, '#e8d0b8');
+      G.bevelq(g, W2.x - 3, W2.y - 3, W2.w + 6, W2.h + 6, '#fff0e0', '#b08a68');
+      G.R(g, W2.x, W2.y, W2.w, W2.h, '#12182a');
+      G.cityWall(g, W2.x, W2.y, W2.w, W2.h, t);
+      g.globalAlpha = 0.5; G.R(g, W2.x, W2.y, W2.w, W2.h, '#0d1424'); g.globalAlpha = 1;
+      for (let i = 0; i < 22; i++)                      // rain on the glass
+        G.Rq(g, W2.x + ((G.hash(i, 3) * W2.w + t * 9) % W2.w),
+          W2.y + ((G.hash(i, 7) * W2.h + t * 90) % W2.h), 0.25, 4, '#5f86b0');
+      G.Rq(g, W2.x + W2.w / 2 - 0.75, W2.y, 1.5, W2.h, '#e8d0b8');
+      G.Rq(g, W2.x, W2.y + W2.h / 2 - 0.75, W2.w, 1.5, '#e8d0b8');
+      // gingham curtains, tied back
+      for (const sd of [0, 1]) {
+        const cx2 = sd ? W2.x + W2.w - 13 : W2.x + 1;
+        for (let j = 0; j < 9; j++)
+          for (let i = 0; i < 3; i++)
+            G.Rh(g, cx2 + i * 4, W2.y + 1 + j * 5, 4, 5,
+              (i + j) % 2 ? '#f6c8d4' : '#fbe4ea');
+        G.Rq(g, cx2, W2.y + 22, 12, 2, '#e88ca0');
+      }
+
+      // ---- a photograph of her, over the counter ----
+      G.R(g, 150, 46, 22, 20, '#c8a884');
+      G.bevelq(g, 150, 46, 22, 20, '#f0d8b8', '#8a6a48');
+      G.R(g, 152, 48, 18, 14, '#cfe0e8');
+      G.fc(g, 161, 56, 5, '#f2d0b8');
+      G.fc(g, 161, 52.5, 4.5, '#e8e4e0');
+      G.Rq(g, 159, 55, 1, 1, '#3a2e2a'); G.Rq(g, 163, 55, 1, 1, '#3a2e2a');
+      G.Rq(g, 159.5, 57.5, 3, 0.75, '#c87a86');
+      G.R(g, 155, 62, 12, 3, '#f0a8b8');
+      G.text(g, 'TRACY', 161, 63, '#8a6a48', { align: 'center', sc: 0.5 });
+
+      // ---- the pendant lamp she hung, with a scalloped shade ----
+      G.Rh(g, 76, 12, 0.5, 24, '#b08a68');
       const bt = this.bulbT || 0;
       const bl = bt > 0 ? (Math.sin(bt * 30) > 0 ? 1.6 : 0.4) : 1;
-      G.fc(g, 76, 45, 3, bl > 1 ? '#fff8d8' : '#ffe89a');
-      G.fc(g, 76, 45, 1.5, '#ffffff');
-      G.glow(g, 76, 46, 46 * bl, 34 * bl, '#ffd47a', 0.55 * bl);
-      // grime in the corners
-      G.grain(g, 0, WORK_Y - 14, 220, 12, '#0e1219', 0.1, 9);
-      // the café's own sign, tucked left where nothing else lands
+      for (let r = 0; r < 7; r++)
+        G.Rq(g, 76 - (r + 2) * 1.4, 36 + r, (r + 2) * 2.8, 1, r < 2 ? '#ffd0dc' : '#f0a8b8');
+      for (let k = 0; k < 5; k++) G.fc(g, 63 + k * 6.5, 43, 2, '#f0a8b8');
+      G.hairq(g, 63, 36, 26, '#fff0f4');
+      G.fc(g, 76, 46, 3, bl > 1 ? '#fff8d8' : '#ffe89a');
+      G.fc(g, 76, 46, 1.5, '#ffffff');
+      G.glow(g, 76, 46, 56 * bl, 40 * bl, '#ffd9a0', 0.6 * bl);
+
+      // ---- the shop's own sign, still neon, still hers ----
       const fl = (Math.sin(t * 13) > 0.94) ? 0.35 : 1;
       G.R(g, 8, 18, 96, 3, fl > 0.5 ? P.magentaLt : P.magentaDk);
-      G.glow(g, 60, 30, 130, 56, P.magenta, 0.9 * fl);
-      G.text(g, 'SCOOP  ·  24 HR', 10, 24, fl > 0.5 ? P.cyanLt : P.cyanDk, { out: OUT });
+      G.glow(g, 60, 26, 130, 48, P.magenta, 0.8 * fl);
+      G.text(g, 'SCOOP  ·  24 HR', 10, 24, fl > 0.5 ? '#ff7ab8' : '#8a3a5c', { out: OUT });
 
       // ===== the machine at the counter =====
       const c = this.reveal ? null : this.cust;
@@ -915,8 +1028,18 @@
       }
 
       // ===== the back work shelf =====
-      G.plate(g, -4, WORK_Y, 224, 10, P.plate, { r: 2, band: 3 });
-      G.R(g, -4, WORK_Y + 1, 224, 1, P.cyanDk);
+      // steel plate with a cyan pinstripe, in a shop otherwise made of
+      // mint tiles and bunting. It is a wooden counter with a scalloped
+      // valance hanging off it now, like the one in her front room.
+      G.plate(g, -4, WORK_Y, G.W + 8, 10, '#c8a884',
+        { r: 2, band: 3, lit: '#e8cba8', dk: '#8a6a48', grain: 3 });
+      G.hairq(g, -4, WORK_Y, G.W + 8, '#f2dcc0');
+      G.R(g, -4, WORK_Y + 7, G.W + 8, 3, '#f0a8b8');
+      for (let i = 0; i * 9 < G.W + 12; i++) {         // the scallops
+        const sx = -4 + i * 9;
+        for (let r = 0; r < 4; r++)
+          G.Rq(g, sx + r * 0.9, WORK_Y + 10 + r, 9 - r * 1.8, 1, r < 1 ? '#ffd0dc' : '#f0a8b8');
+      }
       // ---- THE SLEEVES ----
       // A stand with one cone on it says nothing about how many you have.
       // A stack says it at a glance: the rims climb as the sleeve fills
@@ -960,8 +1083,19 @@
       }
 
       // ===== the pit deck, sunk in front =====
-      G.plate(g, -4, DECK_Y, G.W + 8, DECK_H, P.plate, { r: 2, band: 4 });
-      G.R(g, -4, DECK_Y + 1, G.W + 8, 1, P.cyanDk);
+      // Painted wood and a mint edge instead of battleship plate. The
+      // pits are dark, so the deck has to stay light or they stop
+      // reading as holes in it.
+      G.plate(g, -4, DECK_Y, G.W + 8, DECK_H, '#e0cdbc',
+        { r: 2, band: 4, lit: '#f6ece0', dk: '#b49c8a', grain: 2 });
+      G.R(g, -4, DECK_Y, G.W + 8, 2, '#8fd8c0');
+      G.hairq(g, -4, DECK_Y, G.W + 8, '#c8f0e0');
+      G.hairq(g, -4, DECK_Y + 1.75, G.W + 8, '#5c9a86');
+      // a few sprinkles somebody never wiped up
+      for (let i = 0; i < 26; i++) {
+        const sx = G.hash(i, 3) * (G.W + 8) - 4, sy = DECK_Y + 3 + G.hash(i, 7) * 3;
+        G.Rq(g, sx, sy, 2, 1, ['#ff9ab8', '#8fd8c0', '#ffd45a', '#8fc8ff'][i % 4]);
+      }
       for (let i = 0; i < 5; i++) {
         const r = pitRect(i);
         if (i >= this.n) { this.drawBlank(g, r, i); continue; }
@@ -1074,8 +1208,9 @@
       const pit = G.state.pits[i];
       const f = pit ? G.flavById(pit.fid) : null;
       // the well: a chrome rim with a hard inner shadow so it reads as sunk
-      G.plate(g, r.x - 4, r.y - 4, r.w + 8, r.h + 8, P.hullDk, { r: 2, band: 2 });
-      G.R(g, r.x - 3, r.y - 3, r.w + 6, 1, P.hullLt);
+      G.plate(g, r.x - 4, r.y - 4, r.w + 8, r.h + 8, '#e0b878',
+        { r: 2, band: 2, lit: '#ffe0a8', dk: '#a8813f' });
+      G.R(g, r.x - 3, r.y - 3, r.w + 6, 1, '#fff0c8');
       G.R(g, r.x - 2, r.y - 2, r.w + 4, r.h + 4, '#0b0d14');
       G.R(g, r.x - 2, r.y - 2, r.w + 4, 2, '#05060a');
       G.R(g, r.x - 2, r.y - 2, 2, r.h + 4, '#05060a');
@@ -1139,24 +1274,42 @@
     // name plate on the deck lip, battery tucked in the corner of the well
     pitLabel(g, r, i, pit, f) {
       const nm = f ? f.name.split(' ')[0].slice(0, 9) : 'EMPTY';
-      G.R(g, r.x - 3, r.y + r.h + 2, r.w + 6, 9, '#0d1220');
-      G.text(g, nm, r.x + r.w / 2, r.y + r.h + 3, f ? f.col : '#4a5060', { align: 'center' });
+      // a hand-painted tag clipped to the front of the well, rather than
+      // a black strip with the flavour's own colour burning out of it
+      const ty = r.y + r.h + 2;
+      G.rr(g, r.x - 4, ty - 1, r.w + 8, 11, '#8a6a48');
+      G.rr(g, r.x - 3, ty, r.w + 6, 9, '#fbf3e8');
+      G.hairq(g, r.x - 2, ty + 0.5, r.w + 4, '#ffffff');
+      if (f) {                                    // a dab of the flavour on the tag
+        G.fc(g, r.x + 4, ty + 4.5, 3, G.shade(f.col, -0.3));
+        G.fc(g, r.x + 4, ty + 4, 2.5, f.col);
+      }
+      G.text(g, nm, r.x + r.w / 2 + 3, ty + 1, f ? G.shade(f.col, -0.5) : '#8a7464',
+        { align: 'center' });
       const bx = r.x + 2, by = r.y + 2, bw = 18, bh = 7;
-      G.R(g, bx - 1, by - 1, bw + 4, bh + 2, OUT);
-      G.R(g, bx, by, bw, bh, '#12141c');
-      G.R(g, bx + bw, by + 2, 2, bh - 4, P.hullDk);
+      G.R(g, bx - 1, by - 1, bw + 4, bh + 2, '#5c4430');
+      G.R(g, bx, by, bw, bh, '#2a1f18');
+      G.R(g, bx + bw, by + 2, 2, bh - 4, '#c8a070');
       const frac = pit && pit.max ? G.clamp(pit.qty / pit.max, 0, 1) : 0;
       for (let k = 0; k < Math.round(frac * 5); k++)
         G.R(g, bx + 1 + k * 3.4, by + 1, 3, bh - 2, frac > 0.5 ? P.lime : frac > 0.22 ? P.hazard : P.magenta);
       const qty = '' + (pit ? pit.qty : 0);
-      G.R(g, bx + bw + 4, by - 1, G.tw(qty) + 3, bh + 2, '#0d1220');
-      G.text(g, qty, bx + bw + 6, by, P.cream);
+      G.R(g, bx + bw + 4, by - 1, G.tw(qty) + 3, bh + 2, '#5c4430');
+      G.text(g, qty, bx + bw + 6, by, '#fbf3e8');
     },
+    // a pit you have not built yet: a lid over the hole, not a slab of
+    // battleship plate sunk into a pastel counter
     drawBlank(g, r, i) {
-      G.plate(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, P.plateDk2, { r: 2, band: 1, spec: false });
-      for (let j = 0; j < r.h; j += 5) G.R(g, r.x, r.y + j, r.w, 2, '#181a24');
-      G.text(g, 'PIT ' + (i + 1), r.x + r.w / 2, r.y + r.h / 2 - 8, '#3a4050', { align: 'center' });
-      G.text(g, 'LOCKED', r.x + r.w / 2, r.y + r.h / 2 + 2, '#3a4050', { align: 'center' });
+      G.plate(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, '#c8b4a4',
+        { r: 2, band: 2, lit: '#e8d8c8', dk: '#9a8272', spec: false });
+      G.R(g, r.x, r.y, r.w, r.h, '#b09a88');
+      G.bevelq(g, r.x, r.y, r.w, r.h, '#8a7462', '#d8c8b8');
+      for (let j = 2; j < r.h - 2; j += 6) G.hairq(g, r.x + 3, r.y + j, r.w - 6, '#a08a78');
+      // a little dust sheet corner, so it reads as put away rather than broken
+      for (let k = 0; k < 5; k++)
+        G.Rq(g, r.x + r.w - 11 + k * 2, r.y + 2 + k * 1.4, 9 - k * 1.6, 1.4, '#e4d6c6');
+      G.text(g, 'PIT ' + (i + 1), r.x + r.w / 2, r.y + r.h / 2 - 8, '#7a6454', { align: 'center' });
+      G.text(g, 'LOCKED', r.x + r.w / 2, r.y + r.h / 2 + 2, '#8a7464', { align: 'center' });
     },
 
     // ---- the cone or cup with its scoops ----

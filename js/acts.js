@@ -234,6 +234,210 @@
   const PAT_X = 352;                        // and where it stops, close enough to see
   const WINDOW = 4.5;                       // how long you get. It cannot be failed.
 
+  // ============================================================
+  // THE DANCE.
+  //
+  // It used to be four scripted beats you watched: he waved, he said a
+  // line, the room cheered, and the objective advanced. The one moment
+  // in act one where the whole restaurant is looking at you and you are
+  // doing the thing you were built to do, and you had nothing to do
+  // with it.
+  //
+  // It is a little game now. Five bars; a marker sweeps the track once
+  // a bar; tap while it is in the middle and he SNAPS into the pose.
+  // Tap late and he flops into it. It cannot be failed -- five misses
+  // still gets you off the stage and the kids still clap, because they
+  // are four -- but five hits gets you a different line and the old
+  // couple in the back booth remember who you used to be.
+  //
+  // The poses are all arms, because he grew hands last pass and this is
+  // the only place in the game that gets to show them off.
+  // ============================================================
+  // BIG. The first set sat within a few units of where his arms hang
+  // anyway, so the whole dance read as a robot standing still. His head
+  // top is about 52 above the floor; a pose that does not clear it is
+  // not a pose, it is a fidget.
+  const POSE = [
+    { lab: 'UP',     h: [[-17, -60], [17, -60]], hop: 32 },
+    { lab: 'LEFT',   h: [[-32, -50], [7, -14]],  hop: 10 },
+    { lab: 'RIGHT',  h: [[-7, -14], [32, -50]],  hop: 10 },
+    { lab: 'CLAP',   h: [[-5, -40], [5, -40]],   hop: 18, grip: 1 },
+    { lab: 'FINISH', h: [[-34, -62], [34, -62]], hop: 44 },
+  ];
+  const BARS = POSE.length;
+  const SWEEP = 1.15;                 // seconds a marker takes to cross
+  const ZONE_LO = 0.44, ZONE_HI = 0.64;
+
+  function danceStart(S) {
+    S.lock = 1;
+    S.hush = 1;
+    S.flags.onstage = 1;
+    S.flags.dance = { t: 0, bar: 0, tapped: [], res: [], hits: 0, pop: 0, last: -1, over: 0 };
+    S.pclip = 'idle';
+    S.setObj('TAP ON THE BEAT');
+    G.audio.sfx('menu');
+    S.mine('RIGHT. EVERYBODY WATCHING? GOOD.', 2.2);
+  }
+
+  // where the marker is, 0..1 across the track
+  function danceMark(d) { return (d.t % SWEEP) / SWEEP; }
+
+  function danceTap(S) {
+    const d = S.flags.dance;
+    if (!d || d.over) return;
+    const bar = Math.floor(d.t / SWEEP);
+    if (bar >= BARS || d.tapped[bar]) return;
+    d.tapped[bar] = true;
+    const m = danceMark(d);
+    const hit = m >= ZONE_LO && m <= ZONE_HI;
+    d.res[bar] = hit;
+    const P = POSE[Math.min(bar, BARS - 1)];
+    d.pop = 1;
+    if (hit) {
+      d.hits++;
+      S.sqV = -(P.hop + 18);
+      G.audio.sfx('coin');
+      S.bang(S.px, F - 40, ['#ffd45a', '#ff8ab0', '#8fd8c0', '#7fd8ff'][bar % 4], 12, 2.2);
+      for (let i = 0; i < 9; i++)
+        S.pop(S.px + G.rand(-30, 30), F - 62 + G.rand(-10, 10), 'bit',
+          ['#ffd45a', '#8fd8c0', '#ff8ab0', '#7fd8ff'][i % 4], 0, 2.4);
+      S.cheer(['k1', 'k2', 'k3', 'run'], 26);
+      // over HIM, not over the middle of the screen
+      G.floatText(['NICE', 'YES', 'GO ON', 'LOVELY', 'BIG FINISH'][bar],
+        S.px - Math.round(G.cam.x), F - 74, '#ffd45a');
+    } else {
+      S.sqV = 16;
+      G.audio.sfx('denied');
+      G.floatText('OFF THE BEAT', S.px - Math.round(G.cam.x), F - 74, '#8a94a8');
+    }
+  }
+
+  function danceUpdate(S, dt) {
+    const d = S.flags.dance;
+    if (!d) return;
+    d.t += dt;
+    d.pop = Math.max(0, d.pop - dt * 3);
+    const bar = Math.floor(d.t / SWEEP);
+    // a click on the downbeat, so there is a beat to be on
+    if (bar !== d.last && bar < BARS) {
+      d.last = bar;
+      G.audio.sfx('clack');
+      for (const id of ['k1', 'k2', 'k3']) { const a = S.actor(id); if (a) a.hopV = -14; }
+    }
+    // ---- the pose, eased toward whatever bar we are in ----
+    const P = POSE[G.clamp(bar, 0, BARS - 1)];
+    const snap = d.tapped[bar] ? 1 : 0.45;             // crisp if you hit it
+    const wob = d.tapped[bar] ? 0 : Math.sin(d.t * 9) * 2;
+    const k = Math.min(1, dt * (6 + snap * 10));
+    if (!S.phands) S.phands = [{ x: S.px - 9, y: F - 20 }, { x: S.px + 9, y: F - 20 }];
+    for (let i = 0; i < 2; i++) {
+      const tgt = { x: S.px + P.h[i][0], y: F + P.h[i][1] + wob };
+      S.phands[i].x = G.lerp(S.phands[i].x, tgt.x, k);
+      S.phands[i].y = G.lerp(S.phands[i].y, tgt.y, k);
+      S.phands[i].grip = P.grip ? 1 : 0;
+    }
+    if (bar >= BARS && !d.over) {
+      d.over = 1;
+      danceEnd(S, d);
+    }
+  }
+
+  function danceEnd(S, d) {
+    const all = d.hits >= BARS, most = d.hits >= 3;
+    S.flags.dance = null;
+    S.phands = null;
+    S.setObj(null);
+    S.play([
+      { d: 1.6,
+        go(S2) {
+          S2.pclip = 'wave'; S2.pp = 1; S2.sqV = -52;
+          S2.cheer(['k1', 'k2', 'k3', 'run', 'e1', 'e2', 'mum'], 38);
+          for (const id of ['k1', 'k2', 'k3', 'run']) {
+            const a = S2.actor(id); if (a) { a.hold = 2.6; a.holdClip = 'point'; a.p = 1; }
+          }
+          S2.bang(STAGE_X, F - 40, '#ff8ab0', 18, 3.2);
+          G.audio.sfx(all ? 'perfect' : 'coin');
+          G.floatText(all ? 'PERFECT' : most ? 'CROWD PLEASER' : 'THEY CLAPPED ANYWAY',
+            G.W / 2, 44, all ? '#ffd45a' : most ? '#ff9ab8' : '#8fd8c0', 1);
+          for (let i = 0; i < (all ? 40 : 18); i++)
+            S2.pop(STAGE_X + G.rand(-60, 60), 22 + G.rand(0, 14), 'bit',
+              ['#ffd45a', '#8fd8c0', '#ff8ab0', '#7fd8ff'][i % 4], 0, 2.6);
+        } },
+      { d: 2.6,
+        go(S2) {
+          S2.say('e2', all ? 'THAT COW HAS STILL GOT IT. LOOK AT HIM GO.'
+                           : most ? 'THAT COW HAS STILL GOT IT.'
+                                  : 'HE IS TRYING. THAT IS THE MAIN THING.', 2.6);
+        } },
+      { d: 0.2,
+        go(S2) {
+          S2.lock = 0; S2.hush = 0; S2.pclip = 'idle';
+          S2.setObj("COLLECT TABLE FOUR'S ORDER");
+          G.audio.sfx('unlock');
+        } },
+    ]);
+  }
+
+  // ---- ONE STRIP, UNDER THE ACTION ----
+  // The first pass stacked a pose card, a row of pips and the track up
+  // the middle of the frame, which put the entire read-out on top of the
+  // one thing it was asking you to look at. Pose tab left, track middle,
+  // pips right, all of it below his feet.
+  function danceDraw(g, S) {
+    const d = S.flags.dance;
+    if (!d || d.over) return;
+    const bar = Math.floor(d.t / SWEEP), m = danceMark(d);
+    const pop = G.easeOut(d.pop);
+    const Y = 162, H = 12;
+    // the strip it all sits on
+    g.globalAlpha = 0.86;
+    G.R(g, 0, Y - 4, G.W, 22, '#2a1218');
+    g.globalAlpha = 1;
+    G.hairq(g, 0, Y - 4, G.W, '#8a3a44');
+
+    // ---- the pose, named, on the left ----
+    const P = POSE[G.clamp(bar, 0, BARS - 1)];
+    G.R(g, 8, Y - 1, 52, H, '#4a1c24');
+    G.bevelq(g, 8, Y - 1, 52, H, '#a8505c', '#160a0e');
+    G.text(g, P.lab, 34, Y + 2, '#ffd45a', { align: 'center' });
+
+    // ---- the track ----
+    const T = { x: 70, y: Y, w: 172, h: H - 2 };
+    G.R(g, T.x - 1, T.y - 1, T.w + 2, T.h + 2, '#140a0e');
+    G.R(g, T.x, T.y, T.w, T.h, '#3a2028');
+    const zx = T.x + T.w * ZONE_LO, zw = T.w * (ZONE_HI - ZONE_LO);
+    G.R(g, zx, T.y, zw, T.h, '#2f6b3a');
+    G.hairq(g, zx, T.y, zw, '#8fd8c0');
+    G.hairq(g, zx, T.y + T.h - 0.25, zw, '#8fd8c0');
+    const inZone = m >= ZONE_LO && m <= ZONE_HI;
+    if (inZone) { g.globalAlpha = 0.4 + Math.abs(Math.sin(S.t * 12)) * 0.3;
+      G.R(g, zx, T.y, zw, T.h, '#b6ff3a'); g.globalAlpha = 1; }
+    const mx = T.x + m * T.w;
+    G.R(g, mx - 2, T.y - 3, 4, T.h + 6, '#140a0e');
+    G.R(g, mx - 1.5, T.y - 2, 3, T.h + 4, inZone ? '#b6ff3a' : '#ffd45a');
+    if (pop > 0) {
+      g.globalAlpha = pop * 0.8;
+      G.oc(g, mx, T.y + T.h / 2, 5 + pop * 12, '#ffe6a8');
+      g.globalAlpha = 1;
+    }
+
+    // ---- one pip a bar, on the right ----
+    for (let i = 0; i < BARS; i++) {
+      const sx = 256 + i * 12;
+      const seen = i < bar || d.tapped[i];
+      const col = !seen ? '#3a2a22' : d.res[i] ? '#ffd45a' : '#6b3a34';
+      G.fc(g, sx, Y + 5, 4, '#140a0e');
+      G.fc(g, sx, Y + 5, 3, col);
+      if (d.res[i]) {
+        G.Rq(g, sx - 5, Y + 4.5, 10, 1, col);
+        G.Rq(g, sx - 0.5, Y, 1, 10, col);
+      }
+    }
+    if (bar === 0 && d.t < SWEEP * 0.9 && !d.tapped[0])
+      G.text(g, 'TAP WHEN IT IS IN THE GREEN', 160, Y - 13,
+        Math.sin(S.t * 5) > 0 ? '#ffd45a' : '#8a6a44', { align: 'center', sc: 0.5, out: OUT });
+  }
+
   const floorDef = {
     w: 580, start: 122, obj: 'SAY HELLO TO TABLE FOUR',
     minX: 16, maxX: 552,
@@ -616,33 +820,7 @@
         } },
       { id: 'dance', x: STAGE_X, label: 'DO THE DANCE', markY: F - 70,
         once: 1, hidden: (S) => !S.done.hello,
-        on(S) {
-          S.flags.onstage = 1;
-          S.play([
-            { d: 0.4, go(S2) { S2.lock = 1; S2.pclip = 'wave'; S2.pp = 0.5; S2.sqV = -46; G.audio.sfx('menu'); } },
-            { d: 3.4,
-              go(S2) { S2.mine('WHO WANTS A SWIRL, THEN? EVERYBODY? RIGHT.', 3.2); },
-              tick(S2, p) {
-                S2.pclip = p < 0.45 ? 'wave' : 'talk';
-                S2.pp = Math.sin(p * 6.28) * 0.5 + 0.5;
-                if (Math.random() < 0.5) {
-                  const cs = ['#ffd45a', '#8fd8c0', '#ff8ab0', '#7fd8ff'];
-                  S2.pop(STAGE_X + G.rand(-46, 46), 26, 'bit', cs[Math.floor(Math.random() * 4)], 0, 2.2);
-                }
-                if (Math.random() < 0.14) S2.sqV = -20;
-              } },
-            { d: 1.8,
-              go(S2) {
-                S2.cheer(['k1', 'k2', 'k3', 'run', 'e2', 'mum'], 36);
-                for (const id of ['k1', 'k2', 'k3', 'run']) { const a = S2.actor(id); if (a) { a.hold = 2.4; a.holdClip = 'point'; a.p = 1; } }
-                S2.bang(STAGE_X, F - 40, '#ff8ab0', 16, 3);
-                G.audio.sfx('coin');
-                G.floatText('CROWD PLEASER', G.W / 2, 44, '#ff9ab8', 1);
-                S2.say('e2', 'THAT COW HAS STILL GOT IT.', 2.6);
-              } },
-            { d: 0.2, go(S2) { S2.lock = 0; S2.pclip = 'idle'; S2.setObj("COLLECT TABLE FOUR'S ORDER"); G.audio.sfx('unlock'); } },
-          ]);
-        } },
+        on(S) { danceStart(S); } },
       { id: 'collect', x: 400, label: 'COLLECT', markY: CNT_TOP - 42,
         once: 1, hidden: (S) => !S.done.dance,
         on(S) {
@@ -671,6 +849,8 @@
                   { d: 0.1, go(S2) { S2.play(ATTACK); } }]);
         } },
     ],
+    // while the dance has you locked on the stage, a tap is the game
+    onTapLocked(S) { if (S.flags.dance) danceTap(S); },
     // tap yourself and the bell goes. It does nothing. Everybody
     // reacts to it every single time.
     onTap(S, wx, y) {
@@ -693,7 +873,22 @@
     },
 
     update(S, dt) {
+      if (S.flags.dance) danceUpdate(S, dt);
       if (S.flags.aim) S.flags.aim = Math.min(1, S.flags.aim + dt * 2.4);
+      // carrying: both arms forward, both fists shut, and they stay that
+      // way through the walk cycle
+      if (S.flags.carry && !S.pcrawl) {
+        // IN FRONT OF HIS CHEST. At 26 up and 13 out the gloves landed
+        // level with his ear cups and the two cones stood up over his
+        // head like a pair of antlers.
+        const fy = F - 15 + (S.pdy || 0) + (S.pclip === 'walk' ? -Math.abs(Math.sin(S.pwalk * 9)) * 2 : 0);
+        S.phands = [{ x: S.px - 9, y: fy, grip: 1 }, { x: S.px + 9, y: fy - 1, grip: 1 }];
+      } else if (!S.pcrawl && !S.flags.dance && S.phands && !S.flags.hits) {
+        // NOT during the dance: this branch ran on the very next line
+        // after danceUpdate had posed him, so every pose was set and
+        // then thrown away in the same frame
+        S.phands = null;
+      }
       // the window. It runs out; it cannot be failed. If you are still
       // stood there when it does, you go anyway - you were always going.
       if (S.flags.window > 0) {
@@ -708,6 +903,7 @@
     },
 
     after(g, S) {
+      danceDraw(g, S);
       // six seconds, drawn where you cannot miss it
       if (S.flags.window > 0) {
         const w = 122, x0 = Math.round(G.W / 2 - w / 2), y0 = 30;
@@ -718,10 +914,26 @@
         G.R(g, x0, y0, wd, 5, fr > 0.4 ? '#ff8a4a' : '#ff4a4a');
         G.hairq(g, x0, y0, wd, '#ffe0b8');
       }
-      if (S.flags.carry) {
+      // ---- THE TWO SWIRLS, IN YOUR HANDS ----
+      // They used to hang in the air sixteen units either side of him,
+      // keeping station while he walked, because he had nothing to hold
+      // them with. He has gloves now. S.phands puts his arms out in
+      // front and closes the fists; phandPts comes back saying where
+      // they ended up, and the cones are drawn there.
+      if (S.flags.carry && S.phandPts) {
         G.cam.push(g);
-        G.cone(g, S.px - 16, F - 30, { w: 9, h: 12 });
-        G.cone(g, S.px + 16, F - 30, { w: 9, h: 12 });
+        for (let i = 0; i < 2; i++) {
+          const h = S.phandPts[i];
+          if (!h) continue;
+          const cy = G.cone(g, h.x, h.y + 6, { w: 9, h: 12 });
+          // pink, not cream: a cream scoop held against a cream body is a
+          // scoop nobody can see
+          G.gooScoop(g, h.x, cy - 4, 5, { col: '#ffcfdd', goo: 3, fleck: '#e0708c' },
+            { t: S.t, wob: 0.3 });
+          // and the glove goes back on TOP of the cone, so he is gripping
+          // it rather than balancing it
+          if (G.mooHand) G.mooHand(g, h.x, h.y, 3.2, i ? 1 : -1, 1);
+        }
         G.cam.pop(g);
       }
       if (S.flags.white) {
