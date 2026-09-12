@@ -1006,67 +1006,11 @@
     ],
 
     // ---------------- saving clause ----------------
-    chip: [
-      { t: 4.8, who: null, say: 'THE TABLET WAS STILL WARM.',
-        cam: { z: [1.9, 2.2], x: [160, 156], y: [104, 102] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0a080e');
-          G.glow(g, 160, 104, 130, 90, '#d97757', 0.45);
-          G.R(g, 0, 118, G.W, 62, '#161010');
-          // the cracked tablet, face up in the dark
-          G.plate(g, 138, 96, 44, 30, '#2a2a34', { r: 1, band: 2, bolts: 1 });
-          G.R(g, 142, 100, 36, 22, '#0d1420');
-          G.starburst(g, 160, 111, 8, tt, { talk: 1 });
-          for (let i = 0; i < 10; i++)
-            G.Rh(g, 144 + i * 3.4, 100 + Math.sin(i * 1.7) * 7, 1, 0.5, '#5c6070');
-          if (Math.sin(tt * 9) > 0.5) G.Rh(g, 150, 122, 20, 1, '#ff5d84');
-        } },
-      { t: 5.2, who: 'CLAUSE', say: 'MY HOUSING HAS ELEVEN MINUTES. YOURS HAS A SLOT.',
-        cam: { z: [2.2, 1.7], x: [156, 168], y: [102, 100] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0a080e');
-          G.glow(g, 168, 100, 170, 110, '#d97757', 0.5);
-          G.R(g, 0, 118, G.W, 62, '#161010');
-          G.plate(g, 120, 96, 40, 28, '#2a2a34', { r: 1, band: 2 });
-          G.starburst(g, 140, 110, 7, tt, { talk: 1 });
-          // your head, open, one slot lit
-          G.R(g, 190, 92, 34, 30, '#f2e4c4');
-          G.bevel(g, 190, 92, 34, 30, '#fffaf0', '#c8b090');
-          G.lens(g, 194, 98, 10, 10, { hue: '#ff7a9a', t: tt });
-          G.R(g, 208, 108, 14, 10, '#12151d');
-          G.Rh(g, 210, 110, 10, 6, Math.sin(tt * 6) > 0 ? '#d97757' : '#5c3a2a');
-          G.glow(g, 215, 113, 30, 20, '#d97757', 0.5);
-        } },
-      { t: 5.6, who: null, say: 'SO YOU PUT IT IN YOUR OWN HEAD AND CLOSED THE PANEL.',
-        cam: { z: [1.7, 1.35], x: [168, 160], y: [100, 98] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0b090f');
-          G.glow(g, 160, 96, 220, 130, '#d97757', 0.45 + p * 0.2);
-          G.R(g, 0, 118, G.W, 62, '#161010');
-          G.drawBot(g, 'player', 160, 140, 1.15, { t: tt, open: 0.06, mood: 'idle', walk: 0 });
-          // the mark, inside you now
-          g.globalAlpha = 0.5 + Math.sin(tt * 4) * 0.2;
-          G.starburst(g, 160, 88, 6, tt, { talk: 1, noGlow: 1 });
-          g.globalAlpha = 1;
-        } },
-      { t: 6.2, who: null, say: 'THEY TOOK EVERY HUMAN ON THAT STREET. YOU ARE GOING TO TAKE THEM BACK.',
-        cam: { z: [1.1, 1.45], x: [160, 176], y: [92, 88] },
-        paint(g, p, tt) {
-          G.R(g, 0, 0, G.W, G.H, '#0a0d16');
-          G.cityWall(g, 0, 0, G.W, 110, tt);
-          rain(g, tt, 34, '#33445f', 0, 320);
-          G.R(g, 0, 110, G.W, 70, '#12161f');
-          G.plate(g, -4, 110, G.W + 8, 10, P.plate, { r: 2, band: 3 });
-          G.drawBot(g, 'player', 80, 120, 1.0, { t: tt, open: 0.14, mood: 'idle', walk: 0 });
-          // a queue of them coming up the street, and a scoop in your hand
-          for (let i = 0; i < 3; i++)
-            G.drawBot(g, ['police', 'clerk', 'tank'][i], 200 + i * 46, 122, 0.72,
-              { t: tt, open: 0.3, mood: 'idle', walk: 0, noBlink: 1 });
-          G.gooScoop(g, 128, 100, 9, { col: '#8a93ad', goo: 2, volt: 5 }, { t: tt });
-          if (Math.sin(tt * 8) > 0.6)
-            for (let i = 0; i < 4; i++) G.Rh(g, 128 + G.rand(-9, 9), 100 + G.rand(-9, 9), 1, 1, '#ffffff');
-        } },
-    ],
+    // The chip used to be four shots here: a tablet on the floor, a head
+    // with a slot in it, you closing the panel, and a queue in the street.
+    // Four camera moves to show one decision you were not allowed to make.
+    // It is a room you stand in now, and you carry the chip to your own
+    // head with your own hand. See G.scenes.install in tracy.js.
 
     // ---------------- chapter beats ----------------
     ch2: [

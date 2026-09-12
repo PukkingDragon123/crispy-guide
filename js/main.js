@@ -938,46 +938,16 @@
 
       // ---- the panel in the side of your head ----
       // Everything this machine has ever been told arrived through this
-      // slot, which is where the last chip went in.
-      // hh is HALF the skull, so the chin is headTop + 2*hh. The panel
-      // goes low and outboard -- under the ear can, beside the muzzle.
-      // Taken off the head centre it sat squarely on his face.
+      // slot. The painter lives with the mascot, so the night he puts
+      // clause in there opens the same one.
       const hh = Math.max(4, m.headY - m.headTop);
-      const slot = {
-        w: Math.max(4, Math.round(m.hw * 0.36)),
-        h: Math.max(3, Math.round(hh * 0.34)),
-        x: MOO.x + Math.round(m.hw * 0.44),
-        y: m.headTop + Math.round(hh * 1.42) - lift,
-      };
       let open = 0;
       if (b) {
         if (bt < T_FLY - 0.06) open = G.clamp((bt - (T_FLY - 0.36)) / 0.30, 0, 1);
         else if (bt < T_SEAT) open = 1;
         else open = 1 - G.clamp((bt - T_SEAT) / (T_SHUT - T_SEAT), 0, 1);
       }
-      // A SHUTTER, not a lid. A panel that lifts off leaves a pale slab
-      // hanging in front of his face at this size; two halves parting
-      // reads as a slot opening and costs six pixels.
-      // Shut, it is a seam in his cheek, not a hole: a hard black frame
-      // on a cream face reads as a sticking plaster. The frame only goes
-      // black as the thing actually opens.
-      const CR = '#f2e4c4';
-      const frame = G.mix('#b8a68a', '#0d0a12', Math.min(1, open * 3));
-      G.R(gg, slot.x - 1, slot.y - 1, slot.w + 2, slot.h + 2, frame);
-      G.R(gg, slot.x, slot.y, slot.w, slot.h, open > 0.03 ? '#05070c' : CR);
-      const oh = open * slot.h;
-      const half = Math.max(0, (slot.h - oh) / 2);
-      if (half > 0.1) {
-        G.Rh(gg, slot.x, slot.y, slot.w, half, CR);
-        G.Rh(gg, slot.x, slot.y + slot.h - half, slot.w, half, CR);
-        G.hairq(gg, slot.x, slot.y + half - 0.25, slot.w, '#9a8a70');
-        G.hairq(gg, slot.x, slot.y + slot.h - half, slot.w, '#fffaf0');
-      }
-      if (open > 0.03) {
-        G.Rq(gg, slot.x, slot.y + slot.h - half - 0.5, slot.w, 0.5,
-          G.mix('#3a2a14', '#ffc46a', open));
-        G.glow(gg, slot.x + slot.w / 2, slot.y + slot.h / 2, 18, 13, '#ffbe6a', 1.1 * open);
-      }
+      const slot = G.mooSlot(gg, m, open, lift);
 
       // ---- the chip, in the air ----
       if (b && bt > T_LIFT && bt < T_SEAT) {

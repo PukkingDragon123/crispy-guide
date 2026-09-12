@@ -5,8 +5,10 @@
 A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: a red
 crew cap with the chain's letter on it, a black visor with two amber slits
 burning behind it, a pair of ear cups with the roundel stamped on them, tan horn
-nubs poking out from under the cap, a pink snout, and the house apron over a
-cream body. For six years you were the face of MOO-BOT, a beachfront burger
+nubs poking out from under the cap, a pink snout, the house apron over a cream
+body, and a pair of cream gloves on the ends of two jointed arms — because a
+mascot whose whole job is handing people food ought to be seen to have
+something to hand it with. For six years you were the face of MOO-BOT, a beachfront burger
 chain with a cow on the sign, open twenty-four hours.
 
 Then a patrol machine walked in through the front door, put **six rounds** into
@@ -30,6 +32,117 @@ machine at all — and every one of those you get out is one they do not.**
 
 **▶ Play it:** open `index.html` in a browser. No build step, no dependencies,
 no asset files — every sprite, sound and note is generated in code.
+
+---
+
+## 🧤 He has hands now
+
+They were stubs: two dark rounded bars hung at his sides, and wherever a scene
+asked for a reach, a line with a dark blob on the end of it.
+
+An arm is a bar to the elbow and a bar from it, and it ends in a hand — a
+**cream glove**, because four dark fingers on a dark sleeve is a smudge at every
+size this game draws, and a pale mitt against this palette is unmistakable at
+six pixels. A thumb on the inboard side says which hand it is; two grooves on
+the outboard edge let you count three fingers if you go looking; a red cuff
+gives it a wrist. Closed around something, the palm narrows and the fingers
+curl.
+
+Three things had to be got right by looking rather than by reading: the thumb
+was drawn **before** the palm, so the palm's own outline swallowed it and the
+mitt was a bean; the cuff sat a pixel above the palm and got painted over, so
+the glove had no wrist at all; and the hand radius went through `u()`, which
+floors at a whole logical unit, so at the scales the HUD and the shop rows draw
+him at he had two mitts wider than his own legs.
+
+The painter is published as `G.mooHand`, because the counter needs to show you
+carrying a cone and a second hand drawn by a second file is how a game ends up
+with two of everything.
+
+## 🍦 The cones are not infinite any more
+
+A cone used to appear on the counter every time you tapped the stand, for ever,
+which made the stand a button rather than a thing.
+
+The stand is a **sleeve** now: a tube with a countable stack of cones nested in
+it, one rim per cone, climbing as it fills and dropping away as you use them up.
+You **pull one out** and carry it — in your hand, in your glove — to a holder
+on the counter, and set it down. The sleeve holds eighteen, restocked every
+morning, so running out inside a shift means you have been throwing them away
+rather than that the shop is broken. Clause mentions it at three.
+
+The tutorial in Tracy's kitchen teaches the same verb, because a tutorial that
+teaches a different verb from the game is worse than no tutorial.
+
+**And placing a scoop is easier again.** The clean-scoop window started 0.40
+wide and has been opened twice; it is nearly a full unit of green now, with slop
+right out at 2.1. The cone catches a scoop from a 44-unit radius — or from
+anywhere over the top half of the counter — and it draws the actual catch: a
+wide ring that lights up and says LET GO the moment letting go would work. A
+cone you let go of two units wide of the holder goes back in the sleeve instead
+of on the floor.
+
+![Carrying a cone](screenshots/cone-carry.png)
+
+## 🧭 Clause actually helps now
+
+It knew everything and volunteered almost none of it. It sat in its corner with
+a menu of paid asks and a bank of remarks, and a player who did not know what a
+pit was could stand there for a whole shift being told the floor was sticky.
+
+![Clause pointing at a pit](screenshots/clause-guide.png)
+
+The **scene** owns the knowing — it is the one that can see the counter, the
+build and what is in your hand — and answers one question, `nextStep()`, with
+one physical action at a time. Clause polls it twice a second, flies to the
+answer, puts the game's own quest pin on the actual thing with the verb on a tag
+over it, and says the line **once**, when the step changes. Standing still and
+repeating yourself is nagging; saying it when the situation moves is help.
+
+So it walks you through: take a cone → stand it here → **pit 3, +64%**, press
+in and sweep → let go here → sauce it → serve it. It names the best-matching pit
+and how good the match is. It tells you when the sleeve is empty, when every pit
+is out, and when there is nothing to put that scoop on.
+
+An explicit ask, or a disguise it just spotted, outranks the running guide for a
+few seconds — otherwise the two of them fight over where it hovers. And it has
+about thirty more things to say, at roughly twice the rate, because a companion
+whose whole job is company was managing one remark every fifteen seconds.
+
+## 🚪 Five beats, and a door worth watching
+
+The break-in was nine beats. Two of them existed only to hold a sound effect and
+three more told you the same fact twice. What is left is the four things that
+happen — she is happy, something is at the door, the door comes in, they take
+her — and the one thing you do. The banging runs **underneath** the hide beat
+now, so the thing at the door and the thing you have to do about it happen at
+the same time, which is how it would. A beat can carry two lines, so an exchange
+does not cost a beat each way.
+
+And the door itself used to be one rectangle with two panels painted on it,
+rotating about its foot and sliding away. That is a door being *moved*. It is a
+door being destroyed now, and the difference is all in the first fifth of a
+second: the boot lands and the leaf **bows** before it gives, the hinges tear
+out and take screws and paint with them, the glass goes first because glass
+always goes first, the lock side splinters into a mouth of raw wood — and then
+the leaf lets go, spins, and lands **in the room**, where it stays for the rest
+of the night. It used to be culled the moment it landed and come to rest below
+the counter front anyway, so a door that had just been kicked through a wall
+simply stopped existing.
+
+## 🔌 Installing Clause is one frame, and you do it
+
+It used to be four shots: a tablet on the floor, a head with a slot in it, you
+closing the panel, and a queue in the street. Four camera moves to show you one
+decision you were not allowed to make.
+
+It is one room now. Her tablet is dying on the floor of the place they have just
+taken her out of, the door is gone, and the chip comes out of its socket with a
+click. **You carry it to the panel in your own cheek** — it opens as you get
+near, the shutter shuts behind it, and it wakes up inside you. Nothing happens
+until you do it.
+
+![The install](screenshots/install.png)
 
 ---
 
@@ -1723,8 +1836,8 @@ js/art3.js          walls, conduit, neon, steam, and the MOO-BOT brand:
 js/robots.js        legacy chassis helpers still used by the city art
 js/bots.js          the rig: frames, plate detail, optics and dot eyes,
                     posed creatures, tells, the tip jar cat, goo scoops
-js/moobot.js        the mascot, built to the model sheet. Everything that
-                    draws the player comes through here
+js/moobot.js        the mascot, built to the model sheet, hands and all.
+                    Everything that draws the player comes through here
 js/clause.js        clause.ai — flight, chatter, asks, the books
 js/cine.js          the cutscene camera and every story beat
 js/acts.js          act one, the floor of MOO-BOT; act two, the wreck

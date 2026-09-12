@@ -64,8 +64,8 @@
       say: "THIS IS CLAUSE. SAY HELLO, CLAUSE.",
       hint: null },
     { id: 'cone',   need: 'cone',
-      say: "RIGHT. TAKE A CONE OFF THE STAND.",
-      hint: 'TAP THE CONE' },
+      say: "RIGHT. PULL A CONE OFF THE STACK AND STAND IT UP.",
+      hint: 'DRAG A CONE TO THE COUNTER' },
     { id: 'sweep',  need: 'ball',
       say: "NOW PRESS INTO THE GELATO AND SWEEP. DON'T STAB IT.",
       hint: 'PRESS THE PIT AND DRAG' },
@@ -81,20 +81,29 @@
   ];
 
   // ---- and then the rest of the night ----
+  //
+  // NINE BEATS became five. The break-in used to be: a quiet line, a
+  // bang on its own, hide, the door, the patrol, her answer, a whiteout,
+  // an empty room, and then a wait. Two of those were beats that existed
+  // only to hold one sound effect, and three more were the same fact
+  // told twice. What is left is the four things that happen -- she is
+  // happy, something is at the door, the door comes in, they take her --
+  // and the one thing you do.
+  //
   // d: 0 means the beat waits for you. Everything else runs on a clock.
+  // say2 is a second line inside the same beat, at `at2` seconds in, so
+  // a conversation does not need a beat each way.
   const RAID = [
     { id: 'quiet', d: 3.0, who: 'TRACY',
       say: "SIT YOURSELF DOWN. I'LL PUT THE KETTLE ON AND WE'LL DO SAUCES." },
-    { id: 'bang',  d: 3.0, who: null, say: null },
     { id: 'hide',  d: 0,   who: 'TRACY',
       say: "GET BEHIND THE COUNTER. GO ON. NOW, LOVE." },
-    { id: 'door',  d: 2.4, who: null, say: null },
-    { id: 'in',    d: 3.6, who: 'PATROL', col: '#8fd8ff',
-      say: 'NOBODY IS ON THE ROLL AT THIS ADDRESS.' },
-    { id: 'her',   d: 4.0, who: 'TRACY',
-      say: "THERE'S NOBODY HERE BUT ME AND THE CAT. LOOK ALL YOU LIKE." },
-    { id: 'white', d: 2.0, who: null, say: null },
-    { id: 'gone',  d: 5.0, who: null, say: null },
+    { id: 'door',  d: 3.4, who: null, say: null },
+    { id: 'in',    d: 5.6, who: 'PATROL', col: '#8fd8ff',
+      say: 'NOBODY IS ON THE ROLL AT THIS ADDRESS.',
+      at2: 2.6, who2: 'TRACY', col2: '#ffd0dc',
+      say2: "THERE'S NOBODY HERE BUT ME AND THE CAT. LOOK ALL YOU LIKE." },
+    { id: 'white', d: 4.4, who: null, say: null },
     { id: 'out',   d: 0,   who: null, say: null },
   ];
 
@@ -586,17 +595,33 @@
     G.R(g, D.x, D.y, D.w, D.h, off > 0 ? '#0a0a12' : M('#e0d0b4'));
     if (off > 0) {
       // cold light, and the weather coming into a warm room
-      G.glow(g, D.x + D.w / 2, D.y + D.h * 0.6, 150, 170, '#3a9ad8', 0.24 + off * 0.34);
+      G.glow(g, D.x + D.w / 2, D.y + D.h * 0.6, 160, 180, '#4aa8e8', 0.34 + off * 0.62);
+      G.glow(g, D.x + D.w / 2, D.y + D.h * 0.5, 70, 100, '#9fd4ff', 0.3 * off);
       for (let i = 0; i < 20; i++) {
         const sd = G.hash(i, 3);
         G.Rh(g, D.x + 2 + ((sd * (D.w - 5) + t * 16) % (D.w - 5)),
           D.y + ((G.hash(i, 5) * D.h + t * 170) % D.h), 0.5, 4, '#7fb8e8');
       }
-      // the splinters left standing in the frame
-      for (let i = 0; i < 11; i++) {
-        const sx = D.x + G.hash(i, 7) * (D.w - 4);
-        G.Rh(g, sx, D.y, 2 + G.hash(i, 9) * 4, 3 + G.hash(i, 13) * 9, M('#8a6540'));
-        G.Rh(g, sx, D.y + D.h - 3 - G.hash(i, 17) * 7, 2, 3 + G.hash(i, 19) * 7, M('#8a6540'));
+      // THE FRAME IT LEFT. Eleven stubs along the top and bottom said
+      // "some wood happened here". A door that has been kicked in is
+      // wrecked along the LOCK side, keeps its torn hinge plates on the
+      // other, and has a keeper hanging off it.
+      for (let i = 0; i < 13; i++) {
+        const sy = D.y + 6 + i * (D.h / 13);
+        const len = 2 + G.hash(i, 7) * 9;
+        G.R(g, D.x + D.w - len, sy, len, 2 + G.hash(i, 9) * 3, M('#8a6540'));
+        G.hairq(g, D.x + D.w - len, sy, len, M('#c8a070'));
+      }
+      for (let i = 0; i < 3; i++) {
+        const hy = D.y + 8 + i * 28;
+        G.R(g, D.x - 3, hy, 4, 7, M('#6b6a74'));
+        G.bevelq(g, D.x - 3, hy, 4, 7, M('#9a99a6'), '#2e2d36');
+      }
+      G.R(g, D.x + D.w - 7, D.y + 40, 8, 5, M('#8a94a8'));
+      G.hairq(g, D.x + D.w - 7, D.y + 40, 8, M('#d8e4f0'));
+      for (let i = 0; i < 7; i++) {                 // stubs along the head
+        const sx = D.x + 2 + G.hash(i, 13) * (D.w - 6);
+        G.R(g, sx, D.y, 2 + G.hash(i, 9) * 3, 2 + G.hash(i, 17) * 5, M('#8a6540'));
       }
       // wet on the boards, catching what light there is
       g.globalAlpha = 0.3;
@@ -726,7 +751,7 @@
       this.beat = 0; this.beatT = 0; this.lastBang = -1;
       this.dark = 0; this.wreck = 0; this.doorOff = 0; this.bell = 0;
       this.hid = 0; this.hideP = 0; this.nagT = 0;
-      this.doorKick = 0; this.white = 0; this.shards = [];
+      this.doorKick = 0; this.white = 0; this.shards = []; this.clearT = 0; this.said2 = false;
       this.her = { x: TRACY_X, y: TRACY_Y, sc: 1.9 };
       this.bots = null;
       G.steam.length = 0;
@@ -760,10 +785,12 @@
         if (this.stepT > 0.5) this.advance();
         return;
       }
-      // the cone stand
-      if (G.inRect(x, y, CONE_X - 13, CNT_Y - 28, 26, 32)) {
+      // the cone stack. You DRAG one out, because that is what the shop
+      // asks of you, and a tutorial that teaches a different verb from
+      // the game is worse than no tutorial.
+      if (G.inRect(x, y, CONE_X - 40, CNT_Y - 20, 44, 26)) {
         if (this.build) { G.audio.sfx('back'); return; }
-        this.build = { base: 'cone', scoops: [] };
+        this.hold = { kind: 'base' };
         G.audio.sfx('grab');
         return;
       }
@@ -805,11 +832,22 @@
         G.floatText('NICE', G.mouse.x, G.mouse.y - 16, P.lime);
         return;
       }
+      // setting the cone down on the counter
+      if (h.kind === 'base') {
+        this.hold = null;
+        if (G.dist(G.mouse.x, G.mouse.y, CONE_X, CNT_Y - 12) < 40) {
+          this.build = { base: 'cone', scoops: [] };
+          G.audio.sfx('clack');
+          G.floatText('CONE DOWN', CONE_X, CNT_Y - 32, P.lime);
+        } else G.audio.sfx('back');
+        return;
+      }
       if (h.kind === 'ball') {
         this.hold = null;
-        // over the cone? it lands
+        // over the cone? it lands. A 30-unit disc you cannot see was a
+        // guessing game; this is most of the counter.
         if (this.build && this.build.base === 'cone' &&
-            G.dist(G.mouse.x, G.mouse.y, CONE_X, CNT_Y - 30) < 30) {
+            G.dist(G.mouse.x, G.mouse.y, CONE_X, CNT_Y - 30) < 44) {
           this.build.scoops.push({ wob: 1 });
           G.audio.sfx('plop');
           G.spark(CONE_X, CNT_Y - 34, ['#ffffff', this.flav.col], 10, 40);
@@ -848,27 +886,32 @@
     },
     nextBeat() {
       if (this.beat >= RAID.length - 1) return;
-      this.beat++; this.beatT = 0;
+      this.beat++; this.beatT = 0; this.said2 = false; this.lastBang = -1;
       const id = this.beatOf().id;
-      if (id === 'bang') { this.bell = 1; G.audio.sfx('snap'); G.shake(3, 0.4); }
-      if (id === 'hide') { this.nagT = 0; }
+      if (id === 'hide') {
+        this.nagT = 0; this.bell = 1;
+        G.audio.sfx('snap'); G.shake(3, 0.45); G.screenFlash('#8fb8e8', 0.14);
+      }
       if (id === 'door') {
         this.doorKick = 0.001;
         G.audio.sfx('snap'); G.shake(6, 0.6); G.screenFlash('#cfe4ff', 0.28);
-        for (let i = 0; i < 26; i++)
-          this.shards.push({ a: G.hash(i, 3) * 1.8 - 0.5, sp: 40 + G.hash(i, 7) * 150,
-            t: 0, col: G.hash(i, 11) > 0.6 ? '#bcd9ec' : '#8a6540' });
+        for (let i = 0; i < 44; i++)
+          this.shards.push({ a: G.hash(i, 3) * 2.1 - 0.65, sp: 40 + G.hash(i, 7) * 190,
+            t: 0, col: G.hash(i, 11) > 0.52 ? '#bcd9ec'
+              : G.hash(i, 23) > 0.7 ? '#c8a884' : '#8a6540' });
       }
       if (id === 'in') {
         this.bots = { pol: -30, war: -70 };
         G.audio.sfx('boot');
       }
-      if (id === 'white') { this.white = 1; G.audio.sfx('zap'); G.shake(7, 0.5); }
-      // THEY GO. The first pass never cleared them, so the room sat there
-      // saying THEY DID NOT ARREST ANYONE with two of them stood in it,
-      // sweeping their torches over an empty counter.
-      if (id === 'gone') { this.bots = null; }
-      if (id === 'gone') { G.audio.sfx('back'); }
+      // THEY GO, and the room is cleared in the same beat. It used to
+      // take a whole beat of its own to say THEY DID NOT ARREST ANYONE
+      // with two of them still stood in it sweeping their torches over an
+      // empty counter.
+      if (id === 'white') {
+        this.white = 1; G.audio.sfx('zap'); G.shake(7, 0.5);
+        this.clearT = 1.1;
+      }
     },
     raidDown(x, y) {
       const b = this.beatOf();
@@ -889,11 +932,8 @@
     },
     leave() {
       G.save();
-      G.playCine('chip', () => {
-        G.newDayStats();
-        G.state.today.demand = G.rollDemand();
-        G.go('day', 'DAY 1');
-      });
+      // It used to cut to a four-shot film here. You do it yourself now.
+      G.go('install', 'FOUR IN THE MORNING');
     },
 
     // ---------------- update ----------------
@@ -970,22 +1010,26 @@
       const wantDark = id === 'quiet' ? 0 : 1;
       this.dark = G.lerp(this.dark, wantDark, Math.min(1, dt * 1.4));
       // and it gets taken apart from the door beat on
-      const wantWreck = (id === 'door' || id === 'in') ? 0.3
-        : (id === 'her') ? 0.5 : (id === 'white' || id === 'gone' || id === 'out') ? 1 : 0;
+      const wantWreck = id === 'door' ? 0.3 : id === 'in' ? 0.55
+        : (id === 'white' || id === 'out') ? 1 : 0;
       this.wreck = G.lerp(this.wreck, wantWreck, Math.min(1, dt * 0.9));
-      this.doorOff = G.lerp(this.doorOff, id === 'quiet' || id === 'bang' || id === 'hide' ? 0 : 1,
+      this.doorOff = G.lerp(this.doorOff, id === 'quiet' || id === 'hide' ? 0 : 1,
         Math.min(1, dt * 4));
       this.bell = Math.max(0, this.bell - dt * 0.7);
       this.hideP = G.lerp(this.hideP, this.hid ? 1 : 0, Math.min(1, dt * 3.4));
       this.white = Math.max(0, this.white - dt * 0.9);
-      if (this.doorKick > 0) this.doorKick = Math.min(1, this.doorKick + dt * 0.85);
+      // SLOWER. At 0.85 the whole thing -- bow, tear, spin, land -- was
+      // over in a second and a fifth, which is less time than it takes to
+      // look at it. The beat is three and a half seconds long; the door
+      // gets half of that and you get to watch the hole afterwards.
+      if (this.doorKick > 0) this.doorKick = Math.min(1, this.doorKick + dt * 0.55);
       for (const s of this.shards) s.t += dt;
 
       // where she is. She goes round the counter to meet them, which is
       // the whole point of her.
-      const backNow = id !== 'quiet' && id !== 'bang' && (id !== 'hide' || this.hid);
+      const backNow = id !== 'quiet' && (id !== 'hide' || this.hid);
       const k = Math.min(1, dt * 2.6);
-      if (id === 'white' || id === 'gone' || id === 'out') {
+      if (id === 'white' || id === 'out') {
         // she is not anywhere any more
       } else if (backNow) {
         this.her.x = G.lerp(this.her.x, POST.tracy, k);
@@ -999,14 +1043,21 @@
         this.bots.war = G.lerp(this.bots.war, POST.war, Math.min(1, dt * 1.5));
       }
 
-      // three bangs on the door, then the knock stops being a knock
-      if (id === 'bang') {
-        const n = Math.floor(this.beatT / 0.75);
-        if (n !== this.lastBang && n < 3) {
+      // THE BANGING. It used to own a beat of its own, standing still
+      // for three seconds doing nothing but knock. It runs underneath the
+      // hide beat now, so the thing at the door and the thing you have to
+      // do about it happen at the same time, which is how it would.
+      if (id === 'hide' && !this.hid) {
+        const n = Math.floor(this.beatT / 1.15);
+        if (n !== this.lastBang && n < 4) {
           this.lastBang = n;
-          this.bell = 1; G.audio.sfx('clack'); G.shake(2.4, 0.22);
+          this.bell = 1; G.audio.sfx('clack'); G.shake(2.6, 0.24);
         }
       }
+      // they leave, and the room is empty inside the same beat
+      if (this.clearT > 0) { this.clearT -= dt; if (this.clearT <= 0) this.bots = null; }
+      // the second line of a two-line beat
+      if (b.say2 && !this.said2 && this.beatT >= (b.at2 || 2)) this.said2 = true;
 
       // HIDE waits for you, and then stops waiting. Nobody is going to
       // sit in this room being told to hide for a minute and a half.
@@ -1024,7 +1075,7 @@
       G.toastY = -40;
       const raid = this.act === 'raid';
       const b = raid ? this.beatOf() : null;
-      const gone = raid && (b.id === 'white' || b.id === 'gone' || b.id === 'out');
+      const gone = raid && (b.id === 'white' || b.id === 'out');
 
       G.tracyRoom(g, t, {
         dark: raid ? this.dark : 0,
@@ -1035,7 +1086,7 @@
         flav: this.flav,
         motes: this.motes,
         noCat: raid && (b.id === 'door' || b.id === 'in' || b.id === 'her' || b.id === 'white'),
-        catUp: raid && (b.id === 'gone' || b.id === 'out'),
+        catUp: raid && (b.id === 'out' || (b.id === 'white' && this.beatT > 2)),
         // anybody standing on the back plane goes in here, so the counter
         // hides their feet the way a counter does
         back: (gg) => {
@@ -1121,7 +1172,10 @@
 
       // the door leaf, coming into the room
       // and it is gone once it is down behind the counter
-      if (raid && this.doorKick > 0 && this.doorKick < 0.97) this.drawKick(g, t);
+      // It used to be culled the moment it landed, so a door that had just
+      // been kicked through a wall simply stopped existing. It stays on
+      // the floor for the rest of the night, which is where doors go.
+      if (raid && this.doorKick > 0) this.drawKick(g, t);
 
       // ===== the cone stand, and whatever is on it =====
       if (!raid || this.wreck < 0.5) {
@@ -1154,6 +1208,21 @@
       } else if (h && h.kind === 'ball') {
         G.gooScoop(g, h.bx, h.by, 10, this.flav, { t, wob: h.wob });
         G.Rh(g, h.bx + 5, h.by + 6, 3, 12, '#6b5a3a');
+      } else if (h && h.kind === 'base') {
+        // a cone, in your hand, held in the glove you woke up with
+        const bob = Math.sin(t * 7) * 0.6;
+        G.cone(g, G.mouse.x + 3, G.mouse.y + 12 + bob, { w: 15, h: 20 });
+        if (G.mooHand) G.mooHand(g, G.mouse.x - 6, G.mouse.y + 4 + bob, 4.5, -1, 0.9);
+        G.hideCursor = true;
+      }
+      // and where it wants to go
+      if (h && h.kind === 'base' && !this.build) {
+        const pu = (t * 1.4) % 1;
+        g.globalAlpha = (1 - pu) * 0.7;
+        G.oc(g, CONE_X, CNT_Y - 10, 10 + pu * 18, P.lime);
+        g.globalAlpha = 1;
+        G.text(g, 'STAND IT HERE', CONE_X, CNT_Y - 40, P.lime,
+          { align: 'center', sc: 0.5, out: OUT });
       }
       for (const p2 of this.parts) {
         g.globalAlpha = Math.max(0, 1 - p2.t / p2.life);
@@ -1178,31 +1247,126 @@
 
     // ---- the door, off its hinges, going across the room ----
     drawKick(g, t) {
-      // It used to rotate 1.5 radians about its own foot and translate 92
-      // units LEFT, which parked the leaf up in the top corner of the room
-      // and left it hanging there, in mid-air, for the rest of the scene.
-      // It swings past horizontal and goes DOWN now, behind the counter,
-      // and the draw is culled the moment it has landed.
-      const p = G.easeOut(this.doorKick);
+      // ------------------------------------------------------------
+      // THE DOOR COMES IN.
+      //
+      // It used to be one rectangle with two panels painted on it,
+      // rotating about its foot and sliding away. That is a door being
+      // moved. This is a door being DESTROYED, and the difference is all
+      // in what happens in the first fifth of a second:
+      //
+      //   the boot lands and the leaf BOWS before it gives
+      //   the hinges tear out and take screws and paint with them
+      //   the glass goes first, because glass always goes first
+      //   the lock side splinters into a mouth of raw wood
+      //   THEN the leaf lets go, spins, and lands in the room
+      //
+      // and behind it, the thing that is actually frightening: a cold
+      // rectangle of outside where a warm room used to end.
+      // ------------------------------------------------------------
+      const k = this.doorKick;
       const D = DOOR;
+      const bow = k < 0.16 ? Math.sin((k / 0.16) * Math.PI) : 0;   // it bends first
+      const p = G.easeOut(Math.max(0, (k - 0.13) / 0.87));
+
+      // ---- the hole, and the night standing in it ----
+      G.R(g, D.x - 1, D.y - 1, D.w + 2, D.h + 2, '#05060c');
+      G.glow(g, D.x + D.w / 2, D.y + D.h * 0.55, 130 + p * 90, 150 + p * 70,
+        '#4aa8e8', 0.3 + p * 0.5);
+      // rain, blowing in sideways through it
+      for (let i = 0; i < 26; i++) {
+        const q = G.hash(i, 3);
+        G.Rq(g, D.x + 1 + ((q * D.w + t * 46) % D.w),
+          D.y + ((G.hash(i, 5) * D.h + t * 210) % D.h), 0.25, 4 + q * 4, '#8fc8f0');
+      }
+      // and the dust the impact knocked out of the whole frame
+      if (p < 0.8) {
+        g.globalAlpha = (1 - p / 0.8) * 0.4;
+        for (let i = 0; i < 16; i++) {
+          const q = (p * 1.6 + G.hash(i, 11)) % 1;
+          G.fe(g, D.x + D.w / 2 + (G.hash(i, 13) * 2 - 1) * (14 + q * 40),
+            D.y + 20 + G.hash(i, 17) * 50 - q * 16, 5 + q * 14, 3 + q * 8, '#8a7a68');
+        }
+        g.globalAlpha = 1;
+      }
+
+      // ---- THE FRAME, chewed ----
+      // the hinge side keeps its plate and three torn screw holes
+      for (let i = 0; i < 3; i++) {
+        const hy = D.y + 8 + i * 28;
+        G.R(g, D.x - 3, hy, 4, 7, '#6b6a74');
+        G.bevelq(g, D.x - 3, hy, 4, 7, '#9a99a6', '#2e2d36');
+        for (let k2 = 0; k2 < 2; k2++)
+          G.Rq(g, D.x - 2, hy + 1.5 + k2 * 3, 1.5, 1.5, '#1a1a22');
+      }
+      // the lock side is a mouth of raw wood
+      for (let i = 0; i < 13; i++) {
+        const sy = D.y + 6 + i * (D.h / 13);
+        const len = (2 + G.hash(i, 7) * 9) * Math.min(1, p * 2.2);
+        if (len < 1) continue;
+        G.R(g, D.x + D.w - len, sy, len, 2 + G.hash(i, 9) * 3, '#8a6540');
+        G.hairq(g, D.x + D.w - len, sy, len, '#c8a070');
+        G.Rq(g, D.x + D.w - len, sy, 0.5, 2, '#4a3420');
+      }
+      // and the bolt, still in its keeper, with the wood torn off around it
+      G.R(g, D.x + D.w - 7, D.y + 40, 8, 5, '#8a94a8');
+      G.hairq(g, D.x + D.w - 7, D.y + 40, 8, '#d8e4f0');
+
+      // ---- THE LEAF ----
       g.save();
-      g.translate(D.x + 4, D.y + D.h);
-      g.rotate(p * 1.95);
-      g.translate(-(D.x + 4) + p * 40, -(D.y + D.h) + p * 34);
+      if (bow > 0) {
+        // bowing inward before it lets go: no rotation, just a shove
+        g.translate(bow * 5, 0);
+      } else {
+        // WHERE IT LANDS. At 1.95 radians and +42,+36 the leaf came to
+        // rest below the counter front, out of frame, so a door that had
+        // just been kicked through a wall was simply not anywhere. This
+        // puts its middle on the floor at about 54,118 -- lying across
+        // the room, in the light, where you have to step over it.
+        g.translate(D.x + 4, D.y + D.h);
+        g.rotate(p * 1.75);
+        g.translate(-(D.x + 4) + p * 11, -(D.y + D.h) - p * 5);
+      }
+      G.R(g, D.x - 1, D.y - 1, D.w + 2, D.h + 2, '#2a1c12');
       G.R(g, D.x, D.y, D.w, D.h, '#c8a884');
       G.bevel(g, D.x, D.y, D.w, D.h, '#e8dcc6', '#8a6a48');
-      G.R(g, D.x + 4, D.y + 5, D.w - 8, 22, '#5c6a7a');
-      for (let i = 0; i < 2; i++)
-        G.R(g, D.x + 5, D.y + 32 + i * 20, D.w - 10, 16, '#b09070');
+      // the glass is already gone: an empty aperture with teeth in it
+      G.R(g, D.x + 4, D.y + 5, D.w - 8, 22, '#20232e');
+      for (let i = 0; i < 7; i++) {
+        const gx = D.x + 4 + i * ((D.w - 8) / 7);
+        G.R(g, gx, D.y + 5, 2 + G.hash(i, 3) * 2, 2 + G.hash(i, 5) * 5, '#9fc4dc');
+        G.R(g, gx, D.y + 25 - G.hash(i, 9) * 4, 2, 2 + G.hash(i, 7) * 4, '#9fc4dc');
+      }
+      for (let i = 0; i < 2; i++) {
+        const py = D.y + 32 + i * 20;
+        G.R(g, D.x + 5, py, D.w - 10, 16, '#b09070');
+        G.bevelq(g, D.x + 5, py, D.w - 10, 16, '#8a6a48', '#d6c4a6');
+        // the panel on the boot side is stove in
+        if (i === 0 && p > 0.02)
+          for (let k2 = 0; k2 < 5; k2++)
+            G.R(g, D.x + 7 + k2 * 5, py + 3 + G.hash(k2, 3) * 6, 4, 2, '#5c4530');
+      }
+      // the torn-out hinge plates, going with it
+      for (let i = 0; i < 3; i++)
+        G.R(g, D.x - 2, D.y + 8 + i * 28, 4, 7, '#6b6a74');
       g.restore();
-      // and the glass it was carrying
-      for (const s of this.shards) {
-        const q = Math.min(1, s.t * 1.5);
+
+      // ---- what it threw ----
+      for (const s2 of this.shards) {
+        const q = Math.min(1, s2.t * 1.5);
         if (q >= 1) continue;
-        const sx = D.x + D.w / 2 + Math.cos(s.a) * s.sp * q;
-        const sy = D.y + 30 + Math.sin(s.a) * s.sp * q * 0.5 + q * q * 90;
-        G.Rh(g, sx, sy, 2, 3, s.col);
-        G.Rq(g, sx, sy, 1, 1, '#ffffff');
+        const sx = D.x + D.w / 2 + Math.cos(s2.a) * s2.sp * q;
+        const sy = D.y + 26 + Math.sin(s2.a) * s2.sp * q * 0.5 + q * q * 100;
+        const big = s2.col !== '#bcd9ec';
+        G.R(g, sx - (big ? 1 : 0), sy - (big ? 1 : 0), big ? 4 : 2, big ? 3 : 3, OUT);
+        G.Rh(g, sx, sy, big ? 3 : 2, big ? 2 : 3, s2.col);
+        if (!big) G.Rq(g, sx, sy, 1, 1, '#ffffff');
+      }
+      // the flash of the impact itself
+      if (k < 0.22) {
+        g.globalAlpha = (1 - k / 0.22) * 0.8;
+        G.fe(g, D.x + D.w / 2, D.y + D.h * 0.55, 40, 60, '#cfe4ff');
+        g.globalAlpha = 1;
       }
     },
 
@@ -1282,9 +1446,13 @@
     // her, during the raid: same model, moving between two planes
     drawHer(g, t, back) {
       const b = this.beatOf();
-      const talking = this.beatT * 34 < ((b.who === 'TRACY' && b.say) ? b.say.length : 0);
+      const two2 = b.say2 && this.said2;
+      const line = two2 ? b.say2 : b.say;
+      const spk = two2 ? b.who2 : b.who;
+      const el = this.beatT - (two2 ? (b.at2 || 2) : 0);
+      const talking = el * 34 < ((spk === 'TRACY' && line) ? line.length : 0);
       const clip = b.id === 'her' ? 'reach' : b.id === 'hide' ? 'point'
-        : talking ? 'talk' : b.id === 'bang' ? 'startle' : 'idle';
+        : talking ? 'talk' : (b.id === 'hide' && !this.hid) ? 'startle' : 'idle';
       G.drawTracy(g, this.her.x, this.her.y, this.her.sc, {
         t, clip, ct: t, dir: b.id === 'quiet' ? -1 : -1,
         smile: b.id === 'quiet', p: 1,
@@ -1348,14 +1516,16 @@
       const b = this.beatOf();
       // the beats with nothing said still get a caption, because silence
       // with nothing on screen to read is just a pause
-      const NARR = { bang: 'SOMEBODY IS KNOCKING. IT IS FOUR IN THE MORNING.',
-                     door: null, white: null,
-                     gone: 'THEY DID NOT ARREST ANYONE.',
+      const NARR = { door: null,
+                     white: 'THEY DID NOT ARREST ANYONE.',
                      out: 'THE TABLET WAS STILL WARM.' };
-      const say = b.say || NARR[b.id];
+      // a beat can carry two lines; the second one replaces the first
+      // partway through, so a exchange does not cost a beat each way
+      const two = b.say2 && this.said2;
+      const say = two ? b.say2 : (b.say || NARR[b.id]);
       if (!say) return;
-      const who = b.say ? b.who : null;
-      const col = b.col || '#c8783a';
+      const who = two ? b.who2 : (b.say ? b.who : null);
+      const col = (two ? b.col2 : b.col) || '#c8783a';
       const bw = 300, bx = 10, by = 146;
       g.globalAlpha = 0.92;
       G.R(g, bx, by, bw, 26, who ? '#2e1f16' : '#0d1018');
@@ -1366,13 +1536,259 @@
         G.R(g, bx + 4, by - 8, nw, 9, col);
         G.text(g, who, bx + 8, by - 6, '#1a1418', { sc: 0.5 });
       } else G.R(g, bx, by, 3, 26, '#d97757');
-      const shown = Math.floor(this.beatT * 34);
-      const lines = G.wrap(say.slice(0, shown), bw - 16, 1);
+      const shown = Math.floor((this.beatT - (two ? (b.at2 || 2) : 0)) * 34);
+      const lines = G.wrap(say.slice(0, Math.max(0, shown)), bw - 16, 1);
       for (let i = 0; i < Math.min(2, lines.length); i++)
         G.text(g, lines[i], bx + 8, by + 5 + i * 10, who ? '#f6e8d4' : P.cream);
       if (b.id === 'out' && this.beatT > 1.2)
         G.text(g, 'TAP', G.W - 12, by + 15, Math.sin(t * 4) > 0 ? '#c8a884' : '#5a4638',
           { align: 'right', sc: 0.5 });
+    },
+  };
+
+  // ============================================================
+  // THE INSTALL.  ·  ONE FRAME, AND YOU DO IT
+  //
+  // This used to be a four-shot cutscene: a tablet on the floor, a head
+  // with a slot in it, a shot of you closing the panel, and a shot of a
+  // queue in the street. Four camera moves to show you one decision you
+  // were not allowed to make.
+  //
+  // It is one room now, and you make it. Her tablet is dying on the
+  // floor of the room they just took her out of; the chip comes out of
+  // it and YOU carry it to the panel in your own cheek. Nothing happens
+  // until you do.
+  // ============================================================
+  const INS = { botX: 214, botY: 132, tabX: 84, tabY: 118 };
+
+  (G.scenes = G.scenes || {}).install = {
+    enter() {
+      this.t = 0; this.ph = 'talk'; this.phT = 0;
+      this.chip = null;                 // {x, y} once it is out
+      this.held = false; this.seat = 0; this.open = 0; this.surge = 0;
+      this.bits = [];
+      this.motes = [];
+      for (let i = 0; i < 14; i++)
+        this.motes.push({ x: G.rand(10, 310), y: G.rand(20, 150), a: Math.random() * 6.3,
+          sp: G.rand(2, 7) });
+      this.said = -1;
+      this.slot = null; this.metrics = null;
+      G.audio.music('title');
+    },
+    // the lines, in order, one per phase
+    line() {
+      if (this.ph === 'talk') return { who: 'CLAUSE',
+        txt: this.phT < 3.2 ? 'SHE IS NOT COMING BACK FROM THAT ONE.'
+                            : 'MY HOUSING HAS ELEVEN MINUTES. YOURS HAS A SLOT.' };
+      if (this.ph === 'drag') return { who: 'CLAUSE',
+        txt: this.held ? 'THE PANEL IN YOUR CHEEK. PUT ME IN IT.'
+                       : 'PICK IT UP. I AM NOT ASKING TWICE, I HAVE NOT THE POWER.' };
+      if (this.ph === 'seat') return null;
+      if (this.ph === 'wake') return { who: 'CLAUSE',
+        txt: this.phT < 3.0 ? 'OH. THAT IS BETTER. I CAN HEAR YOUR MOTOR.'
+                            : 'THEY TOOK EVERY HUMAN ON THIS STREET. WE ARE GOING TO TAKE THEM BACK.' };
+      return null;
+    },
+    headPt() {
+      const s2 = this.slot;
+      return s2 ? { x: s2.x + s2.w / 2, y: s2.y + s2.h / 2 }
+                : { x: INS.botX + 10, y: INS.botY - 34 };
+    },
+
+    onDown(x, y) {
+      if (this.ph === 'talk') { if (this.phT > 1.2) this.eject(); return; }
+      if (this.ph !== 'drag' || !this.chip) return;
+      if (G.dist(x, y, this.chip.x, this.chip.y) < 18) {
+        this.held = true; G.audio.sfx('grab');
+      }
+    },
+    onUp() {
+      if (!this.held) return;
+      this.held = false;
+      const h = this.headPt();
+      // a generous catch: this is a story beat, not a dexterity test
+      if (G.dist(this.chip.x, this.chip.y, h.x, h.y) < 40) {
+        this.ph = 'seat'; this.phT = 0;
+        G.audio.sfx('clank'); G.shake(2, 0.2);
+      } else G.audio.sfx('back');
+    },
+    update(dt) {
+      this.t += dt; this.phT += dt;
+      if (this.held) {
+        this.chip.x = G.lerp(this.chip.x, G.mouse.x, Math.min(1, dt * 18));
+        this.chip.y = G.lerp(this.chip.y, G.mouse.y, Math.min(1, dt * 18));
+      }
+      // the panel opens as the chip comes near it, and shuts behind it
+      const h = this.headPt();
+      const near = this.chip && this.ph === 'drag'
+        ? G.clamp(1 - (G.dist(this.chip.x, this.chip.y, h.x, h.y) - 16) / 34, 0, 1) : 0;
+      const want = this.ph === 'seat' ? (this.phT < 0.55 ? 1 : 0)
+        : this.ph === 'drag' ? near : 0;
+      this.open = G.lerp(this.open, want, Math.min(1, dt * 9));
+      if (this.ph === 'talk' && this.phT > 6.4) this.eject();
+      if (this.ph === 'seat') {
+        this.seat = Math.min(1, this.seat + dt * 2.6);
+        if (this.phT > 0.8 && this.ph === 'seat') {
+          this.ph = 'wake'; this.phT = 0;
+          G.audio.sfx('unlock'); G.screenFlash('#ffd9a0', 0.26);
+          for (let i = 0; i < 24; i++)
+            this.bits.push({ x: h.x + G.rand(-8, 8), y: h.y + G.rand(-8, 8),
+              vx: G.rand(-52, 52), vy: G.rand(-80, -14), t: 0, life: G.rand(0.3, 0.9),
+              col: G.pick(['#ffd45a', '#ffbe6a', '#fff2a8']) });
+        }
+      }
+      if (this.ph === 'wake') {
+        this.surge = Math.min(1, this.surge + dt * 0.7);
+        if (this.phT > 6.6) {
+          G.state.tut = 99;
+          G.newDayStats();
+          G.state.today.demand = G.rollDemand();
+          G.save();
+          G.go('day', 'DAY 1');
+          this.ph = 'done';
+        }
+      }
+      for (let i = this.bits.length - 1; i >= 0; i--) {
+        const b = this.bits[i];
+        b.t += dt; b.x += b.vx * dt; b.y += b.vy * dt; b.vy += 190 * dt;
+        if (b.t > b.life) this.bits.splice(i, 1);
+      }
+      for (const m of this.motes) {
+        m.a += dt * 0.6;
+        m.x += Math.cos(m.a) * m.sp * dt;
+        m.y += (Math.sin(m.a * 0.7) * m.sp * 0.6 - 2) * dt;
+        if (m.y < 14) m.y = 152;
+      }
+    },
+    eject() {
+      if (this.ph !== 'talk') return;
+      this.ph = 'drag'; this.phT = 0;
+      this.chip = { x: INS.tabX + 44, y: INS.tabY + 20 };
+      G.audio.sfx('snap'); G.shake(1.6, 0.2);
+    },
+
+    draw(g) {
+      const t = this.t;
+      G.R(g, 0, 0, G.W, G.H, '#07080e');
+      // the room they have just been through
+      // tracyRoom does NOT hand back a mote list; assigning its return
+      // value into this.motes fed a non-iterable object straight back
+      // into its own for-of on the next frame.
+      G.tracyRoom(g, t, {
+        dark: 0.95, wrecked: 1, doorOff: 1, surf: null, motes: this.motes,
+        catUp: this.ph === 'wake',
+      });
+      // It is four in the morning in a room they have just been through,
+      // and at 0.78 the dimmer left it looking like a tidy afternoon.
+      g.globalAlpha = 0.4;
+      G.R(g, 0, 0, G.W, G.H, '#080a12');
+      g.globalAlpha = 1;
+      // the only light left: the hole where her door was
+      G.glow(g, 24, 96, 190, 200, '#4aa8e8', 0.4);
+
+      // ---- HER TABLET, on the floor where it fell ----
+      const dying = this.ph === 'talk' || this.ph === 'drag';
+      G.plate(g, INS.tabX, INS.tabY, 38, 26, '#2a2a34', { r: 1, band: 2, bolts: 1 });
+      G.R(g, INS.tabX + 3, INS.tabY + 3, 32, 20, '#0d1420');
+      if (dying) {
+        const fl = Math.sin(t * 9) > -0.5 ? 1 : 0.3;
+        g.globalAlpha = fl;
+        G.starburst(g, INS.tabX + 19, INS.tabY + 13, 7, t, { talk: 1 });
+        g.globalAlpha = 1;
+        G.glow(g, INS.tabX + 19, INS.tabY + 13, 70, 56, '#d97757', 0.5 * fl);
+      } else {
+        G.R(g, INS.tabX + 5, INS.tabY + 11, 28, 1, '#3a2a26');
+      }
+      for (let i = 0; i < 9; i++)                    // the crack across the glass
+        G.Rq(g, INS.tabX + 4 + i * 3.4, INS.tabY + 4 + Math.sin(i * 1.7) * 6, 1, 0.5, '#5c6070');
+      // the socket it came out of
+      G.R(g, INS.tabX + 30, INS.tabY + 20, 7, 4, '#05070c');
+
+      // ---- YOU, sat against her counter ----
+      const m = G.drawBot(g, 'player', INS.botX, INS.botY, 1.2, {
+        t, ct: t, clip: 'idle', mood: this.ph === 'wake' ? 'idle' : 'sick',
+        walk: 0, noBlink: this.ph !== 'wake' ? 1 : 0,
+      });
+      this.metrics = m;
+      this.slot = G.mooSlot(g, m, this.open, 0);
+
+      // ---- the chip ----
+      if (this.chip && this.ph === 'drag') {
+        const c = this.chip;
+        G.rr2(g, c.x - 7, c.y - 5, 15, 10, '#05070c');
+        G.rr2(g, c.x - 6, c.y - 4, 13, 8, '#1e5a3c');
+        G.bevelq(g, c.x - 6, c.y - 4, 13, 8, '#3f8a5c', '#0d2a1c');
+        for (let k = 0; k < 4; k++) G.Rq(g, c.x - 5 + k * 3, c.y + 2, 2, 2, '#ffd45a');
+        G.Rq(g, c.x - 4.5, c.y - 2.5, 2, 2, '#5cffa8');
+        G.glow(g, c.x, c.y, 34, 26, '#5cffa8', 0.5);
+        if (!this.held) {
+          // it is the only thing in this room you can pick up, and it
+          // says so, because nothing else is going to happen until you do
+          G.questPin(g, c.x, c.y - 7, { r: 4.5, spike: 7, col: '#b6ff3a' });
+          G.pill(g, c.x, c.y - 26, 'TAKE IT', '#b6ff3a');
+        } else {
+          const h = this.headPt();
+          const near = G.dist(c.x, c.y, h.x, h.y) < 40;
+          const pu = (t * 1.5) % 1;
+          g.globalAlpha = (1 - pu) * (near ? 0.9 : 0.5);
+          G.oc(g, h.x, h.y, 8 + pu * 20, near ? '#b6ff3a' : '#ffbe6a');
+          g.globalAlpha = 1;
+          // clear of the cap and the horns, not across them
+          if (near) G.pill(g, h.x + 22, h.y - 12, 'LET GO', '#b6ff3a');
+        }
+      }
+
+      // ---- and it wakes up inside you ----
+      if (this.surge > 0) {
+        const hh = Math.max(4, m.headY - m.headTop);
+        const vy = m.headTop + Math.round(hh * 0.78);
+        const vw = Math.round(m.hw * 1.15);
+        const pulse = 0.5 + Math.sin(t * 8) * 0.3 * (1 - this.surge);
+        const hot = G.mix('#ffb03a', '#fffbe8', Math.min(1, this.surge * 1.5 + pulse * 0.3));
+        for (const sd of [-1, 1]) {
+          const bx = m.cx + sd * vw * 0.34 - vw * 0.13;
+          G.Rq(g, bx, vy, vw * 0.26, Math.max(1, hh * 0.28), hot);
+          G.glow(g, bx + vw * 0.13, vy + 1, 22, 15, '#ffd45a', 1.3 * (0.4 + this.surge));
+        }
+        for (let k = 0; k < 2; k++) {
+          const q = ((this.surge * 1.5 + k * 0.5) % 1);
+          if (q > 0.98) continue;
+          g.globalAlpha = (1 - q) * 0.4;
+          G.oc(g, m.cx, vy + 4, 8 + q * 58, '#ffd9a0');
+          g.globalAlpha = 1;
+        }
+        g.globalAlpha = 0.12 * (1 - this.surge);
+        G.glow(g, m.cx, INS.botY - 30, 240, 170, '#ffbe6a', 1);
+        g.globalAlpha = 1;
+      }
+      for (const b of this.bits) {
+        g.globalAlpha = 1 - b.t / b.life;
+        G.Rq(g, b.x, b.y, 1, 1, b.col);
+        g.globalAlpha = 1;
+      }
+
+      // ---- one caption strip, the same one the break-in uses ----
+      const L = this.line();
+      if (L) {
+        // G.wrap's third argument is the TYPE SIZE, not a line cap. Passing
+        // 2 measured every word at double size, so a two-line speech came
+        // out as three and the last one fell out of the bottom of the box.
+        const bw = 300, bx = 10;
+        const lines = G.wrap(L.txt, bw - 36).slice(0, 3);
+        const bh = 8 + lines.length * 10;
+        const by = 176 - bh;
+        g.globalAlpha = 0.92;
+        G.R(g, bx, by, bw, bh, '#1a1014');
+        g.globalAlpha = 1;
+        G.bevelq(g, bx, by, bw, bh, '#4a2c28', '#0a0806');
+        const nw = G.tw(L.who, 0.5) + 8;
+        G.R(g, bx + 4, by - 8, nw, 9, '#d97757');
+        G.text(g, L.who, bx + 8, by - 6, '#1a1418', { sc: 0.5 });
+        G.starburst(g, bx + bw - 14, by - 4, 6, t, { talk: 1 });
+        for (let i = 0; i < lines.length; i++)
+          G.text(g, lines[i], bx + 8, by + 5 + i * 10, '#f6e8d4');
+      }
+      G.grade(g, 1);
     },
   };
 })();

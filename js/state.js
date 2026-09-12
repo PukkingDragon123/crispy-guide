@@ -672,6 +672,7 @@
       pits: [{ fid: fl[0].id, qty: 12, max: 12 }],    // loaded on the line
       sauces: ['fudge'],
       tops: ['sprinkles'],
+      cones: 18, cups: 10,                            // the sleeve on the shelf
       owned: [],                                      // armoury + shop + lab upgrades
       allies: [],
       tier: 0,                                        // clause.ai plan
@@ -855,8 +856,19 @@
     return p ? G.flavById(p.fid) : null;
   };
 
+  // ---- HOW MANY CONES ARE ON THE SHELF ----
+  // They used to be infinite: a cone appeared on the counter every time
+  // you tapped the stand, for ever, so the stand was a button and not a
+  // thing. A sleeve holds what a sleeve holds. It is restocked every
+  // morning, generously, so running out inside one shift means you have
+  // been throwing them away rather than that the shop is broken.
+  G.coneStock = () => 18 + (G.has('pit2') ? 4 : 0) + (G.has('pit3') ? 4 : 0);
+  G.cupStock = () => 10 + (G.has('pit3') ? 4 : 0);
+
   G.newDayStats = function () {
     G.state.calls = G.tier().calls;
+    G.state.cones = G.coneStock();
+    G.state.cups = G.cupStock();
     G.state.today = { dayEarn: 0, nightEarn: 0, served: 0, perfect: 0, volt: 0,
                       jobs: [], misdx: 0, fixed: 0, spent: 0, demand: {},
                       goal: G.rollGoal(G.state.day), closed: false, tips: 0,

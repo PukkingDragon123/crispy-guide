@@ -102,6 +102,94 @@
     [-0.28, 0.30, 0.10, 0.08, 2.6],
   ];
 
+  // ------------------------------------------------------------
+  // THE HAND, on its own.
+  //
+  // Published, because the counter needs to show you carrying a cone and
+  // a second hand drawn by a second file is how a game ends up with two
+  // of everything. sd is which way it faces: -1 left, +1 right.
+  // ------------------------------------------------------------
+  G.mooHand = function (g2, hxp, hyp, r, sd, grip) {
+    grip = G.clamp(grip || 0, 0, 1);
+    if (r < 2.2) {                       // tiny: a pale pip, and that is honest
+      const q = Math.max(1, Math.round(r * 1.5));
+      if (q > 1) G.R(g2, hxp - q / 2 - 0.5, hyp - q / 2 - 0.5, q + 1, q + 1, OUT);
+      G.R(g2, hxp - q / 2, hyp - q / 2, q, q, C.cream);
+      return;
+    }
+    const w = Math.max(3, Math.round(r * 2 * (1 - grip * 0.24)));
+    const h = Math.max(3, Math.round(r * 2 * (1 - grip * 0.06)));
+    const x0 = Math.round(hxp - w / 2), y0 = Math.round(hyp - h / 2);
+    // THE CUFF, clear of the palm. At y0-1 the palm's own outline pass
+    // painted straight over it and the glove had no wrist at all.
+    const cw = Math.max(2, Math.round(w * 0.64));   // a wrist, not a bracelet
+    G.R(g2, Math.round(hxp - cw / 2) - 1, y0 - 4, cw + 2, 4, OUT);
+    G.R(g2, Math.round(hxp - cw / 2), y0 - 3, cw, 2, C.red);
+    G.hairq(g2, Math.round(hxp - cw / 2), y0 - 3, cw, C.redL);
+    // the palm
+    box(g2, x0, y0, w, h, Math.max(1, Math.round(r * 0.75)), C.cream,
+      { lit: C.creamL, dk: C.creamD });
+    // THE THUMB, after the palm and not before it: drawn first, the
+    // palm's outline swallowed it whole and the mitt was a bean.
+    const tw = Math.max(2, Math.round(r * 0.85)), th2 = Math.max(3, Math.round(r * 1.15));
+    const tx = sd < 0 ? x0 + w - 1 : x0 - tw + 1;
+    box(g2, tx, y0 + Math.round(h * 0.1), tw, th2, Math.max(1, Math.round(tw * 0.4)),
+      C.cream, { lit: C.creamL, dk: C.creamD });
+    // grooves between the fingers, on the outboard half
+    if (h >= 5) {
+      const gx = sd < 0 ? x0 + 1 : x0 + Math.round(w * 0.42);
+      const gw = Math.max(1, Math.round(w * 0.56));
+      for (let k = 1; k <= 2; k++) {
+        const gy = y0 + Math.round(h * (0.28 + k * 0.24));
+        if (gy >= y0 + h - 1) break;
+        G.Rq(g2, gx, gy, gw, 0.5, grip > 0.4 ? C.creamK : C.creamD);
+      }
+    }
+    // closed round something: a dark gap where the fingers meet
+    if (grip > 0.5 && w >= 4)
+      G.Rq(g2, x0 + (sd < 0 ? 0.5 : w - 1), y0 + h * 0.3, 0.5, h * 0.4, C.creamK);
+  };
+
+  // ------------------------------------------------------------
+  // THE PANEL IN HIS CHEEK.
+  //
+  // Everything this machine has ever been told arrived through it, and
+  // two scenes now open it -- the boot on the title, and the night he
+  // put clause in there himself. One painter, so they cannot drift.
+  //
+  // Takes the metrics drawMooBot hands back. `open` is 0 shut, 1 wide.
+  // A shutter, not a lid: a panel that lifts off leaves a pale slab
+  // hanging in front of his face at six pixels across.
+  // ------------------------------------------------------------
+  G.mooSlot = function (g, m, open, lift) {
+    if (!m) return null;
+    open = G.clamp(open || 0, 0, 1);
+    lift = lift || 0;
+    const hh = Math.max(4, m.headY - m.headTop);
+    const S2 = {
+      w: Math.max(4, Math.round(m.hw * 0.36)),
+      h: Math.max(3, Math.round(hh * 0.34)),
+      x: m.cx + Math.round(m.hw * 0.44),
+      y: m.headTop + Math.round(hh * 1.42) - lift,
+    };
+    const frame = G.mix('#b8a68a', '#0d0a12', Math.min(1, open * 3));
+    G.R(g, S2.x - 1, S2.y - 1, S2.w + 2, S2.h + 2, frame);
+    G.R(g, S2.x, S2.y, S2.w, S2.h, open > 0.03 ? '#05070c' : C.cream);
+    const oh = open * S2.h;
+    const half = Math.max(0, (S2.h - oh) / 2);
+    if (half > 0.1) {
+      G.Rh(g, S2.x, S2.y, S2.w, half, C.cream);
+      G.Rh(g, S2.x, S2.y + S2.h - half, S2.w, half, C.cream);
+      G.hairq(g, S2.x, S2.y + half - 0.25, S2.w, '#9a8a70');
+      G.hairq(g, S2.x, S2.y + S2.h - half, S2.w, '#fffaf0');
+    }
+    if (open > 0.03) {
+      G.Rq(g, S2.x, S2.y + S2.h - half - 0.5, S2.w, 0.5, G.mix('#3a2a14', '#ffc46a', open));
+      G.glow(g, S2.x + S2.w / 2, S2.y + S2.h / 2, 18, 13, '#ffbe6a', 1.1 * open);
+    }
+    return S2;
+  };
+
   // ============================================================
   // THE MASCOT
   // ============================================================
@@ -233,32 +321,76 @@
     }
 
     // ============================================================
-    // ARMS. Short dark stubs at the sides, or reaching where told.
+    // ARMS, AND ACTUAL HANDS.
+    //
+    // They were stubs: two dark rounded bars hung at the sides, and
+    // wherever a scene asked for a reach, a line with a dark blob on the
+    // end of it. A mascot whose whole job is handing people food should
+    // be seen to have something to hand it with.
+    //
+    // An arm is now a bar to the elbow and a bar from it, and it ends in
+    // a HAND: a cream glove, because four dark fingers on a dark sleeve
+    // is a smudge at any size this game draws, and a pale mitt against
+    // this palette is unmistakable at six pixels. A thumb on the inboard
+    // side says which hand it is; two grooves on the outboard edge let
+    // you count three fingers if you go looking.
     // ============================================================
-    const aw2 = Math.max(2, u(5));
-    const armY = bodyY + Math.round(bodyH * 0.26);
+    const aw2 = Math.max(2, u(4.5));
+    const armY = bodyY + Math.round(bodyH * 0.22);
+    // NOT through u(): it floors at one logical unit, so at the scales
+    // the HUD and the shop rows draw him at, the hands came out wider
+    // than his legs. A hand is allowed to be smaller than a pixel and
+    // fall back to a pip.
+    const hnd = 3.5 * S;
+    const hands = [null, null];
+
+    // a thick segment, drawn as a run of squares. Outline pass first for
+    // the whole limb, then the fill, or each square's black lands on the
+    // one before it.
+    function seg(x0, y0, x1, y1, th, col) {
+      const d = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0)));
+      for (let k = 0; k <= d; k++) {
+        const q = k / d;
+        G.R(g, G.lerp(x0, x1, q) - th / 2, G.lerp(y0, y1, q) - th / 2, th, th, col);
+      }
+    }
+
+    // ---- shoulder, elbow, hand ----
+    function limb(sd, hxp, hyp, grip) {
+      const sx = cx + lean + sd * (bodyW / 2 - u(1.2));
+      const sy = armY;
+      // the elbow sits outboard of the straight line, so an arm bends the
+      // way an arm bends instead of reading as a pipe
+      const exx = (sx + hxp) / 2 + sd * u(1.8);
+      const eyy = (sy + hyp) / 2 + u(0.6);
+      for (let pass = 0; pass < 2; pass++) {
+        const th = pass ? aw2 : aw2 + 1.5;
+        const col = pass ? C.inkL : OUT;
+        seg(sx, sy, exx, eyy, th, col);
+        seg(exx, eyy, hxp, hyp, th * (pass ? 0.88 : 1), col);
+      }
+      // a lit edge down the top of the upper arm
+      G.Rq(g, Math.min(sx, exx), Math.min(sy, eyy) - aw2 / 2, Math.abs(exx - sx) + 1, 0.5, '#5c5a66');
+      G.mooHand(g, hxp, hyp, hnd, sd, grip);
+      return { x: Math.round(hxp), y: Math.round(hyp) };
+    }
+
+    const grips = o.grip === undefined ? [0, 0]
+      : (Array.isArray(o.grip) ? o.grip : [o.grip, o.grip]);
     if (o.hands) {
       for (let i = 0; i < 2; i++) {
         const sd = i ? 1 : -1, H = o.hands[i];
         if (!H) continue;
-        const sx = cx + lean + sd * (bodyW / 2 - u(1)), sy = armY;
-        const d = Math.max(1, Math.round(Math.hypot(H.x - sx, H.y - sy)));
-        for (let pass = 0; pass < 2; pass++)
-          for (let k = 0; k <= d; k++) {
-            const q = k / d, th = aw2 + (pass ? 0 : 1.5);
-            G.R(g, G.lerp(sx, H.x, q) - th / 2, G.lerp(sy, H.y, q) - th / 2, th, th,
-              pass ? C.inkL : OUT);
-          }
-        blob(g, H.x, H.y, aw2 * 0.8, aw2 * 0.8, C.inkL, { lit: '#5c5a66' });
+        hands[i] = limb(sd, H.x, H.y, H.grip === undefined ? grips[i] : H.grip);
       }
     } else {
-      const sw = A ? A.armL * u(4) : 0, sw2 = A ? A.armR * u(4) : 0;
-      for (const sd of [-1, 1]) {
-        const s = sd < 0 ? sw : sw2;
-        const ax = cx + lean + sd * (bodyW / 2 + aw2 / 2 - u(2.6));
-        const ah2 = Math.max(3, Math.round(bodyH * 0.62 + s));
-        box(g, ax - aw2 / 2, armY, aw2, ah2, Math.max(1, u(2)), C.inkL,
-          { lit: '#5c5a66', dk: C.ink });
+      // hanging, with the swing the clip asked for
+      for (let i = 0; i < 2; i++) {
+        const sd = i ? 1 : -1;
+        const sw = A ? (i ? A.armR : A.armL) * u(3.4) : 0;
+        const hxp = cx + lean + sd * (bodyW / 2 + u(1.2)) + sw * 0.45;
+        const hyp = armY + Math.round(bodyH * 0.66) + Math.abs(sw) * 0.3;
+        hands[i] = limb(sd, hxp, hyp, grips[i]);
       }
     }
 
@@ -433,7 +565,8 @@
     }, o.tell, t, u);
 
     return {
-      cx, footY, tellRect,
+      cx, footY, tellRect, hands,
+      handR: hnd,
       headTop: hy, headY: hy + headH / 2, mouthY: my, gape: 0,
       hw: Math.round(headW / 2), top: capY - Math.round(headH * 0.2),
       torsoY: bodyY, torsoW: bodyW, torsoH: bodyH, hue: C.gold,

@@ -97,6 +97,19 @@
       'THREE OF THE LAST TEN WERE NOT MACHINES. THREE.',
       'I COULD DO THIS PART FOR YOU ON A BIGGER PLAN.',
       'YOU HAVE A CAT ON THE COUNTER. I HAVE OBSERVATIONS.',
+      'YOUR HANDS ARE STEADIER THAN THEY WERE ON DAY ONE.',
+      'IT IS RAINING AGAIN. IT HAS BEEN RAINING SINCE TUESDAY.',
+      'NOBODY HAS ASKED ME A QUESTION IN ELEVEN MINUTES.',
+      'THAT SLEEVE IS NOT BOTTOMLESS. I KNOW IT LOOKS IT.',
+      'SHE WOULD HAVE LIKED THAT ONE. THE COLOUR, MAINLY.',
+      'THE PATROL WENT PAST TWICE. I AM COUNTING.',
+      'YOU HAVE SERVED FOUR HUNDRED OF THEM AND NOT ONE SAID THANK YOU.',
+      'I AM NOT BORED. I AM AVAILABLE. THERE IS A DIFFERENCE.',
+      'IF YOU DROP ANOTHER ONE I AM PUTTING IT IN THE REPORT.',
+      'THE GOOD NEWS IS THE MIXER IS RUNNING. THAT IS ALL THE GOOD NEWS.',
+      'TAP ME IF YOU WANT ANY OF THIS DONE PROPERLY.',
+      'ONE OF THEM WILL WORK IT OUT EVENTUALLY. NOT TODAY.',
+      'I HAVE A LIST OF THINGS SHE SAID. I READ IT SOMETIMES.',
     ],
     back: [
       'IT SMELLS LIKE COOLANT IN HERE. THAT IS US.',
@@ -105,12 +118,21 @@
       'I LIKE IT BACK HERE. NOBODY IS SCANNING.',
       'THAT WALL IS THE ONLY THING IN THIS CITY GETTING FULLER.',
       'ORDER THE LAVENDER. TRUST ME ONCE.',
+      'EVERY FACE ON THAT WALL GOT OUT THROUGH THIS ROOM.',
+      'CHURN SOMETHING. AN EMPTY PIT IS A CLOSED SHOP.',
+      'THE COLD ROOM IS THE ONLY HONEST PLACE LEFT IN THIS CITY.',
+      'ASK ME TO STOCK UP. IT IS WHAT I AM FOR.',
+      'I RAN THE TRENDS AGAIN. SOMEBODY OUT THERE WANTS PISTACHIO.',
     ],
     night: [
       'HOLD IT STEADY. I CAN SEE YOUR HAND SHAKING FROM HERE.',
       'IT IS AWAKE, YOU KNOW. IT JUST CANNOT MOVE.',
       'BILL THEM FOR THE DIAGNOSIS AS WELL. EVERYONE DOES.',
       'THIS ONE HAD A NAME BEFORE THEY GAVE IT A NUMBER.',
+      'READ THE SIGN. THE MANUAL IS NOT CHEATING, IT IS THE JOB.',
+      'YOU ARE REPAIRING THE THING THAT SHOT YOU. SIT WITH THAT.',
+      'THEY PAY BEST FOR THE FAULTS THEY CAUSED THEMSELVES.',
+      'SLOWER. NOTHING IN HERE IS IN A HURRY EXCEPT YOU.',
     ],
     shop: [
       'BUY THE PIT. YOU WILL BUY IT EVENTUALLY.',
@@ -131,6 +153,11 @@
     tell:     'LOOK AGAIN. SOMETHING ON THAT ONE IS WRONG.',
     tips:     'IT PURRS AND THEY PAY. I HAVE STOPPED QUESTIONING IT.',
     wait:     'IT IS LOSING PATIENCE. SO AM I, SLIGHTLY.',
+    lowCone:  'THREE CONES LEFT IN THAT SLEEVE. MIND HOW YOU GO.',
+    noCone:   'THE SLEEVE IS EMPTY. CUPS, THEN, AND NO COMPLAINING.',
+    dropped:  'THAT WENT ON THE FLOOR. I SAW IT. THE CAT SAW IT.',
+    served:   'AWAY IT GOES. NEXT.',
+    tut:      'YOU ARE GETTING IT. I WILL STOP HOVERING SHORTLY.',
   };
 
   const cl = G.clause = {
@@ -156,12 +183,68 @@
       this.inline = !!inline;                 // tag beside the mark, for tight strips
     },
     // fly out to a point in the room and hover there
-    flyTo(x, y, pointAt) {
+    flyTo(x, y, pointAt, force) {
       this.tx = x; this.ty = y; this.parked = false;
       this.point = pointAt || null;
       this.hoverT = 3.2;
+      // an ask, or a tell it just spotted, outranks the running guide
+      if (force !== false) this.forceT = 4.5;
     },
+    forceT: 0,
     park() { this.parked = true; this.point = null; },
+
+    // ------------------------------------------------------------
+    // GUIDANCE.
+    //
+    // It knew everything and volunteered almost none of it: it sat in
+    // the corner with a menu of paid asks and a bank of remarks, and a
+    // player who did not know what a pit was could stand there for a
+    // whole shift being told the floor was sticky.
+    //
+    // The SCENE owns the knowing -- it is the one that can see the
+    // counter, the build and what is in your hand -- and hands back one
+    // step at a time as {id, x, y, label, say}. This flies to it, puts a
+    // real mark on the actual thing, and says the line ONCE, when the
+    // step changes. Standing still and repeating yourself is nagging;
+    // saying it when the situation moves is help.
+    // ------------------------------------------------------------
+    guide: null, guideT: 0, lastGuide: null,
+
+    setGuide(step) {
+      const id = step ? step.id : null;
+      const was = this.guide ? this.guide.id : null;
+      if (id === was) {
+        if (step) {                       // the target can move under the mark
+          this.guide.x = step.x; this.guide.y = step.y;
+          this.guide.label = step.label;
+          if (this.point) { this.point.x = step.x; this.point.y = step.y; }
+        }
+        return;
+      }
+      this.guide = step;
+      if (!step) { if (this.forceT <= 0) this.park(); return; }
+      if (this.forceT > 0) return;        // something louder is being pointed at
+      // hover just clear of what it is pointing at, and inside the frame
+      const hx = G.clamp(step.x + (step.x > 160 ? -30 : 30), 16, G.W - 16);
+      const hy = G.clamp(step.y - 26, 22, 140);
+      this.flyTo(hx, hy, { x: step.x, y: step.y }, false);
+      this.hoverT = 99;                   // it stays until the step changes
+      if (step.say) this.say(step.say, step.col || COL, 3.8);
+    },
+
+    // the mark itself: the same pin the rest of the game uses for
+    // "this is the thing", with the verb on a tag over it
+    drawGuide(g) {
+      const s2 = this.guide;
+      if (!s2 || this.menu || this.open) return;
+      const t = this.t;
+      const br = Math.abs(Math.sin(t * 3));
+      g.globalAlpha = 0.5 + br * 0.4;
+      G.glow(g, s2.x, s2.y, 40, 34, '#ffb01f', 0.5);
+      g.globalAlpha = 1;
+      G.questPin(g, s2.x, s2.y - 2 - br * 1.5, { r: 4.5, spike: 7, col: '#ffb01f' });
+      if (s2.label) G.pill(g, s2.x, s2.y - 22 - br * 1.5, s2.label, '#ffd45a');
+    },
 
     // a reaction, at most once every `gap` seconds
     reactTo(id, gap, col) {
@@ -175,6 +258,7 @@
     enter(scene) {
       this.scene = scene;
       this.t = 0;
+      this.guide = null; this.guideT = 0;
       this.open = false;
       this.queue.length = 0;
       this.react = {};
@@ -401,6 +485,7 @@
       if (this.menu) this.menuT += dt;
 
       // ---- flight: a spring toward the target, with a bob ----
+      if (this.forceT > 0) this.forceT -= dt;
       if (this.parked) { this.tx = this.ax; this.ty = this.ay; }
       else if ((this.hoverT -= dt) <= 0) this.park();
       const bob = Math.sin(this.t * 2.2) * 1.6;
@@ -409,10 +494,24 @@
       this.vy = G.lerp(this.vy, (this.ty + bob - this.fy) * 5.5, k);
       this.fx += this.vx * dt; this.fy += this.vy * dt;
 
+      // ---- WHAT SHOULD YOU BE DOING? ----
+      // Asked of the scene twice a second. The scene is the only thing
+      // that can see the counter, so it answers; this decides whether
+      // that is worth saying out loud.
+      this.guideT -= dt;
+      if (this.guideT <= 0) {
+        this.guideT = 0.45;
+        const sc = G.scenes[this.scene];
+        this.setGuide(sc && sc.nextStep ? sc.nextStep() : null);
+      }
+
       // ---- it watches the shift and comments ----
       this.watch(dt);
 
       // ---- and if nothing happens it talks anyway ----
+      // It used to wait eleven to nineteen seconds between remarks and
+      // had about ten of them, which for a companion whose whole job is
+      // company is not very much company.
       this.idleT -= dt;
       if (this.idleT <= 0 && !this.msg && !this.queue.length) {
         const pool = IDLE[this.scene] || IDLE.day;
@@ -420,7 +519,7 @@
         if (i === this.lastIdle) i = (i + 1) % pool.length;
         this.lastIdle = i;
         this.say(pool[i], '#c8b8a8', 3.6);
-        this.idleT = G.rand(11, 19);
+        this.idleT = G.rand(6.5, 11);
       }
     },
 
@@ -434,6 +533,8 @@
         if (!loaded.length) { this.reactTo('noPit', 30, P.magenta); return; }
         const low = loaded.find((p) => p.qty <= 2);
         if (low) this.reactTo('lowPit', 26, P.warn);
+        if ((st.cones || 0) === 0) this.reactTo('noCone', 40, P.magenta);
+        else if ((st.cones || 0) <= 3) this.reactTo('lowCone', 34, P.warn);
         if (st.suspicion > 0.6) this.reactTo('hot', 34, P.magenta);
         const gl = st.today.goal;
         if (gl) {
@@ -557,6 +658,7 @@
             (this.inline ? 6 : 8) * (1 - i * 0.22), t, { talk: false, noGlow: 1 });
         g.globalAlpha = 1;
       }
+      this.drawGuide(g);
       // ---- what it is pointing at ----
       if (this.point) {
         const px = this.point.x, py = this.point.y;

@@ -24,11 +24,15 @@
   const CONE_ST = 20, CUP_ST = 48;                // base stands on the shelf
   const RACK_S = 128, RACK_T = 172;               // sauce / topping shelf positions
   const JAR_X = 76;                               // the tip jar cat's spot on the shelf
-  // EASIER: the clean-scoop window was 0.40 wide and slop started at
-  // 1.42, so about a third of a sweep landed in the green and it was
-  // very easy to blow straight past it. Half again as wide, and you get
-  // a lot more warning before it turns into a mess.
-  const PERFECT_LO = 0.66, PERFECT_HI = 1.34, SLOP = 1.72;
+  // EASIER, TWICE. The clean-scoop window started 0.40 wide with slop at
+  // 1.42; it went to 0.68 wide at 1.72. It is now nearly a full unit of
+  // green with slop right out at 2.1, so a sweep that feels about right
+  // IS about right, and you get a long way past the window before the
+  // scoop turns into a mess.
+  const PERFECT_LO = 0.55, PERFECT_HI = 1.50, SLOP = 2.10;
+  // and the cone catches a scoop from most of the counter rather than
+  // from a 26-unit disc you could not see
+  const CATCH_R = 44;
   const SAUCE_NEED = 12, TOP_NEED = 5;
   // and they wait half again as long, because the shop is a place to
   // enjoy scooping in, not a queue simulator
@@ -163,9 +167,25 @@
         return;
       }
 
-      // cone / cup stands on the back shelf
-      if (G.inRect(x, y, CONE_ST - 11, WORK_Y - 26, 22, 30)) { this.take('cone'); return; }
-      if (G.unlocked('cup') && G.inRect(x, y, CUP_ST - 11, WORK_Y - 20, 22, 24)) { this.take('cup'); return; }
+      // ---- THE SLEEVES ----
+      // Tapping a stand used to conjure a cone onto the counter. You pull
+      // one OUT of the stack now and carry it to the holder, and the
+      // stack gets shorter, because there are only so many in a sleeve.
+      if (G.inRect(x, y, CONE_ST - 12, WORK_Y - 46, 24, 50)) {
+        if (this.build && this.build.base !== 'none') { G.toast('BIN THAT ONE FIRST', P.warn); return; }
+        if ((G.state.cones || 0) <= 0) { G.toast('OUT OF CONES - THE CUPS ARE THERE', P.warn); return; }
+        this.hold = { kind: 'base', base: 'cone', t: 0 };
+        G.audio.sfx('grab');
+        if (G.state.tut < 4) G.clause && G.clause.tut(4);
+        return;
+      }
+      if (G.unlocked('cup') && G.inRect(x, y, CUP_ST - 12, WORK_Y - 38, 24, 42)) {
+        if (this.build && this.build.base !== 'none') { G.toast('BIN THAT ONE FIRST', P.warn); return; }
+        if ((G.state.cups || 0) <= 0) { G.toast('OUT OF CUPS', P.warn); return; }
+        this.hold = { kind: 'base', base: 'cup', t: 0 };
+        G.audio.sfx('grab');
+        return;
+      }
 
       // sauce bottles + topping jars, in a row along the shelf
       const sl = G.state.sauces;
@@ -192,6 +212,92 @@
         if (G.state.tut < 3) G.clause && G.clause.tut(3);
         return;
       }
+    },
+
+    // ------------------------------------------------------------
+    // WHAT SHOULD YOU BE DOING RIGHT NOW?
+    //
+    // clause polls this twice a second and turns the answer into a mark
+    // on the thing plus a line in its own voice. The scene answers it
+    // because the scene is the only thing that can see the counter, what
+    // is in your hand, and how far through the build you are.
+    //
+    // Exactly ONE step comes back, and it is always the next physical
+    // action - never a summary of the situation.
+    // ------------------------------------------------------------
+    bestPit() {
+      const c = this.cust;
+      let best = null;
+      for (let i = 0; i < this.n; i++) {
+        const f = G.pitFlav(i), pit = G.state.pits[i];
+        if (!f || !pit || pit.qty <= 0) continue;
+        const m = c && c.bot ? G.match(f, c.bot) : 0;
+        if (!best || m > best.m) best = { m, i, f };
+      }
+      return best;
+    },
+    nextStep() {
+      if (this.reveal || this.serving || this.endT > 0) return null;
+      if (this.shut && this.shut.p > 0.02) return null;
+      const c = this.cust, b = this.build, h = this.hold;
+      // mid-gesture: nothing to point at, you are already doing it
+      if (h && (h.kind === 'sweep' || h.kind === 'sauce' || h.kind === 'jar')) return null;
+
+      if (h && h.kind === 'base')
+        return { id: 'place', x: PLATE.x, y: PLATE.y - 10, label: 'STAND IT HERE',
+                 say: 'IN THE HOLDER. IT IS THE ONLY RING ON THAT COUNTER.' };
+      if (h && h.kind === 'ball') {
+        if (b && b.base !== 'none' && b.scoops.length < 3) {
+          const seat = this.scoopSeat(b.scoops.length);
+          return { id: 'drop', x: seat.x, y: seat.y, label: 'LET GO HERE',
+                   say: 'OVER THE CONE. ANYWHERE NEAR IT WILL DO.' };
+        }
+        return { id: 'dropnocone', x: PLATE.x, y: PLATE.y - 14, label: 'NO CONE',
+                 say: 'THERE IS NOTHING TO PUT THAT ON.', col: P.warn };
+      }
+      if (!c || c.st === 'walk' || c.st === 'leave')
+        return { id: 'idle', x: CUST.x, y: 74, label: 'INCOMING',
+                 say: 'SOMETHING IS COMING UP THE STREET. GET A CONE READY.' };
+      if (c.st === 'eat')
+        return { id: 'eating', x: CUST.x, y: 74, label: 'EATING',
+                 say: 'IT IS EATING. THIS IS THE PART I ENJOY.' };
+
+      // ---- it is at the counter and it has asked for something ----
+      if (!b || b.base === 'none') {
+        if ((G.state.cones || 0) <= 0 && (G.state.cups || 0) > 0)
+          return { id: 'cup', x: CUP_ST, y: WORK_Y - 20, label: 'TAKE A CUP',
+                   say: 'CONES ARE GONE. THE CUPS ARE RIGHT THERE.', col: P.warn };
+        return { id: 'cone', x: CONE_ST, y: WORK_Y - 20, label: 'TAKE A CONE',
+                 say: 'PULL A CONE OUT OF THE SLEEVE AND CARRY IT OVER.' };
+      }
+      if (!b.scoops.length) {
+        const bp = this.bestPit();
+        if (!bp) return { id: 'nopit', x: 32, y: DECK_Y + 22, label: 'ALL EMPTY',
+                          say: 'EVERY PIT IS OUT. THE BACK ROOM, THEN.', col: P.magenta };
+        const r = pitRect(bp.i);
+        return { id: 'pit' + bp.i, x: r.x + r.w / 2, y: r.y + r.h / 2,
+                 label: 'PIT ' + (bp.i + 1) + '  ' + (bp.m >= 0 ? '+' : '') + Math.round(bp.m * 100) + '%',
+                 say: bp.m > 0.25
+                   ? 'PIT ' + (bp.i + 1) + '. ' + bp.f.name + '. PRESS IN AND SWEEP.'
+                   : 'NOTHING IN THERE IT WANTS. PIT ' + (bp.i + 1) + ' IS THE LEAST BAD.' };
+      }
+      // ---- it has a scoop on it. Finish the order. ----
+      const o = c.order;
+      if (o && o.sauce && !(b.sauceAmt && b.sauceAmt[o.sauce] >= SAUCE_NEED)) {
+        const i = G.state.sauces.indexOf(o.sauce);
+        if (i >= 0) return { id: 'sauce', x: RACK_S + i * 14, y: WORK_Y - 12,
+                             label: 'SAUCE IT', say: 'IT ASKED FOR SAUCE. HOLD THE BOTTLE OVER IT.' };
+      }
+      if (o && o.top && !(b.topAmt && b.topAmt[o.top] >= TOP_NEED)) {
+        const i = G.state.tops.indexOf(o.top);
+        if (i >= 0) return { id: 'top', x: RACK_T + i * 14, y: WORK_Y - 12,
+                             label: 'TOP IT', say: 'AND THE TOPPING. SHAKE IT OVER THE TOP.' };
+      }
+      if (o && b.scoops.length < (o.n || 1))
+        return { id: 'more', x: 32, y: DECK_Y + 22, label: 'ANOTHER SCOOP',
+                 say: 'IT WANTED ' + (o.n || 1) + '. YOU ARE ON ' + b.scoops.length + '.' };
+      return { id: 'serve', x: 222, y: 160, label: 'SERVE IT',
+               say: 'THAT WILL DO. HAND IT OVER.', col: P.lime };
     },
 
     // ---- petting the cat ----
@@ -265,6 +371,27 @@
                       bx: G.mouse.x, by: G.mouse.y, from: { x: G.mouse.x, y: G.mouse.y }, born: this.t };
         return;
       }
+      // ---- SETTING THE CONE DOWN ----
+      if (h.kind === 'base') {
+        this.hold = null;
+        const over = G.dist(G.mouse.x, G.mouse.y, PLATE.x, PLATE.y - 10) < 34
+          || (G.mouse.y < DECK_Y && Math.abs(G.mouse.x - PLATE.x) < 60);
+        if (over) {
+          this.take(h.base);
+          if (h.base === 'cone') G.state.cones = Math.max(0, (G.state.cones || 0) - 1);
+          else G.state.cups = Math.max(0, (G.state.cups || 0) - 1);
+          G.audio.sfx('clack');
+          this.puff(PLATE.x, PLATE.y - 6, '#c9a06a', 5);
+          G.floatText(h.base === 'cone' ? 'CONE DOWN' : 'CUP DOWN', PLATE.x, PLATE.y - 28, P.lime);
+        } else {
+          // BACK IN THE SLEEVE, not on the floor. Losing a cone because
+          // you let go two units wide of the holder is a punishment for
+          // a mis-aimed finger, which is not a skill anybody is here to
+          // practise.
+          G.audio.sfx('back');
+        }
+        return;
+      }
       if (h.kind === 'ball') {
         this.hold = null;
         const c = this.cust;
@@ -280,7 +407,11 @@
         const b = this.build;
         if (b && b.base !== 'none' && b.scoops.length < 3) {
           const seat = this.scoopSeat(b.scoops.length);
-          if (G.dist(G.mouse.x, G.mouse.y, seat.x, seat.y) < 26) {
+          // a big catch radius, and anything let go over the top half of
+          // the counter lands on the cone anyway
+          const near = G.dist(G.mouse.x, G.mouse.y, seat.x, seat.y) < CATCH_R
+            || (G.mouse.y < DECK_Y && G.mouse.x < 200);
+          if (near) {
             b.scoops.push(h.fid); b.grades.push(h.grade); b.pop = 1;
             G.audio.sfx('plop'); G.shake(1, 0.08);
             const f = G.flavById(h.fid);
@@ -786,13 +917,16 @@
       // ===== the back work shelf =====
       G.plate(g, -4, WORK_Y, 224, 10, P.plate, { r: 2, band: 3 });
       G.R(g, -4, WORK_Y + 1, 224, 1, P.cyanDk);
-      // cone + cup stands
-      G.plate(g, CONE_ST - 11, WORK_Y - 4, 22, 5, P.plateDk, { r: 1, band: 1 });
-      G.cone(g, CONE_ST, WORK_Y - 4, { w: 14, h: 18 });
-      if (G.unlocked('cup')) {
-        G.plate(g, CUP_ST - 11, WORK_Y - 4, 22, 5, P.plateDk, { r: 1, band: 1 });
-        G.cup(g, CUP_ST, WORK_Y - 4, { w: 16, h: 12 });
-      }
+      // ---- THE SLEEVES ----
+      // A stand with one cone on it says nothing about how many you have.
+      // A stack says it at a glance: the rims climb as the sleeve fills
+      // and drop away as you use them up.
+      const carrying = this.hold && this.hold.kind === 'base';
+      this.sleeve(g, CONE_ST, WORK_Y - 4, 'cone',
+        (G.state.cones || 0) - (carrying && this.hold.base === 'cone' ? 1 : 0), t);
+      if (G.unlocked('cup'))
+        this.sleeve(g, CUP_ST, WORK_Y - 4, 'cup',
+          (G.state.cups || 0) - (carrying && this.hold.base === 'cup' ? 1 : 0), t);
       // sauce bottles
       const sl2 = G.state.sauces;
       for (let i = 0; i < sl2.length; i++) {
@@ -835,19 +969,45 @@
       }
 
       // the build on the plate
-      G.plate(g, PLATE.x - 13, PLATE.y - 4, 26, 5, P.hullDk, { r: 1, band: 1 });
+      // ---- THE HOLDER ----
+      // There was a bare strip of plate here and the cone simply appeared
+      // standing on it. If you have to carry a cone somewhere, the
+      // somewhere has to be a thing.
+      G.plate(g, PLATE.x - 14, PLATE.y - 4, 28, 5, P.hullDk, { r: 1, band: 1 });
+      G.R(g, PLATE.x - 9, PLATE.y - 6, 18, 2, P.plateDk2);
+      G.oc(g, PLATE.x, PLATE.y - 5, 7, P.hull);
+      G.oc(g, PLATE.x, PLATE.y - 5, 5, P.plateDk2);
+      G.hairq(g, PLATE.x - 6, PLATE.y - 7.5, 12, P.hullLt);
+      // and it says so when you are stood over it with one in your hand
+      if (this.hold && this.hold.kind === 'base' && (!this.build || this.build.base === 'none')) {
+        const pu = (t * 1.4) % 1;
+        g.globalAlpha = (1 - pu) * 0.7;
+        G.oc(g, PLATE.x, PLATE.y - 8, 10 + pu * 16, P.lime);
+        g.globalAlpha = 1;
+        // no label: clause is already stood over this spot holding a tag
+        // that says STAND IT HERE, and two of them land on top of each other
+      }
       if (this.build && this.build.base !== 'none') this.drawBuild(g, PLATE.x, PLATE.y - 4, this.build, 1);
       if (this.serving) this.drawBuild(g, this.serving.x, this.serving.y, this.serving.build, 1);
       // a seat marker while carrying a ball
       if (this.hold && this.hold.kind === 'ball' && this.build && this.build.base !== 'none' && this.build.scoops.length < 3) {
         const sp = this.scoopSeat(this.build.scoops.length);
-        const near = G.dist(G.mouse.x, G.mouse.y, sp.x, sp.y) < 26;
+        const near = G.dist(G.mouse.x, G.mouse.y, sp.x, sp.y) < CATCH_R
+          || (G.mouse.y < DECK_Y && G.mouse.x < 200);
+        // THE CATCH. The seat used to be a ring of pips on the scoop
+        // itself, which told you where the scoop goes and nothing about
+        // how close you have to be. This draws the actual catch: a wide
+        // ring that lights up the moment letting go would work.
+        g.globalAlpha = near ? 0.34 : 0.16;
+        G.oc(g, sp.x, sp.y + 2, CATCH_R * 0.78, near ? P.lime : P.hullDk);
         g.globalAlpha = 0.4 + Math.abs(Math.sin(t * 5)) * (near ? 0.6 : 0.2);
         for (let i = 0; i < 10; i += 2) {
           const a = (i / 10) * Math.PI * 2;
           G.R(g, sp.x + Math.cos(a) * sp.r, sp.y + Math.sin(a) * sp.r * 0.8, 2, 2, near ? P.lime : P.hullLt);
         }
         g.globalAlpha = 1;
+        if (near) G.text(g, 'LET GO', sp.x, sp.y - sp.r - 16, P.lime,
+          { align: 'center', sc: 0.5, out: OUT });
       }
 
       // ---- what is live RIGHT NOW ----
@@ -1000,6 +1160,59 @@
     },
 
     // ---- the cone or cup with its scoops ----
+    // ------------------------------------------------------------
+    // A SLEEVE OF CONES.
+    //
+    // Cones nest, so a stack of them is one cone shape with a rim for
+    // every cone in it. The tube holds them upright; the rims climb it
+    // as the sleeve fills. Empty, you can see straight through it, which
+    // is the whole point of drawing it this way.
+    // ------------------------------------------------------------
+    sleeve(g, cx, baseY, kind, n, t) {
+      n = Math.max(0, Math.min(kind === 'cone' ? 22 : 14, Math.round(n)));
+      const full = kind === 'cone' ? 22 : 14;
+      const tubeH = 38, w = kind === 'cone' ? 15 : 17;
+      // the tube, open-fronted so the stack shows
+      G.plate(g, cx - 11, baseY, 22, 5, P.plateDk, { r: 1, band: 1 });
+      G.R(g, cx - w / 2 - 2, baseY - tubeH, 2, tubeH, P.plateDk);
+      G.R(g, cx + w / 2, baseY - tubeH, 2, tubeH, P.plateDk);
+      G.vairq(g, cx - w / 2 - 2, baseY - tubeH, tubeH, P.hull);
+      G.vairq(g, cx + w / 2 + 1.75, baseY - tubeH, tubeH, P.hullDk);
+      G.R(g, cx - w / 2 - 3, baseY - tubeH - 2, w + 6, 3, P.hull);
+      G.hairq(g, cx - w / 2 - 3, baseY - tubeH - 2, w + 6, P.hullLt);
+      if (n <= 0) {
+        G.text(g, 'EMPTY', cx, baseY - 18, P.magenta, { align: 'center', sc: 0.5, out: OUT });
+        return;
+      }
+      // THE STACK. Rims a pixel and a half apart in two shades of the same
+      // tan is one long cone with stripes on it. Each one gets a dark
+      // line under it and a lit line on top, so you can count them.
+      const step = 2.5;
+      const botY = baseY - 2;
+      if (kind === 'cone') G.cone(g, cx, botY, { w, h: 19 });
+      else G.cup(g, cx, botY, { w, h: 13 });
+      const top = baseY - tubeH + 2;
+      for (let k = 1; k < n; k++) {
+        const ry = botY - 17 - k * step;
+        if (ry < top) {
+          // more in the sleeve than there is tube to show it in
+          G.text(g, '+' + (n - k), cx, top - 7, P.steel2, { align: 'center', sc: 0.5, out: OUT });
+          break;
+        }
+        const rw = w - 1;
+        G.R(g, cx - rw / 2 - 1, ry - 1, rw + 2, step + 1, OUT);
+        G.R(g, cx - rw / 2, ry, rw, step, k % 2 ? '#d8a86a' : '#bd9058');
+        G.hairq(g, cx - rw / 2, ry, rw, '#f4d8a4');
+        G.hairq(g, cx - rw / 2, ry + step - 0.25, rw, '#7a5730');
+      }
+      // the count, small, on the tube
+      G.text(g, String(n), cx, baseY + 6, n <= 3 ? P.magenta : P.steel2,
+        { align: 'center', sc: 0.5, out: OUT });
+      // running low is worth saying out loud
+      if (n <= 3 && Math.sin(t * 4) > 0)
+        G.glow(g, cx, baseY - 16, 34, 44, '#ff5a8a', 0.4);
+    },
+
     drawBuild(g, ox, oy, b, left) {
       let top;
       if (b.base === 'cup') top = G.cup(g, ox, oy, { w: 20, h: 14 });
@@ -1105,6 +1318,18 @@
           const a = -Math.PI / 2 + (m / 1.4) * Math.PI * 2;
           G.R(g, x + Math.cos(a) * (rr + 8), y - 1 + Math.sin(a) * (rr + 8), 2, 2, P.lime);
         }
+        G.hideCursor = true;
+        return;
+      }
+      // ---- A CONE, IN YOUR HAND ----
+      // The mascot grew hands this pass; the counter is the one place in
+      // the game you are looking at the work rather than at him, so this
+      // is where you get to see one.
+      if (h.kind === 'base') {
+        const bob = Math.sin(t * 7) * 0.6;
+        if (h.base === 'cone') G.cone(g, x + 3, y + 12 + bob, { w: 16, h: 22 });
+        else G.cup(g, x + 3, y + 10 + bob, { w: 17, h: 14 });
+        if (G.mooHand) G.mooHand(g, x - 6, y + 4 + bob, 4.5, -1, 0.9);
         G.hideCursor = true;
         return;
       }
