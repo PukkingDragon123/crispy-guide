@@ -2,11 +2,12 @@
 
 **They took the world. You have gelato.**
 
-A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: a big
-cream head with two dot eyes and one smile behind a pair of black shades, ears
-that hang, a slim body with the BIG MOO roundel on the chest, a flower lei, and
-long legs with daylight between them. For six years you were the face of BIG
-MOO, a beachfront burger chain with a cow on the sign, open twenty-four hours.
+A zero-dependency pixel-art game at **1280×720**. You are a **mascot**: a red
+crew cap with the chain's letter on it, a black visor with two amber slits
+burning behind it, a pair of ear cups with the roundel stamped on them, tan horn
+nubs poking out from under the cap, a pink snout, and the house apron over a
+cream body. For six years you were the face of BIG MOO, a beachfront burger
+chain with a cow on the sign, open twenty-four hours.
 
 Then a patrol machine walked in through the front door, put **six rounds** into
 you, and left a charge under the counter. Your legs still work. Almost nothing
@@ -420,6 +421,38 @@ eleven pixels, and the spot is the plot while the person is the joke.
 The line along the bottom of the screen says what the pointer is actually on:
 
 > TAP A MAN IN A COAT TO TALK
+
+---
+
+## 💥 Comic
+
+Everything that happens in a walkable room now says so. The model sheet
+this mascot came off has three little dashes over its head when it is
+pleased; that idea is the whole layer.
+
+| | |
+|---|---|
+| **The star** | ten spokes on alternating radii, snapping open past its own size and then shutting. Outline pass first and fill after, or each spoke's black lands on the one before it |
+| **Speed dashes** | seven short bars thrown out of the star on its own arcs, stretching as they go |
+| **The marks** | three strokes fanning off a head — over anybody you talk to, and over your own when a job lands |
+| **Puffs** | a soft cloud that grows and drifts, rather than the expanding hoop that was there before. Dust does not ring |
+
+![Comic](screenshots/comic.png)
+
+One call — `S.comic(x, y, col, size)` — fires the star, the dashes, a
+spray of sparks and a kick on the camera, so everything that lands in this
+game lands the same way. `S.bang` routes through it too.
+
+**And it bounces.** The spring was clamped at ±0.15, so a landing that set
+the velocity to 62 looked exactly like one at 30; it runs to ±0.22 now.
+Stepping off the mark stretches you, every footfall squashes you and kicks
+a puff of dust back the way you came, and landing drops six of them.
+
+**Float text pops.** It used to fade in at full size and slide upward,
+which is a subtitle moving. A number that matters snaps out past its own
+size and settles back — at a scale quantised to quarter steps, because a
+glyph drawn at 0.83 of its size lands between native pixels and the whole
+line goes soft, which is the one thing this raster is not allowed to do.
 
 ---
 
@@ -1263,7 +1296,38 @@ And a cream body with a badge on it is a fridge, so the suit got **one black
 patch, on the hip** — one, because a 22-by-16 chest with a roundel on it has
 room for exactly one marking and a second lands under the lei.
 
-### A new head
+### The crew uniform
+
+![The mascot](screenshots/mascot-beach.png)
+
+**A cap.** Red, worn forward, with the chain's letter on the crown and a
+peak that comes toward you. It goes down *after* the horns, so the brim
+cuts their roots and they read as coming out from under it — and the horns
+moved out to 0.33 of the head's width to do that, because at 0.27 they
+were entirely underneath it.
+
+**A visor.** One dark faceplate with **two amber slits** burning behind
+it, which is the whole face. The two separate lenses it replaced are a
+person in sunglasses; a visor is a machine in a cow suit, which is what
+this is. The slits carry the expression on their own: angry pulls the
+inner end down, hurt lifts it, and one row of pixels is the entire range.
+
+**Ear cups.** Not flaps — a pair of padded cans on the sides of the head
+with the chain's roundel stamped on them. They go down before the skull so
+it tucks over the mount, and they sit at 0.50 of the head's width: any
+further in and the skull covers them, and all you see is a dark crescent.
+
+**An apron.** A bib on two straps and a skirt under it, in the house red,
+with a hem stripe, a pocket and the mark on the front. The cowbell came
+off with it — a bell on a strap and a lei round the same neck is two
+necklaces, and on a sixteen-unit chest the bell hung straight down through
+the middle of the flowers and out the other side into the badge.
+
+And the limbs went dark and stubby to go with it, because the mascot is
+cream, the apron is red, and a cream limb drawn over a cream body is one
+wide shape with no arms in it.
+
+### The head under it
 
 The old one was a flat-topped slab with a letterbox of black glass across
 it, two beige domes balanced on the roof, and a face crammed into the

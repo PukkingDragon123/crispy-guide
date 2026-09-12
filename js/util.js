@@ -713,7 +713,7 @@
     }
     for (let i = G.floaters.length - 1; i >= 0; i--) {
       const f = G.floaters[i];
-      f.t += dt; f.y -= 15 * dt;
+      f.t += dt; f.y -= (26 - Math.min(22, f.t * 30)) * dt;
       if (f.t > 1.2) G.floaters.splice(i, 1);
     }
     for (let i = G.toasts.length - 1; i >= 0; i--) {
@@ -769,8 +769,18 @@
     }
     for (const f of G.floaters) {
       const a = f.t > 0.8 ? 1 - (f.t - 0.8) / 0.4 : 1;
+      // IT POPS. It used to fade in at full size and slide upward, which
+      // is a subtitle moving; a number that matters snaps out past its
+      // own size and settles back.
+      const sc0 = f.big ? 2 : 1;
+      const e = f.t < 0.22 ? G.backOut(f.t / 0.22) : 1;
+      // quantised to quarter steps: a glyph drawn at 0.83 of its size
+      // lands between native pixels and the whole line goes soft, which
+      // is the one thing this raster is not allowed to do
+      const sc = Math.max(0.5, Math.round(sc0 * (0.4 + 0.6 * e)
+        * (f.t > 0.9 ? 1 - (f.t - 0.9) * 0.5 : 1) * 4) / 4);
       g.globalAlpha = Math.max(0, a);
-      G.text(g, f.str, f.x, f.y, f.col, { align: 'center', out: P.ink, sc: f.big ? 2 : 1 });
+      G.text(g, f.str, f.x, f.y, f.col, { align: 'center', out: P.ink, sc });
       g.globalAlpha = 1;
     }
     let ty = G.toastY || 40;

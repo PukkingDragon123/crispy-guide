@@ -45,7 +45,7 @@
     // barrel with a cow balanced on it. The body is 24 now and the head is
     // wider than it is, which is the whole difference between a mascot and
     // a water tank.
-    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 0.80, h: 1.06, hs: 1.42, soft: 2, cow: 1, shades: 1, mascot: 1, beach: 1 },
+    player:  { base: 'hoof',   torso: 'barrel',  head: 'cow',     arms: 'scoop',     prop: 'none',    w: 0.80, h: 1.06, hs: 1.42, soft: 2, cow: 1, shades: 1, mascot: 1, apron: 1 },
   };
   G.frameOf = (id) => FRAME[id] || FRAME.police;
 
@@ -500,8 +500,8 @@
       // 18 + 16 - 1 + 19 = 52, which is G.SZ.MASCOT and therefore an adult
       // head to heel. Long legs and a short body inside that budget, rather
       // than the other way round.
-      const lw = Math.max(3, Math.round(u(mas ? 5.6 : 9) * (1 - sq * 0.4)));
-      const lh = Math.max(4, Math.round(u(mas ? 18 : 16) * (1 + sq * 0.7)));
+      const lw = Math.max(3, Math.round(u(mas ? 6 : 9) * (1 - sq * 0.4)));
+      const lh = Math.max(4, Math.round(u(mas ? 15 : 16) * (1 + sq * 0.7)));
       const hf = Math.max(3, u(mas ? 4 : 5));
       const spread = mas ? 0.28 : 0.24;
       // ---- the tail. It goes down first so the body covers the root.
@@ -558,7 +558,7 @@
         }
         const off = (s < 0 ? sw : -sw);
         const isSpare = spare && s > 0;
-        const c = isSpare ? '#bcc0c6' : b.col;
+        const c = isSpare ? '#bcc0c6' : mas ? '#4a4356' : b.col;
         const lx = cx + s * Math.round(bw * spread) - lw / 2;
         const ly = footY - lh + off;
         // the shank, all the way down to the cuff
@@ -720,7 +720,7 @@
     let w = bw, h = u(TORSO_H[kind] === undefined ? 18 : TORSO_H[kind]);
     if (kind === 'slab')    w = Math.round(bw * 1.12);
     if (kind === 'narrow')  w = Math.round(bw * 0.78);
-    if (kind === 'barrel')  { w = Math.round(bw * (mascot ? 0.90 : 1.12)); h = u(mascot ? 16 : 19); }
+    if (kind === 'barrel')  { w = Math.round(bw * (mascot ? 0.90 : 1.12)); h = u(mascot ? 17 : 19); }
     if (kind === 'violin')  w = Math.round(bw * 0.9);
     if (kind === 'robe')    w = Math.round(bw * 0.96);
     if (kind === 'filing')  w = Math.round(bw * 0.96);
@@ -815,8 +815,8 @@
         // the chest carries ONE mark, under the lei and clear of it. It
         // used to be at 0.185 of a 35-wide barrel, which is a dinner
         // plate across the belly.
-        const bx2 = cx, by2 = y + Math.round(h * 0.60);
-        G.mooLogo(g, bx2, by2, Math.max(4, Math.round(w * 0.22)), { word: false });
+        // no mark on the bare chest: the apron goes over it and carries
+        // the mark itself, and two roundels on one torso is one too many
         return { y, w, h, top: y };
       }
       // a full-belly gauge in a machined bezel
@@ -972,7 +972,7 @@
     if (kind === 'lamp')    { w = hw * 1.6; h = u(18); }
     if (kind === 'wedge')   { w = hw * 2.1; h = u(17); }
     if (kind === 'crt')     { w = hw * 2.1; h = u(20); }
-    if (kind === 'cow')     { w = hw * 1.88; h = u(19); }
+    if (kind === 'cow')     { w = hw * 1.88; h = u(21); }
     const cow = kind === 'cow';
     const prof = [];
     const y = neckY - h;
@@ -989,41 +989,32 @@
     }
 
 
-    // ---- ears first, so the skull tucks over where they attach.
-    // A rounded flap that hangs DOWN and out, with a pink inside. The
-    // version before this was a two-pixel taper sticking straight out
-    // sideways at eye level, which reads as a fin. ----
+    // ---- EAR CUPS ----
+    // Not flaps: this is a machine in a cow suit, and what it has on the
+    // sides of its head is a pair of padded cans with the chain's roundel
+    // stamped on them. They go down before the skull so the skull tucks
+    // over the mount.
     if (cow) {
-      const flick = Math.sin(t * 1.7) * 0.5 + Math.sin(t * 0.63) * 0.5;
       for (const sd of [-1, 1]) {
-        // TALLER THAN WIDE, AND LOW. At 0.4 of the head's width by 0.4 of
-        // its height, attached level with the eyes, it is a horizontal
-        // ellipse sticking straight out of the skull -- a fin. Narrower,
-        // longer, and pinned below the eyeline, it hangs.
-        const ew2 = Math.max(4, Math.round(w * 0.28));     // how far it reaches out
-        const eh2 = Math.max(6, Math.round(h * 0.54));     // how far it hangs
-        const ax = cx + sd * Math.round(w * 0.48);
-        const ay = y + Math.round(h * 0.40);
-        const drop = (sd > 0 ? flick : -flick) * Math.max(1, u(1.5));
-        // an ellipse, tilted down and out, drawn row by row
-        const rows = [];
-        for (let j2 = 0; j2 < eh2; j2++) {
-          const q = (j2 / Math.max(1, eh2 - 1) - 0.42) * 2;
-          const hw = Math.max(0, (ew2 / 2) * Math.sqrt(Math.max(0, 1 - q * q * 0.92)));
-          const off = sd * (j2 / eh2) * ew2 * 0.55;
-          rows.push([ax + off - hw, hw * 2, ay + j2 + drop * (j2 / eh2)]);
-        }
-        for (const r of rows) if (r[1] >= 1)
-          G.R(g, Math.round(r[0]) - 1, Math.round(r[2]) - 1, Math.round(r[1]) + 2, 3, OUT);
-        for (let j2 = 0; j2 < rows.length; j2++) {
-          const r = rows[j2], q = j2 / Math.max(1, rows.length - 1);
-          if (r[1] < 1) continue;
-          G.R(g, Math.round(r[0]), Math.round(r[2]), Math.round(r[1]), 1,
-            q < 0.2 ? G.shade(c, 0.2) : q > 0.82 ? G.shade(c, -0.3) : G.shade(c, -0.06));
-          // the pink inside, inset so the rim of the ear stays cream
-          if (q > 0.22 && q < 0.86 && r[1] > 3)
-            G.Rq(g, Math.round(r[0]) + r[1] * 0.24, Math.round(r[2]), r[1] * 0.52, 1,
-              sd < 0 ? '#e8a0b4' : '#f2aec0');
+        // at 0.44 of the head's width the cup is INSIDE the skull, and the
+        // skull goes down after it, so all you see is a dark crescent
+        const er = Math.max(3, Math.round(h * 0.26));
+        const ax = cx + sd * Math.round(w * 0.50);
+        const ay = y + Math.round(h * 0.44);
+        // the mount, behind the cup
+        G.R(g, ax - sd * er * 0.2 - u(2), ay - u(2), u(4), u(4), '#1a1620');
+        // the can itself
+        G.fc(g, ax, ay, er + 1, OUT);
+        G.fc(g, ax, ay, er, '#2f2839');
+        G.fc(g, ax, ay, Math.max(1, er - 1.5), '#1d1826');
+        G.Rq(g, ax - er * 0.7, ay - er * 0.66, er * 0.5, 1, '#57495f');
+        // and the roundel on it
+        if (er >= 5) {
+          G.fc(g, ax, ay, Math.max(1.5, er * 0.56), '#c8383a');
+          G.fc(g, ax, ay, Math.max(1, er * 0.34), '#f6ecd6');
+          G.fc(g, ax, ay, Math.max(0.75, er * 0.2), '#c8383a');
+        } else {
+          G.fc(g, ax, ay, Math.max(1, er * 0.5), '#c8383a');
         }
       }
     }
@@ -1109,25 +1100,57 @@
       // roof with their own black outlines, which reads as a pair of
       // little hats balanced on a cow rather than as horns.
       for (const sd of [-1, 1]) {
-        const N = 8;
-        const bx = cx + sd * Math.round(w * 0.33), by = y + Math.round(h * 0.16);
+        const N = 5;
+        // out from under the CAP, not up off a bare crown: the cap covers
+        // the top of the head now, so a horn that rises from the middle
+        // of it is a horn nobody can see.
+        const bx = cx + sd * Math.round(w * 0.33), by = y + Math.round(h * 0.06);
         const seg2 = [];
         for (let i2 = 0; i2 <= N; i2++) {
           const q = i2 / N;
-          seg2.push([bx + sd * (q * w * 0.15 + Math.sin(q * 2.4) * w * 0.035),
-                     by - q * h * 0.27 - Math.sin(q * 1.5) * h * 0.05,
-                     Math.max(0.6, h * 0.095 * (1 - q * 0.74))]);
+          seg2.push([bx + sd * (q * w * 0.155 + Math.sin(q * 2.4) * w * 0.02),
+                     by - q * h * 0.17 - Math.sin(q * 1.5) * h * 0.03,
+                     Math.max(0.8, h * 0.13 * (1 - q * 0.45))]);
         }
         for (const q of seg2) G.R(g, q[0] - q[2] - 1, q[1] - q[2] - 1, q[2] * 2 + 2, q[2] * 2 + 2, OUT);
         for (let i2 = 0; i2 <= N; i2++) {
           const q = seg2[i2], p2 = i2 / N;
           G.R(g, q[0] - q[2], q[1] - q[2], q[2] * 2, q[2] * 2,
-            p2 < 0.2 ? '#c9ab7c' : p2 > 0.72 ? '#f6ead0' : '#e6d5ae');
+            p2 < 0.2 ? '#a8854c' : p2 > 0.72 ? '#e8c894' : '#cfa96a');
           G.Rq(g, q[0] - q[2] * 0.6, q[1] - q[2] * 0.9, Math.max(0.5, q[2] * 0.6), 0.75, '#fffbe8');
         }
         // the collar at the root, which is what seats it in the hide
         G.Rh(g, bx - h * 0.10, by - 1, h * 0.20, 1.5, G.shade(c, -0.3));
         G.hairq(g, bx - h * 0.09, by - 1, h * 0.18, G.shade(c, 0.2));
+      }
+      // ---- THE CAP ----
+      // The crew cap, worn forward, with the chain's letter on it. It
+      // goes down AFTER the horns so its brim cuts their roots and they
+      // read as coming out from under it.
+      if (o.cap !== 0) {
+        const cw = Math.round(w * 0.80), ch = Math.max(4, Math.round(h * 0.32));
+        const cTop = y - Math.round(h * 0.28);
+        for (let j = 0; j < ch; j++) {
+          const p = j / Math.max(1, ch - 1);
+          const hw = Math.max(1, Math.round((cw / 2) *
+            (0.40 + 0.60 * Math.sqrt(Math.max(0, 1 - Math.pow(1 - p, 2))))));
+          G.R(g, cx - hw - 1, cTop + j, hw * 2 + 2, 1, OUT);
+          G.R(g, cx - hw, cTop + j, hw * 2, 1,
+            j < 2 ? '#e8585a' : p > 0.82 ? '#8a2022' : '#c8383a');
+        }
+        // the peak, wide and shallow, coming toward you
+        const pw = Math.round(w * 0.92), ph = Math.max(2, Math.round(h * 0.12));
+        const py = cTop + ch - 1;
+        for (let j = 0; j < ph; j++) {
+          const q = j / Math.max(1, ph - 1);
+          const hw = Math.max(2, Math.round((pw / 2) * (1 - q * q * 0.30)));
+          G.R(g, cx - hw - 1, py + j, hw * 2 + 2, 1, OUT);
+          G.R(g, cx - hw, py + j, hw * 2, 1, j < 1 ? '#e8585a' : q > 0.55 ? '#6b1618' : '#a8262e');
+        }
+        G.fc(g, cx, cTop + 1, Math.max(1, u(1.1)), '#8a2022');   // the button
+        if (w >= 20)
+          G.text(g, 'M', cx, cTop + Math.round(ch * 0.36), '#f6ecd6',
+            { align: 'center', sc: w >= 30 ? 1 : 0.5 });
       }
     } else {
       const hp = HEAD_PROFILE[kind] || HEAD_PROFILE.boxy;
@@ -1230,55 +1253,39 @@
         }
       }
     } else if (o.shades) {
-      // ---- THE SHADES ----
-      // TWO LENSES AND A BRIDGE, sitting on a face. What was here before
-      // was one wraparound band 94% of the head wide with a notch cut in
-      // the middle -- at this size that is not a pair of glasses, it is a
-      // letterbox slot across a wall, and it took the whole head with it.
-      // These are narrower than the skull, so cream shows either side and
-      // the head stays a head.
-      const lw = Math.max(5, Math.round(w * 0.31));       // one lens
-      const lh = Math.max(5, Math.round(h * 0.27));
-      const sp3 = Math.round(w * 0.20);                    // centre of each
-      const gy = ey - Math.max(1, u(1));
-      // the arms, going back over the cheek to the ear
-      for (const sd of [-1, 1]) {
-        const ax2 = cx + sd * (sp3 + lw / 2);
-        // it runs to the EDGE OF THE SKULL and stops. Given a fixed
-        // length it overshot into open air, and two black tabs floating
-        // either side of the head is not a pair of arms.
-        const edge = prof[G.clamp(Math.round(h * 0.30), 0, h - 1)] || Math.round(w * 0.46);
-        const run = Math.max(u(2), cx + sd * edge - ax2 * sd * 0 - (sd > 0 ? ax2 - cx : cx - ax2) - 0);
-        const L2 = Math.max(u(2), edge - (sp3 + lw / 2));
-        G.R(g, sd > 0 ? ax2 : ax2 - L2, gy + lh * 0.2 - 1, L2 + 1, u(2) + 2, OUT);
-        G.Rh(g, sd > 0 ? ax2 : ax2 - L2, gy + lh * 0.24, L2, u(1.5), '#2a2434');
-        G.hairq(g, sd > 0 ? ax2 : ax2 - L2, gy + lh * 0.24, L2, '#6b5f7a');
+      // ---- THE VISOR ----
+      // ONE dark faceplate with two amber slits burning behind it. The
+      // pair of separate lenses this replaced is a person in sunglasses;
+      // a visor is a machine wearing a cow suit, which is what this is.
+      const vw = Math.max(8, Math.round(w * 0.70));
+      const vh = Math.max(5, Math.round(h * 0.26));
+      const vx = cx - vw / 2, vy = ey - Math.max(1, u(1));
+      G.rr2(g, vx - 1, vy - 1, vw + 2, vh + 2, OUT);
+      for (let j = 0; j < vh; j++) {
+        const q = j / Math.max(1, vh - 1);
+        const inset = j === 0 || j === vh - 1 ? 1 : 0;
+        G.R(g, vx + inset, vy + j, vw - inset * 2, 1,
+          j === 0 ? '#4c4258' : q > 0.86 ? '#0a0710' : q > 0.55 ? '#120e1c' : '#1c1628');
       }
-      // the bridge, a bar between the two, high on the muzzle
-      G.R(g, cx - sp3, gy + lh * 0.14 - 1, sp3 * 2, u(2) + 2, OUT);
-      G.Rh(g, cx - sp3, gy + lh * 0.18, sp3 * 2, u(1.5), '#2a2434');
-      G.hairq(g, cx - sp3, gy + lh * 0.18, sp3 * 2, '#6b5f7a');
-      // and the lenses: a rounded block of dark glass each, with the
-      // optic burning behind it
-      for (const sd of [-1, 1]) {
-        const lx0 = cx + sd * sp3 - lw / 2;
-        G.rr2(g, lx0 - 1, gy - 1, lw + 2, lh + 2, OUT);
-        for (let j = 0; j < lh; j++) {
-          const q = j / Math.max(1, lh - 1);
-          const inset = j === 0 || j === lh - 1 ? 1 : 0;
-          G.R(g, lx0 + inset, gy + j, lw - inset * 2, 1,
-            j === 0 ? '#5c5270' : q > 0.86 ? '#0e0a14' : q > 0.58 ? '#161022' : '#1f1730');
+      // the light across the glass: a long streak low-left, a pip high-right
+      G.Rq(g, vx + vw * 0.08, vy + vh * 0.70, vw * 0.34, 0.25, '#6b6480');
+      G.Rq(g, vx + vw * 0.66, vy + vh * 0.16, vw * 0.18, 0.25, '#8f88a8');
+      G.hairq(g, vx + 1, vy - 0.25, vw - 2, '#6b5f7a');
+      // ---- and the eyes: two amber slits, which is the whole face ----
+      if (!o.dead) {
+        const sw2 = Math.max(2, Math.round(vw * 0.13));
+        const sh3 = blink ? Math.max(1, u(0.75)) : Math.max(1.5, Math.round(vh * 0.30));
+        const look = Math.round(Math.sin(t * 0.6) * u(1));
+        const sy2 = vy + Math.round(vh * 0.34) + (blink ? Math.round(vh * 0.16) : 0);
+        for (const sd of [-1, 1]) {
+          const sx2 = cx + sd * Math.round(vw * 0.25) - sw2 / 2 + look;
+          // angry pulls the inner end down, hurt lifts it -- one row of
+          // pixels is the entire expression this face has
+          const tilt = mood === 'angry' ? sd * 0.5 : mood === 'sick' ? -sd * 0.5 : 0;
+          G.R(g, sx2, sy2 + (sd < 0 ? -tilt : tilt), sw2, sh3, '#ffd24a');
+          G.Rq(g, sx2, sy2 + (sd < 0 ? -tilt : tilt), sw2, 0.5, '#fff0b4');
+          if (!blink) G.glow(g, sx2 + sw2 / 2, sy2 + sh3 / 2, u(7), u(5), '#ffc83a', 0.45);
         }
-        const lcx = cx + sd * sp3;
-        const look = Math.sin(t * 0.6) * u(1);
-        if (!blink && !o.dead) {
-          G.Rh(g, lcx - u(1.5) + look, gy + lh * 0.38, u(3), Math.max(1, lh * 0.3), G.shade(hue, -0.3));
-          G.Rq(g, lcx - u(0.75) + look, gy + lh * 0.42, u(1.5), Math.max(0.5, lh * 0.2), hue);
-          G.glow(g, lcx + look, gy + lh * 0.5, u(8), lh, hue, 0.4);
-        }
-        // the light on the glass: a streak low-left, a pip high-right
-        G.Rq(g, lx0 + lw * 0.12, gy + lh * 0.66, lw * 0.4, 0.25, '#8a94b8');
-        G.Rq(g, lx0 + lw * 0.62, gy + lh * 0.16, lw * 0.22, 0.25, '#b4bcd8');
       }
     } else {
       const sp = Math.round(w * (cow ? 0.25 : 0.27));
@@ -1331,7 +1338,7 @@
           const q = (j2 / (mzH - 1) - 0.42) * 2;
           const hh = Math.max(1, Math.round((mzW / 2) * snout(q)));
           G.R(g, cx - hh, mzT + j2, hh * 2, 1,
-            j2 < 1 ? '#ffffff' : j2 > mzH - 2 ? G.shade(c, -0.2) : G.shade(c, 0.24));
+            j2 < 1 ? G.shade(c, 0.42) : j2 > mzH - 2 ? G.shade(c, -0.2) : G.shade(c, 0.24));
           G.Rq(g, cx - hh, mzT + j2, 0.75, 1, G.shade(c, 0.42));
           G.Rq(g, cx + hh - 0.75, mzT + j2, 0.75, 1, G.shade(c, -0.16));
         }
@@ -1629,7 +1636,7 @@
       // A mascot's sleeves are part of the costume, so they are cut
       // from the body tone, not from the chassis grey. Grey limbs on a
       // cream suit read as machinery somebody bolted on.
-      const c = o.mascot ? b.col : b.col2;
+      const c = o.mascot ? '#4a4356' : b.col2;
       if (o.hands) {
         // reaching: the arm runs from the shoulder to wherever the hand
         // has been put, bending once in the middle
@@ -1645,7 +1652,7 @@
         }
       } else {
       const swL = (o.swingL || 0) * u(4), swR = (o.swingR || 0) * u(4);
-      const L = o.mascot ? 0.84 : 0.5, R = o.mascot ? 0.78 : 0.44;
+      const L = o.mascot ? 0.62 : 0.5, R = o.mascot ? 0.56 : 0.44;
       const sl = o.mascot ? -0.17 : -0.07, sr = o.mascot ? -0.11 : -0.04;
       const l = softLimb(-1, Math.round(th * L) + sway + swL, aw2, G.shade(c, sl));
       mitten(l, -1, G.shade(c, sl + 0.05));
@@ -2035,7 +2042,7 @@
     // a 16-unit chest the bell hung straight down through the middle of
     // the flowers and out the other side into the badge. The lei IS the
     // necklace now; the bell comes back off the beach.
-    if ((fr.soft || 0) > 1 && !fr.beach) {
+    if ((fr.soft || 0) > 1 && !fr.beach && !fr.apron) {
       const ty2 = hd.y + hd.h - u(2), cw = Math.round(torso.w * 0.38), ch = Math.max(2, u(3));
       for (let j = 0; j < ch; j++) {
         const pinch = Math.abs(j / (ch - 1) - 0.5) * 2;
@@ -2071,6 +2078,45 @@
     // onto the chest. It sits BELOW the collar and a good deal wider than
     // it -- the first pass put it at the same height, where the collar and
     // the bell covered all but two petals of it.
+    // ---- THE CREW APRON ----
+    // A bib on two straps and a skirt under it, in the house red, with
+    // the chain's mark on the front. It is what the mascot wears on the
+    // floor, and it is where the badge lives now.
+    if (fr.apron) {
+      const ty3 = torso.y, th3 = torso.h, tw3 = torso.w;
+      const bibW = Math.round(tw3 * 0.52), bibH = Math.max(3, Math.round(th3 * 0.34));
+      const skW = Math.round(tw3 * 0.88), skH = Math.max(4, Math.round(th3 * 0.52));
+      const bt = ty3 + Math.max(1, u(2));
+      // straps: they run UP from the corners of the bib to the shoulder
+      // line and stop. Short bars fanned out from the bib read as a pair
+      // of flames coming off the collarbone.
+      const sTop = hd.y + hd.h - u(1);
+      for (const sd of [-1, 1]) {
+        const x0 = cxl + sd * (bibW / 2 - u(1));
+        const n2 = Math.max(2, Math.round(bt - sTop));
+        for (let k = 0; k <= n2; k++) {
+          const q = k / n2;
+          G.Rh(g, G.lerp(x0, x0 + sd * u(2), q) - u(1), bt - k, u(2), 1, '#a8262e');
+          G.Rq(g, G.lerp(x0, x0 + sd * u(2), q) - u(1), bt - k, 0.75, 1, '#e8585a');
+        }
+      }
+      G.R(g, cxl - bibW / 2 - 1, bt - 1, bibW + 2, bibH + 2, OUT);
+      G.R(g, cxl - bibW / 2, bt, bibW, bibH, '#c8383a');
+      G.hairq(g, cxl - bibW / 2 + 0.5, bt, bibW - 1, '#e8585a');
+      const st = bt + bibH;
+      G.R(g, cxl - skW / 2 - 1, st - 1, skW + 2, skH + 2, OUT);
+      for (let j = 0; j < skH; j++) {
+        const q = j / Math.max(1, skH - 1);
+        const hw = Math.max(1, Math.round((skW / 2) * (0.80 + 0.20 * Math.min(1, q * 4))));
+        G.R(g, cxl - hw, st + j, hw * 2, 1,
+          j < 1 ? '#e8585a' : q > 0.9 ? '#6b1618' : q > 0.72 ? '#a8262e' : '#c8383a');
+      }
+      G.hairq(g, cxl - skW * 0.40, st + skH - 2.5, skW * 0.80, '#f6ecd6');   // hem stripe
+      G.R(g, cxl + skW * 0.08, st + skH * 0.34, Math.max(2, skW * 0.28),
+        Math.max(2, skH * 0.32), '#a8262e');
+      G.hairq(g, cxl + skW * 0.08, st + skH * 0.34, Math.max(2, skW * 0.28), '#e8585a');
+      G.mooLogo(g, cxl, bt + bibH * 0.5, Math.max(3, Math.round(bibW * 0.36)), { word: false });
+    }
     if (fr.beach) {
       // Eleven flowers at 1.7 radius across 86% of the chest is a bouquet,
       // and on a slim body it is most of the body. Seven small ones on a

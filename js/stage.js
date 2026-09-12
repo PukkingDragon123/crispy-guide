@@ -122,6 +122,53 @@
         G.Rq(g, p.x - 0.5, p.y - 0.5, 1, 1, '#ffffff');
       } else if (p.kind === 'dust') {
         G.oc(g, p.x, p.y, 1 + q * 4, p.col);
+      } else if (p.kind === 'burst') {
+        // A COMIC STAR. Eight spokes on alternating radii, snapping open
+        // and then shutting. Outline pass first, fill after, or each
+        // spoke's black lands on the one before it.
+        const e = q < 0.26 ? G.backOut(q / 0.26) : 1;
+        const R = p.r * e * (1 - q * 0.22);
+        const N = 10;
+        for (let pass = 0; pass < 2; pass++) {
+          const col = pass ? (q < 0.45 ? '#ffffff' : p.col) : OUT;
+          const pad = pass ? 0 : 0.75;
+          for (let i = 0; i < N; i++) {
+            const a2 = (i / N) * 6.2832 + p.seed;
+            const rr = R * (i % 2 ? 1 : 0.52);
+            const steps = Math.max(2, Math.round(rr));
+            for (let k = 0; k <= steps; k++) {
+              const t2 = k / steps, th = Math.max(0.5, (1 - t2) * R * 0.34) + pad;
+              G.Rh(g, p.x + Math.cos(a2) * rr * t2 - th / 2,
+                p.y + Math.sin(a2) * rr * t2 * 0.85 - th / 2, th, th, col);
+            }
+          }
+        }
+      } else if (p.kind === 'puff') {
+        // a soft cloud rather than an expanding hoop: dust does not ring
+        const r = p.r * (0.35 + G.easeOut(q) * 1.0);
+        G.fc(g, p.x, p.y, r + 0.5, G.shade(p.col, -0.34));
+        G.fc(g, p.x, p.y, r, p.col);
+        G.fc(g, p.x - r * 0.32, p.y - r * 0.32, Math.max(0.5, r * 0.46),
+          G.mix(p.col, '#ffffff', 0.45));
+      } else if (p.kind === 'dash') {
+        const len = p.r * (0.3 + (1 - q) * 0.7);
+        G.Rh(g, p.x - len / 2 - 0.25, p.y - 0.75, len + 0.5, 1.5, OUT);
+        G.Rh(g, p.x - len / 2, p.y - 0.5, len, 1, p.col);
+      } else if (p.kind === 'mark') {
+        // THE EMPHASIS DASHES. Three strokes fanning off a head, which is
+        // how the model sheet says "pleased" without moving a muscle.
+        const e = q < 0.3 ? G.backOut(q / 0.3) : 1;
+        for (let i = -1; i <= 1; i++) {
+          const a2 = -Math.PI / 2 + i * 0.62;
+          const r0 = p.r * 0.34 * e, r1 = p.r * (0.72 + Math.abs(i) * -0.14) * e;
+          const steps = Math.max(2, Math.round(r1 - r0));
+          for (let pass = 0; pass < 2; pass++)
+            for (let k = 0; k <= steps; k++) {
+              const rr = G.lerp(r0, r1, k / steps), th = pass ? 1 : 2;
+              G.Rh(g, p.x + Math.cos(a2) * rr - th / 2, p.y + Math.sin(a2) * rr - th / 2,
+                th, th, pass ? p.col : OUT);
+            }
+        }
       } else if (p.kind === 'bit') {
         const spin = Math.abs(Math.sin(p.t * 8));
         G.Rh(g, p.x, p.y, 1.5 + spin, 0.5 + spin * 0.5, p.col);
@@ -250,18 +297,42 @@
       pspeedMul: 1, pdy: 0, camAt: null, hush: 0,
       hoverK: null, hoverA: null, pendWho: null,
     };
-    S.pop = (x, y, kind, col, r, life) => {
-      if (S.pops.length > 120) return;
+    S.pop = (x, y, kind, col, r, life, vx, vy) => {
+      if (S.pops.length > 140) return;
       S.pops.push({ x, y, kind: kind || 'star', col: col || '#ffd45a',
-        r: r === undefined ? 12 : r, t: 0, life: life === undefined ? 0.5 : life });
+        r: r === undefined ? 12 : r, t: 0, life: life === undefined ? 0.5 : life,
+        vx: vx || 0, vy: vy || 0, seed: G.rand(0, 6.28) });
     };
+    // ---- A COMIC HIT ----
+    // The star, a ring of speed dashes running out of it, a spray of
+    // sparks and a kick on the camera. One call, so everything that lands
+    // in this game lands the same way.
+    S.comic = (x, y, col, size) => {
+      const R = size || 15;
+      S.pop(x, y, 'burst', col || '#ffd45a', R, 0.42);
+      for (let i = 0; i < 7; i++) {
+        const a2 = (i / 7) * 6.2832 + G.rand(0, 1);
+        S.pop(x + Math.cos(a2) * R * 1.2, y + Math.sin(a2) * R * 0.9, 'dash',
+          col || '#ffd45a', G.rand(4, 9), G.rand(0.16, 0.3),
+          Math.cos(a2) * 40, Math.sin(a2) * 30);
+      }
+      for (let i = 0; i < 6; i++) {
+        const a2 = Math.random() * 6.2832, sp = G.rand(20, 60);
+        S.pop(x, y, 'star', col || '#ffd45a', 0, G.rand(0.3, 0.6),
+          Math.cos(a2) * sp, Math.sin(a2) * sp - 20);
+      }
+      G.shake(3, 0.22);
+    };
+    // the three dashes over a head, for anything that went well
+    S.emote = (x, y, col) => S.pop(x, y, 'mark', col || '#ffd45a', 11, 0.55);
     // a burst you can feel: a ring, a spray of stars and a shake
     S.bang = (x, y, col, n, shake) => {
       S.pop(x, y, 'ring', col || '#ffd45a', 14, 0.42);
+      S.pop(x, y, 'burst', col || '#ffd45a', 11 + (n || 8), 0.36);
       for (let i = 0; i < (n || 8); i++) {
         const a2 = Math.random() * 6.28, sp = G.rand(4, 16);
         S.pop(x + Math.cos(a2) * sp, y + Math.sin(a2) * sp * 0.7, 'star',
-          col || '#ffd45a', 0, G.rand(0.3, 0.62));
+          col || '#ffd45a', 0, G.rand(0.3, 0.62), Math.cos(a2) * 44, Math.sin(a2) * 34 - 14);
       }
       if (shake !== 0) G.shake(shake || 2.2, 0.2);
     };
@@ -285,8 +356,9 @@
       a.said = G.rand(7, 12);            // do not also blurt it ambiently
       a.hold = 1.5; a.holdClip = 'talk';
       S.chat = G.rand(3, 5);
-      S.pop(a.x, (a.headTop === undefined ? S.floor - G.SZ.ADULT : a.headTop) - 3,
-        'ring', '#ffe6a8', 8, 0.4);
+      const htop = (a.headTop === undefined ? S.floor - G.SZ.ADULT : a.headTop) - 3;
+      S.pop(a.x, htop, 'ring', '#ffe6a8', 8, 0.4);
+      S.emote(a.x, htop - 2, '#ffe6a8');
       return true;
     };
     S.setObj = (txt) => { S.obj = txt; S.objT = 0; };
@@ -382,8 +454,14 @@
         S.sqV -= S.sq * 260 * dt; S.sqV -= S.sqV * 9 * dt; S.sq += S.sqV * dt;
         for (let i = S.pops.length - 1; i >= 0; i--) {
           const p = S.pops[i]; p.t += dt;
-          if (p.kind === 'star') { p.y -= dt * 12; }
+          if (p.vx || p.vy) {
+            p.x += p.vx * dt; p.y += p.vy * dt;
+            p.vx -= p.vx * 3.4 * dt; p.vy = p.vy * (1 - 3.4 * dt) + 120 * dt;
+          }
+          if (p.kind === 'star' && !p.vy) { p.y -= dt * 12; }
           if (p.kind === 'dust') { p.y -= dt * 5; }
+          if (p.kind === 'puff') { p.y -= dt * 9; p.x += Math.sin(p.t * 3 + p.seed) * dt * 5; }
+          if (p.kind === 'mark') { p.y -= dt * 16; }
           if (p.kind === 'bit') { p.y += dt * 44; p.x += Math.sin(p.t * 7 + p.y) * dt * 26; }
           if (p.t > p.life) S.pops.splice(i, 1);
         }
@@ -395,26 +473,34 @@
           if (Math.abs(d) <= speed * dt) {
             S.px = S.goal; S.goal = null; S.pclip = 'idle';
             // land: squash, a puff of dust, a small thump
-            S.sqV = 44; S.land = 0.2;
-            for (let i = 0; i < 5; i++)
-              S.pop(S.px + G.rand(-7, 7), S.floor - 1, 'dust', '#b8a890', 3, G.rand(0.2, 0.4));
+            S.sqV = 62; S.land = 0.24;
+            for (let i = 0; i < 6; i++)
+              S.pop(S.px + G.rand(-8, 8), S.floor - 1, 'puff', '#cbbfa8',
+                G.rand(1.6, 3.2), G.rand(0.24, 0.46), G.rand(-16, 16), G.rand(-12, -2));
             if (S.pending) {
               const k = S.pending; S.pending = null;
               if (!(k.once && S.done[k.id])) {
                 S.done[k.id] = 1;
+                // it landed: the star, the dashes over your head, a thump
+                S.comic(k.x, (k.markY === undefined ? S.floor - 40 : k.markY) + 6, '#b6ff3a', 13);
+                S.emote(S.px, S.pheadTop === undefined ? S.floor - 56 : S.pheadTop - 4, '#ffd45a');
                 if (k.on) k.on(S);
               }
             }
             if (S.pendWho) { const a = S.pendWho; S.pendWho = null; S.talkTo(a); }
           } else {
-            if (S.pclip !== 'walk') S.sqV = -30;             // stretch off the mark
+            if (S.pclip !== 'walk') S.sqV = -44;             // stretch off the mark
             S.px += Math.sign(d) * speed * dt;
             S.pdir = Math.sign(d);
             S.pclip = 'walk'; S.pwalk += dt;
-            // a real bouncy walk, and dust where the foot lands
-            if (Math.sin(S.pwalk * 9) > 0.95)
+            // a real bouncy walk: the body squashes on every footfall and
+            // kicks a puff of dust back the way it came
+            if (Math.sin(S.pwalk * 9) > 0.95) {
+              S.sqV = Math.max(S.sqV, 16);
               for (let i = 0; i < 2; i++)
-                S.pop(S.px - S.pdir * 4 + G.rand(-2, 2), S.floor - 1, 'dust', '#b8a890', 3, 0.3);
+                S.pop(S.px - S.pdir * (4 + i * 3), S.floor - 1, 'puff', '#cbbfa8',
+                  G.rand(1.2, 2.2), G.rand(0.22, 0.36), -S.pdir * G.rand(6, 18), G.rand(-10, -3));
+            }
           }
         } else if (!S.lock) S.pclip = def.pidle || 'idle';
 
@@ -490,7 +576,9 @@
             t, walk: S.pclip === 'walk' ? S.pwalk : 0, clip: S.pclip, ct: t,
             dir: S.pdir, mood: S.pmood || 'idle', open: S.popen || 0,
             legOff: S.plegOff, crawl: S.pcrawl, hands: S.phands, p: S.pp,
-            noBlink: S.pnoBlink, sq: G.clamp(S.sq * 0.045, -0.12, 0.15),
+            // more give in it. The spring was clamped so tight that a
+            // landing that set sqV to 62 looked the same as one at 30.
+            noBlink: S.pnoBlink, sq: G.clamp(S.sq * 0.05, -0.17, 0.22),
           });
         S.pheadTop = pr ? pr.y : S.floor - G.SZ.MASCOT;
         if (S.pcrawl) S.pheadTop = S.floor - 26;
