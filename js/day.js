@@ -1743,8 +1743,11 @@
       G.text(g, 'CREW', cr.x, cr.y + 0.5, P.steel2, { sc: 0.5 });
       G.text(g, String((st.crew || []).length), cr.x + cr.w, cr.y + 0.5, P.violetLt,
         { sc: 0.5, align: 'right' });
-      G.text(g, 'SEEN ' + st.spotted, cr.x, cr.y + 7.5, P.lime, { sc: 0.5 });
-      G.text(g, 'LOST ' + st.missed, cr.x + cr.w, cr.y + 7.5,
+      // SIGNS, NOT WORDS. At two digits apiece SEEN 23 and LOST 17 ran
+      // into each other in the middle of a forty-unit cell and came out
+      // as SEEN 23LOST 17. The colours already say which is which.
+      G.text(g, '+' + st.spotted, cr.x, cr.y + 7.5, P.lime, { sc: 0.5 });
+      G.text(g, '-' + st.missed, cr.x + cr.w, cr.y + 7.5,
         st.missed ? P.magenta : '#46506b', { sc: 0.5, align: 'right' });
 
       // ---- THE TRAY: three zones that never move ----
