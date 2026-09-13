@@ -103,7 +103,8 @@
       say: 'NOBODY IS ON THE ROLL AT THIS ADDRESS.',
       at2: 2.6, who2: 'TRACY', col2: '#ffd0dc',
       say2: "THERE'S NOBODY HERE BUT ME AND THE CAT. LOOK ALL YOU LIKE." },
-    { id: 'white', d: 4.4, who: null, say: null },
+    { id: 'shot',  d: 6.0, who: null, say: null,
+      at2: 3.2, who2: null, say2: 'AND THEN IT WAS QUIET FOR A LONG TIME.' },
     { id: 'out',   d: 0,   who: null, say: null },
   ];
 
@@ -752,6 +753,7 @@
       this.dark = 0; this.wreck = 0; this.doorOff = 0; this.bell = 0;
       this.hid = 0; this.hideP = 0; this.nagT = 0;
       this.doorKick = 0; this.white = 0; this.shards = []; this.clearT = 0; this.said2 = false;
+      this.blind = 0; this.glim = 0; this.shotDone = 0;
       this.her = { x: TRACY_X, y: TRACY_Y, sc: 1.9 };
       this.bots = null;
       G.steam.length = 0;
@@ -894,6 +896,7 @@
       }
       if (id === 'door') {
         this.doorKick = 0.001;
+        this.glim = 1.45;                 // it lights the room as it goes
         G.audio.sfx('snap'); G.shake(6, 0.6); G.screenFlash('#cfe4ff', 0.28);
         for (let i = 0; i < 44; i++)
           this.shards.push({ a: G.hash(i, 3) * 2.1 - 0.65, sp: 40 + G.hash(i, 7) * 190,
@@ -908,10 +911,8 @@
       // take a whole beat of its own to say THEY DID NOT ARREST ANYONE
       // with two of them still stood in it sweeping their torches over an
       // empty counter.
-      if (id === 'white') {
-        this.white = 1; G.audio.sfx('zap'); G.shake(7, 0.5);
-        this.clearT = 1.1;
-      }
+      // the shot itself is timed inside the beat, not on its opening
+      if (id === 'shot') { this.shotDone = 0; G.audio.stopAllLoops && G.audio.stopAllLoops(); }
     },
     raidDown(x, y) {
       const b = this.beatOf();
@@ -927,7 +928,7 @@
       if (this.hid) return;
       this.hid = 1;
       G.audio.sfx('grab');
-      G.floatText('HIDDEN', PEEK_X, HIDE.y - 12, P.lime);
+      G.floatText('HEAD DOWN', PEEK_X, HIDE.y - 12, P.lime);
       this.nextBeat();
     },
     leave() {
@@ -1011,13 +1012,13 @@
       this.dark = G.lerp(this.dark, wantDark, Math.min(1, dt * 1.4));
       // and it gets taken apart from the door beat on
       const wantWreck = id === 'door' ? 0.3 : id === 'in' ? 0.55
-        : (id === 'white' || id === 'out') ? 1 : 0;
+        : (id === 'shot' || id === 'out') ? 1 : 0;
       this.wreck = G.lerp(this.wreck, wantWreck, Math.min(1, dt * 0.9));
       this.doorOff = G.lerp(this.doorOff, id === 'quiet' || id === 'hide' ? 0 : 1,
         Math.min(1, dt * 4));
       this.bell = Math.max(0, this.bell - dt * 0.7);
       this.hideP = G.lerp(this.hideP, this.hid ? 1 : 0, Math.min(1, dt * 3.4));
-      this.white = Math.max(0, this.white - dt * 0.9);
+      this.white = Math.max(0, this.white - dt * 4.2);
       // SLOWER. At 0.85 the whole thing -- bow, tear, spin, land -- was
       // over in a second and a fifth, which is less time than it takes to
       // look at it. The beat is three and a half seconds long; the door
@@ -1029,7 +1030,7 @@
       // the whole point of her.
       const backNow = id !== 'quiet' && (id !== 'hide' || this.hid);
       const k = Math.min(1, dt * 2.6);
-      if (id === 'white' || id === 'out') {
+      if (id === 'shot' || id === 'out') {
         // she is not anywhere any more
       } else if (backNow) {
         this.her.x = G.lerp(this.her.x, POST.tracy, k);
@@ -1054,6 +1055,46 @@
           this.bell = 1; G.audio.sfx('clack'); G.shake(2.6, 0.24);
         }
       }
+      // ------------------------------------------------------------
+      // THE DARK.
+      //
+      // You are behind the counter with your head down. You cannot see
+      // any of this, so neither can the player: the moment you hide, the
+      // screen goes black and the whole break-in happens in sound.
+      //
+      // It is not a cut to black, though, because a cut to black for
+      // fifteen seconds is a loading screen. Light PUNCHES THROUGH it --
+      // the door coming in, a torch crossing the gap, the muzzle flash --
+      // so you catch the room a third of a second at a time and it is
+      // worse every time.
+      // ------------------------------------------------------------
+      const dark = this.hid && (id === 'door' || id === 'in' || id === 'shot');
+      const wantBlind = dark ? 1 : (id === 'out' ? Math.max(0, 1 - this.beatT * 0.55) : 0);
+      this.blind = G.lerp(this.blind, wantBlind, Math.min(1, dt * (dark ? 3.2 : 1.6)));
+      this.glim = Math.max(0, this.glim - dt * 2.6);
+
+      // THE SHOT. A second and a half of nothing, and then it happens
+      // somewhere you cannot see, which is the only way it could.
+      if (id === 'shot' && !this.shotDone && this.beatT > 1.6) {
+        this.shotDone = 1;
+        G.audio.sfx('boom');
+        G.shake(10, 0.7);
+        G.screenFlash('#ffe8c8', 0.15);
+        this.glim = 1.5;
+        // A MUZZLE FLASH SHOWS YOU THE ROOM. It does not delete the room.
+        // The first pass stacked a glow, a full-frame wash, a screenFlash
+        // and a white plate on top of each other and the frame came out
+        // as a sheet of paper -- you heard the shot and saw nothing, which
+        // is the one thing this beat cannot do. So: a hard punch that is
+        // gone in two tenths, under it the room, lit, for half a second.
+        this.white = 0.9;
+        this.clearT = 1.8;
+        for (let i = 0; i < 18; i++)
+          this.parts.push({ x: PEEK_X + G.rand(-40, 40), y: 150 + G.rand(-6, 6),
+            vx: G.rand(-40, 40), vy: G.rand(-70, -10), t: 0, life: G.rand(0.4, 1),
+            col: G.pick(['#8a7258', '#d8c4a0', '#5c4a38']) });
+      }
+
       // they leave, and the room is empty inside the same beat
       if (this.clearT > 0) { this.clearT -= dt; if (this.clearT <= 0) this.bots = null; }
       // the second line of a two-line beat
@@ -1075,7 +1116,7 @@
       G.toastY = -40;
       const raid = this.act === 'raid';
       const b = raid ? this.beatOf() : null;
-      const gone = raid && (b.id === 'white' || b.id === 'out');
+      const gone = raid && (b.id === 'shot' || b.id === 'out');
 
       G.tracyRoom(g, t, {
         dark: raid ? this.dark : 0,
@@ -1085,8 +1126,8 @@
         surf: this.surf,
         flav: this.flav,
         motes: this.motes,
-        noCat: raid && (b.id === 'door' || b.id === 'in' || b.id === 'her' || b.id === 'white'),
-        catUp: raid && (b.id === 'out' || (b.id === 'white' && this.beatT > 2)),
+        noCat: raid && (b.id === 'door' || b.id === 'in' || b.id === 'shot'),
+        catUp: raid && (b.id === 'out' || (b.id === 'shot' && this.beatT > 4)),
         // anybody standing on the back plane goes in here, so the counter
         // hides their feet the way a counter does
         back: (gg) => {
@@ -1233,16 +1274,102 @@
       if (raid) {
         this.drawHideMark(g, t);
         this.drawUnder(g, t);
+        this.drawBlind(g, t);
         this.drawRaidTalk(g, t);
         if (this.white > 0.02) {
-          g.globalAlpha = Math.min(1, this.white * 1.4);
-          G.R(g, 0, 0, G.W, G.H, '#eef4ff');
+          g.globalAlpha = Math.min(0.72, this.white * 0.78);
+          G.R(g, 0, 0, G.W, G.H, '#fff4e0');
           g.globalAlpha = 1;
         }
       } else {
         this.drawTalk(g, t);
       }
       G.grade(g, 1);
+    },
+
+    // ------------------------------------------------------------
+    // WHAT YOU CAN SEE WITH YOUR HEAD DOWN, WHICH IS NOTHING.
+    //
+    // Black over the whole frame, less whatever light is punching
+    // through it. In between, the only thing in the picture is you:
+    // two amber slits under a counter, and they flinch.
+    // ------------------------------------------------------------
+    drawBlind(g, t) {
+      const b = this.beatOf();
+      const gl = G.clamp(this.glim, 0, 1);
+      // ---- THE LIGHT THAT MAKES A GLIMPSE A GLIMPSE ----
+      // Taking the black away is not the same as putting a light on. The
+      // room underneath is a dark room at four in the morning, so the
+      // first pass lifted the lid off it and you still could not see
+      // anything. The door going and the shot going both THROW light,
+      // and this is that light.
+      if (gl > 0.04) {
+        const src = b.id === 'shot' ? { x: (this.bots ? this.bots.pol : 120) + 6, y: 92 }
+                                    : { x: DOOR.x + DOOR.w / 2, y: DOOR.y + DOOR.h * 0.55 };
+        const warm = b.id === 'shot';
+        G.glow(g, src.x, src.y, warm ? 300 * gl : 420 * gl, warm ? 250 * gl : 360 * gl,
+          warm ? '#ffe0a0' : '#cfe4ff', (warm ? 0.85 : 1.5) * gl);
+        g.globalAlpha = (warm ? 0.13 : 0.24) * gl;
+        G.R(g, 0, 0, G.W, G.H, warm ? '#ffd9a0' : '#9fc4e8');
+        g.globalAlpha = 1;
+        // the hard edge of the doorway, thrown across the floor
+        g.globalAlpha = (warm ? 0.15 : 0.2) * gl;
+        for (let i = 0; i < 16; i++)
+          G.Rh(g, src.x - 6 - i * 3, 104 + i * 3.4, 14 + i * 4, 4, warm ? '#ffe6b8' : '#dfeeff');
+        g.globalAlpha = 1;
+      }
+      const a = this.blind * (1 - gl);
+      if (a <= 0.01) return;
+      g.globalAlpha = Math.min(0.985, a);
+      G.R(g, 0, 0, G.W, G.H, '#05060a');
+      g.globalAlpha = 1;
+      if (a < 0.45) return;                 // mid-glimpse: let the room show
+
+      // ---- TORCHES, crossing the dark ----
+      // You cannot see the room, but you can see what is being pointed
+      // round it, which is worse.
+      if (b.id === 'in' && this.bots) {
+        for (const bx of [this.bots.pol, this.bots.war]) {
+          const sw = Math.sin(t * 1.6 + bx * 0.05) * 90;
+          const ox = bx + sw;
+          g.globalAlpha = 0.05 * a;
+          for (let i = 0; i < 22; i++)
+            G.Rh(g, ox - 3 - i * 1.4, 74 + i * 3.4, 6 + i * 1.6, 4, '#cfe4ff');
+          g.globalAlpha = 0.28 * a;
+          G.fe(g, ox, 76, 3, 2, '#dfeeff');
+          g.globalAlpha = 1;
+          G.glow(g, ox, 78, 26, 20, '#8fc8ff', 0.35 * a);
+        }
+      }
+
+      // ---- and you, under the counter ----
+      // taken off his ACTUAL metrics, so the two slits sit in the visor
+      // rather than floating somewhere below his chin
+      const m = this.peekM;
+      const hh = m ? Math.max(4, m.headY - m.headTop) : 12;
+      const vx = m ? m.cx : PEEK_X;
+      const vw = m ? Math.round(m.hw * 1.15) : 18;
+      const flinch = this.shotDone && this.beatT < 2.6 ? 1 : 0;
+      const sy = (m ? m.headTop + Math.round(hh * 0.78) : 132)
+        + (flinch ? 3 : 0) + Math.sin(t * 1.4) * 0.5;
+      const lit = flinch ? 0.22 : 0.55 + Math.sin(t * 2.2) * 0.12;
+      for (const sd of [-1, 1]) {
+        const bx = vx + sd * vw * 0.34 - vw * 0.13;
+        G.Rq(g, bx, sy, vw * 0.26, Math.max(1, hh * 0.26), G.mix('#2a1c0e', '#ffb03a', lit * a));
+        G.glow(g, bx + vw * 0.13, sy + 1, 20, 13, '#ffb03a', 0.55 * lit * a);
+      }
+      // the lip of the counter over you, just about catching the light
+      g.globalAlpha = 0.3 * a;
+      G.R(g, vx - 40, (m ? m.headTop : 128) - 6, 80, 1, '#4a3a2a');
+      g.globalAlpha = 1;
+      // a breath of dust in front of your face
+      if (b.id === 'shot' && this.shotDone)
+        for (let i = 0; i < 7; i++) {
+          const q = ((t * 0.5 + i * 0.14) % 1);
+          g.globalAlpha = (1 - q) * 0.22 * a;
+          G.fe(g, vx - 14 + i * 5, sy - 4 - q * 14, 3 + q * 5, 2 + q * 3, '#8a7c6c');
+          g.globalAlpha = 1;
+        }
     },
 
     // ---- the door, off its hinges, going across the room ----
@@ -1392,7 +1519,7 @@
       // y0 + 59, which left about four units of skull above the lip - at
       // this raster that is a cream smudge, and the whole point of the shot
       // is that you can see yourself watching.
-      G.drawBot(g, 'player', PEEK_X, y0 + 46, 1.25,
+      this.peekM = G.drawBot(g, 'player', PEEK_X, y0 + 46, 1.25,
         { t, open: 0.06, mood: 'sick', walk: 0, noBlink: 1, clip: 'slump', ct: t, p: 1 });
       // the near edge of the counter, and the underside of it
       G.plate(g, -4, y0, G.W + 8, 6, '#8a7258', { r: 1, band: 2, grain: 3 });
@@ -1516,9 +1643,8 @@
       const b = this.beatOf();
       // the beats with nothing said still get a caption, because silence
       // with nothing on screen to read is just a pause
-      const NARR = { door: null,
-                     white: 'THEY DID NOT ARREST ANYONE.',
-                     out: 'THE TABLET WAS STILL WARM.' };
+      const NARR = { door: null, shot: null,
+                     out: 'THEY DID NOT ARREST ANYONE. THEY DID NOT NEED TO.' };
       // a beat can carry two lines; the second one replaces the first
       // partway through, so a exchange does not cost a beat each way
       const two = b.say2 && this.said2;

@@ -1116,171 +1116,632 @@
   // ============================================================
   // ACT TWO: THE WRECK
   // ============================================================
+  // ============================================================
+  // THE RUINS OF MOO-BOT
+  //
+  // The first pass drew four rectangles of brick with a scalloped
+  // top edge and called it a bombed building. Scalloped is the
+  // problem: a blast does not nibble, it BITES, and an even wobble
+  // along the top of a wall reads as a castle. You could see the
+  // battlements from the far side of the car park.
+  //
+  // So it is built the way the building was built. A row of steel
+  // stanchions, brick infill between them, a concrete lintel over
+  // the shopfronts, a fascia band on the lintel with the name on
+  // it, and a flat roof over the lot. Then it gets hit, and each of
+  // those things fails in the way that thing fails: brick comes
+  // away in chunks between the columns, steel bends instead of
+  // breaking, the lintel cracks and shows its rebar, the fascia
+  // tears loose and hangs by one end, and the roof folds into the
+  // middle of the floor with its truss hanging out of it.
+  //
+  // It is all static, so it is baked once into a buffer. What is
+  // left live is the part that has to move: three fires, the smoke
+  // off them, one bulb on the fallen sign that has not given up,
+  // and the rain.
+  // ============================================================
+  const RB = {
+    top: FB - 84,        // parapet
+    lint: FB - 52,       // top of the lintel beam
+    head: FB - 44,       // head of the glazing
+    cill: FB - 6,        // cill
+    x0: -30, x1: 606,
+  };
+  const COLS = [-18, 68, 154, 240, 326, 412, 498, 584];
+  const BAYS = [
+    { k: 'wall', fall: 0.18 },
+    { k: 'shop', fire: 1 },
+    { k: 'gone', fall: 1 },
+    { k: 'shop', fire: 0 },
+    { k: 'wall', fall: 0.5 },
+    { k: 'shop', fire: 1 },
+    { k: 'wall', fall: 0.3 },
+  ];
+  const BRICK_HI = '#6a584e', BRICK_LO = '#181318', STEEL = '#5a6273';
+  let wreckBuf = null, cityBuf = null;
+
+  // ---- the top edge of what is left of a wall --------------------
+  // Chunks, eight units wide, each one either standing, half taken
+  // or gone, with a short ramp between so the breaks are diagonal
+  // instead of vertical. Small jitter on top of that for the bricks
+  // that came away one at a time.
+  function blastTop(x, base, amp, seed) {
+    // Chunk WIDTHS vary as well as chunk heights. All-equal chunks is
+    // how you get battlements: the eye finds the period and the wall
+    // turns into a castle. Two frequencies beaten together kills it.
+    const c = Math.floor(x / 8), f = x / 8 - c;
+    const step = (n) => { const h = G.hash(n, seed); return h < 0.2 ? 1 : h < 0.58 ? 0.46 : h < 0.84 ? 0.2 : 0; };
+    const a = step(c), b = step(c + 1);
+    const ramp = 0.1 + G.hash(c, seed + 9) * 0.34;
+    const v = f < 1 - ramp ? a : G.lerp(a, b, (f - (1 - ramp)) / ramp);
+    // enough long-wave to stop the bays matching, not enough to make dunes
+    const slow = Math.sin(x * 0.022 + seed) * 0.09 + Math.sin(x * 0.009 - seed) * 0.08;
+    return Math.round(base + (v + slow) * amp + G.hash(x, seed + 4) * 2.2);
+  }
+
+  // ---- two units of brick wall, top to bottom --------------------
+  function brickCol(g, x, top, bot) {
+    // A COURSE IS TWO UNITS AND A BRICK IS SIX. The first pass used ten
+    // by five, which at four native pixels a unit is a forty-by-twenty
+    // block -- that is not brickwork, that is masonry, and stacked up
+    // eighty units it read as a sandstone cliff with a pointed top.
+    for (let y = top; y < bot; y += 1) {
+      const p = (y - top) / Math.max(1, bot - top);
+      const row = Math.floor(y / 2);
+      const joint = Math.round(y) % 2 === 0 ? -0.1 : 0.02;
+      const bond = (Math.floor((x + (row % 2) * 3) / 6) % 2) ? 0.055 : -0.035;
+      const patch = G.hash(Math.floor(x / 7), row) > 0.86 ? 0.1 : 0;
+      G.Rh(g, x, y, 2, 1, G.shade(G.mix(BRICK_HI, BRICK_LO, 0.2 + p * 0.62), joint + bond + patch));
+    }
+    G.Rh(g, x, top, 2, 1, '#7e6a60');       // the break, only a shade lighter
+    G.Rh(g, x, top + 1, 2, 1, '#504039');
+  }
+
+  // ---- a steel stanchion, possibly bent, possibly snapped --------
+  function stanchion(g, x, top, bot, lean, snap) {
+    for (let y = bot; y > top; y -= 1) {
+      const q = (bot - y) / Math.max(1, bot - top);
+      const ox = x + lean * q * q * 14;
+      G.Rh(g, ox - 3, y, 6, 1, G.shade(STEEL, -0.4));         // web, in shadow
+      G.Rh(g, ox - 3, y, 1.5, 1, STEEL);                      // flanges
+      G.Rh(g, ox + 1.5, y, 1.5, 1, G.shade(STEEL, 0.16));
+      if (Math.round(y) % 9 === 0) {
+        G.Rq(g, ox - 2.5, y, 1, 1, '#8d97aa');
+        G.Rq(g, ox + 2, y, 1, 1, '#8d97aa');
+      }
+    }
+    if (snap) {                                                // torn off: splayed steel
+      const ox = x + lean * 14;
+      for (let i = 0; i < 5; i++) {
+        const a = -1.5 + i * 0.7 + G.hash(i, 3) * 0.4, L = 4 + G.hash(i, 7) * 7;
+        G.line(g, ox, top, ox + Math.cos(a) * L, top - Math.abs(Math.sin(a)) * L, '#7b8698', 1);
+      }
+    }
+  }
+
+  // ---- a blown-out shopfront ------------------------------------
+  function shopBay(g, x0, x1, lit) {
+    const w = x1 - x0;
+    G.R(g, x0, RB.head, w, RB.cill - RB.head, '#05060b');
+    // you can see a bit of the room: a back wall and the ceiling grid
+    G.R(g, x0 + 3, RB.head + 5, w - 6, RB.cill - RB.head - 11, lit ? '#241419' : '#12111a');
+    for (let i = 0; i * 9 < w - 6; i++)
+      G.Rh(g, x0 + 3, RB.head + 5 + i * 9, w - 6, 1, lit ? '#341c1c' : '#191824');
+    // the counter line, still in there
+    G.R(g, x0 + 6, RB.cill - 13, w - 14, 4, lit ? '#3a2218' : '#1b1620');
+    // mullions: aluminium bars, bent every which way
+    // ALUMINIUM BARS. Bent eleven units on a sine they came out as
+    // elephant trunks; a mullion that has been hit leans, and at most
+    // one of them in a bay folds.
+    for (let i = 1; i < 4; i++) {
+      const mx = x0 + (w * i) / 4, h2 = G.hash(mx, 5);
+      const lean = (h2 - 0.5) * 5, fold = h2 > 0.72 ? 7 : 0;
+      for (let y = RB.head; y < RB.cill; y += 1) {
+        const q = (y - RB.head) / (RB.cill - RB.head);
+        const ox = mx + lean * q + fold * Math.max(0, Math.sin((q - 0.3) * 2.6));
+        G.Rh(g, ox - 0.75, y, 1.5, 1, G.mix('#6e7787', '#1c2029', 0.24 + q * 0.56));
+        G.Rq(g, ox - 0.75, y, 0.5, 1, G.mix('#8e97a7', '#2a303c', 0.24 + q * 0.56));
+      }
+    }
+    // GLASS IN THE HEAD. The first pass put a tooth every three units
+    // and the shopfront grew stalactites -- a cave, not a window. Six
+    // shards in a bay, at wildly different lengths, is a broken window.
+    for (let i = 0; i < w / 9; i++) {
+      const gx = x0 + 2 + i * 9 + G.hash(i + x0, 15) * 5;
+      if (G.hash(gx, 11) < 0.34) continue;
+      const L = 1.5 + Math.pow(G.hash(gx, 9), 2) * 8;
+      G.Rh(g, gx, RB.head, 1.5, L, '#2f4352');
+      G.Rq(g, gx, RB.head, 1, L * 0.7, '#5e8098');
+      G.Rq(g, gx + 0.25, RB.head + L - 1, 1, 1, '#a8cade');
+    }
+    // the cill, broken open with its blockwork showing
+    G.R(g, x0 - 1, RB.cill, w + 2, 5, '#5e5a58');
+    G.hairq(g, x0 - 1, RB.cill, w + 2, '#8b8681');
+    for (let i = 0; i < w; i += 7) if (G.hash(i + x0, 13) < 0.4) G.R(g, x0 + i, RB.cill, 5, 5, '#3a3634');
+  }
+
+  // ---- the concrete lintel, cracked, with its rebar out ----------
+  function lintel(g, x0, x1) {
+    G.R(g, x0, RB.lint, x1 - x0, RB.head - RB.lint + 2, '#6a6560');
+    G.hairq(g, x0, RB.lint, x1 - x0, '#948e86');
+    G.hairq(g, x0, RB.head + 1, x1 - x0, '#3d3a38');
+    G.grainq && G.grainq(g, x0, RB.lint, x1 - x0, RB.head - RB.lint, '#514c48', 0.1);
+    for (let i = 0; i < (x1 - x0) / 22; i++) {
+      const cx = x0 + 8 + i * 22 + G.hash(i + x0, 3) * 10;
+      if (G.hash(cx, 5) < 0.68) continue;
+      // a break, and the reinforcement bridging it
+      G.R(g, cx, RB.lint, 5, RB.head - RB.lint + 2, '#2a2724');
+      for (let k = 0; k < 3; k++)
+        G.Rh(g, cx - 1, RB.lint + 2 + k * 2.5, 7, 1, '#9a6a4a');
+    }
+  }
+
+  // ---- MOO-BOT across the front, in three states -----------------
+  function fascia(g, x0, x1, state) {
+    const h = 9, y = RB.lint - h;
+    if (state === 'gone') {                       // just the fixing brackets
+      for (let i = 0; i * 18 < x1 - x0; i++) G.R(g, x0 + 4 + i * 18, y + 5, 3, 5, '#4a4448');
+      return;
+    }
+    if (state === 'hang') {
+      // torn loose and swinging from the left-hand bracket
+      G.R(g, x0 + 2, y + 4, 4, 6, '#4a4448');
+      g.save();
+      g.translate(x0 + 4, y + 6); g.rotate(1.24);
+      G.R(g, 0, -h / 2, x1 - x0 - 14, h, '#a02c34');
+      G.hairq(g, 0, -h / 2, x1 - x0 - 14, '#d9545c');
+      G.hairq(g, 0, h / 2 - 0.5, x1 - x0 - 14, '#5e161c');
+      G.text(g, 'M O-B', 5, -3, '#f2e6d2', { sc: 1 });
+      for (let i = 0; i < 5; i++)                 // the torn end
+        G.R(g, x1 - x0 - 14, -h / 2 + i * 2, 2 + G.hash(i, 3) * 4, 2, '#a02c34');
+      g.restore();
+      return;
+    }
+    G.R(g, x0, y, x1 - x0, h, '#a02c34');
+    G.hairq(g, x0, y, x1 - x0, '#d9545c');
+    G.hairq(g, x0, y + h - 0.5, x1 - x0, '#5e161c');
+    const word = 'MOO-BOT';
+    G.text(g, word, (x0 + x1) / 2, y + 2, '#f6ecd6', { sc: 1, align: 'center' });
+    // scorched away at one end
+    g.globalAlpha = 0.55;
+    for (let i = 0; i < 16; i++)
+      G.R(g, x1 - 22 + G.hash(i, 3) * 22, y + G.hash(i, 7) * h, 3, 2, '#1d1216');
+    g.globalAlpha = 1;
+  }
+
+  // ---- the roof, folded into the middle of the floor -------------
+  function roofFall(g, x0, y0, x1, y1, sag, th) {
+    const N = 64;
+    for (let i = N; i >= 0; i--) {
+      const q = i / N;
+      const x = G.lerp(x0, x1, q);
+      const y = G.lerp(y0, y1, q) + Math.sin(q * Math.PI) * sag;
+      // A SHEET. Banded across the run it came out as a tank track;
+      // the light has to run ALONG the fold, with the ribs as an
+      // occasional dark line, or it is not a roof, it is a caterpillar.
+      G.R(g, x - 0.5, y - 1, 4, th + 3, '#161a23');               // shadow under the deck
+      G.Rh(g, x, y, 3, 1, '#8b96a6');                             // the lit fold
+      G.R(g, x, y + 1, 3, th - 2, '#555f70');
+      G.Rh(g, x, y + th - 1, 3, 1, '#333a47');
+      if (i % 5 === 0) G.R(g, x, y, 1, th, '#414a59');            // ribs
+      if (i % 11 === 0) G.R(g, x, y + th, 2, 4, '#3c4453');       // purlins under it
+    }
+    // the truss that used to hold it up, hanging out of the low end
+    const tx = x1 - 4, ty = y1 + sag * 0.1, tL = 52, dip = 14;
+    const chord = (o, col) => {
+      for (let i = 0; i <= tL; i += 1) {
+        const q = i / tL;
+        G.Rh(g, tx - i, ty + o + q * dip, 1.5, 1.5, col);
+      }
+    };
+    chord(3, '#79828f');
+    chord(12, '#5a626f');
+    for (let i = 0; i <= 6; i++) {                       // uprights and diagonals
+      const q = i / 6, ax = tx - q * tL, ay = ty + q * dip;
+      G.line(g, ax, ay + 3, ax, ay + 13, '#6b7484', 1);
+      if (i < 6) G.line(g, ax, ay + 13, ax - tL / 6, ay + dip / 6 + 3, '#68707d', 1);
+    }
+  }
+
+  // ---- the pylon sign, down across the car park ------------------
+  function fallenSign(g, t) {
+    const bx = 158, by = F - 9;
+    // the base, with the pole snapped off it and the bolts stripped
+    G.R(g, bx - 13, by - 4, 26, 7, '#3b414d');
+    G.bevelq(g, bx - 13, by - 4, 26, 7, '#5e6675', '#1c2028');
+    for (let i = 0; i < 5; i++) G.Rq(g, bx - 10 + i * 5, by - 3, 1, 1, '#8d97aa');
+    for (let i = 0; i < 6; i++) {
+      const a = -2 + i * 0.5;
+      G.line(g, bx, by - 4, bx + Math.cos(a) * 6, by - 4 - Math.abs(Math.sin(a)) * 7, '#7b8698', 1);
+    }
+    // the pole, lying east, with the sign face on the end of it
+    g.save();
+    g.translate(bx + 8, by - 5); g.rotate(-0.1);
+    G.R(g, 0, -3.5, 96, 7, '#49505e');
+    G.hairq(g, 0, -3.5, 96, '#727c8d');
+    G.hairq(g, 0, 3, 96, '#252a34');
+    for (let i = 0; i < 6; i++) G.Rh(g, 12 + i * 16, -3.5, 2, 7, '#39404c');
+    g.restore();
+    // THE FACE. It landed on its edge and leaned back against the
+    // rubble, so you get to read it, which is the point of it.
+    g.save();
+    g.translate(286, F - 17); g.rotate(-0.15);
+    // JUST THE MARK. The word went on the fascia; a pylon sign is one
+    // shape you can read from the ring road, and a seven-letter word
+    // squeezed into thirty units is a smudge.
+    // SIZED OFF THE MARK, not the other way round. Under about
+    // thirteen units of radius the cow stops being a cow and becomes a
+    // cream bar with a stripe in it, so the panel is whatever size a
+    // readable cow needs, and the panel came second.
+    const SW = 66, SH = 37;
+    G.R(g, -SW / 2 - 1.5, -SH / 2 - 1.5, SW + 3, SH + 3, '#191d26');
+    G.R(g, -SW / 2, -SH / 2, SW, SH, '#d8cdb6');
+    G.bevelq(g, -SW / 2, -SH / 2, SW, SH, '#f2e8d0', '#8e8474');
+    G.R(g, -SW / 2 + 3, -SH / 2 + 3, SW - 6, SH - 6, '#efe4cc');
+    G.mooLogo(g, 0, 0, 15, { word: true });
+    // the bulb rim: dead, dead, dead, and one that is not
+    for (let i = 0; i < 14; i++) {
+      const q = i / 14, px = -SW / 2 + 2.5 + q * (SW - 5);
+      for (const py of [-SH / 2 + 1.5, SH / 2 - 1.5]) {
+        // squares. G.fc at r=1 rasterises to a PLUS SIGN, and a rim of
+        // plus signs is a border, not a row of bulbs.
+        const live = i === 5 && py < 0 && Math.sin(t * 17) > -0.6;
+        G.Rh(g, px - 0.75, py - 0.75, 1.5, 1.5, live ? '#fff4c8' : '#6d5f56');
+        G.Rq(g, px - 0.25, py - 0.75, 0.5, 0.5, live ? '#ffffff' : '#877871');
+        if (live) G.glow(g, px, py, 24, 18, '#ffd47a', 0.5);
+      }
+    }
+    // one crack, and a corner missing
+    G.line(g, -SW / 2 + 4, SH / 2 - 12, -SW / 2 + 17, SH / 2 - 3, '#1a1116', 1.5);
+    for (let i = 0; i < 7; i++)
+      G.R(g, SW / 2 - 11 + i * 1.6, SH / 2 - 9 + G.hash(i, 3) * 9, 3, 3, '#241b16');
+    g.restore();
+  }
+
+  // ---- the car park ----------------------------------------------
+  function apron(g) {
+    for (let j = 0; j < G.H - FB + 4; j++)
+      G.Rh(g, RB.x0, FB + j, RB.x1 - RB.x0, 1, G.mix('#2f2a30', '#131018', Math.min(1, j / 40)));
+    // the kerb the building sits behind
+    G.R(g, RB.x0, FB, RB.x1 - RB.x0, 3, '#4a4650');
+    G.hairq(g, RB.x0, FB, RB.x1 - RB.x0, '#6e6a74');
+    // parking bays, painted on and mostly burnt off
+    for (let i = 0; i < 13; i++) {
+      const px = RB.x0 + 10 + i * 48;
+      for (let y = 0; y < 22; y += 2) {
+        if (G.hash(px + y, 3) < 0.42) continue;
+        G.Rh(g, px + y * 0.35, F - 16 + y, 2, 1.5, G.mix('#c8bfa8', '#3a3238', 0.3 + G.hash(y, 7) * 0.5));
+      }
+    }
+    // TARMAC, not a black band. Mottle it, drag some tyre through it,
+    // and give the near strip a kerb to sit behind, or the bottom fifth
+    // of every frame in this scene is nothing at all.
+    for (let i = 0; i < 200; i++) {
+      const mx = RB.x0 + G.hash(i, 51) * (RB.x1 - RB.x0), my = FB + 6 + G.hash(i, 53) * 40;
+      G.Rh(g, mx, my, 3 + G.hash(i, 57) * 9, 1.5, G.shade('#2b262d', G.hash(i, 59) * 0.16 - 0.04));
+    }
+    for (let i = 0; i < 7; i++) {                          // tyre, laid down hard
+      const ty = F - 12 + i * 5.5, sw = 2.2 + G.hash(i, 61) * 2;
+      for (let x = RB.x0; x < RB.x1; x += 4) {
+        if (G.hash(x + i * 7, 63) < 0.3) continue;
+        G.Rh(g, x + Math.sin(x * 0.02 + i) * 3, ty, 4, sw, '#1b171d');
+      }
+    }
+    // a drain, and the tarmac coming up around it
+    for (const dx of [96, 344]) {
+      G.R(g, dx, F - 6, 14, 6, '#22242c');
+      for (let i = 0; i < 4; i++) G.Rh(g, dx + 1, F - 5 + i * 1.5, 12, 0.8, '#4c5058');
+    }
+  }
+
+  // ---- heaps, with things in them you can name -------------------
+  function rubble(g) {
+    for (let m = 0; m < 11; m++) {
+      const mx = RB.x0 + 14 + m * 56 + G.hash(m, 3) * 16;
+      const mw = 46 + G.hash(m, 5) * 40, mh = 9 + G.hash(m, 7) * 15;
+      for (let i = 0; i < mw; i += 2) {
+        const p2 = i / mw;
+        const h = Math.round(mh * Math.pow(Math.sin(p2 * Math.PI), 0.7) * (0.7 + G.hash(mx + i, 9) * 0.5));
+        if (h < 1) continue;
+        G.R(g, mx + i, FB - h, 2, h + 5, G.mix('#4e5666', '#15181f', 0.3 + G.hash(i, 11) * 0.42));
+        G.Rh(g, mx + i, FB - h, 2, 1, '#7d8aa0');
+      }
+      // broken slab with the mesh hanging out of it
+      if (m % 3 === 1) {
+        const sx = mx + mw * 0.55, sy = FB - mh * 0.5;
+        g.save(); g.translate(sx, sy); g.rotate(G.hash(m, 13) * 0.7 - 0.35);
+        G.R(g, -14, -4, 28, 8, '#6e6961');
+        G.hairq(g, -14, -4, 28, '#98918a');
+        for (let k = 0; k < 4; k++) G.line(g, 13, -3 + k * 2, 21 + G.hash(k, 3) * 5, -5 + k * 2.6, '#9a6a4a', 1);
+        g.restore();
+      }
+      const kind = m % 5, kx = mx + mw * 0.34, ky = FB - 1;
+      if (kind === 0) {                                // a booth bench, upside down
+        G.R(g, kx - 16, ky - 9, 34, 11, '#5a2028');
+        G.hairq(g, kx - 16, ky - 9, 34, '#8a3a44');
+        G.R(g, kx - 12, ky + 2, 26, 4, '#3a1418');
+        for (let k = 0; k < 4; k++) G.Rh(g, kx - 13 + k * 9, ky - 8, 7, 1.5, '#733038');
+      } else if (kind === 1) {                         // trays, fanned out
+        for (let k = 0; k < 5; k++) {
+          g.save(); g.translate(kx + (k - 2) * 2.4, ky - 4 + k * 1.6); g.rotate((k - 2) * 0.045);
+          G.R(g, -11, -2, 22, 3, '#8a3a42'); G.hairq(g, -11, -2, 22, '#b8555e');
+          g.restore();
+        }
+      } else if (kind === 2) {                         // a length of counter, face up
+        G.R(g, kx - 21, ky - 7, 42, 7, '#6b4a30');
+        G.hairq(g, kx - 21, ky - 7, 42, '#a87a52');
+        G.R(g, kx - 21, ky, 42, 3, '#38231a');
+        G.R(g, kx - 6, ky - 11, 13, 5, '#8d949f');     // the till, still bolted to it
+        G.Rq(g, kx - 3, ky - 10, 1, 1, '#3affd0');
+      } else if (kind === 3) {                         // chairs, tangled
+        for (let j2 = 0; j2 < 2; j2++) {
+          g.save(); g.translate(kx + j2 * 9, ky); g.rotate(j2 ? 0.8 : -0.35);
+          for (let k = 0; k < 12; k++) G.R(g, -6 + k * 0.7, -k, 3, 2, '#5c6470');
+          G.R(g, -8, 0, 18, 3, '#5c6470');
+          g.restore();
+        }
+      } else {                                         // a fryer basket and its oil
+        G.R(g, kx - 8, ky - 8, 18, 9, '#8a94a8');
+        G.hairq(g, kx - 8, ky - 8, 18, '#b6c0d2');
+        for (let k = 1; k < 5; k++) G.vairq(g, kx - 8 + k * 3.4, ky - 7, 7, '#4a5468');
+        G.fe(g, kx + 1, ky + 3, 11, 2.5, '#2a221c');
+      }
+      // rebar tufts
+      if (m % 2 === 0)
+        for (let k = 0; k < 4; k++)
+          G.line(g, mx + mw * 0.75, FB - 2, mx + mw * 0.75 + (k - 1.5) * 5, FB - 6 - G.hash(k + m, 3) * 9, '#8a5e42', 1);
+    }
+  }
+
+  // ---- the burning city, its own buffer so it can parallax -------
+  function bakeCity() {
+    const c = document.createElement('canvas');
+    c.width = 700 * G.PX; c.height = 130 * G.PX;
+    // the tops have to clear the parapet of the building in front of it,
+    // or there is no city in the shot, only a rumour of one
+    const b = c.getContext('2d');
+    b.imageSmoothingEnabled = false;
+    b.setTransform(G.PX, 0, 0, G.PX, 0, 0);
+    // the far rank, flat and almost gone in the murk
+    let x = 0;
+    while (x < 700) {
+      const w = 22 + G.hash(x, 15) * 44, hh = 40 + G.hash(x + 2, 16) * 46;
+      G.R(b, x, 118 - hh, w, hh, '#121927');
+      x += w + 5;
+    }
+    // the near rank: taller, lit, and three of them on fire
+    x = -14;
+    let n = 0;
+    while (x < 700) {
+      const w = 18 + G.hash(x, 5) * 32, hh = 52 + G.hash(x + 3, 6) * 58;
+      const top = 118 - hh, burn = n % 7 === 3;
+      G.R(b, x, top, w, hh, '#090d15');
+      G.hairq(b, x, top, w, '#1e2636');
+      for (let wy = top + 4; wy < 114; wy += 6)
+        for (let wx = x + 2; wx < x + w - 2; wx += 5) {
+          const h2 = G.hash(wx, wy);
+          if (h2 > 0.78) G.Rh(b, wx, wy, 1.5, 2, burn && h2 > 0.9 ? '#ff9a3a' : '#3a4a6b');
+        }
+      if (burn) {
+        // the top floors gone, and the fire in them
+        for (let i = 0; i < w; i += 2)
+          G.R(b, x + i, top, 2, 3 + G.hash(x + i, 9) * 5, '#070a11');
+        G.glow(b, x + w / 2, top + 6, 70, 52, '#ff7a2a', 0.34);
+        for (let k = 0; k < 6; k++)
+          G.Rh(b, x + 3 + k * (w / 7), top + 2 - G.hash(k, 3) * 4, 3, 6, k % 2 ? '#ffb050' : '#e0762a');
+      }
+      // aerials and a water tank or two
+      if (G.hash(x, 21) > 0.6) G.R(b, x + w * 0.6, top - 6, 2, 6, '#1a2130');
+      x += w + 4; n++;
+    }
+    // the murk the whole thing is standing in
+    for (let j = 0; j < 26; j++) {
+      b.globalAlpha = 0.055;
+      G.Rh(b, 0, 104 + j, 700, 1, '#7a4a3a');
+      b.globalAlpha = 1;
+    }
+    return c;
+  }
+
+  // ---- the set, baked once ---------------------------------------
+  function bakeWreck() {
+    const c = document.createElement('canvas');
+    c.width = (RB.x1 - RB.x0) * G.PX; c.height = G.H * G.PX;
+    const b = c.getContext('2d');
+    b.imageSmoothingEnabled = false;
+    b.setTransform(G.PX, 0, 0, G.PX, -RB.x0 * G.PX, 0);
+
+    // ---- the building, bay by bay ----
+    for (let i = 0; i < BAYS.length; i++) {
+      const bay = BAYS[i], x0 = COLS[i], x1 = COLS[i + 1];
+      if (bay.k === 'gone') {
+        // taken out completely: a stump of brick and a lot of nothing
+        for (let x = x0; x < x1; x += 2)
+          brickCol(b, x, blastTop(x, FB - 16, -12, 30 + i), FB);
+        continue;
+      }
+      if (bay.k === 'wall') {
+        const base = RB.top + bay.fall * 26;
+        for (let x = x0; x < x1; x += 2)
+          brickCol(b, x, blastTop(x, base, 30, 3 + i * 5), FB);
+        // A WALL WITH NOTHING IN IT IS A CLIFF. Every bay of a building
+        // has a hole in it at head height, so this one gets its window
+        // back: burnt out, its frame gone, its lintel cracked.
+        const oy = RB.head + 4, oh = RB.cill - RB.head - 12;
+        for (let k2 = 0; k2 < 2; k2++) {
+          const ow = ((x1 - x0) - 44) / 2, ox = x0 + 15 + k2 * (ow + 14);
+          G.R(b, ox - 2, oy - 5, ow + 4, 5, '#565049');   // lintel
+          G.hairq(b, ox - 2, oy - 5, ow + 4, '#7d766c');
+          G.R(b, ox, oy, ow, oh, '#07080d');
+          G.bevelq(b, ox, oy, ow, oh, '#2a2630', '#04050a');
+          for (let k = 0; k < ow; k += 3)                 // what is left of the frame
+            if (G.hash(k + ox, 5) > 0.62) G.Rh(b, ox + k, oy, 2, 2 + G.hash(k, 7) * 6, '#3e3a44');
+          G.R(b, ox - 3, oy + oh, ow + 6, 4, '#4e4942');  // cill
+          G.hairq(b, ox - 3, oy + oh, ow + 6, '#746d64');
+          b.globalAlpha = 0.24;                           // the soot that came out of it
+          for (let x = ox - 3; x < ox + ow + 3; x += 3)
+            G.Rh(b, x, oy - 6 - G.hash(x, 7) * 12, 3, 22 + G.hash(x, 9) * 14, '#120d11');
+          b.globalAlpha = 1;
+        }
+      } else {
+        // shopfront: brick only above the lintel
+        const base = RB.top + (i === 3 ? 8 : 0);
+        for (let x = x0; x < x1; x += 2) {
+          const tp = blastTop(x, base, 26, 7 + i * 3);
+          if (tp < RB.lint - 2) brickCol(b, x, tp, RB.lint);
+        }
+        lintel(b, x0 - 2, x1 + 2);
+        shopBay(b, x0 + 3, x1 - 3, bay.fire);
+      }
+      // the fascia, in whatever state this bay's is in
+      if (bay.k !== 'gone')
+        fascia(b, x0 + 2, x1 - 2, i === 1 ? 'full' : i === 3 ? 'hang' : i === 5 ? 'full' : 'gone');
+    }
+    // ---- the steel, which bent rather than broke ----
+    for (let i = 0; i < COLS.length; i++) {
+      const snap = i === 2 || i === 3 || i === 6;
+      const top = snap ? FB - 26 - G.hash(i, 3) * 30 : RB.top - 6;
+      stanchion(b, COLS[i], top, FB + 2, snap ? (i % 2 ? 0.5 : -0.4) : 0, snap);
+    }
+    // ---- cables, hanging off what is left of the roof line ----
+    for (let i = 0; i < 7; i++) {
+      const cx = RB.x0 + 46 + i * 82 + G.hash(i, 3) * 20;
+      const L = 8 + G.hash(i, 7) * 15, tp = RB.top + G.hash(i, 11) * 14;
+      for (let k = 0; k < L; k++)
+        G.Rq(b, cx + Math.sin(k * 0.3 + i) * 2.4, tp + k, 1, 1, '#23262e');
+    }
+    // ---- the roof, folded into the floor ----
+    roofFall(b, 150, RB.top + 4, 268, FB - 12, 16, 5);
+    roofFall(b, 470, RB.top + 16, 392, FB - 6, 9, 4);
+    apron(b);
+    rubble(b);
+    // ---- the burnt stub of the counter, where it always was ----
+    for (let i = 0; i < 108; i += 2) {
+      const th = 13 + Math.round(Math.sin(i * 0.14) * 4 + G.hash(i, 3) * 5);
+      G.R(b, 300 + i, FB - th, 2, th + 3, G.mix('#5a4030', '#201508', 0.2 + G.hash(i, 7) * 0.45));
+      G.Rh(b, 300 + i, FB - th, 2, 1, '#8a6a4a');
+    }
+    for (let i = 0; i < 5; i++)
+      G.R(b, 310 + i * 22, FB - 9 - G.hash(i, 5) * 4, 6, 11, '#3f4854');
+    // ---- things sat on the near strip, at near-strip SIZE ----
+    for (let i = 0; i < 16; i++) {
+      const nx = RB.x0 + 18 + i * 40 + G.hash(i, 67) * 18, ny = F + 2 + G.hash(i, 71) * 22;
+      const k = i % 4;
+      b.save(); b.translate(nx, ny); b.rotate((G.hash(i, 73) - 0.5) * 1.2);
+      if (k === 0) {                                    // a slab of ceiling, face up
+        G.R(b, -13, -3, 26, 6, '#585e69'); G.hairq(b, -13, -3, 26, '#838b98');
+        G.R(b, -13, 3, 26, 2, '#22262e');
+      } else if (k === 1) {                             // a tray, and what was on it
+        G.R(b, -9, -2, 18, 3, '#8a3a42'); G.hairq(b, -9, -2, 18, '#b8555e');
+        G.Rh(b, -4, -4, 6, 2, '#c9b48c');
+      } else if (k === 2) {                             // a bin lid
+        G.fe(b, 0, 0, 10, 3.5, '#3f4854'); G.fe(b, 0, -1, 7, 2, '#59626f');
+      } else {                                          // paper. it pops, and it should
+        G.R(b, -6, -2, 12, 4, '#b9ad94'); G.hairq(b, -6, -2, 12, '#e0d5bc');
+        G.R(b, -2, -2, 3, 4, '#8e836e');
+      }
+      b.restore();
+    }
+    // ---- scatter on the near apron, so it is not an empty stage ----
+    for (let i = 0; i < 64; i++) {
+      const sx = RB.x0 + G.hash(i, 23) * (RB.x1 - RB.x0), sy = FB + 4 + G.hash(i, 29) * 34;
+      const sw = 3 + G.hash(i, 31) * 11, sh = 1.5 + G.hash(i, 37) * 3;
+      const cc = G.mix(['#4e5666', '#5c3630', '#8a2f3a', '#6b5c3a', '#3f4854', '#6e6961'][i % 6],
+        '#14101a', 0.46 + G.hash(i, 41) * 0.34);
+      G.R(b, sx, sy, sw, sh, cc);
+      G.hairq(b, sx, sy, sw, G.shade(cc, 0.4));
+    }
+    return c;
+  }
+
+  // ---- a fire, and what comes off it -----------------------------
+  const FIRES = [
+    { x: 111, y: RB.cill - 3, s: 0.95 },      // inside the first shopfront
+    { x: 455, y: RB.cill - 3, s: 0.8 },       // inside the last one
+    { x: 196, y: FB + 7, s: 1.2 },            // and two out on the tarmac
+    { x: 348, y: FB + 3, s: 0.62 },
+  ];
+  function fire(g, x, y, sc, t, seed) {
+    const fl = 0.62 + Math.sin(t * 5.3 + seed) * 0.24 + Math.sin(t * 11 + seed * 2) * 0.14;
+    G.glow(g, x, y - 5 * sc, 80 * sc * fl, 42 * sc * fl, '#ff7a2a', 0.42);
+    for (let k = 0; k < 7; k++) {
+      const o = k - 3, h = (5 + Math.abs(3 - Math.abs(o)) * 4) * sc * fl;
+      const wob = Math.sin(t * 7 + k * 1.7 + seed) * 1.6;
+      G.Rh(g, x + o * 2.4 * sc + wob, y - h, 2.4 * sc, h, k % 2 ? '#e0762a' : '#c8541e');
+      G.Rh(g, x + o * 2.4 * sc + wob, y - h * 0.62, 2.4 * sc, h * 0.62, '#ffb050');
+      if (Math.abs(o) < 2) G.Rh(g, x + o * 2.4 * sc + wob, y - h * 0.3, 1.6 * sc, h * 0.3, '#ffe6a8');
+    }
+    for (let k = 0; k < 5; k++)                          // embers on the ground
+      G.Rq(g, x - 7 * sc + k * 3.5 * sc, y + 1, 1, 1, Math.sin(t * 6 + k) > 0 ? '#ff8a3a' : '#7a2e14');
+  }
+  function smoke(g, x, y, t, seed, n, rise) {
+    // SMOKE IS NOT GREY BLOBS. At a fifth alpha a hard ellipse is a
+    // blob, and nine of them stacked is a wall of blobs. It wants to
+    // be thin, wide, warm at the bottom where the fire is still in it,
+    // and cold and enormous by the time it reaches the cloud.
+    for (let k = 0; k < n; k++) {
+      const q = ((t * rise + k * (110 / n) + seed * 31) % 110) / 110;
+      const sy = y - q * 112;
+      const sx = x + Math.sin(q * 3.1 + seed) * (8 + q * 30) + q * 16;
+      const a = (1 - q) * (q < 0.12 ? q / 0.12 : 1);
+      g.globalAlpha = 0.085 * a + 0.02;
+      G.fe(g, sx, sy, 7 + q * 30, 3.5 + q * 12, G.mix('#7a4a3c', '#5c5560', Math.min(1, q * 2)));
+      g.globalAlpha = 0.05 * a;
+      G.fe(g, sx, sy + 1.5, 5 + q * 22, 2.5 + q * 8, q < 0.3 ? '#c2703a' : '#8d8494');
+      g.globalAlpha = 1;
+    }
+  }
+
   const wreckDef = {
     w: 560, start: 40, obj: 'GET TO THE ROAD',
     minX: 22, maxX: 528, pspeed: 0.6, grade: 1.25, hopAmp: 4.2,
 
     sky(g, S) {
+      // A LID OF SMOKE WITH A FIRE UNDER IT. There is no night sky
+      // over this, there is a ceiling.
       for (let j = 0; j < G.H; j++)
-        G.Rh(g, 0, j, G.W, 1, G.mix('#0d1220', '#2e1c22', Math.pow(j / G.H, 0.85)));
+        G.Rh(g, 0, j, G.W, 1, G.mix('#090d18', '#3a1e21', Math.pow(j / G.H, 0.78)));
+      G.glow(g, 150, 96, 520, 150, '#6e2a16', 0.5);
+      G.glow(g, 262, 104, 320, 96, '#b04a1e', 0.26);
+      // the city behind, on its own plane so it moves slower than you
+      if (!cityBuf) cityBuf = bakeCity();
+      const par = -14 - G.cam.x * 0.34;
+      g.drawImage(cityBuf, par, FB - 122, 700, 130);
+      // what is coming off it
+      for (let i = 0; i < 3; i++) smoke(g, par + 120 + i * 210, FB - 20, S.t, i * 7 + 2, 6, 6);
+      // and the cloud the whole thing is under. Ellipses at a third
+      // alpha gave a row of dark eggs sitting in the sky; a ceiling is
+      // long flat streaks you can barely separate from each other.
+      for (let i = 0; i < 9; i++) {
+        const cy = 3 + i * 6.5, cw = 180 + G.hash(i, 3) * 260;
+        const cx = ((G.hash(i, 7) * 520 + S.t * (1.4 + i * 0.5)) % 640) - 150;
+        g.globalAlpha = 0.1;
+        G.fe(g, cx, cy, cw * 0.5, 3.5, G.mix('#120e18', '#3c2026', i / 9));
+        g.globalAlpha = 0.06;
+        G.fe(g, cx + 20, cy + 3, cw * 0.34, 2.5, G.mix('#2c1c24', '#83401f', i / 9));
+        g.globalAlpha = 1;
+      }
     },
 
     paint(g, S) {
-      // ---- the city, a long way off and still lit ----
-      let x = -10;
-      while (x < 580) {
-        const w = 16 + Math.round(G.hash(x, 5) * 30), hh = 18 + Math.round(G.hash(x + 3, 6) * 34);
-        G.R(g, x, FB - 62 - hh, w, hh, '#0b1018');
-        for (let wy = FB - 58 - hh; wy < FB - 68; wy += 6)
-          for (let wx = x + 2; wx < x + w - 2; wx += 5)
-            if (G.hash(wx, wy) > 0.72) G.Rh(g, wx, wy, 1.5, 2, '#3a4a6b');
-        x += w + 3;
-      }
-      // ---- WHAT IS LEFT OF THE BUILDING. A wall, standing on the
-      // floor, with a top edge that got taken off it. ----
-      const bays = [[8, 148], [176, 132], [326, 96], [438, 118]];
-      for (const [bx, bw] of bays) {
-        // the ragged top of the wall, bay by bay
-        for (let i = 0; i < bw; i += 2) {
-          const top = FB - 60 + Math.round(Math.sin((bx + i) * 0.09) * 5 + G.hash(bx + i, 3) * 7);
-          for (let y = top; y < FB; y += 1) {
-            const p2 = (y - top) / (FB - top);
-            // block courses, and it gets sootier the further down you go
-            const course = (Math.round(y) % 7 === 0) ? -0.18 : 0;
-            const bond = (Math.round((bx + i) / 11) + Math.floor(y / 7)) % 2 ? 0.05 : 0;
-            G.Rh(g, bx + i, y, 2, 1,
-              G.shade(G.mix('#7d6c64', '#2e2528', 0.2 + p2 * 0.62), course + bond));
-          }
-          G.Rh(g, bx + i, top, 2, 1, '#9d8b80');
-        }
-        // soot up the wall from where the fire went out of the windows
-        g.globalAlpha = 0.17;
-        for (let i = 0; i < bw; i += 3)
-          G.Rh(g, bx + i, FB - 38 - G.hash(i + bx, 7) * 12, 3, 22 + G.hash(i, 9) * 10, '#150f12');
+      if (!wreckBuf) wreckBuf = bakeWreck();
+      g.drawImage(wreckBuf, RB.x0, 0, RB.x1 - RB.x0, G.H);
+
+      // ---- the part that has to move ----
+      for (const f of FIRES) smoke(g, f.x, f.y - 10, S.t, f.x, 9, 12 * f.s);
+      for (const f of FIRES) fire(g, f.x, f.y, f.s, S.t, f.x);
+      fallenSign(g, S.t);
+
+      // puddles on the tarmac, with the fire moving about in them
+      for (let i = 0; i < 12; i++) {
+        const px = RB.x0 + 18 + i * 54 + G.hash(i, 13) * 22;
+        const pw = 24 + G.hash(i, 17) * 38, py = F - 18 + G.hash(i, 19) * 24;
+        g.globalAlpha = 0.6; G.fe(g, px, py, pw / 2, 3.2, '#1e2c3c');
+        g.globalAlpha = 0.3; G.fe(g, px, py, pw / 2.7, 2.2, '#b8683a');
+        g.globalAlpha = 0.4;
+        G.Rh(g, px - 2 + Math.sin(S.t * 2.6 + i) * 1.6, py - 1, 4, 2, '#ff9a4a');
         g.globalAlpha = 1;
-        // the fascia stripe, still there in patches
-        for (let i = 0; i * 16 < bw; i++) {
-          if (G.hash(bx + i, 11) < 0.34) continue;
-          const fy = FB - 58 + Math.round(Math.sin((bx + i * 16) * 0.09) * 4);
-          G.R(g, bx + i * 16, fy, 15, 5, i % 2 ? '#8a2f3a' : '#d8cbb8');
-          G.hairq(g, bx + i * 16, fy, 15, i % 2 ? '#c8505c' : '#f0e6d4');
-        }
-      }
-      // ---- window openings punched through it ----
-      for (const wx of [30, 200, 348, 462]) {
-        G.R(g, wx, FB - 48, 62, 34, '#0a0c14');
-        G.bevelq(g, wx, FB - 48, 62, 34, '#2c2830', '#050609');
-        for (let i = 0; i < 9; i++) {                    // the teeth left in the frame
-          G.Rh(g, wx + 3 + i * 6.6, FB - 48, 3 + G.hash(i + wx, 3) * 3, 3 + G.hash(i, 9) * 8, '#4a4450');
-          G.Rh(g, wx + 3 + i * 6.6, FB - 17 - G.hash(i, 5) * 6, 3, 3 + G.hash(i, 7) * 6, '#4a4450');
-        }
-        g.globalAlpha = 0.4; G.glow(g, wx + 31, FB - 30, 70, 44, '#1a2740', 0.6); g.globalAlpha = 1;
-      }
-      // ---- the roof, on the floor ----
-      for (const q of [[92, 62, 0.68], [268, 74, -0.52], [452, 56, 0.44]]) {
-        for (let k = 0; k < q[1]; k++) {
-          G.R(g, q[0] + k * q[2] - 1, FB - 2 - k - 1, 6, 3, OUT);
-          G.R(g, q[0] + k * q[2], FB - 2 - k, 4, 2, k % 7 < 4 ? '#5a6474' : '#3f4854');
-        }
-      }
-      // a truss lying flat across the middle
-      for (let i = 0; i < 60; i++) {
-        G.R(g, 150 + i * 2, FB - 6 - Math.round(Math.sin(i * 0.5) * 2), 3, 2, '#4a5568');
-        if (i % 4 === 0) G.R(g, 150 + i * 2, FB - 10, 2, 6, '#3f4854');
-      }
-      // ---- the ground, wet, with the fires on it ----
-      for (let j = 0; j < G.H - FB + 4; j++)
-        G.Rh(g, 0, FB + j, 580, 1, G.mix('#33272c', '#14101a', j / 34));
-      G.hairq(g, 0, FB, 580, '#4a3c40');
-      // ---- rubble in heaps, not in a line ----
-      for (let m = 0; m < 9; m++) {
-        const mx = 24 + m * 62 + G.hash(m, 3) * 14;
-        const mw = 44 + G.hash(m, 5) * 34, mh = 8 + G.hash(m, 7) * 14;
-        for (let i = 0; i < mw; i += 2) {
-          const p2 = i / mw;
-          const h = Math.round(mh * Math.sin(p2 * Math.PI) * (0.7 + G.hash(mx + i, 9) * 0.5));
-          if (h < 1) continue;
-          G.R(g, mx + i, FB - h, 2, h + 4, G.mix('#4a5262', '#161a24', 0.28 + G.hash(i, 11) * 0.4));
-          G.Rh(g, mx + i, FB - h, 2, 1, '#77839a');
-        }
-        // and things you can name, sat in it
-        const kind = m % 5;
-        const kx = mx + mw * 0.4, ky = FB - 1;
-        if (kind === 0) {                                // a booth bench, upside down
-          G.R(g, kx - 16, ky - 8, 34, 10, '#5a2028');
-          G.hairq(g, kx - 16, ky - 8, 34, '#8a3a44');
-          G.R(g, kx - 12, ky + 2, 26, 4, '#3a1418');
-        } else if (kind === 1) {                         // a tray stack
-          for (let k = 0; k < 4; k++) G.R(g, kx - 10 + k, ky - 6 + k * 2, 20, 2, '#8a3a42');
-        } else if (kind === 2) {                         // a length of counter
-          G.R(g, kx - 20, ky - 6, 40, 6, '#6b4a30');
-          G.hairq(g, kx - 20, ky - 6, 40, '#a87a52');
-          G.R(g, kx - 20, ky, 40, 3, '#3a2418');
-        } else if (kind === 3) {                         // a chair frame
-          for (let k = 0; k < 12; k++) G.R(g, kx - 6 + k * 0.8, ky - k, 3, 2, '#5c6470');
-          G.R(g, kx - 8, ky, 18, 3, '#5c6470');
-        } else {                                         // a fryer basket
-          G.R(g, kx - 8, ky - 7, 18, 8, '#8a94a8');
-          for (let k = 1; k < 5; k++) G.vairq(g, kx - 8 + k * 3.4, ky - 6, 6, '#4a5468');
-        }
-      }
-      // the burnt stub of the counter, where it always was
-      for (let i = 0; i < 118; i += 2) {
-        const th = 14 + Math.round(Math.sin(i * 0.14) * 4 + G.hash(i, 3) * 5);
-        G.R(g, 356 + i, FB - th, 2, th, G.mix('#5a4030', '#221609', 0.2 + G.hash(i, 7) * 0.45));
-        G.Rh(g, 356 + i, FB - th, 2, 1, '#8a6a4a');
-      }
-      g.globalAlpha = 0.3;
-      G.R(g, 356, FB - 9, 118, 9, '#120c08');
-      g.globalAlpha = 1;
-      for (let i = 0; i < 5; i++)                        // the stools that were bolted to it
-        G.R(g, 366 + i * 24, FB - 8 - G.hash(i, 5) * 4, 6, 10, '#3f4854');
-      // ---- the sign's cow head, face down in a puddle, still trying ----
-      const fk = Math.sin(S.t * 19) > -0.75 ? 1 : 0.15;
-      G.R(g, 274, FB - 14, 56, 16, '#1a2230');
-      G.bevelq(g, 274, FB - 14, 56, 16, '#2e3a4e', '#0a0f16');
-      const hd = [];
-      for (let i = 0; i <= 22; i++) {
-        const a2 = (i / 22) * Math.PI * 2;
-        hd.push([302 + Math.cos(a2) * 20, FB - 6 + Math.sin(a2) * 6]);
-      }
-      for (const q of hd) G.Rh(g, q[0] - 1.5, q[1] - 1.5, 3, 3, '#12101a');
-      for (const q of hd) G.Rh(g, q[0] - 0.75, q[1] - 0.75, 1.5, 1.5, fk > 0.5 ? '#ff8ab0' : '#5c3a48');
-      for (const e of [[-24, -1], [24, -1]])
-        G.Rh(g, 302 + e[0], FB - 7, 3, 3, fk > 0.5 ? '#ff8ab0' : '#5c3a48');
-      G.Rh(g, 296, FB - 9, 2, 2, fk > 0.5 ? '#ffffff' : '#4a3038');
-      G.Rh(g, 306, FB - 9, 2, 2, fk > 0.5 ? '#ffffff' : '#4a3038');
-      if (fk > 0.5) G.glow(g, 302, FB - 6, 90, 36, '#ff8ab0', 0.34);
-      // ---- two fires, and the smoke off them ----
-      for (const f of [[128, 1], [406, 0.85]]) {
-        const fl = 0.65 + Math.sin(S.t * 5 + f[0]) * 0.35;
-        G.glow(g, f[0], FB - 6, 76 * fl * f[1], 40 * fl, '#ff7a2a', 0.4);
-        for (let k = 0; k < 7; k++)
-          G.Rh(g, f[0] - 6 + k * 2, FB - 4 - k * 2.4 - fl * 5, 2, 5, k % 2 ? '#ffb050' : '#e0762a');
-        g.globalAlpha = 0.13;
-        for (let k = 0; k < 11; k++) {
-          const sy = FB - 14 - ((S.t * 13 + k * 9 + f[0]) % 100);
-          G.Rh(g, f[0] - 5 + Math.sin(sy * 0.08 + f[0]) * 7, sy, 7 + k * 0.9, 4, '#8a7c88');
-        }
-        g.globalAlpha = 1;
-      }
-      // ---- puddles on the near floor, holding the fire ----
-      for (let i = 0; i < 9; i++) {
-        const px = 20 + i * 62 + G.hash(i, 13) * 20, pw = 26 + G.hash(i, 17) * 34;
-        g.globalAlpha = 0.35;
-        G.fe(g, px, FB + 10 + G.hash(i, 19) * 14, pw / 2, 3, '#2a3a4a');
-        g.globalAlpha = 0.18;
-        G.fe(g, px, FB + 10 + G.hash(i, 19) * 14, pw / 2.6, 2, '#c8703a');
-        g.globalAlpha = 1;
-      }
-      // scatter on the near floor, so it is not an empty apron
-      for (let i = 0; i < 70; i++) {
-        const sx = G.hash(i, 23) * 580, sy = FB + 4 + G.hash(i, 29) * 26;
-        const sw = 3 + G.hash(i, 31) * 10, sh = 1.5 + G.hash(i, 37) * 3;
-        const cc = G.mix(['#4a5262', '#5c3630', '#8a2f3a', '#6b5c3a', '#3f4854'][i % 5],
-          '#14101a', 0.34 + G.hash(i, 41) * 0.3);
-        G.R(g, sx, sy, sw, sh, cc);
-        G.hairq(g, sx, sy, sw, G.shade(cc, 0.4));
+        G.hairq(g, px - pw / 2.2, py - 3.2, pw / 1.1, '#465c72');
       }
     },
 
