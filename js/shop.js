@@ -168,15 +168,18 @@
       G.conduit(g, 0, 2, G.W, false, P.magenta);
       G.glow(g, 160, 80, 240, 130, '#ff7a4a', 0.3);
 
-      // HUD
-      G.plate(g, 2, 2, 56, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.hazard);
-      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.hazard);
-      G.plate(g, 62, 2, 74, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, 'THE ARMOURY', 66, 4, P.magentaLt);
-      G.plate(g, 200, 2, 116, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, 'FREED ' + G.state.freed + '  ·  HEAT ' + Math.round(G.state.suspicion * 100) + '%', 204, 4,
-        G.state.suspicion > 0.6 ? P.magenta : P.lime);
+      // ---- HUD: one bar, like every other bar in the game ----
+      // Three plates with gaps between them let the magenta conduit
+      // behind show through the gaps, so the top of the armoury read as
+      // a row of boxes with a broken meter running between them.
+      const HC = G.hudPanel(g, 2, 2, 300, 14, [52, 112, 136], { col: P.ink2 });
+      G.R(g, HC[0].x + 1, HC[0].y + 2, 4, 5, P.hazard);
+      G.bevelq(g, HC[0].x + 1, HC[0].y + 2, 4, 5, '#ffd88a', '#9a6a10');
+      G.text(g, '$' + Math.round(G.state.moneyShown), HC[0].x + 8, HC[0].y + 1, P.hazard);
+      G.text(g, 'THE ARMOURY', HC[1].x + 1, HC[1].y + 1, P.magentaLt);
+      G.text(g, 'FREED ' + G.state.freed, HC[2].x + 1, HC[2].y + 1, P.violetLt);
+      G.text(g, 'HEAT ' + Math.round(G.state.suspicion * 100) + '%', HC[2].x + HC[2].w, HC[2].y + 1,
+        G.state.suspicion > 0.6 ? P.magenta : P.lime, { align: 'right' });
 
       for (let i = 0; i < TABS.length; i++) {
         const on = this.tab === i;
@@ -239,11 +242,13 @@
         204, 144, P.violetLt, { sc: 0.5 });
 
       G.drawSteam(g);
-      G.R(g, 0, 150, G.W, 30, P.woodDk);
-      G.plate(g, -4, 148, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });
-      G.hair(g, -4, 148, G.W + 8, P.woodHi);
-      G.drawBtn(g, 4, 152, 68, 16, '< BACK', { col: '#3a2a5c' });
-      G.drawBtn(g, 216, 152, 100, 16, 'OPEN TOMORROW', { col: loaded ? '#2f8a48' : '#5c2030' });
+      // the tray drops four units so the line readout above it stops
+      // being sawn in half by its own lip
+      G.R(g, 0, 154, G.W, 26, P.woodDk);
+      G.plate(g, -4, 152, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });
+      G.hair(g, -4, 152, G.W + 8, P.woodHi);
+      G.drawBtn(g, 4, 157, 68, 17, '< BACK', { col: '#3a2a5c' });
+      G.drawBtn(g, 216, 157, 100, 17, 'OPEN TOMORROW', { col: loaded ? '#2f8a48' : '#5c2030' });
       if (G.clause) { G.clause.at(258, 22, 166, 4, 286, true); G.clause.draw(g); }
       if (this.flash) {
         g.globalAlpha = (1 - this.flash.t / 0.5) * 0.4;

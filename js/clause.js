@@ -713,21 +713,21 @@
       G.text(g, G.tier().name + ' PLAN', 58, 40, CO);
       G.R(g, 30, 50, 260, 1, '#33201a');
       for (let i = 0; i < r.rows.length; i++) {
-        const row = r.rows[i], ry = 52 + i * 9;
+        const row = r.rows[i], ry = 54 + i * 10;
         G.text(g, row[0], 34, ry, P.steel2);
-        G.text(g, row[1], 168, ry, row[2], { align: 'right' });
+        G.text(g, row[1], 166, ry, row[2], { align: 'right' });
       }
 
       // ---- the trend, in the space the ledger does not need ----
       const hs = r.hist || [];
-      G.R(g, 176, 52, 1, 68, '#33201a');
-      G.text(g, 'SHIFT NET', 184, 52, CO);
-      const base = 114, top = 64;
+      G.R(g, 176, 52, 1, 70, '#33201a');
+      G.text(g, 'SHIFT NET', 184, 54, CO);
+      const base = 116, top = 66;
       G.R(g, 184, base, 104, 1, '#33201a');
       let peak = 1;
       for (const e of hs) peak = Math.max(peak, Math.abs(e.net));
       const now = hs.length ? hs[hs.length - 1] : null;
-      if (now) G.text(g, '$' + now.net, 292, 52, now.net >= 0 ? P.lime : P.magenta, { align: 'right' });
+      if (now) G.text(g, '$' + now.net, 290, 54, now.net >= 0 ? P.lime : P.magenta, { align: 'right' });
       for (let i = 0; i < hs.length; i++) {
         const e = hs[i], bx = 184 + i * 13;
         const hgt = Math.max(2, Math.round((Math.abs(e.net) / peak) * (base - top)));
@@ -738,13 +738,16 @@
       }
       // the day numbers under the bars are the legend; anything more collides
       // with the NET rule below
-      const ny = 52 + r.rows.length * 9 + 2;
+      // THE TOTAL GOES UNDER BOTH COLUMNS. It used to be placed off the
+      // number of ledger rows, so on a short shift the rule and the NET
+      // figure were drawn straight through the middle of the bar chart
+      // and the plan line ran across the column rule on its way out.
+      const ny = 126;
       G.R(g, 30, ny, 260, 1, '#33201a');
-      G.text(g, 'NET', 34, ny + 3, P.cream);
-      G.text(g, '$' + r.net, 286, ny + 3, r.net >= 0 ? P.lime : P.magenta, { align: 'right' });
-      if (ny + 14 < 142)
-        G.text(g, r.tier < 4 ? 'UPGRADE MY PLAN FOR THE REST OF THE NUMBERS.' : 'ALL OF IT. NO LIMITS.',
-          160, ny + 14, '#6b5248', { align: 'center' });
+      G.text(g, 'NET', 34, ny + 4, P.cream);
+      G.text(g, '$' + r.net, 290, ny + 4, r.net >= 0 ? P.lime : P.magenta, { align: 'right' });
+      G.text(g, r.tier < 4 ? 'UPGRADE MY PLAN FOR THE REST OF THE NUMBERS.' : 'ALL OF IT. NO LIMITS.',
+        160, ny + 16, '#6b5248', { align: 'center' });
     },
   };
 })();

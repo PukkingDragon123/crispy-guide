@@ -908,26 +908,27 @@
       // This is the one strip of wall with nothing on the shelf in front
       // of it: right of the lamp, left of her photograph, above the
       // sauce bottles.
-      // and BELOW the order card, which lands at y 16-58 whenever there
-      // is a machine at the counter. The three lines of her handwriting
-      // are what matter; the header can hide behind a customer's head.
-      const CB = { x: 94, y: 48, w: 54, h: 26 };
+      // IT HAS TO CLEAR THE SAUCE BOTTLE. The third line of her
+      // handwriting used to finish at y 74 and the bottle in front of it
+      // starts at 69, so OWN BOOK came out as OW. Two lines, a shallower
+      // board, and it stops well above the shelf. Moving it left was
+      // worse: the cone on its holder stands right in front of x 82.
+      const CB = { x: 94, y: 44, w: 52, h: 24 };
       G.R(g, CB.x - 2, CB.y - 2, CB.w + 4, CB.h + 4, '#8a6a48');
       G.bevelq(g, CB.x - 2, CB.y - 2, CB.w + 4, CB.h + 4, '#c8a070', '#5c4430');
       G.R(g, CB.x, CB.y, CB.w, CB.h, '#2e3a34');
       G.grainq(g, CB.x, CB.y, CB.w, CB.h, '#3a4840', 0.05, 3);
       G.text(g, 'TODAY', CB.x + CB.w / 2, CB.y + 2, '#ffe6a8', { align: 'center', sc: 0.5 });
-      G.Rq(g, CB.x + 12, CB.y + 8.5, CB.w - 24, 0.5, '#8a9a90');
+      G.Rq(g, CB.x + 10, CB.y + 8.5, CB.w - 20, 0.5, '#8a9a90');
       // a little cone, drawn in chalk
-      const cnx = CB.x + 11, cny = CB.y + 22;
-      for (let r = 0; r < 8; r++)
-        G.Rq(g, cnx - (8 - r) * 0.5, cny - 8 + r, (8 - r) * 1, 1, '#d8c8a0');
-      G.fc(g, cnx, cny - 9.5, 3.5, '#ffd0dc');
-      G.fc(g, cnx, cny - 10.5, 2, '#fff0f4');
+      const cnx = CB.x + 10, cny = CB.y + 22;
+      for (let r = 0; r < 7; r++)
+        G.Rq(g, cnx - (7 - r) * 0.5, cny - 7 + r, (7 - r) * 1, 1, '#d8c8a0');
+      G.fc(g, cnx, cny - 8.5, 3, '#ffd0dc');
+      G.fc(g, cnx, cny - 9.5, 1.75, '#fff0f4');
       // and her handwriting
-      G.text(g, 'SCOOPS', CB.x + 21, CB.y + 11, '#cfe0d4', { sc: 0.5 });
-      G.text(g, 'FROM HER', CB.x + 21, CB.y + 17, '#cfe0d4', { sc: 0.5 });
-      G.text(g, 'OWN BOOK', CB.x + 21, CB.y + 23, '#a8d8c0', { sc: 0.5 });
+      G.text(g, 'SCOOPS FROM', CB.x + 19, CB.y + 11, '#cfe0d4', { sc: 0.5 });
+      G.text(g, 'HER OWN BOOK', CB.x + 19, CB.y + 17, '#a8d8c0', { sc: 0.5 });
 
       // ---- plants. Two pots and a trailing vine, like her front room ----
       const potX = 196;
@@ -1159,7 +1160,7 @@
 
       // ---- HUD ----
       this.hud(g);
-      if (G.clause) { G.clause.at(297, 162, 166, 4, 284); G.clause.draw(g); G.clause.drawMenu(g); }
+      if (G.clause) { G.clause.at(297, 162, 163, 66, 196); G.clause.draw(g); G.clause.drawMenu(g); }
 
       // ===== the shutter, over everything but the tray =====
       if (this.shut && this.shut.p > 0.005) { this.drawShutter(g, t); this.hud(g); G.grade(g, 1); return; }
@@ -1300,16 +1301,33 @@
     // a pit you have not built yet: a lid over the hole, not a slab of
     // battleship plate sunk into a pastel counter
     drawBlank(g, r, i) {
-      G.plate(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, '#c8b4a4',
-        { r: 2, band: 2, lit: '#e8d8c8', dk: '#9a8272', spec: false });
-      G.R(g, r.x, r.y, r.w, r.h, '#b09a88');
-      G.bevelq(g, r.x, r.y, r.w, r.h, '#8a7462', '#d8c8b8');
-      for (let j = 2; j < r.h - 2; j += 6) G.hairq(g, r.x + 3, r.y + j, r.w - 6, '#a08a78');
-      // a little dust sheet corner, so it reads as put away rather than broken
+      // FOUR LOCKED LIDS USED TO BE THE BRIGHTEST THING ON THE COUNTER.
+      // Whatever you are meant to be looking at, it is not the shelf of
+      // things you have not bought yet, so they go down a long way in
+      // tone and pick up a padlock and a price instead of the word
+      // LOCKED -- which told you nothing you could act on.
+      G.plate(g, r.x - 3, r.y - 3, r.w + 6, r.h + 6, '#8d7d72',
+        { r: 2, band: 2, lit: '#a89686', dk: '#5e5248', spec: false });
+      G.R(g, r.x, r.y, r.w, r.h, '#6f6258');
+      G.bevelq(g, r.x, r.y, r.w, r.h, '#544a42', '#8f8075');
+      for (let j = 2; j < r.h - 2; j += 6) G.hairq(g, r.x + 3, r.y + j, r.w - 6, '#665a51');
+      // the dust sheet corner, so it reads as put away rather than broken
       for (let k = 0; k < 5; k++)
-        G.Rq(g, r.x + r.w - 11 + k * 2, r.y + 2 + k * 1.4, 9 - k * 1.6, 1.4, '#e4d6c6');
-      G.text(g, 'PIT ' + (i + 1), r.x + r.w / 2, r.y + r.h / 2 - 8, '#7a6454', { align: 'center' });
-      G.text(g, 'LOCKED', r.x + r.w / 2, r.y + r.h / 2 + 2, '#8a7464', { align: 'center' });
+        G.Rq(g, r.x + r.w - 11 + k * 2, r.y + 2 + k * 1.4, 9 - k * 1.6, 1.4, '#9e8f84');
+      // a padlock, shut
+      const lx = r.x + r.w / 2, ly = r.y + r.h / 2 - 9;
+      G.R(g, lx - 3.5, ly - 3, 7, 2, '#4a423c');
+      G.R(g, lx - 3.5, ly - 5, 2, 3, '#4a423c');
+      G.R(g, lx + 1.5, ly - 5, 2, 3, '#4a423c');
+      G.R(g, lx - 2.5, ly - 6, 5, 1.5, '#4a423c');
+      G.R(g, lx - 5, ly - 1, 10, 8, '#a8977f');
+      G.bevelq(g, lx - 5, ly - 1, 10, 8, '#cbb896', '#6d6053');
+      G.Rq(g, lx - 0.5, ly + 2, 1, 3, '#5e5346');
+      G.text(g, 'PIT ' + (i + 1), r.x + r.w / 2, r.y + r.h / 2 + 5, '#a2938a', { align: 'center' });
+      const arm = G.armById && G.armById('pit' + (i + 1));
+      if (arm)
+        G.text(g, '$' + arm.price, r.x + r.w / 2, r.y + r.h / 2 + 15,
+          G.state.money >= arm.price ? P.lime : '#8a7c72', { align: 'center', sc: 0.5 });
     },
 
     // ---- the cone or cup with its scoops ----
@@ -1522,7 +1540,7 @@
       // it hangs on the wall beside the machine, never over it - the cast is
       // tall, wide and horned, and a tag over the head buried all of that
       const bx = G.clamp(cx - (bot.hw + 4) - bw, 110, 114);
-      const by = 16;                          // under the HUD, over the bench labels
+      const by = 22;                          // under the HUD, over the bench labels
       G.plate(g, bx, by, bw, bh, '#e4dcc4', { r: 2, band: 2, lit: '#f4eeda', dk: '#b8ae94', spec: false });
       for (let i = 0; i < 6; i++) G.R(g, bx + bw, by + 11 + i, 6 - i, 1, i < 2 ? '#f4eeda' : '#e4dcc4');
       G.R(g, bx + bw, by + 17, 5, 1, '#0d1018');
@@ -1540,11 +1558,12 @@
       if (o.top) { for (let i = 0; i < 3; i++) G.R(g, sx + i * 3, by + 22 + (i % 2) * 2, 2, 2, G.topBitCol(o.top)); sx += 12; }
       // patience
       const pw = G.clamp(1 - c.wait / (PATIENCE * botPatience(c)), 0, 1);
-      G.R(g, bx, by + bh, bw, 3, '#0d1220');
-      G.R(g, bx, by + bh, Math.round(bw * pw), 3, pw > 0.5 ? '#3d9a4a' : pw > 0.22 ? P.hazard : P.magenta);
+      G.hudTrack(g, bx, by + bh, bw, 3, pw, pw > 0.5 ? '#3d9a4a' : pw > 0.22 ? P.hazard : P.magenta);
       // clause.ai's read, if you have paid for it - inside the tag, not under it
       if (c.read) {
-        G.R(g, bx + 2, by + 30, bw - 4, 10, '#1a2a3a');
+        G.R(g, bx + 2, by + 30, bw - 4, 10, '#16283a');
+        G.hairq(g, bx + 2, by + 30, bw - 4, '#0a1620');
+        G.hairq(g, bx + 2, by + 39.75, bw - 4, '#27435c');
         G.text(g, 'HATES ' + (c.bot.hates === 'none' ? 'NOTHING' : c.bot.hates.toUpperCase()),
           bx + 5, by + 31, P.cyanLt);
       }
@@ -1553,8 +1572,8 @@
       if (gr) {
         const m = gr.taste;
         const col = m > 0.35 ? P.lime : m > -0.1 ? P.hazard : P.magenta;
-        G.R(g, bx + bw - 26, by + 12, 24, 8, '#1a1f2c');
-        G.text(g, (m >= 0 ? '+' : '') + Math.round(m * 100) + '%', bx + bw - 24, by + 13, col);
+        G.tag(g, bx + bw - 2, by + 12, (m >= 0 ? '+' : '') + Math.round(m * 100) + '%', col,
+          { align: 'right', sc: 1 });
       }
     },
 
@@ -1669,86 +1688,106 @@
     },
 
     hud(g) {
+      // ---- ONE BAR ACROSS THE TOP ----
+      // It was four boxes: 52, 128, 62 and 46 wide, with four-unit gaps
+      // and two type sizes fighting inside them. Everything the shift
+      // wants to tell you now lives in one panel with rules between
+      // the compartments, one bar style, one pip, one tag.
       const st = G.state;
       const gl = st.today.goal || { quota: 0, take: 0 };
-      // ---- money ----
-      G.cosy(g, 2, 2, 52, 12, { lamp: false });
-      G.R(g, 6, 6, 4, 5, P.lampLt);
-      G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.lampLt);
-
-      // ---- today's goal: a served counter and a take bar, both live ----
       const qOK = st.today.served >= gl.quota, tOK = st.today.dayEarn >= gl.take;
-      G.cosy(g, 58, 2, 128, 12, { lamp: false });
-      G.text(g, 'D' + st.day + '  ' + G.chapterName(), 61, 3, P.steel2, { sc: 0.5 });
-      // quota pips, on the second row beside the take bar
-      for (let i = 0; i < gl.quota; i++) {
-        const px = 61 + i * 5;
-        const on = st.today.served > i;
-        G.Rh(g, px, 8.5, 3.5, 3.5, on ? P.lime : '#20263a');
-        G.bevel(g, px, 8.5, 3.5, 3.5, on ? '#b6ff9a' : '#2c3348', '#0b0e14');
+      const C = G.hudPanel(g, 2, 2, 300, 18, [54, 148, 54, 42]);
+
+      // ---- what you have ----
+      const m = C[0];
+      G.R(g, m.x + 1, m.y + 4, 4, 5, P.lampLt);
+      G.bevelq(g, m.x + 1, m.y + 4, 4, 5, '#ffe9a8', '#96721f');
+      G.Rq(g, m.x + 2.5, m.y + 5.5, 1, 2, '#8a6a28');
+      G.text(g, '$' + Math.round(st.moneyShown), m.x + 8, m.y + 0.5, P.lampLt);
+      // the calls counter used to be a tag in the tray, sat on top of
+      // clause's own starburst. It is a number about your money, so it
+      // lives with the money.
+      if (G.clause && G.clause.menuItems().length) {
+        G.Rq(g, m.x + 1, m.y + 9.5, 1, 1, P.lampDk);
+        G.Rq(g, m.x + 2.5, m.y + 8.5, 1, 1, P.lampDk);
+        G.Rq(g, m.x + 2.5, m.y + 10.5, 1, 1, P.lampDk);
+        G.Rq(g, m.x + 4, m.y + 9.5, 1, 1, P.lampDk);
+        G.text(g, st.calls + ' CALLS', m.x + 7, m.y + 8.5,
+          st.calls > 0 ? P.warm : '#6b5a4a', { sc: 0.5 });
       }
-      G.text(g, st.today.served + '/' + gl.quota, 61 + gl.quota * 5 + 2, 8,
+
+      // ---- the shift, and how it is going ----
+      const d = C[1];
+      G.text(g, 'DAY ' + st.day, d.x, d.y + 0.5, P.cream, { sc: 0.5 });
+      G.text(g, G.chapterName(), d.x + 22, d.y + 0.5, P.steel2, { sc: 0.5 });
+      if (st.today.closed) G.tag(g, d.x + d.w, d.y - 0.5, 'CLOSED', P.magentaLt, { align: 'right' });
+      const pe = G.hudPips(g, d.x, d.y + 7, gl.quota, st.today.served, qOK ? P.lime : '#7fc8ff', 8);
+      G.text(g, st.today.served + '/' + gl.quota, pe + 2.5, d.y + 7.5,
         qOK ? P.lime : P.steel2, { sc: 0.5 });
-      if (st.today.closed) G.text(g, 'CLOSED', 183, 3, P.magentaLt, { sc: 0.5, align: 'right' });
-      // take bar, with the figures beside it rather than over it
-      const tf = G.clamp(st.today.dayEarn / Math.max(1, gl.take), 0, 1);
-      const bx0 = 61 + gl.quota * 5 + 24;
-      G.R(g, bx0, 9, 183 - bx0 - 34, 4, '#0d1220');
-      G.R(g, bx0, 9, Math.round((183 - bx0 - 34) * tf), 4, tOK ? P.lime : P.hazard);
-      G.hair(g, bx0, 9, Math.round((183 - bx0 - 34) * tf), tOK ? '#dfffcf' : '#ffd8a0');
-      G.text(g, '$' + st.today.dayEarn + '/' + gl.take, 183, 8, tOK ? P.lime : P.steel2,
-        { sc: 0.5, align: 'right' });
+      const bx0 = pe + 20, bw = d.x + d.w - 30 - bx0;
+      G.hudTrack(g, bx0, d.y + 7, bw, 4, st.today.dayEarn / Math.max(1, gl.take),
+        tOK ? P.lime : P.hazard);
+      G.text(g, '$' + st.today.dayEarn + '/' + gl.take, d.x + d.w, d.y + 7.5,
+        tOK ? P.lime : P.steel2, { sc: 0.5, align: 'right' });
 
-      // ---- heat ----
-      G.cosy(g, 190, 2, 62, 12, { lamp: false });
-      G.text(g, 'HEAT', 193, 4, P.steel2, { sc: 0.5 });
-      G.R(g, 193, 9, 56, 3, '#0d1220');
-      G.R(g, 193, 9, Math.round(56 * st.suspicion), 3,
-        st.suspicion > 0.66 ? P.magenta : st.suspicion > 0.33 ? P.hazard : P.lime);
-      G.text(g, Math.round(st.suspicion * 100) + '%', 249, 4,
-        st.suspicion > 0.66 ? P.magenta : P.steel2, { sc: 0.5, align: 'right' });
-      // ---- crew count, so the rescues feel like a tally ----
-      G.cosy(g, 256, 2, 46, 12, { lamp: false });
-      G.text(g, 'CREW ' + (st.crew || []).length, 259, 3, P.violetLt, { sc: 0.5 });
-      G.text(g, '+' + st.spotted, 259, 9, P.lime, { sc: 0.5 });
-      G.text(g, '-' + st.missed, 299, 9, st.missed ? P.magenta : '#46506b',
+      // ---- how close they are to working you out ----
+      const ht = C[2];
+      const hc = st.suspicion > 0.66 ? P.magenta : st.suspicion > 0.33 ? P.hazard : P.lime;
+      G.text(g, 'HEAT', ht.x, ht.y + 0.5, P.steel2, { sc: 0.5 });
+      G.text(g, Math.round(st.suspicion * 100) + '%', ht.x + ht.w, ht.y + 0.5, hc,
         { sc: 0.5, align: 'right' });
+      G.hudTrack(g, ht.x, ht.y + 7, ht.w, 4, st.suspicion, hc, { tick: 0.66, tickCol: '#ff9ecb' });
 
-      // tray
-      // the tray is a wooden counter edge now, not a steel bar
+      // ---- and the tally that is the actual point of all this ----
+      const cr = C[3];
+      G.text(g, 'CREW', cr.x, cr.y + 0.5, P.steel2, { sc: 0.5 });
+      G.text(g, String((st.crew || []).length), cr.x + cr.w, cr.y + 0.5, P.violetLt,
+        { sc: 0.5, align: 'right' });
+      G.text(g, 'SEEN ' + st.spotted, cr.x, cr.y + 7.5, P.lime, { sc: 0.5 });
+      G.text(g, 'LOST ' + st.missed, cr.x + cr.w, cr.y + 7.5,
+        st.missed ? P.magenta : '#46506b', { sc: 0.5, align: 'right' });
+
+      // ---- THE TRAY: three zones that never move ----
+      // The way out on the left, what the game is saying in the middle,
+      // and the two controls that act on what is in your hands on the
+      // right. The clause strip used to run from four units off one
+      // edge to two hundred and eighty-four off the other, so every
+      // time it opened its mouth it drew straight over SERVE.
       G.R(g, 0, 150, G.W, 30, P.woodDk);
       G.plate(g, -4, 148, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });
       G.hair(g, -4, 148, G.W + 8, P.woodHi);
       G.grain(g, 0, 153, G.W, 27, '#1c1108', 0.05, 7);
-      if (G.unlocked('backroom')) G.drawBtn(g, 4, 152, 56, 16, 'BACK ROOM >', { col: '#2f8a48' });
-      // no ask buttons: you tap clause for those. Only the controls you
-      // can actually use are drawn at all.
-      const cs = this.canServe();
-      if (cs) G.drawBtn(g, 200, 152, 44, 16, 'SERVE', { col: '#2f8a48' });
-      if (this.build) G.drawBtn(g, 248, 152, 30, 16, 'BIN', { col: '#5c2030' });
-      // ---- ONE line of guidance along the bottom. There used to be
-      // two, at x 6 and x 48, and when neither had anything better to
-      // say they both printed PRESS A PIT AND SWEEP on top of each
-      // other, which came out as PRESS A PIT AND SWEEPS A PIT AND SWEEP.
-      const canAsk = G.clause && G.clause.menuItems().length;
-      if (canAsk)
-        G.text(g, 'TAP CLAUSE  ·  ' + G.state.calls + ' CALLS', 6, 170,
-          G.state.calls > 0 ? P.steel : '#46506b', { sc: 0.5 });
-      const h = this.hold;
-      if (h && h.kind === 'sweep') {
-        G.text(g, h.fill > SLOP ? 'TOO MUCH - BIN IT' : h.fill >= PERFECT_LO ? 'LET GO NOW' : 'KEEP SWEEPING',
-          canAsk ? 100 : 6, 170,
-          h.fill > SLOP ? P.magenta : h.fill >= PERFECT_LO ? P.lime : P.hazard, { sc: 0.5 });
-      } else if (!(G.clause && G.clause.msg)) {
-        // and it names the step you are actually on, which is the same
-        // step the marks on the shelf are lighting up
-        const b = this.build;
-        const say = st.today.closed ? 'SHIFT OVER - GO THROUGH THE BACK'
-          : !b || b.base === 'none' ? 'TAKE A CONE OR A CUP'
-          : !b.scoops.length ? 'PRESS A PIT AND SWEEP'
-          : this.canServe() ? 'SAUCE AND TOPS, THEN SERVE'
-          : 'SAUCE AND TOPS IF YOU LIKE';
-        G.text(g, say, canAsk ? 100 : 6, 170, '#46506b', { sc: 0.5 });
+
+      if (G.unlocked('backroom')) G.drawBtn(g, 4, 155, 58, 19, 'BACK ROOM >', { col: '#2f8a48' });
+      if (this.canServe()) G.drawBtn(g, 200, 155, 46, 19, 'SERVE', { col: '#2f8a48' });
+      if (this.build) G.drawBtn(g, 248, 155, 32, 19, 'BIN', { col: '#5c2030' });
+      // ---- ONE line of guidance, at a size you can read it at ----
+      // It was half-height grey type on dark wood at y 170, which is to
+      // say it was not there. It now has a recess of its own, full-size
+      // type, and a colour that means something while you are sweeping.
+      const SX = 66, SW2 = 128, SY = 156;
+      if (!(G.clause && G.clause.msg)) {
+        G.R(g, SX - 1, SY - 1, SW2 + 2, 18, '#150d09');
+        G.R(g, SX, SY, SW2, 16, '#241710');
+        G.hairq(g, SX, SY, SW2, '#0e0806');
+        G.hairq(g, SX, SY + 15.75, SW2, '#422c1d');
+        const h = this.hold;
+        let say, col = P.warm;
+        if (h && h.kind === 'sweep') {
+          say = h.fill > SLOP ? 'TOO MUCH - BIN IT'
+            : h.fill >= PERFECT_LO ? 'LET GO NOW' : 'KEEP SWEEPING';
+          col = h.fill > SLOP ? P.magentaLt : h.fill >= PERFECT_LO ? P.lime : P.hazard;
+        } else {
+          const bd = this.build;
+          say = st.today.closed ? 'SHIFT OVER - GO THROUGH THE BACK'
+            : !bd || bd.base === 'none' ? 'TAKE A CONE OR A CUP'
+            : !bd.scoops.length ? 'PRESS A PIT AND SWEEP'
+            : this.canServe() ? 'SAUCE AND TOPS, THEN SERVE'
+            : 'SAUCE AND TOPS IF YOU LIKE';
+        }
+        const ls = G.wrap(say, SW2 - 9);
+        for (let i = 0; i < Math.min(2, ls.length); i++)
+          G.text(g, ls[i], SX + 4, SY + (ls.length > 1 ? 1.5 : 4.5) + i * 8, col);
       }
     },
   };

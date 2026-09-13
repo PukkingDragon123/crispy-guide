@@ -35,6 +35,109 @@ no asset files — every sprite, sound and note is generated in code.
 
 ---
 
+## 🔇 You hide, and then the screen goes black
+
+Tracy sits you down, says she will put the kettle on, and tells you to get
+behind the counter. You do. **The screen goes to black and stays there.**
+
+The door, the search and the shot all happen in a room you are not looking at.
+It is not a cut to black, though, because a cut to black for fifteen seconds is
+a loading screen. Light **punches through** it — the door coming in, a torch
+crossing the gap, the muzzle flash — so you catch the room a third of a second
+at a time and it is worse every time. In between, the only thing in the picture
+is you: two amber visor slits under a counter, and they flinch.
+
+Then the gun goes off somewhere you cannot see, and it is quiet for a long time.
+
+![The blackout](screenshots/raid-dark.png)
+
+The flash needed tuning twice. A glow, a full-frame wash, a screen flash and a
+white plate stacked on top of each other came out as **a sheet of paper** — you
+heard the gun and saw nothing, which is the one thing that beat cannot do. It is
+now a hard punch that clears in two tenths of a second, with the room lit warm
+underneath it for half a second after.
+
+---
+
+## 🧱 The ruins are a building that was hit, not a castle
+
+The car park outside MOO-BOT used to be four rectangles of brick with a
+scalloped top edge, and you could see the battlements from the far side of it.
+Scalloped is the problem: a blast does not nibble, it **bites**, and an even
+wobble along the top of a wall reads as a castle.
+
+So it is built the way the building was built — **steel stanchions, brick infill
+between them, a concrete lintel over the shopfronts, a fascia band on the lintel
+with the name on it, a flat roof over the lot** — and then each of those fails
+the way that thing fails:
+
+- brick comes away **in chunks** between the columns, at chunk widths that vary
+  so the eye cannot find the period and turn it into masonry
+- steel **bends** instead of breaking, and where it has gone it is splayed open
+- the lintel cracks and shows its **rebar** bridging the gap
+- the fascia **tears loose and hangs by one end**, MOO-B still legible on it
+- the roof **folds into the floor** with its truss hanging out of the low end
+- the pylon sign is **down across the tarmac**, snapped off its base plate, the
+  cow on its face still readable and one bulb on the rim still going
+
+A course of brick is two units and a brick is six, because the first pass used
+ten by five — which at four native pixels a unit is a forty-by-twenty block, and
+that is not brickwork, it is a sandstone cliff. Every wall bay got its window
+back, too: a wall with nothing in it is not a wall, it is a cliff.
+
+![The ruins](screenshots/wreck.png)
+
+![The sign, down](screenshots/ruins-sign.png)
+
+The city burns on **its own plane** behind, so it moves slower than you do, and
+the near apron has tyre and litter on it instead of thirty units of black. The
+whole set bakes into a buffer once; only the fires, the smoke, the one bulb and
+the rain are live.
+
+---
+
+## 📊 One bar, one track, one pip
+
+The top of the screen used to be **four separate boxes** of four different
+widths, with four different type sizes in them, sitting at four different
+distances apart. Individually each one was fine. Together they read as a row of
+things that had arrived from different places, because that is what they were.
+Behind them, in the gaps, the decorative conduit showed through — so the armoury
+looked like it had a broken meter running along the top.
+
+There is now one **readout kit** that the whole game draws from:
+
+| | |
+|---|---|
+| `G.hudPanel` | one panel, divided by hairline rules, returning its cells |
+| `G.hudTrack` | one bar: recessed track, fill lit on top and shadowed below |
+| `G.hudPips` | one pip, for counting things off |
+| `G.tag` | one chip, for a word that is a status rather than a sentence |
+
+The counter, the back room, the lab, the armoury and the workshop all use it, so
+the top of every frame reads as a single object with compartments.
+
+![The counter](screenshots/cafe.png)
+
+![The armoury](screenshots/armoury.png)
+
+Underneath, the counter's tray is **three zones that never move** — the way out
+on the left, what the game is saying in the middle, and the two controls that
+act on what is in your hands on the right. The clause strip used to run from
+four units off one edge to two hundred and eighty-four off the other, so every
+time it opened its mouth it drew straight over SERVE.
+
+And the line of guidance at the bottom was half-height grey type on dark wood,
+which is to say it was not there. It has a recess of its own now, full-size
+type, and a colour that means something while you are sweeping.
+
+Four locked pit lids used to be the **brightest thing on the counter**. Whatever
+you are meant to be looking at, it is not the shelf of things you have not
+bought yet — so they drop a long way in tone and carry a padlock and **the
+price** instead of the word LOCKED, which told you nothing you could act on.
+
+---
+
 ## 💃 The dance is a little game now
 
 Act one has a stage in it, a birthday party at table four, and a mascot whose

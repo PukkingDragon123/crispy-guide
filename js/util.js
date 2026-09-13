@@ -962,6 +962,86 @@
     return { x, y, w, h };
   };
 
+  // ============================================================
+  // THE READOUT KIT
+  //
+  // The top of the screen used to be four separate boxes of four
+  // different widths with four different type sizes in them, sitting
+  // at four different distances apart. Individually each one was
+  // fine. Together they read as a row of things that had arrived
+  // from different places, because that is what they were.
+  //
+  // So there is now ONE panel with rules in it, ONE track that every
+  // bar in the game is drawn with, ONE pip, and ONE tag. Anything
+  // that wants to tell you a number uses these, and the top of the
+  // frame reads as a single object with compartments.
+  // ============================================================
+
+  // one panel, divided. cells are absolute widths; returns their rects
+  G.hudPanel = function (g, x, y, w, h, cells, o) {
+    o = o || {};
+    G.cosy(g, x, y, w, h, { lamp: false, col: o.col });
+    const out = [];
+    let cx = x + 2;
+    for (let i = 0; i < cells.length; i++) {
+      out.push({ x: cx + 2, y: y + 2.5, w: cells[i] - 4, h: h - 5, cx: cx + cells[i] / 2 });
+      cx += cells[i];
+      if (i < cells.length - 1) {
+        G.vairq(g, cx, y + 3, h - 6, '#0b0810');
+        G.vairq(g, cx + 0.25, y + 3, h - 6, '#6b4f34');
+      }
+    }
+    // the last cell has the panel's own frame on its right, not a rule,
+    // so a right-aligned value in it would sit on the border
+    const last = out[out.length - 1];
+    if (last) last.w = Math.min(last.w, x + w - 4 - last.x);
+    return out;
+  };
+
+  // one bar. a recessed track, a fill with light on its top edge and
+  // shadow on its bottom, and an optional threshold tick.
+  G.hudTrack = function (g, x, y, w, h, f, col, o) {
+    o = o || {};
+    G.R(g, x - 0.5, y - 0.5, w + 1, h + 1, '#09080f');
+    G.R(g, x, y, w, h, '#161a26');
+    G.hairq(g, x, y, w, '#0a0d16');
+    const fw = f > 0 ? Math.max(1, Math.round(w * G.clamp(f, 0, 1))) : 0;
+    if (fw) {
+      G.R(g, x, y, fw, h, col);
+      G.hairq(g, x, y, fw, G.shade(col, 0.44));
+      G.hairq(g, x, y + h - 0.25, fw, G.shade(col, -0.34));
+    }
+    if (o.tick !== undefined) {
+      const tx = x + Math.round(w * G.clamp(o.tick, 0, 1));
+      G.Rq(g, tx, y - 1, 1, h + 2, o.tickCol || '#f6ecd6');
+    }
+  };
+
+  // one pip. returns the x the row ended at, so the label can follow it
+  G.hudPips = function (g, x, y, n, on, col, cap) {
+    const show = Math.min(n, cap || 8), step = 4.5;
+    for (let i = 0; i < show; i++) {
+      const lit = on > i;
+      G.Rh(g, x + i * step, y, 3.5, 3.5, lit ? col : '#1b2030');
+      G.bevelq(g, x + i * step, y, 3.5, 3.5, lit ? G.shade(col, 0.46) : '#2a3145', '#080b11');
+    }
+    return x + show * step;
+  };
+
+  // one tag: a small chip with a frame, for a word that is a status
+  // rather than a sentence -- CLOSED, FREE, LOCKED, 3 LEFT.
+  G.tag = function (g, x, y, label, col, o) {
+    o = o || {};
+    const sc = o.sc === undefined ? 0.5 : o.sc;
+    const w = G.tw(label, sc) + 6, h = sc < 1 ? 8 : 11;
+    const bx = o.align === 'right' ? x - w : x;
+    G.rr(g, bx - 0.5, y - 0.5, w + 1, h + 1, '#09080f');
+    G.rr(g, bx, y, w, h, o.bg || '#1d1a26');
+    G.hairq(g, bx + 1, y + 0.5, w - 2, G.shade(col, -0.34));
+    G.text(g, label, bx + w / 2, y + (h - 7 * sc) / 2 + 0.25, col, { align: 'center', sc });
+    return { x: bx, y, w, h };
+  };
+
   // ---------- shared button ----------
   // A button you would want to press: a warm shadow under it, a rounded
   // body, a soft light along the top and a hairline of lamp on the lip.

@@ -648,18 +648,18 @@
       // ---- HUD ----
       // no money on the board when it is you on the bench and the person
       // holding the screwdriver has never been paid for anything
+      // ---- one bar, with compartments, like the counter's ----
+      // Four plates with gaps let the conduit behind show through, and
+      // the whole strip read as four things that had turned up separately.
+      const NC = G.hudPanel(g, 2, 2, 276, 14, [54, 42, 82, 98], { col: P.ink2 });
       if (!this.tut) {
-        G.cosy(g, 2, 2, 54, 12, { lamp: false });
-        G.R(g, 6, 6, 4, 5, P.lampLt);
-        G.text(g, '$' + Math.round(G.state.money), 13, 4, P.hazard);
+        G.R(g, NC[0].x + 1, NC[0].y + 2, 4, 5, P.lampLt);
+        G.bevelq(g, NC[0].x + 1, NC[0].y + 2, 4, 5, '#ffe9a8', '#96721f');
+        G.text(g, '$' + Math.round(G.state.money), NC[0].x + 8, NC[0].y + 1, P.hazard);
       }
-      G.plate(g, 60, 2, 46, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, (this.pi + 1) + '/' + this.queue.length, 64, 4, P.cyanLt);
-      // two plates, so neither name gets cut in half
-      G.plate(g, 110, 2, 80, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, this.job.name.slice(0, 12), 114, 4, this.bot.hue);
-      G.plate(g, 194, 2, 84, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, this.sys.name.slice(0, 13), 198, 4, this.sys.col);
+      G.text(g, (this.pi + 1) + '/' + this.queue.length, NC[1].x + 1, NC[1].y + 1, P.cyanLt);
+      G.text(g, this.job.name.slice(0, 12), NC[2].x + 1, NC[2].y + 1, this.bot.hue);
+      G.text(g, this.sys.name.slice(0, 13), NC[3].x + 1, NC[3].y + 1, this.sys.col);
       // the patient, as a chip in the corner
       G.plate(g, 282, 2, 34, 26, '#12141c', { r: 1, band: 1, spec: false });
       G.drawBot(g, this.job.id, 299, 27, 0.24,
@@ -704,12 +704,18 @@
       const need = this.needTool();
       for (let i = 0; i < tools.length; i++) {
         const bx = 4 + i * 54, on = this.tool === tools[i], want = need === tools[i];
-        G.plate(g, bx, TRAY_Y + 3, 52, 20, on ? P.cyanDk : want ? '#2a3a1e' : '#1a1e2a', { r: 1, band: 1, spec: false });
-        if (want) G.R(g, bx, TRAY_Y + 3, 52, 1, P.lime);
-        G.text(g, G.toolById(tools[i]).name.split(' ')[0].slice(0, 8), bx + 26, TRAY_Y + 5,
-          on ? '#ffffff' : P.cream, { align: 'center' });
-        if (f && f.named && want)
-          G.text(g, ACT[f.id][f.step].g.toUpperCase(), bx + 26, TRAY_Y + 14, P.lime, { align: 'center' });
+        // the same button as MANUAL and SIGN OFF next to it. Flat plates
+        // beside pressable buttons read as the disabled half of the tray.
+        G.drawBtn(g, bx, TRAY_Y + 3, 52, 20,
+          G.toolById(tools[i]).name.split(' ')[0].slice(0, 8),
+          { col: on ? '#1f7f9c' : want ? '#41662a' : '#2a3040',
+            tcol: on ? '#ffffff' : want ? '#eaffd8' : P.cream });
+        if (want && !on) {
+          G.hairq(g, bx + 3, TRAY_Y + 3.5, 46, P.lime);
+          if (f && f.named)
+            G.text(g, ACT[f.id][f.step].g.toUpperCase(), bx + 26, TRAY_Y + 14, '#dfffcf',
+              { align: 'center', sc: 0.5 });
+        }
       }
       G.drawBtn(g, 172, TRAY_Y + 3, 54, 20, 'MANUAL', { col: this.book ? P.violet : '#3a2a5c' });
       G.drawBtn(g, 230, TRAY_Y + 3, 86, 20, 'SIGN OFF', { col: this.canFinish() ? '#2f8a48' : '#20242e' });

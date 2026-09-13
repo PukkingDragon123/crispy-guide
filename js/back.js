@@ -121,7 +121,7 @@
       lab.tab = s.tab;
       lab.scroll = 0;
       this.open = s.tab;
-      if (G.clause) G.clause.at(300, 160, 166, 4, 276);
+      if (G.clause) G.clause.at(300, 158, 162, 68, 282);
     },
     close() { G.audio.sfx('back'); this.open = null; },
     crewDown(x, y) {
@@ -181,7 +181,7 @@
       // ---- chrome ----
       this.hud(g, t);
       if (this.open !== null) this.panel(g, t);
-      if (G.clause) { G.clause.at(300, 160, 166, 4, 276); G.clause.draw(g); G.clause.drawMenu(g); }
+      if (G.clause) { G.clause.at(300, 158, 162, 68, 282); G.clause.draw(g); G.clause.drawMenu(g); }
       G.grade(g, 1);
     },
 
@@ -540,19 +540,26 @@
     // ---- tray and the interact button ----
     hud(g, t) {
       const st = G.state;
-      G.R(g, 0, 0, G.W, 16, '#150e09');
-      G.hair(g, 0, 16, G.W, P.lampDk);
-      G.cosy(g, 2, 2, 52, 12, { lamp: false });
-      G.R(g, 6, 6, 4, 5, P.lampLt);
-      G.text(g, '$' + Math.round(st.moneyShown), 13, 4, P.lampLt);
-      G.text(g, 'THE BACK ROOM  ·  SHIFT ' + st.day, 60, 4, P.violetLt);
       const n = G.pitCount();
       const loaded = st.pits.slice(0, n).filter((p) => p && p.qty > 0).length;
       const stock = Object.keys(st.shelf).filter((k) => st.shelf[k] > 0).length;
-      G.text(g, 'CREW ' + (st.crew || []).length, 214, 3, P.lime, { sc: 0.5 });
-      G.text(g, 'CALLS ' + st.calls, 214, 9, P.steel, { sc: 0.5 });
-      G.text(g, loaded + '/' + n + ' PITS', 262, 3, loaded ? P.lime : P.magenta, { sc: 0.5 });
-      G.text(g, 'STOCK ' + stock, 262, 9, P.steel, { sc: 0.5 });
+      // ---- one bar, with compartments, like everywhere else ----
+      // It was a money plate and then three clusters of loose text sat
+      // straight on the room, which is the one arrangement that always
+      // looks like debug output.
+      const BC = G.hudPanel(g, 2, 2, 300, 18, [54, 152, 48, 46]);
+      G.R(g, BC[0].x + 1, BC[0].y + 4, 4, 5, P.lampLt);
+      G.bevelq(g, BC[0].x + 1, BC[0].y + 4, 4, 5, '#ffe9a8', '#96721f');
+      G.text(g, '$' + Math.round(st.moneyShown), BC[0].x + 8, BC[0].y + 3.5, P.lampLt);
+      G.text(g, 'THE BACK ROOM', BC[1].x, BC[1].y + 0.5, P.violetLt, { sc: 0.5 });
+      G.text(g, 'SHIFT ' + st.day, BC[1].x, BC[1].y + 7.5, P.cream, { sc: 0.5 });
+      G.text(g, 'CREW ' + (st.crew || []).length, BC[2].x, BC[2].y + 0.5, P.lime, { sc: 0.5 });
+      G.text(g, 'CALLS ' + st.calls, BC[2].x, BC[2].y + 7.5,
+        st.calls > 0 ? P.warm : '#6b5a4a', { sc: 0.5 });
+      G.text(g, loaded + '/' + n + ' PITS', BC[3].x + BC[3].w, BC[3].y + 0.5,
+        loaded ? P.lime : P.magenta, { sc: 0.5, align: 'right' });
+      G.text(g, 'STOCK ' + stock, BC[3].x + BC[3].w, BC[3].y + 7.5, P.steel,
+        { sc: 0.5, align: 'right' });
 
       G.R(g, 0, 150, G.W, 30, P.woodDk);
       G.plate(g, -4, 148, G.W + 8, 5, P.woodLt, { r: 1, band: 2, grain: 3 });

@@ -189,12 +189,14 @@
       G.R(g, 60, 10, 200, 2, '#e8f0d8');
       G.glow(g, 160, 60, 220, 120, '#dfe8ff', 0.5);
 
-      // HUD
-      G.plate(g, 2, 2, 54, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.R(g, 6, 6, 4, 5, P.hazard);
-      G.text(g, '$' + Math.round(G.state.moneyShown), 13, 4, P.hazard);
-      G.plate(g, 60, 2, 76, 12, P.ink2, { r: 1, band: 1, spec: false });
-      G.text(g, 'THE LAB · DAY ' + G.state.day, 64, 4, P.violetLt);
+      // ---- one bar, like the counter's and the armoury's ----
+      const LC = G.hudPanel(g, 2, 2, 300, 14, [54, 130, 112], { col: P.ink2 });
+      G.R(g, LC[0].x + 1, LC[0].y + 2, 4, 5, P.hazard);
+      G.bevelq(g, LC[0].x + 1, LC[0].y + 2, 4, 5, '#ffd88a', '#9a6a10');
+      G.text(g, '$' + Math.round(G.state.moneyShown), LC[0].x + 8, LC[0].y + 1, P.hazard);
+      G.text(g, 'THE LAB · DAY ' + G.state.day, LC[1].x + 1, LC[1].y + 1, P.violetLt);
+      G.text(g, 'CALLS ' + G.state.calls, LC[2].x + LC[2].w, LC[2].y + 1,
+        G.state.calls > 0 ? P.cyanLt : '#4a5468', { align: 'right' });
 
       // tabs
       for (let i = 0; i < TABS.length; i++) {
@@ -216,15 +218,14 @@
       G.drawBtn(g, 4, 152, 58, 16, '< CAFE', { col: '#2a5c6b' });
       if (G.unlocked('ask_recipe')) G.drawBtn(g, 66, 152, 52, 16, 'IDEA', { col: '#3a2a5c' });
       if (G.unlocked('ask_restock')) G.drawBtn(g, 122, 152, 52, 16, 'RESTOCK', { col: '#3a2a5c' });
-      G.text(g, 'CALLS ' + G.state.calls, 182, 156, P.steel);
-      if (G.clause) { G.clause.at(300, 163, 166, 4, 286); G.clause.draw(g); G.clause.drawMenu(g); }
+      if (G.clause) { G.clause.at(300, 159, 163, 4, 282); G.clause.draw(g); G.clause.drawMenu(g); }
       G.grade(g, 1);
     },
 
     // ---- the online order form ----
     drawOrder(g, t) {
-      G.plate(g, 4, 32, 312, 114, '#0f1420', { r: 2, band: 1, lit: '#1d2836', dk: '#080c12', spec: false });
-      for (let j = 34; j < 144; j += 3) { g.globalAlpha = 0.08; G.R(g, 6, j, 308, 1, P.cyanLt); g.globalAlpha = 1; }
+      G.plate(g, 4, 32, 312, 117, '#0f1420', { r: 2, band: 1, lit: '#1d2836', dk: '#080c12', spec: false });
+      for (let j = 34; j < 147; j += 3) { g.globalAlpha = 0.08; G.R(g, 6, j, 308, 1, P.cyanLt); g.globalAlpha = 1; }
       const list = this.shelfList();
       G.text(g, 'STOCK', 10, 34, P.cyanLt);
       G.text(g, 'ON SHELF', 176, 34, P.steel);
